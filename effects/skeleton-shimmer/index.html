@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>骨架屏扫光</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-base: #1c1e2c;        /* 骨架底色 */
+    --mt-highlight: #2e3147;   /* 扫光颜色（比底色略亮） */
+    --mt-speed: 1;             /* 扫光速度倍率：1 为正常，越大越快 */
+    --mt-rounded: 8px;         /* 骨架块圆角 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-skeleton {
+    width: min(380px, 80vw);
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 14px 16px;
+  }
+
+  /* 所有骨架块共享同一条「扫光」背景：
+     底色上叠一条斜向高光带，background-position 从左扫到右无缝循环 */
+  .mt-skeleton .bone {
+    border-radius: var(--mt-rounded);
+    background:
+      linear-gradient(100deg, transparent 32%, var(--mt-highlight) 50%, transparent 68%)
+      var(--mt-base);
+    background-size: 220% 100%;
+    background-position: 120% 0;
+    animation: mt-sweep calc(1.6s / var(--mt-speed)) ease-in-out infinite;
+  }
+  @keyframes mt-sweep {
+    to { background-position: -120% 0; }
+  }
+
+  .mt-skeleton .avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    grid-row: span 2;
+  }
+  .mt-skeleton .title { height: 18px; width: 55%; }
+  .mt-skeleton .line { height: 12px; }
+  .mt-skeleton .banner {
+    grid-column: 1 / -1;
+    height: 120px;
+    margin-top: 6px;
+  }
+
+  /* 用户开启「减少动态效果」时：扫光停止，保留静态骨架块 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-skeleton .bone { animation: none; background-position: 50% 0; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-skeleton" id="mtSkeleton" role="status" aria-label="内容加载中">
+  <div class="bone avatar"></div>
+  <div class="bone title"></div>
+  <div class="lines" id="mtLines" style="display: grid; gap: 10px;"></div>
+  <div class="bone banner"></div>
+</div>
+<script>
+  const CONFIG = {
+    rows: 3, // 文本行数：头像右侧的灰色文字占位条数量（2-5）
+  };
+
+  // 生成文本行骨架：最后一行短一截，更像真实段落
+  const lines = document.getElementById('mtLines');
+  for (let i = 0; i < CONFIG.rows; i++) {
+    const line = document.createElement('div');
+    line.className = 'bone line';
+    line.style.width = i === CONFIG.rows - 1 ? '62%' : '100%';
+    lines.appendChild(line);
+  }
+  // 扫光是纯 CSS 动画：页面切到后台时浏览器会自动暂停渲染，无需额外处理
+</script>
+</body>
+</html>

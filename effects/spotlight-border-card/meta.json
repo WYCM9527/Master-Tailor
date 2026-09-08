@@ -1,0 +1,61 @@
+{
+  "slug": "spotlight-border-card",
+  "name": "聚光边框卡片",
+  "category": "card",
+  "tags": ["描边", "鼠标跟随", "发光"],
+  "summary": "鼠标靠近时，卡片边框上亮起一段跟随鼠标的光",
+  "params": [
+    { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "聚光卡片", "maxLength": 16 },
+    {
+      "key": "desc",
+      "label": "卡片描述",
+      "type": "text",
+      "target": "config",
+      "default": "把鼠标移到卡片边缘试试",
+      "maxLength": 40
+    },
+    { "key": "glowColor", "label": "光的颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    {
+      "key": "glowRadius",
+      "label": "光斑半径",
+      "type": "range",
+      "target": "css",
+      "min": 80,
+      "max": 400,
+      "step": 10,
+      "default": 200,
+      "unit": "px"
+    },
+    {
+      "key": "borderWidth",
+      "label": "边框粗细",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 3,
+      "step": 0.5,
+      "default": 1.5,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "cyan-wide",
+      "name": "青光大范围",
+      "values": { "glowColor": "#00e5ff", "glowRadius": 320, "borderWidth": 2 }
+    },
+    {
+      "id": "violet-fine",
+      "name": "紫光细边",
+      "values": { "glowColor": "#c084fc", "glowRadius": 140, "borderWidth": 1 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "常见 spotlight 边框卡片（如 Magic UI）",
+    "url": "https://magicui.design",
+    "license": "未使用其代码"
+  }
+}

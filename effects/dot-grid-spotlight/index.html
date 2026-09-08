@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>点阵网格聚光</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-dotColor: #3a3d52;    /* 点的颜色（常态下的暗点） */
+    --mt-spotColor: #f9cf00;   /* 聚光颜色（鼠标附近点亮的点） */
+    --mt-gap: 26px;            /* 点间距 */
+    --mt-dotSize: 1.5px;       /* 点大小（半径） */
+    --mt-spotRadius: 200px;    /* 聚光半径 */
+    /* 鼠标位置（由 JS 实时更新） */
+    --mt-mx: 50%;
+    --mt-my: 50%;
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+
+  .mt-dots, .mt-dots-lit {
+    position: fixed;
+    inset: 0;
+    /* 用 radial-gradient 平铺出点阵 */
+    background-image: radial-gradient(circle, var(--mt-dotColor) var(--mt-dotSize), transparent var(--mt-dotSize));
+    background-size: var(--mt-gap) var(--mt-gap);
+  }
+
+  .mt-dots-lit {
+    /* 亮色点阵叠在上层，只在鼠标周围一圈内可见 */
+    background-image: radial-gradient(circle, var(--mt-spotColor) var(--mt-dotSize), transparent var(--mt-dotSize));
+    -webkit-mask-image: radial-gradient(circle var(--mt-spotRadius) at var(--mt-mx) var(--mt-my), #000 0%, transparent 100%);
+    mask-image: radial-gradient(circle var(--mt-spotRadius) at var(--mt-mx) var(--mt-my), #000 0%, transparent 100%);
+  }
+</style>
+</head>
+<body>
+<div class="mt-dots" aria-hidden="true"></div>
+<div class="mt-dots-lit" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    ease: 0.18, // 聚光跟随的平滑度（0-1，越小越有拖拽感）
+  };
+
+  const root = document.documentElement;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 目标位置与当前位置，用 rAF 做平滑跟随
+  let targetX = innerWidth / 2, targetY = innerHeight / 2;
+  let curX = targetX, curY = targetY;
+  let rafId = null;
+
+  function feed(x, y) { targetX = x; targetY = y; }
+  document.addEventListener('mousemove', (e) => feed(e.clientX, e.clientY));
+
+  function loop() {
+    // 减少动态效果时：聚光直接吸附到目标位置，不做缓动动画
+    if (reduceMotion) { curX = targetX; curY = targetY; }
+    else {
+      curX += (targetX - curX) * CONFIG.ease;
+      curY += (targetY - curY) * CONFIG.ease;
+    }
+    root.style.setProperty('--mt-mx', curX + 'px');
+    root.style.setProperty('--mt-my', curY + 'px');
+    rafId = requestAnimationFrame(loop);
+  }
+
+  // 页面切到后台时暂停 rAF，避免空耗性能
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelAnimationFrame(rafId); rafId = null; }
+    else if (!rafId) rafId = requestAnimationFrame(loop);
+  });
+  rafId = requestAnimationFrame(loop);
+
+  /* @mt:thumb-start */
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    // 缩略图演示：聚光沿 8 字轨迹自动巡游；收到父页面转发的真实鼠标时优先跟随
+    let lastReal = 0;
+    window.__mtOnPointer = (x, y) => { lastReal = performance.now(); feed(x, y); };
+    (function autoDemo() {
+      if (performance.now() - lastReal > 1200) {
+        const t = performance.now() / 1000;
+        feed(
+          innerWidth / 2 + Math.cos(t * 0.9) * innerWidth * 0.3,
+          innerHeight / 2 + Math.sin(t * 1.4) * innerHeight * 0.28
+        );
+      }
+      requestAnimationFrame(autoDemo);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

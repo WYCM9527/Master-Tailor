@@ -1,0 +1,58 @@
+{
+  "slug": "typewriter",
+  "name": "打字机文字",
+  "category": "text",
+  "tags": ["打字机", "轮播", "光标"],
+  "summary": "文字逐字打出再逐字删除，光标一闪一闪，多句轮播",
+  "params": [
+    {
+      "key": "sentences",
+      "label": "轮播文案",
+      "type": "text",
+      "target": "config",
+      "default": "我们不做设计｜我们只是代码的裁缝师",
+      "maxLength": 80,
+      "help": "多句用「｜」分隔，会依次打出"
+    },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "accent", "label": "光标颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    {
+      "key": "speed",
+      "label": "打字速度",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "displayUnit": " 字/秒"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 72,
+      "step": 2,
+      "default": 40,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "terminal",
+      "name": "终端绿",
+      "values": { "color": "#4ade80", "accent": "#4ade80", "font": "jetbrains-mono", "speed": 14, "fontSize": 28 }
+    },
+    {
+      "id": "wenyi",
+      "name": "文艺楷体",
+      "values": { "font": "lxgw-wenkai", "speed": 5, "fontSize": 44, "accent": "#ff9e42" }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "original" }
+}

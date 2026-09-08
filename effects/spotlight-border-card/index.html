@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>聚光边框卡片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-glowColor: #f9cf00;   /* 光的颜色 */
+    --mt-glowRadius: 200px;    /* 光斑半径：边框上被点亮的范围 */
+    --mt-borderWidth: 1.5px;   /* 边框粗细 */
+    /* 鼠标位置（由 JS 实时更新，相对卡片左上角） */
+    --mt-mx: -9999px;
+    --mt-my: -9999px;
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-spot {
+    position: relative;
+    width: min(360px, 78vw);
+    padding: 34px 30px;
+    border-radius: 16px;
+    background: #14151f;
+    /* 常态下的暗边框 */
+    border: var(--mt-borderWidth) solid rgba(255, 255, 255, 0.08);
+    color: #f2f3f8;
+  }
+  /* 发光边框层：一层跟随鼠标的径向渐变，只通过 mask 露出边框那一圈 */
+  .mt-spot::before {
+    content: '';
+    position: absolute;
+    inset: calc(var(--mt-borderWidth) * -1);
+    border-radius: 16px;
+    padding: var(--mt-borderWidth);
+    background: radial-gradient(
+      circle var(--mt-glowRadius) at var(--mt-mx) var(--mt-my),
+      var(--mt-glowColor),
+      transparent 100%
+    );
+    /* 两层 mask 相减，只保留 padding（即边框环）区域 */
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .mt-spot h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    letter-spacing: 0.03em;
+  }
+  .mt-spot p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #aab0c0;
+  }
+
+  /* 用户开启「减少动态效果」时：光固定在卡片左上角，不跟随（JS 同步停止更新） */
+  @media (prefers-reduced-motion: reduce) {
+    :root { --mt-mx: 20%; --mt-my: 0%; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-spot" id="mtCard">
+  <h3 id="mtTitle">聚光卡片</h3>
+  <p id="mtDesc">把鼠标移到卡片边缘试试</p>
+</div>
+<script>
+  const CONFIG = {
+    title: "聚光卡片",              // 卡片标题
+    desc: "把鼠标移到卡片边缘试试", // 卡片描述
+  };
+
+  const card = document.getElementById('mtCard');
+  const root = document.documentElement;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  document.getElementById('mtDesc').textContent = CONFIG.desc;
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 把指针位置换算成相对卡片左上角的坐标，喂给 CSS 变量
+  function feed(clientX, clientY) {
+    if (reduceMotion) return; // 减少动态效果：光不跟随
+    const rect = card.getBoundingClientRect();
+    root.style.setProperty('--mt-mx', (clientX - rect.left) + 'px');
+    root.style.setProperty('--mt-my', (clientY - rect.top) + 'px');
+  }
+
+  document.addEventListener('mousemove', (e) => feed(e.clientX, e.clientY));
+  // 鼠标离开页面时把光移到视野外
+  document.addEventListener('mouseleave', () => {
+    root.style.setProperty('--mt-mx', '-9999px');
+    root.style.setProperty('--mt-my', '-9999px');
+  });
+
+  /* @mt:thumb-start */
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    // 缩略图演示：光沿卡片边缘绕圈巡游；真实鼠标进入时优先跟随
+    let lastReal = 0;
+    window.__mtOnPointer = (x, y) => { lastReal = performance.now(); feed(x, y); };
+    (function autoDemo() {
+      if (document.hidden) { requestAnimationFrame(autoDemo); return; }
+      if (performance.now() - lastReal > 1200) {
+        const t = performance.now() / 1000;
+        const rect = card.getBoundingClientRect();
+        feed(
+          rect.left + rect.width * (0.5 + Math.cos(t * 1.2) * 0.55),
+          rect.top + rect.height * (0.5 + Math.sin(t * 1.2) * 0.7)
+        );
+      }
+      requestAnimationFrame(autoDemo);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

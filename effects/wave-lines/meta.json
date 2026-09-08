@@ -1,0 +1,68 @@
+{
+  "slug": "wave-lines",
+  "name": "波浪流体线条",
+  "category": "canvas",
+  "tags": ["波浪", "线条", "流动"],
+  "summary": "多条正弦波线错落起伏，像风吹过的水面",
+  "params": [
+    { "key": "color", "label": "线条颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    {
+      "key": "lineCount",
+      "label": "线条数量",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 12,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "amplitude",
+      "label": "波幅",
+      "type": "range",
+      "target": "config",
+      "min": 10,
+      "max": 80,
+      "step": 5,
+      "default": 40,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "流速",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.8,
+      "displayUnit": "×"
+    },
+    {
+      "key": "thickness",
+      "label": "线宽",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 4,
+      "step": 0.5,
+      "default": 1.5,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "ocean",
+      "name": "深海青",
+      "values": { "color": "#00bcd4", "lineCount": 10, "amplitude": 55, "speed": 0.5 }
+    },
+    {
+      "id": "ridge",
+      "name": "紫色山脊",
+      "values": { "color": "#7c4dff", "lineCount": 4, "amplitude": 70, "thickness": 2.5, "speed": 1.2 }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "original" }
+}

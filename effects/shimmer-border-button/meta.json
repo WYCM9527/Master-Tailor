@@ -1,0 +1,61 @@
+{
+  "slug": "shimmer-border-button",
+  "name": "流光描边按钮",
+  "category": "button",
+  "tags": ["流光", "描边", "科技感"],
+  "summary": "一圈光带沿按钮边框不停流转，像霓虹描边",
+  "params": [
+    { "key": "label", "label": "按钮文字", "type": "text", "target": "config", "default": "立即体验", "maxLength": 12 },
+    { "key": "colorA", "label": "流光色 A", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "colorB", "label": "流光色 B", "type": "color", "target": "css", "default": "#7c4dff" },
+    {
+      "key": "speed",
+      "label": "流转速度",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "unit": "",
+      "displayUnit": "×"
+    },
+    {
+      "key": "borderWidth",
+      "label": "描边粗细",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 4,
+      "step": 0.5,
+      "default": 2,
+      "unit": "px"
+    },
+    {
+      "key": "rounded",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "neon-pill",
+      "name": "霓虹胶囊",
+      "values": { "colorA": "#00e5ff", "colorB": "#ff4dff", "speed": 1.6, "rounded": 32, "borderWidth": 2.5 }
+    },
+    {
+      "id": "slow-gold",
+      "name": "慢转鎏金",
+      "values": { "colorB": "#ff9e42", "speed": 0.5, "borderWidth": 1.5 }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "original" }
+}

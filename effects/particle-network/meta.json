@@ -1,0 +1,72 @@
+{
+  "slug": "particle-network",
+  "name": "粒子星空连线",
+  "category": "canvas",
+  "tags": ["粒子", "星空", "连线"],
+  "summary": "漂浮的粒子在靠近时彼此连线，鼠标像引力源",
+  "params": [
+    { "key": "color", "label": "粒子颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    {
+      "key": "count",
+      "label": "粒子数量",
+      "type": "range",
+      "target": "config",
+      "min": 30,
+      "max": 150,
+      "step": 10,
+      "default": 80
+    },
+    {
+      "key": "linkDist",
+      "label": "连线距离",
+      "type": "range",
+      "target": "config",
+      "min": 60,
+      "max": 200,
+      "step": 10,
+      "default": 120,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "漂移速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.6,
+      "displayUnit": "×"
+    },
+    {
+      "key": "lineAlpha",
+      "label": "连线浓度",
+      "type": "range",
+      "target": "css",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.4
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "dense-cyan",
+      "name": "青色密网",
+      "values": { "color": "#00e5ff", "count": 140, "linkDist": 100, "lineAlpha": 0.55 }
+    },
+    {
+      "id": "sparse-slow",
+      "name": "疏星慢移",
+      "values": { "count": 40, "linkDist": 170, "speed": 0.3, "lineAlpha": 0.3, "color": "#c084fc" }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "reference",
+    "name": "particles.js 开创的经典粒子连线模式",
+    "url": "https://github.com/VincentGarreau/particles.js",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

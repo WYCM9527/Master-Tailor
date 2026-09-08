@@ -1,0 +1,42 @@
+{
+  "name": "master-tailor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "裁缝大师 Master-Tailor：面向中文 vibe coding 用户的前端效果图鉴，实时预览 + 可调参 + 可复制中文 prompt。",
+  "scripts": {
+    "dev": "vite",
+    "validate": "tsx scripts/validate.ts",
+    "prebuild": "pnpm validate",
+    "build": "tsc -b && vite build && tsx scripts/build-prompts.ts",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/noto-sans-sc": "^5.3.0",
+    "@types/node": "^26.5.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "lxgw-wenkai-screen-webfont": "^1.7.0",
+    "prettier": "^3.9.6",
+    "shiki": "^4.4.3",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.69.0",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
+  }
+}

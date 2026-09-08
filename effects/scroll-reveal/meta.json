@@ -1,0 +1,61 @@
+{
+  "slug": "scroll-reveal",
+  "name": "滚动进场",
+  "category": "loading",
+  "tags": ["滚动", "进场", "淡入"],
+  "summary": "内容滚到视野内时淡入上移进场，兄弟元素依次错开",
+  "params": [
+    {
+      "key": "distance",
+      "label": "上移距离",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 64,
+      "step": 4,
+      "default": 28,
+      "unit": "px"
+    },
+    {
+      "key": "duration",
+      "label": "进场时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.6,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "stagger",
+      "label": "错开延迟",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.02,
+      "default": 0.1,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "同组相邻元素依次延迟进场"
+    },
+    { "key": "accent", "label": "示例卡强调色", "type": "color", "target": "css", "default": "#f9cf00" },
+    {
+      "key": "once",
+      "label": "只进场一次",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "关闭后每次滚回来都会重新播放"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "bold", "name": "大开大合", "values": { "distance": 56, "duration": 0.9, "stagger": 0.16 } },
+    { "id": "replay", "name": "反复进场", "values": { "once": false, "duration": 0.45, "distance": 20 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

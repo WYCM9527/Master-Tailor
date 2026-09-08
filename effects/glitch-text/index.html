@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>故障风文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字主体颜色 */
+    --mt-colorA: #00e5ff;    /* 色差色 A（左偏移层） */
+    --mt-colorB: #ff2d78;    /* 色差色 B（右偏移层） */
+    --mt-intensity: 4px;     /* 错位幅度：色差与切片的最大位移 */
+    --mt-speed: 1;           /* 抖动频率倍率：1 为正常，越大越频繁 */
+    --mt-fontSize: 44px;     /* 字号 */
+    --mt-font: "JetBrains Mono", ui-monospace, monospace; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-glitch {
+    position: relative;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--mt-color);
+    white-space: nowrap;
+  }
+
+  /* 两个伪元素复制同样的文字（取自 data-text），分别向左右错位并切片 */
+  .mt-glitch::before,
+  .mt-glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+  .mt-glitch::before {
+    color: var(--mt-colorA);
+    transform: translateX(calc(var(--mt-intensity) * -1));
+    animation: mt-slice-a calc(2.4s / var(--mt-speed)) steps(1) infinite;
+    mix-blend-mode: screen;
+  }
+  .mt-glitch::after {
+    color: var(--mt-colorB);
+    transform: translateX(var(--mt-intensity));
+    animation: mt-slice-b calc(3.1s / var(--mt-speed)) steps(1) infinite;
+    mix-blend-mode: screen;
+  }
+
+  /* 主体偶尔整行抽搐一下 */
+  .mt-glitch {
+    animation: mt-jerk calc(4s / var(--mt-speed)) steps(1) infinite;
+  }
+
+  /* 用 clip-path 只露出随机高度的横条，steps(1) 让切换是「跳变」而非过渡 */
+  @keyframes mt-slice-a {
+    0%   { clip-path: inset(12% 0 61% 0); }
+    12%  { clip-path: inset(78% 0 4% 0); }
+    24%  { clip-path: inset(45% 0 38% 0); }
+    36%  { clip-path: inset(3% 0 88% 0); }
+    48%  { clip-path: inset(62% 0 22% 0); }
+    60%  { clip-path: inset(0 0 0 0); }
+    66%  { clip-path: inset(30% 0 55% 0); }
+    78%  { clip-path: inset(88% 0 2% 0); }
+    90%  { clip-path: inset(18% 0 70% 0); }
+    100% { clip-path: inset(12% 0 61% 0); }
+  }
+  @keyframes mt-slice-b {
+    0%   { clip-path: inset(66% 0 10% 0); }
+    14%  { clip-path: inset(8% 0 80% 0); }
+    28%  { clip-path: inset(50% 0 30% 0); }
+    42%  { clip-path: inset(0 0 0 0); }
+    50%  { clip-path: inset(72% 0 12% 0); }
+    64%  { clip-path: inset(25% 0 60% 0); }
+    76%  { clip-path: inset(90% 0 3% 0); }
+    88%  { clip-path: inset(40% 0 45% 0); }
+    100% { clip-path: inset(66% 0 10% 0); }
+  }
+  @keyframes mt-jerk {
+    0%, 92%, 100% { transform: translate(0, 0); }
+    94% { transform: translate(calc(var(--mt-intensity) * 0.6), calc(var(--mt-intensity) * -0.4)); }
+    96% { transform: translate(calc(var(--mt-intensity) * -0.5), calc(var(--mt-intensity) * 0.3)); }
+    98% { transform: translate(0, 0); }
+  }
+
+  /* 用户开启「减少动态效果」时：全部动画停止，只保留轻微的静态色差 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-glitch, .mt-glitch::before, .mt-glitch::after { animation: none; }
+    .mt-glitch::before { clip-path: inset(0 0 55% 0); }
+    .mt-glitch::after { clip-path: inset(55% 0 0 0); }
+  }
+</style>
+</head>
+<body>
+<div class="mt-glitch" id="mtText" data-text="SYSTEM ERROR">SYSTEM ERROR</div>
+<script>
+  const CONFIG = {
+    content: "SYSTEM ERROR", // 文字内容
+  };
+
+  const el = document.getElementById('mtText');
+  el.textContent = CONFIG.content;
+  el.setAttribute('data-text', CONFIG.content); // 伪元素的复制层从这里取文字
+  // 故障抖动是纯 CSS 动画：页面切到后台时浏览器会自动暂停渲染，无需额外处理
+</script>
+</body>
+</html>

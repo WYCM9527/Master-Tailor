@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>打字机文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;       /* 页面底色 */
+    --mt-color: #f2f3f8;    /* 文字颜色 */
+    --mt-accent: #f9cf00;   /* 光标颜色 */
+    --mt-fontSize: 40px;    /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-type {
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 600;
+    color: var(--mt-color);
+    letter-spacing: 0.02em;
+    min-height: 1.5em;
+  }
+
+  /* 光标：一根会呼吸的竖条 */
+  .mt-type .cursor {
+    display: inline-block;
+    width: 0.09em;
+    height: 1.1em;
+    margin-left: 0.08em;
+    background: var(--mt-accent);
+    vertical-align: -0.15em;
+    animation: mt-blink 1s steps(1) infinite;
+  }
+  @keyframes mt-blink {
+    50% { opacity: 0; }
+  }
+
+  /* 用户开启「减少动态效果」时：光标不闪（打字逻辑由 JS 同步降级为直接显示全文） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-type .cursor { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-type"><span id="mtText"></span><span class="cursor" aria-hidden="true"></span></div>
+<script>
+  const CONFIG = {
+    sentences: "我们不做设计｜我们只是代码的裁缝师", // 轮播文案：多句用「｜」分隔
+    speed: 8, // 打字速度：每秒打出的字数（删除速度是打字的 2 倍）
+  };
+
+  const textEl = document.getElementById('mtText');
+  const sentences = CONFIG.sentences.split('｜').map(s => s.trim()).filter(Boolean);
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (reduceMotion || sentences.length === 0) {
+    // 减少动态效果：不做打字动画，直接完整显示第一句
+    textEl.textContent = sentences[0] || '';
+  } else {
+    // 状态机：打字 → 停 1.6s → 删除 → 停 0.4s → 下一句
+    let sentenceIndex = 0;
+    let charCount = 0;
+    let deleting = false;
+    let waitUntil = 0;
+
+    function tick(now) {
+      if (document.hidden) { requestAnimationFrame(tick); return; } // 页面在后台时不推进
+      if (now >= waitUntil) {
+        const current = sentences[sentenceIndex];
+        if (!deleting) {
+          charCount++;
+          textEl.textContent = current.slice(0, charCount);
+          if (charCount >= current.length) { deleting = true; waitUntil = now + 1600; }
+          else waitUntil = now + 1000 / CONFIG.speed;
+        } else {
+          charCount--;
+          textEl.textContent = current.slice(0, charCount);
+          if (charCount <= 0) {
+            deleting = false;
+            sentenceIndex = (sentenceIndex + 1) % sentences.length;
+            waitUntil = now + 400;
+          } else waitUntil = now + 500 / CONFIG.speed;
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+{
+  "slug": "gradient-flow-text",
+  "name": "渐变流动文字",
+  "category": "text",
+  "tags": ["渐变", "流动", "标题"],
+  "summary": "三色渐变在文字内部缓缓流动，字面像有光泽在走",
+  "params": [
+    {
+      "key": "content",
+      "label": "文字内容",
+      "type": "text",
+      "target": "config",
+      "default": "裁缝大师 Master-Tailor",
+      "maxLength": 30
+    },
+    { "key": "colorA", "label": "渐变色 A", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "colorB", "label": "渐变色 B", "type": "color", "target": "css", "default": "#ff4d6d" },
+    { "key": "colorC", "label": "渐变色 C", "type": "color", "target": "css", "default": "#7c4dff" },
+    {
+      "key": "speed",
+      "label": "流动速度",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "unit": "",
+      "displayUnit": "×"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 24,
+      "max": 96,
+      "step": 4,
+      "default": 56,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "smiley-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "aurora",
+      "name": "极光冷调",
+      "values": { "colorA": "#00e5ff", "colorB": "#4ade80", "colorC": "#7c4dff", "speed": 0.6 }
+    },
+    {
+      "id": "sunset-serif",
+      "name": "落日楷体",
+      "values": { "colorA": "#ffd166", "colorB": "#ff9e42", "colorC": "#ff4d6d", "font": "lxgw-wenkai", "speed": 1.4 }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "original" }
+}

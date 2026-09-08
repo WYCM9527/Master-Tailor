@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渐变流动文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;       /* 页面底色 */
+    --mt-colorA: #f9cf00;   /* 渐变色 A */
+    --mt-colorB: #ff4d6d;   /* 渐变色 B */
+    --mt-colorC: #7c4dff;   /* 渐变色 C */
+    --mt-speed: 1;          /* 流动速度倍率：1 为正常，越大越快 */
+    --mt-fontSize: 56px;    /* 字号 */
+    --mt-font: "Smiley Sans Oblique", -apple-system, "PingFang SC", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-flow {
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-align: center;
+    padding: 0 24px;
+    /* 渐变画在文字上：背景拉宽到 300%，再让 background-position 来回移动 */
+    background: linear-gradient(
+      100deg,
+      var(--mt-colorA), var(--mt-colorB), var(--mt-colorC), var(--mt-colorA)
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: mt-flow calc(6s / var(--mt-speed)) linear infinite;
+  }
+
+  @keyframes mt-flow {
+    to { background-position: 300% 0; }
+  }
+
+  /* 用户开启「减少动态效果」时：渐变静止，保留彩色文字 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-flow { animation: none; }
+  }
+</style>
+</head>
+<body>
+<h1 class="mt-flow" id="mtText">裁缝大师 Master-Tailor</h1>
+<script>
+  const CONFIG = {
+    content: "裁缝大师 Master-Tailor", // 文字内容
+  };
+
+  document.getElementById('mtText').textContent = CONFIG.content;
+  // 渐变流动是纯 CSS 动画：页面切到后台时浏览器会自动暂停渲染，无需额外处理
+</script>
+</body>
+</html>

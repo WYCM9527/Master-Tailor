@@ -1,0 +1,55 @@
+{
+  "slug": "skeleton-shimmer",
+  "name": "骨架屏扫光",
+  "category": "loading",
+  "tags": ["loading", "骨架屏", "占位"],
+  "summary": "内容加载前的灰色骨架，一道高光周期性扫过",
+  "params": [
+    { "key": "base", "label": "骨架底色", "type": "color", "target": "css", "default": "#1c1e2c" },
+    { "key": "highlight", "label": "扫光颜色", "type": "color", "target": "css", "default": "#2e3147" },
+    {
+      "key": "speed",
+      "label": "扫光速度",
+      "type": "range",
+      "target": "css",
+      "min": 0.4,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "unit": "",
+      "displayUnit": "×"
+    },
+    {
+      "key": "rounded",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 16,
+      "step": 1,
+      "default": 8,
+      "unit": "px"
+    },
+    {
+      "key": "rows",
+      "label": "文本行数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "default": 3
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "light-host",
+      "name": "浅色页面版",
+      "values": { "base": "#e8e9f0", "highlight": "#f7f8fc", "rounded": 6 }
+    },
+    { "id": "slow-flat", "name": "慢速方正", "values": { "speed": 0.6, "rounded": 3, "rows": 4 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "original" }
+}

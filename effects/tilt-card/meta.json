@@ -1,0 +1,55 @@
+{
+  "slug": "tilt-card",
+  "name": "3D 倾斜卡片",
+  "category": "card",
+  "tags": ["3D", "鼠标跟随", "光泽"],
+  "summary": "卡片跟着鼠标立体倾斜，表面滑过一层高光",
+  "params": [
+    { "key": "photo", "label": "卡片图片", "type": "image", "target": "config", "default": "/samples/sample-1.svg" },
+    { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "极光计划", "maxLength": 16 },
+    {
+      "key": "maxTilt",
+      "label": "最大倾角",
+      "type": "range",
+      "target": "config",
+      "min": 5,
+      "max": 25,
+      "step": 1,
+      "default": 14,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    { "key": "glare", "label": "高光光泽", "type": "toggle", "target": "css", "default": true },
+    {
+      "key": "rounded",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 32,
+      "step": 2,
+      "default": 18,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "strong",
+      "name": "大幅倾斜",
+      "values": { "maxTilt": 22, "photo": "/samples/sample-3.svg", "title": "山脊之夜" }
+    },
+    {
+      "id": "calm",
+      "name": "轻微立体",
+      "values": { "maxTilt": 7, "glare": false, "photo": "/samples/sample-2.svg", "title": "海面日出" }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "常见 3D tilt 卡片交互（如 Aceternity UI）",
+    "url": "https://ui.aceternity.com",
+    "license": "未使用其代码"
+  }
+}

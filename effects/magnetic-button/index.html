@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>磁吸按钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;         /* 页面底色 */
+    --mt-color: #f9cf00;      /* 按钮底色 */
+    --mt-textColor: #191400;  /* 按钮文字颜色 */
+    --mt-rounded: 12px;       /* 按钮圆角 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-magnetic {
+    padding: 16px 36px;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--mt-textColor);
+    background: var(--mt-color);
+    border: none;
+    border-radius: var(--mt-rounded);
+    cursor: pointer;
+    /* 回弹用带过冲的贝塞尔曲线，松手时有「弹簧」感 */
+    transition: transform 0.45s cubic-bezier(0.22, 1.4, 0.36, 1);
+    will-change: transform;
+  }
+</style>
+</head>
+<body>
+<button class="mt-magnetic" id="mtBtn" type="button">开始使用</button>
+<script>
+  const CONFIG = {
+    label: "开始使用", // 按钮文字
+    strength: 0.35,    // 磁力强度：按钮位移占鼠标偏移的比例（0.1-0.6）
+    radius: 140,       // 感应半径：鼠标进入这个范围按钮才会被吸引（px）
+  };
+
+  const btn = document.getElementById('mtBtn');
+  btn.textContent = CONFIG.label;
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 磁吸核心：鼠标在感应半径内时，按钮朝鼠标方向平移「偏移量 × 强度」
+  function feed(x, y) {
+    if (reduceMotion) return; // 减少动态效果：不做磁吸位移
+    const rect = btn.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = x - cx;
+    const dy = y - cy;
+    const dist = Math.hypot(dx, dy);
+    if (dist < CONFIG.radius) {
+      btn.style.transform = 'translate(' + dx * CONFIG.strength + 'px, ' + dy * CONFIG.strength + 'px)';
+    } else {
+      btn.style.transform = '';
+    }
+  }
+
+  document.addEventListener('mousemove', (e) => feed(e.clientX, e.clientY));
+  document.addEventListener('mouseleave', () => { btn.style.transform = ''; });
+
+  /* @mt:thumb-start */
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    // 缩略图演示：一只「看不见的鼠标」在按钮附近画圈，展示磁吸手感；
+    // 父页面转发真实鼠标时优先跟随真实位置
+    let lastReal = 0;
+    window.__mtOnPointer = (x, y) => { lastReal = performance.now(); feed(x, y); };
+    (function autoDemo() {
+      if (document.hidden) { requestAnimationFrame(autoDemo); return; }
+      if (performance.now() - lastReal > 1200) {
+        const t = performance.now() / 1000;
+        const rect = btn.getBoundingClientRect();
+        feed(
+          rect.left + rect.width / 2 + Math.cos(t * 1.6) * CONFIG.radius * 0.8,
+          rect.top + rect.height / 2 + Math.sin(t * 2.3) * CONFIG.radius * 0.5
+        );
+      }
+      requestAnimationFrame(autoDemo);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

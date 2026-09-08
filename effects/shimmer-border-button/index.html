@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流光描边按钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-colorA: #f9cf00;    /* 流光色 A */
+    --mt-colorB: #7c4dff;    /* 流光色 B */
+    --mt-speed: 1;           /* 流转速度倍率：1 为正常，越大越快 */
+    --mt-borderWidth: 2px;   /* 描边粗细 */
+    --mt-rounded: 14px;      /* 按钮圆角 */
+  }
+
+  /* 注册自定义属性后，conic-gradient 的起始角才能被平滑动画 */
+  @property --mt-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-shimmer {
+    position: relative;
+    padding: 16px 40px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #f2f3f8;
+    background: #14151f;
+    border: none;
+    border-radius: var(--mt-rounded);
+    cursor: pointer;
+    isolation: isolate;
+  }
+  /* 描边层：比按钮大一圈的锥形渐变，中间被 ::after 的深色内层盖住，只露出边缘 */
+  .mt-shimmer::before {
+    content: '';
+    position: absolute;
+    inset: calc(var(--mt-borderWidth) * -1);
+    border-radius: calc(var(--mt-rounded) + var(--mt-borderWidth));
+    background: conic-gradient(
+      from var(--mt-angle),
+      transparent 0%,
+      var(--mt-colorA) 18%,
+      var(--mt-colorB) 34%,
+      transparent 52%
+    );
+    z-index: -2;
+    animation: mt-spin calc(3.2s / var(--mt-speed)) linear infinite;
+  }
+  /* 光晕：同一渐变模糊放大，按钮像在发光 */
+  .mt-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: calc(var(--mt-borderWidth) * -1);
+    border-radius: calc(var(--mt-rounded) + var(--mt-borderWidth));
+    background: conic-gradient(
+      from var(--mt-angle),
+      transparent 0%,
+      var(--mt-colorA) 18%,
+      var(--mt-colorB) 34%,
+      transparent 52%
+    );
+    z-index: -3;
+    filter: blur(14px);
+    opacity: 0.55;
+    animation: mt-spin calc(3.2s / var(--mt-speed)) linear infinite;
+  }
+  .mt-shimmer .inner {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--mt-rounded);
+    background: #14151f;
+    z-index: -1;
+  }
+
+  @keyframes mt-spin {
+    to { --mt-angle: 360deg; }
+  }
+
+  /* 用户开启「减少动态效果」时：光带停止流转，保留静态双色描边 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-shimmer::before, .mt-shimmer::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<button class="mt-shimmer" id="mtBtn" type="button"><span class="inner" aria-hidden="true"></span><span id="mtLabel">立即体验</span></button>
+<script>
+  const CONFIG = {
+    label: "立即体验", // 按钮文字
+  };
+
+  document.getElementById('mtLabel').textContent = CONFIG.label;
+  // 流光是纯 CSS 动画：页面切到后台时浏览器会自动暂停渲染，无需额外处理
+</script>
+</body>
+</html>

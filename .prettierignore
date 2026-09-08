@@ -1,0 +1,5 @@
+dist/
+node_modules/
+public/fonts/
+pnpm-lock.yaml
+effects/*/index.html

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>极光渐变流光</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;      /* 页面底色 */
+    --mt-colorA: #f9cf00;  /* 主色：第 1 个光斑 */
+    --mt-colorB: #7c4dff;  /* 辅色：第 2 个光斑 */
+    --mt-colorC: #00e5ff;  /* 点缀色：第 3 个及以后的光斑轮流取色 */
+    --mt-speed: 1;         /* 流动速度倍率：1 为正常，越大越快 */
+    --mt-blur: 90px;       /* 光斑柔和度：高斯模糊半径 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+
+  .mt-aurora {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .mt-aurora .blob {
+    position: absolute;
+    width: 58vmax;
+    height: 58vmax;
+    border-radius: 50%;
+    filter: blur(var(--mt-blur));
+    opacity: 0.55;
+    /* screen 混合让光斑交叠处透出「极光叠色」 */
+    mix-blend-mode: screen;
+    /* 时长 = 基准 26s ÷ 速度倍率；alternate 往返漂移，不会跳变 */
+    animation: mt-drift calc(26s / var(--mt-speed)) ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  @keyframes mt-drift {
+    0%   { transform: translate(-8%, -6%) scale(1) rotate(0deg); }
+    50%  { transform: translate(10%, 8%) scale(1.18) rotate(12deg); }
+    100% { transform: translate(-4%, 12%) scale(0.92) rotate(-10deg); }
+  }
+
+  /* 用户开启「减少动态效果」时：停止漂移，保留静态极光配色 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-aurora .blob { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-aurora" id="mtAurora" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    blobs: 3, // 光斑数量（2-6 个）
+  };
+
+  // 光斑颜色按 主色 → 辅色 → 点缀色 轮流取
+  const palette = ['var(--mt-colorA)', 'var(--mt-colorB)', 'var(--mt-colorC)'];
+  const container = document.getElementById('mtAurora');
+
+  for (let i = 0; i < CONFIG.blobs; i++) {
+    const blob = document.createElement('div');
+    blob.className = 'blob';
+    blob.style.background =
+      'radial-gradient(circle at 50% 50%, ' + palette[i % palette.length] + ', transparent 70%)';
+    // 位置与动画相位都错开，避免所有光斑同步摆动
+    blob.style.left = ((i * 37) % 70 - 12) + '%';
+    blob.style.top = ((i * 53) % 55 - 15) + '%';
+    blob.style.animationDelay = 'calc(' + (i * -7) + 's / var(--mt-speed))';
+    container.appendChild(blob);
+  }
+
+  // 页面切到后台时暂停动画，避免空耗性能
+  document.addEventListener('visibilitychange', () => {
+    const state = document.hidden ? 'paused' : 'running';
+    for (const blob of container.children) blob.style.animationPlayState = state;
+  });
+</script>
+</body>
+</html>

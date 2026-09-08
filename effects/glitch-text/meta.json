@@ -1,0 +1,119 @@
+{
+  "slug": "glitch-text",
+  "name": "故障风文字",
+  "category": "text",
+  "tags": [
+    "故障",
+    "赛博",
+    "抖动"
+  ],
+  "summary": "文字带 RGB 色差错位与横向切片抖动，赛博故障感",
+  "params": [
+    {
+      "key": "content",
+      "label": "文字内容",
+      "type": "text",
+      "target": "config",
+      "default": "SYSTEM ERROR",
+      "maxLength": 24
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "colorA",
+      "label": "色差色 A",
+      "type": "color",
+      "target": "css",
+      "default": "#00e5ff"
+    },
+    {
+      "key": "colorB",
+      "label": "色差色 B",
+      "type": "color",
+      "target": "css",
+      "default": "#ff2d78"
+    },
+    {
+      "key": "intensity",
+      "label": "错位幅度",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "default": 4,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "抖动频率",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "unit": "",
+      "displayUnit": "×"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 24,
+      "max": 96,
+      "step": 4,
+      "default": 44,
+      "unit": "px"
+    },
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "jetbrains-mono"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "cn-heavy",
+      "name": "中文重障",
+      "values": {
+        "content": "信号丢失",
+        "intensity": 7,
+        "speed": 1.6,
+        "font": "smiley-sans"
+      }
+    },
+    {
+      "id": "subtle",
+      "name": "轻微故障",
+      "values": {
+        "intensity": 2,
+        "speed": 0.6,
+        "colorA": "#4ade80",
+        "colorB": "#f9cf00"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "chokcoco / iCSS 中的经典 glitch 技法",
+    "url": "https://github.com/chokcoco/iCSS",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

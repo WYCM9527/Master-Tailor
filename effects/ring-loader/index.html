@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环形加载动画</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;     /* 页面底色 */
+    --mt-color: #f9cf00;  /* 主色 */
+    --mt-size: 56px;      /* 尺寸（直径） */
+    --mt-speed: 1;        /* 转速倍率：1 为正常，越大越快 */
+    --mt-track: 0.12;     /* 轨道可见度：背景圆环的透明度 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-loader { width: var(--mt-size); height: var(--mt-size); }
+
+  /* ---- 样式一：渐变环（锥形渐变 + 环形挖孔） ---- */
+  .mt-loader.ring {
+    border-radius: 50%;
+    background:
+      conic-gradient(from 0deg, transparent 8%, var(--mt-color)) border-box;
+    /* 中间挖孔成环：mask 减去内圆 */
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+    animation: mt-spin calc(1s / var(--mt-speed)) linear infinite;
+  }
+
+  /* ---- 样式二：点阵旋转（8 个点透明度轮转） ---- */
+  .mt-loader.dots { position: relative; animation: mt-spin calc(1.6s / var(--mt-speed)) steps(8) infinite; }
+  .mt-loader.dots i {
+    position: absolute;
+    left: calc(50% - var(--mt-size) / 16);
+    top: 0;
+    width: calc(var(--mt-size) / 8);
+    height: calc(var(--mt-size) / 8);
+    border-radius: 50%;
+    background: var(--mt-color);
+    transform-origin: calc(var(--mt-size) / 16) calc(var(--mt-size) / 2);
+  }
+
+  /* ---- 样式三：双弧追逐（两段圆弧一快一慢） ---- */
+  .mt-loader.dual { position: relative; }
+  .mt-loader.dual::before,
+  .mt-loader.dual::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, var(--mt-track));
+  }
+  .mt-loader.dual::before {
+    border-top-color: var(--mt-color);
+    animation: mt-spin calc(1s / var(--mt-speed)) cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+  }
+  .mt-loader.dual::after {
+    inset: 22%;
+    border-bottom-color: var(--mt-color);
+    animation: mt-spin-rev calc(1.4s / var(--mt-speed)) cubic-bezier(0.6, 0.2, 0.4, 0.8) infinite;
+  }
+
+  @keyframes mt-spin { to { transform: rotate(360deg); } }
+  @keyframes mt-spin-rev { to { transform: rotate(-360deg); } }
+
+  /* 用户开启「减少动态效果」时：停止旋转，改为柔和的呼吸提示（仍能传达「加载中」） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-loader, .mt-loader::before, .mt-loader::after {
+      animation: mt-pulse 2s ease-in-out infinite !important;
+    }
+    @keyframes mt-pulse {
+      50% { opacity: 0.45; }
+    }
+  }
+</style>
+</head>
+<body>
+<div class="mt-loader ring" id="mtLoader" role="status" aria-label="加载中"></div>
+<script>
+  const CONFIG = {
+    style: "ring", // 样式：ring 渐变环 / dots 点阵旋转 / dual 双弧追逐
+  };
+
+  const loader = document.getElementById('mtLoader');
+  loader.className = 'mt-loader ' + CONFIG.style;
+
+  // 点阵样式需要 8 个点子元素，其余样式纯 CSS
+  if (CONFIG.style === 'dots') {
+    for (let i = 0; i < 8; i++) {
+      const dot = document.createElement('i');
+      dot.style.transform = 'rotate(' + i * 45 + 'deg)';
+      dot.style.opacity = String(0.2 + (i / 8) * 0.8); // 尾巴渐隐
+      loader.appendChild(dot);
+    }
+  }
+  // 旋转是纯 CSS 动画：页面切到后台时浏览器会自动暂停渲染，无需额外处理
+</script>
+</body>
+</html>

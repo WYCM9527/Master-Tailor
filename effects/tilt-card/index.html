@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D 倾斜卡片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;     /* 页面底色 */
+    --mt-glare: 1;        /* 高光光泽：1 开启 / 0 关闭 */
+    --mt-rounded: 18px;   /* 卡片圆角 */
+    /* 鼠标在卡片内的相对位置（由 JS 实时更新，驱动高光） */
+    --mt-gx: 50%;
+    --mt-gy: 50%;
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    /* 透视放在父级，卡片的 rotateX/Y 才有纵深感 */
+    perspective: 900px;
+  }
+
+  .mt-tilt {
+    position: relative;
+    width: min(340px, 72vw);
+    aspect-ratio: 4 / 5;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    transform-style: preserve-3d;
+    /* 鼠标离开后回正的过渡；跟随时由 JS 直接改 transform */
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    will-change: transform;
+  }
+  .mt-tilt img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* 标题浮在卡片底部 */
+  .mt-tilt .title {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 40px 20px 16px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.65));
+  }
+  /* 高光层：跟随鼠标位置的一团柔光 */
+  .mt-tilt .glare {
+    position: absolute;
+    inset: 0;
+    opacity: var(--mt-glare);
+    background: radial-gradient(
+      circle at var(--mt-gx) var(--mt-gy),
+      rgba(255, 255, 255, 0.35),
+      transparent 55%
+    );
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  /* 用户开启「减少动态效果」时：卡片不倾斜（JS 同步跳过），此处兜底关掉回正过渡 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-tilt { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-tilt" id="mtCard">
+  <img id="mtPhoto" src="/samples/sample-1.svg" alt="卡片图片">
+  <div class="glare" aria-hidden="true"></div>
+  <div class="title" id="mtTitle">极光计划</div>
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-1.svg", // 卡片图片（替换为你自己的图片路径）
+    title: "极光计划",              // 卡片标题
+    maxTilt: 14,                    // 最大倾角：鼠标移到卡片边缘时的旋转角度（deg）
+  };
+
+  const card = document.getElementById('mtCard');
+  const root = document.documentElement;
+  document.getElementById('mtPhoto').src = CONFIG.photo;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 根据指针位置计算倾角：卡片中心为 0，边缘为 ±maxTilt
+  function feed(clientX, clientY) {
+    if (reduceMotion) return; // 减少动态效果：不倾斜
+    const rect = card.getBoundingClientRect();
+    const px = (clientX - rect.left) / rect.width;   // 0 ~ 1
+    const py = (clientY - rect.top) / rect.height;   // 0 ~ 1
+    const rx = (0.5 - py) * CONFIG.maxTilt * 2;      // 上下 → 绕 X 轴
+    const ry = (px - 0.5) * CONFIG.maxTilt * 2;      // 左右 → 绕 Y 轴
+    card.style.transform = 'rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+    root.style.setProperty('--mt-gx', (px * 100).toFixed(1) + '%');
+    root.style.setProperty('--mt-gy', (py * 100).toFixed(1) + '%');
+  }
+  function resetTilt() {
+    card.style.transform = '';
+    root.style.setProperty('--mt-gx', '50%');
+    root.style.setProperty('--mt-gy', '50%');
+  }
+
+  document.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    // 只有指针悬在卡片上才倾斜，离开就回正
+    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+      feed(e.clientX, e.clientY);
+    } else {
+      resetTilt();
+    }
+  });
+  document.addEventListener('mouseleave', resetTilt);
+
+  /* @mt:thumb-start */
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    // 缩略图演示：指针沿椭圆轨迹在卡片上绕圈，展示立体倾斜；真实鼠标进入时优先跟随
+    let lastReal = 0;
+    window.__mtOnPointer = (x, y) => { lastReal = performance.now(); feed(x, y); };
+    (function autoDemo() {
+      if (document.hidden) { requestAnimationFrame(autoDemo); return; }
+      if (performance.now() - lastReal > 1200) {
+        const t = performance.now() / 1000;
+        const rect = card.getBoundingClientRect();
+        feed(
+          rect.left + rect.width * (0.5 + Math.cos(t * 1.1) * 0.42),
+          rect.top + rect.height * (0.5 + Math.sin(t * 1.7) * 0.42)
+        );
+      }
+      requestAnimationFrame(autoDemo);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

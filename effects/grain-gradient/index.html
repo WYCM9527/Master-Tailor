@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>噪点胶片渐变</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;       /* 页面底色（渐变铺满时基本被盖住） */
+    --mt-colorA: #1b1035;   /* 渐变起始色 */
+    --mt-colorB: #0b3441;   /* 渐变结束色 */
+    --mt-angle: 135deg;     /* 渐变角度 */
+    --mt-grain: 0.12;       /* 噪点浓度（0 为无噪点） */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+
+  .mt-gradient {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(var(--mt-angle), var(--mt-colorA), var(--mt-colorB));
+  }
+  /* 「呼吸变化」开启时由 JS 加上 .breathe：色相极缓慢流转 */
+  .mt-gradient.breathe {
+    animation: mt-breathe 36s ease-in-out infinite alternate;
+  }
+  @keyframes mt-breathe {
+    to { filter: hue-rotate(40deg) saturate(1.15); }
+  }
+
+  .mt-grain {
+    position: fixed;
+    inset: 0;
+    opacity: var(--mt-grain);
+    /* 内联 SVG feTurbulence 生成胶片噪点，无任何外部请求 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: overlay;
+  }
+
+  /* 用户开启「减少动态效果」时：关闭呼吸动画，保留静态渐变与噪点 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-gradient.breathe { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-gradient" id="mtGradient" aria-hidden="true"></div>
+<div class="mt-grain" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    breathe: true, // 呼吸变化：开启后渐变色相极缓慢地流转
+  };
+
+  const gradient = document.getElementById('mtGradient');
+  if (CONFIG.breathe) gradient.classList.add('breathe');
+
+  // 页面切到后台时暂停呼吸动画，避免空耗性能
+  document.addEventListener('visibilitychange', () => {
+    gradient.style.animationPlayState = document.hidden ? 'paused' : 'running';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# 依赖与产物
+node_modules/
+dist/
+*.local
+*.tsbuildinfo
+
+# 编辑器与系统
+.DS_Store
+.idea/
+*.log
+
+# 测试
+coverage/

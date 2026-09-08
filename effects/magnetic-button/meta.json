@@ -1,0 +1,65 @@
+{
+  "slug": "magnetic-button",
+  "name": "磁吸按钮",
+  "category": "button",
+  "tags": ["鼠标跟随", "微交互"],
+  "summary": "鼠标靠近时按钮被轻轻吸过去，离开后弹回原位",
+  "params": [
+    { "key": "label", "label": "按钮文字", "type": "text", "target": "config", "default": "开始使用", "maxLength": 12 },
+    { "key": "color", "label": "按钮底色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "textColor", "label": "文字颜色", "type": "color", "target": "css", "default": "#191400" },
+    {
+      "key": "strength",
+      "label": "磁力强度",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.35,
+      "help": "按钮被吸走的幅度占鼠标偏移的比例"
+    },
+    {
+      "key": "radius",
+      "label": "感应半径",
+      "type": "range",
+      "target": "config",
+      "min": 60,
+      "max": 240,
+      "step": 10,
+      "default": 140,
+      "unit": "px"
+    },
+    {
+      "key": "rounded",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "strong-pill",
+      "name": "强磁胶囊",
+      "values": { "strength": 0.55, "radius": 200, "rounded": 32, "color": "#00e5ff", "textColor": "#00232a" }
+    },
+    {
+      "id": "subtle-dark",
+      "name": "低调深色",
+      "values": { "strength": 0.2, "color": "#26283a", "textColor": "#f2f3f8", "rounded": 8 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "常见磁吸按钮交互（如 hover.dev 等站点）",
+    "url": "https://www.hover.dev",
+    "license": "未使用其代码"
+  }
+}

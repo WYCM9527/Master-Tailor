@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>玻璃拟态卡片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;      /* 页面底色（背景图之外的区域） */
+    --mt-blur: 18px;       /* 磨砂强度：backdrop-filter 模糊半径 */
+    --mt-whiteness: 0.1;   /* 玻璃白度：卡片表面的白色叠加浓度 */
+    --mt-rounded: 22px;    /* 卡片圆角 */
+    --mt-float: 1;         /* 悬浮呼吸：1 开启 / 0 关闭 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  /* 背景图层：玻璃要有「背后的东西」才成立 */
+  .mt-photo {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .mt-glass {
+    position: relative;
+    width: min(340px, 74vw);
+    padding: 36px 32px;
+    border-radius: var(--mt-rounded);
+    /* 玻璃三要素：背景模糊、半透明白、细亮边 */
+    -webkit-backdrop-filter: blur(var(--mt-blur)) saturate(1.4);
+    backdrop-filter: blur(var(--mt-blur)) saturate(1.4);
+    background: rgba(255, 255, 255, var(--mt-whiteness));
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    color: #fff;
+    /* 悬浮呼吸：极缓慢的上下浮动；关闭时幅度乘 0 相当于静止 */
+    animation: mt-float 6s ease-in-out infinite alternate;
+  }
+  @keyframes mt-float {
+    from { transform: translateY(calc(6px * var(--mt-float))); }
+    to   { transform: translateY(calc(-6px * var(--mt-float))); }
+  }
+
+  .mt-glass h3 {
+    margin: 0 0 10px;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+  }
+  .mt-glass p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.82);
+  }
+  /* 顶部一道斜向反光，让「玻璃」更像玻璃 */
+  .mt-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(115deg, rgba(255, 255, 255, 0.22), transparent 42%);
+    pointer-events: none;
+  }
+
+  /* 用户开启「减少动态效果」时：停止悬浮呼吸 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-glass { animation: none; }
+  }
+</style>
+</head>
+<body>
+<img class="mt-photo" id="mtPhoto" src="/samples/sample-2.svg" alt="" aria-hidden="true">
+<div class="mt-glass">
+  <h3 id="mtTitle">Glass Card</h3>
+  <p>磨砂玻璃透出背后的色彩，模糊而不浑浊。换一张背景图，玻璃的气质也会跟着变。</p>
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-2.svg", // 背景图片（替换为你自己的图片路径）
+    title: "Glass Card",            // 卡片标题
+  };
+
+  document.getElementById('mtPhoto').src = CONFIG.photo;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  // 悬浮呼吸是纯 CSS 动画：页面切到后台时浏览器会自动暂停渲染，无需额外处理
+</script>
+</body>
+</html>

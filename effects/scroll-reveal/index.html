@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动进场</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;      /* 页面底色 */
+    --mt-distance: 28px;   /* 上移距离：进场前元素在原位下方多远 */
+    --mt-duration: 0.6s;   /* 进场时长 */
+    --mt-stagger: 0.1s;    /* 错开延迟：同组第 n 个元素多等 n×该值 */
+    --mt-accent: #f9cf00;  /* 示例卡强调色 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #f2f3f8;
+  }
+
+  /* 演示用滚动容器（真实使用时就是页面本身的滚动） */
+  .mt-scroll {
+    height: 100vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    padding: 0 clamp(16px, 6vw, 64px);
+  }
+
+  .mt-section { padding: 9vh 0; }
+  .mt-section .kicker {
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--mt-accent);
+    margin-bottom: 10px;
+  }
+  .mt-section h2 { margin: 0 0 18px; font-size: 30px; }
+  .mt-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .mt-cards .card {
+    padding: 20px 16px;
+    border-radius: 12px;
+    background: #16182490;
+    border: 1px solid #ffffff14;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #aab0c0;
+  }
+  .mt-cards .card b { color: #f2f3f8; display: block; margin-bottom: 6px; }
+  .filler { height: 36vh; display: grid; place-items: center; color: #6d7285; font-size: 13px; }
+
+  /* 进场机制：待进场元素先处于「下移 + 透明」状态，
+     进入视口后加上 .in，过渡回原位 */
+  .mt-reveal {
+    opacity: 0;
+    transform: translateY(var(--mt-distance));
+    transition:
+      opacity var(--mt-duration) ease-out,
+      transform var(--mt-duration) cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: calc(var(--mt-stagger) * var(--mt-i, 0));
+  }
+  .mt-reveal.in {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* 用户开启「减少动态效果」时：不做位移与渐显，内容直接可见 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="mt-scroll" id="mtScroll">
+  <div class="filler">↓ 往下滚动，内容会依次进场 ↓</div>
+
+  <section class="mt-section">
+    <div class="kicker mt-reveal">SECTION 01</div>
+    <h2 class="mt-reveal" style="--mt-i: 1">滚动到这里，标题先进场</h2>
+    <div class="mt-cards">
+      <div class="card mt-reveal" style="--mt-i: 2"><b>然后是卡片</b>同一组元素按错开延迟依次上浮</div>
+      <div class="card mt-reveal" style="--mt-i: 3"><b>一个接一个</b>节奏由「错开延迟」参数控制</div>
+      <div class="card mt-reveal" style="--mt-i: 4"><b>不喧宾夺主</b>进场完成后就安安静静待着</div>
+    </div>
+  </section>
+
+  <div class="filler">继续往下</div>
+
+  <section class="mt-section">
+    <div class="kicker mt-reveal">SECTION 02</div>
+    <h2 class="mt-reveal" style="--mt-i: 1">每一段都是同样的节奏</h2>
+    <div class="mt-cards">
+      <div class="card mt-reveal" style="--mt-i: 2"><b>淡入</b>透明度从 0 到 1</div>
+      <div class="card mt-reveal" style="--mt-i: 3"><b>上移</b>从下方指定距离回到原位</div>
+      <div class="card mt-reveal" style="--mt-i: 4"><b>缓动</b>先快后慢，落定干脆</div>
+    </div>
+  </section>
+
+  <div class="filler">— 底部 —</div>
+</div>
+<script>
+  const CONFIG = {
+    once: true, // 只进场一次：true 播过就保持；false 每次滚回视野都重新播放
+  };
+
+  const scroller = document.getElementById('mtScroll');
+  const targets = document.querySelectorAll('.mt-reveal');
+
+  // 元素进入视口 18% 时触发进场
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          if (CONFIG.once) observer.unobserve(entry.target);
+        } else if (!CONFIG.once) {
+          entry.target.classList.remove('in');
+        }
+      }
+    },
+    { root: scroller, threshold: 0.18 }
+  );
+  targets.forEach((el) => observer.observe(el));
+
+  /* @mt:thumb-start */
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // 缩略图演示：容器自动缓慢下滚再跳回顶部，循环展示进场
+    let dir = 1;
+    setInterval(() => {
+      if (document.hidden) return;
+      scroller.scrollTop += 2.2 * dir;
+      const max = scroller.scrollHeight - scroller.clientHeight;
+      if (scroller.scrollTop >= max - 2) dir = -1;
+      if (scroller.scrollTop <= 2) dir = 1;
+    }, 24);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

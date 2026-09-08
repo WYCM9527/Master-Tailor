@@ -1,0 +1,34 @@
+/* 裁缝大师 · 视觉 tokens：深色玻璃拟态 + 单一强调色 #F9CF00 */
+:root {
+  --bg-0: #08080c;
+  --bg-1: #0d0e15;
+  --bg-2: #14151f;
+
+  /* 玻璃只用于站点 chrome（顶栏 / 面板 / 卡片外框 / 弹层），预览区不叠玻璃 */
+  --glass-bg: rgba(255, 255, 255, 0.045);
+  --glass-bg-strong: rgba(16, 17, 26, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-border-hover: rgba(255, 255, 255, 0.18);
+  --glass-blur: 18px;
+
+  --text-0: #f2f3f8;
+  --text-1: #aab0c0;
+  --text-2: #6d7285;
+
+  --accent: #f9cf00;
+  --accent-soft: rgba(249, 207, 0, 0.13);
+  --accent-border: rgba(249, 207, 0, 0.38);
+  --accent-ink: #191400;
+
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+
+  --font-sans: 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  --shadow-1: 0 10px 36px rgba(0, 0, 0, 0.38);
+  --shadow-2: 0 2px 10px rgba(0, 0, 0, 0.3);
+
+  --maxw: 1400px;
+}

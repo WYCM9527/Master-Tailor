@@ -1,0 +1,64 @@
+{
+  "slug": "dot-grid-spotlight",
+  "name": "点阵网格聚光",
+  "category": "background",
+  "tags": ["网格", "鼠标跟随", "科技感"],
+  "summary": "均匀点阵背景，鼠标移到哪里哪里亮起一圈聚光",
+  "params": [
+    { "key": "dotColor", "label": "点的颜色", "type": "color", "target": "css", "default": "#3a3d52" },
+    { "key": "spotColor", "label": "聚光颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    {
+      "key": "gap",
+      "label": "点间距",
+      "type": "range",
+      "target": "css",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "default": 26,
+      "unit": "px"
+    },
+    {
+      "key": "dotSize",
+      "label": "点大小",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 4,
+      "step": 0.5,
+      "default": 1.5,
+      "unit": "px"
+    },
+    {
+      "key": "spotRadius",
+      "label": "聚光半径",
+      "type": "range",
+      "target": "css",
+      "min": 80,
+      "max": 360,
+      "step": 10,
+      "default": 200,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "cyan-dense",
+      "name": "青光密网",
+      "values": { "spotColor": "#00e5ff", "gap": 18, "spotRadius": 260 }
+    },
+    {
+      "id": "sparse-soft",
+      "name": "疏朗柔光",
+      "values": { "gap": 40, "dotSize": 2, "spotColor": "#c084fc", "spotRadius": 320 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Ibelick Background Snippets",
+    "url": "https://bg.ibelick.com",
+    "license": "未使用其代码"
+  }
+}
