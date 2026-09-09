@@ -35,7 +35,7 @@ export function Home() {
           <span className="mono">Master-Tailor — 前端效果图鉴 · 复制 prompt 粘给你的 AI</span>
           <h1>裁缝大师</h1>
           <p className="hero-slogan">
-            我们不做设计，我们只是<em>代码的裁缝师</em>。
+            我们不做设计，我们只是<em>界面的裁缝师</em>。
           </p>
         </div>
         <div className="span-4 sub hero-meta">
