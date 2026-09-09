@@ -13,13 +13,11 @@ describe('urlState', () => {
     state.values.color = '#112233';
     state.values.photo = 'blob:local-only';
     state.bg = { mode: 'light' };
-    state.placement = '首页顶部';
     state.includeCode = false;
     const sp = encodeState(fixtureMeta, state);
     expect(sp.get('color')).toBe('#112233');
     expect(sp.get('photo')).toBeNull();
     expect(sp.get('bg')).toBe('light');
-    expect(sp.get('pl')).toBe('首页顶部');
     expect(sp.get('nc')).toBe('1');
   });
 

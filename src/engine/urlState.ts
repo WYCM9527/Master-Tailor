@@ -14,7 +14,6 @@ import { sampleByIndex, sampleIndex } from '../contract/samples';
  */
 
 const BG_KEY = 'bg';
-const PLACEMENT_KEY = 'pl';
 const NO_CODE_KEY = 'nc';
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
@@ -28,7 +27,7 @@ export function defaultValues(meta: EffectMeta): Values {
 }
 
 export function defaultState(meta: EffectMeta): EffectState {
-  return { values: defaultValues(meta), bg: { mode: 'dark' }, placement: '', includeCode: true };
+  return { values: defaultValues(meta), bg: { mode: 'dark' }, includeCode: true };
 }
 
 /** 应用预设：默认值 + 预设覆盖 */
@@ -100,7 +99,6 @@ export function encodeState(meta: EffectMeta, state: EffectState): URLSearchPara
   }
   if (state.bg.mode === 'light') sp.set(BG_KEY, 'light');
   if (state.bg.mode === 'custom') sp.set(BG_KEY, state.bg.color);
-  if (state.placement.trim()) sp.set(PLACEMENT_KEY, state.placement.trim());
   if (!state.includeCode) sp.set(NO_CODE_KEY, '1');
   return sp;
 }
@@ -137,10 +135,6 @@ export function decodeState(meta: EffectMeta, sp: URLSearchParams): EffectState 
     if (key === BG_KEY) {
       if (raw === 'light') state.bg = { mode: 'light' };
       else if (HEX_RE.test(raw)) state.bg = { mode: 'custom', color: raw };
-      continue;
-    }
-    if (key === PLACEMENT_KEY) {
-      state.placement = raw.slice(0, 200);
       continue;
     }
     if (key === NO_CODE_KEY) {

@@ -4,7 +4,15 @@
  * 产物已提交进仓库，日常开发无需重跑；升级字体版本时执行：pnpm tsx scripts/prepare-fonts.ts
  * 得意黑（smiley-sans）不在 npm 上，由本脚本从 GitHub release 下载 zip 解压（需要网络）。
  */
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,7 +53,11 @@ mkdirSync(fontsDir, { recursive: true });
   mkdirSync(dest, { recursive: true });
   for (const weight of ['400', '700']) {
     copyCssWoff2Only(path.join(pkg, `${weight}.css`), path.join(dest, `${weight}.css`));
-    const n = copyReferencedWoff2(path.join(dest, `${weight}.css`), path.join(pkg, 'files'), path.join(dest, 'files'));
+    const n = copyReferencedWoff2(
+      path.join(dest, `${weight}.css`),
+      path.join(pkg, 'files'),
+      path.join(dest, 'files'),
+    );
     console.log(`noto-sans-sc ${weight}: ${n} 个 woff2`);
   }
   cpSync(path.join(pkg, 'LICENSE'), path.join(dest, 'LICENSE'));

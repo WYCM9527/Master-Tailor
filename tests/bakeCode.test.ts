@@ -6,7 +6,13 @@ import { fixtureHtml, fixtureMeta } from './fixtures';
 describe('bakeCode', () => {
   it('把 css 参数值写入 --mt-* 声明并保留注释', () => {
     const values = { ...defaultValues(fixtureMeta), color: '#112233', size: 72 };
-    const out = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#ffffff', mode: 'export' });
+    const out = bakeCode({
+      meta: fixtureMeta,
+      html: fixtureHtml,
+      values,
+      bg: '#ffffff',
+      mode: 'export',
+    });
     expect(out).toContain('--mt-color: #112233;   /* 主色 */');
     expect(out).toContain('--mt-size: 72px;');
     expect(out).toContain('--mt-bg: #ffffff;');
@@ -14,7 +20,13 @@ describe('bakeCode', () => {
 
   it('替换 CONFIG 值时不破坏含逗号的中文字符串与行内注释', () => {
     const values = { ...defaultValues(fixtureMeta), text: '你好，裁缝，大师', count: 7 };
-    const out = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#000000', mode: 'export' });
+    const out = bakeCode({
+      meta: fixtureMeta,
+      html: fixtureHtml,
+      values,
+      bg: '#000000',
+      mode: 'export',
+    });
     expect(out).toContain('text: "你好，裁缝，大师", // 文字内容');
     expect(out).toContain('count: 7, // 数量');
   });
@@ -27,11 +39,23 @@ describe('bakeCode', () => {
         { src: '/samples/sample-5.webp', caption: '' },
       ],
     };
-    const preview = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#000000', mode: 'preview' });
+    const preview = bakeCode({
+      meta: fixtureMeta,
+      html: fixtureHtml,
+      values,
+      bg: '#000000',
+      mode: 'preview',
+    });
     expect(preview).toContain('"src":"blob:local-upload"');
     expect(preview).toContain('/samples/sample-5.webp');
 
-    const out = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#000000', mode: 'export' });
+    const out = bakeCode({
+      meta: fixtureMeta,
+      html: fixtureHtml,
+      values,
+      bg: '#000000',
+      mode: 'export',
+    });
     expect(out).toContain('"src":"./slide-1.jpg","caption":"上传图，含逗号"');
     expect(out).toContain('"src":"./slide-2.jpg"');
     expect(out).not.toContain('blob:local-upload');
@@ -43,7 +67,13 @@ describe('bakeCode', () => {
 
   it('导出模式：剥离 thumb 块、图片写占位路径、附文件头注释', () => {
     const values = { ...defaultValues(fixtureMeta), photo: 'blob:http-local-preview' };
-    const out = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#0a0a0f', mode: 'export' });
+    const out = bakeCode({
+      meta: fixtureMeta,
+      html: fixtureHtml,
+      values,
+      bg: '#0a0a0f',
+      mode: 'export',
+    });
     expect(out).not.toContain('@mt:thumb-start');
     expect(out).not.toContain('缩略图演示');
     expect(out).toContain('photo: "./your-image.jpg"');
@@ -70,7 +100,13 @@ describe('bakeCode', () => {
 
   it('font 参数注入 font-family 栈；toggle 注入 1/0', () => {
     const values = { ...defaultValues(fixtureMeta), font: 'jetbrains-mono', glow: false };
-    const out = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#0a0a0f', mode: 'export' });
+    const out = bakeCode({
+      meta: fixtureMeta,
+      html: fixtureHtml,
+      values,
+      bg: '#0a0a0f',
+      mode: 'export',
+    });
     expect(out).toContain('--mt-font: "JetBrains Mono"');
     expect(out).toContain('--mt-glow: 0;');
   });

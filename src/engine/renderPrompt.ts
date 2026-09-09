@@ -11,7 +11,7 @@ import { fontById } from '../contract/fonts';
 
 /**
  * 渲染 8 段式中文 prompt：
- * 任务 → 效果描述 → 参数 → 技术要求 → 放在哪 → 完成后请检查 → 如果遇到问题 → 参考实现（可选）
+ * 任务 → 效果描述 → 参数 → 技术要求 → 放在哪（固定引导 + 效果建议）→ 完成后请检查 → 如果遇到问题 → 参考实现（可选）
  */
 
 export interface PromptOptions {
@@ -20,8 +20,6 @@ export interface PromptOptions {
   promptMd: string;
   values: Values;
   bg: BgSetting;
-  /** 用户填写的「放在哪」，为空时使用占位句 */
-  placement: string;
   includeCode: boolean;
   /** includeCode 时附带的导出版代码（bakeCode export 模式产物） */
   exportedCode?: string;
@@ -141,16 +139,11 @@ export function renderPrompt(o: PromptOptions): string {
   if (sections.techExtra) techLines.push(sections.techExtra);
   parts.push(`【技术要求】\n${techLines.join('\n')}`);
 
-  // 5.【放在哪】
-  const placement = o.placement.trim();
-  if (placement) {
-    parts.push(`【放在哪】\n${placement}`);
-  } else {
-    const hint = sections.placementHint ? `\n（建议：${sections.placementHint}）` : '';
-    parts.push(
-      `【放在哪】\n请把效果加到：＿＿＿（我还没想好具体位置，请先根据我的页面结构推荐 1-2 个合适的位置并问我确认，不要自行大改页面）${hint}`,
-    );
-  }
+  // 5.【放在哪】：不再由用户填写，固定让 AI 先推荐位置再确认；prompt.md 的「## 放在哪」作为建议附上
+  const hint = sections.placementHint ? `\n（建议：${sections.placementHint}）` : '';
+  parts.push(
+    `【放在哪】\n请先根据我的页面结构推荐 1-2 个合适的位置并问我确认，不要自行大改页面${hint}`,
+  );
 
   // 6.【完成后请检查】
   const checks = sections.checks ? sections.checks : DEFAULT_CHECKS.map((c) => `- ${c}`).join('\n');

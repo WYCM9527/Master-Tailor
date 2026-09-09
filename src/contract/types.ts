@@ -172,12 +172,10 @@ export interface Effect {
 /** 预览底色设置 */
 export type BgSetting = { mode: 'dark' } | { mode: 'light' } | { mode: 'custom'; color: string };
 
-/** 详情页完整可分享状态 */
+/** 详情页完整状态（同步进 URL query） */
 export interface EffectState {
   values: Values;
   bg: BgSetting;
-  /** 「放在哪」输入框内容 */
-  placement: string;
   /** prompt 是否附带参考代码 */
   includeCode: boolean;
 }

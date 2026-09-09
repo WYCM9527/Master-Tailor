@@ -740,20 +740,6 @@
 .d-prompt {
   padding: 0;
 }
-.placement {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px var(--pad-s);
-  border-bottom: 1px solid var(--line);
-}
-.placement label {
-  font-size: var(--fs-small);
-  white-space: nowrap;
-}
-.placement input {
-  flex: 1;
-}
 .prompt-text {
   margin: 0;
   padding: var(--pad);

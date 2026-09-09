@@ -80,7 +80,7 @@ if (window.__MT_ENV && window.__MT_ENV.thumb) {
 
 validate 会检查 index.html 含四个基线能力关键字：`aria-roledescription`（轮播语义）、`keydown`（键盘切换）、`prefers-reduced-motion`（不自动播放降级）、`pointerdown`（拖拽/触摸）。纯 CSS 实现（如 scroll-snap 版）可在注释中如实说明原生能力。除此之外的约定基线：无缝循环、悬停/聚焦暂停自动播放、页面切后台暂停。新写轮播请从 `scripts/templates/carousel-core.html` 起步——它带完整的三态类切换骨架（无缝循环）、自动播放、Pointer Events 拖拽、三种分页器与 aria 结构，多数形态只需改「过渡层」CSS。
 
-最终 prompt 由引擎拼装为 8 段：任务 → 效果描述 → 参数 → 技术要求 → 放在哪 → 完成后请检查 → 如果遇到问题 → 参考实现（可开关）。
+最终 prompt 由引擎拼装为 8 段：任务 → 效果描述 → 参数 → 技术要求 → 放在哪（固定引导 AI 先推荐位置再确认，附 `## 放在哪` 的建议）→ 完成后请检查 → 如果遇到问题 → 参考实现（可开关）。
 
 ## 站点视觉：Monochrome Full-Bleed Swiss Grid
 

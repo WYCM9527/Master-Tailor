@@ -2,20 +2,12 @@ import { CopyButton } from './CopyButton';
 
 interface PromptProps {
   promptText: string;
-  placement: string;
-  onPlacementChange: (v: string) => void;
   includeCode: boolean;
   onIncludeCodeChange: (v: boolean) => void;
 }
 
-/** 左列的 Prompt Cell：头部（标题 + 仅描述开关 + 复制按钮）→ 放在哪 → 全文 */
-export function PromptCell({
-  promptText,
-  placement,
-  onPlacementChange,
-  includeCode,
-  onIncludeCodeChange,
-}: PromptProps) {
+/** 左列的 Prompt Cell：头部（标题 + 仅描述开关 + 复制按钮）→ 全文 */
+export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: PromptProps) {
   return (
     <section className="cell span-8 d-prompt" aria-label="Prompt">
       <div className="blk-head">
@@ -42,17 +34,6 @@ export function PromptCell({
             primary
           />
         </div>
-      </div>
-      <div className="placement">
-        <label htmlFor="placement-input">放在哪</label>
-        <input
-          id="placement-input"
-          type="text"
-          value={placement}
-          maxLength={200}
-          placeholder="例如：首页最顶部的横幅区域（不填时 AI 会先问你）"
-          onChange={(e) => onPlacementChange(e.target.value)}
-        />
       </div>
       <pre className="prompt-text">{promptText}</pre>
     </section>

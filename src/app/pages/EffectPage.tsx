@@ -89,7 +89,6 @@ function EffectPage({ effect }: { effect: Effect }) {
         promptMd: effect.promptMd,
         values: state.values,
         bg: state.bg,
-        placement: state.placement,
         includeCode: state.includeCode,
         exportedCode: state.includeCode ? exportCode : undefined,
       }),
@@ -184,8 +183,6 @@ function EffectPage({ effect }: { effect: Effect }) {
           </div>
           <PromptCell
             promptText={promptText}
-            placement={state.placement}
-            onPlacementChange={(v) => setState((s) => ({ ...s, placement: v }))}
             includeCode={state.includeCode}
             onIncludeCodeChange={(v) => setState((s) => ({ ...s, includeCode: v }))}
           />

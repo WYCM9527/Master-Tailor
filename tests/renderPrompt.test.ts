@@ -21,7 +21,6 @@ describe('renderPrompt', () => {
       promptMd: fixturePromptMd,
       values: defaultValues(fixtureMeta),
       bg: { mode: 'dark' },
-      placement: '',
       includeCode: true,
       exportedCode: '<!doctype html><html></html>',
     });
@@ -39,7 +38,6 @@ describe('renderPrompt', () => {
       promptMd: fixturePromptMd,
       values: { ...defaultValues(fixtureMeta), color: '#abcdef', speed: 2.5 },
       bg: { mode: 'light' },
-      placement: '',
       includeCode: false,
     });
     expect(text).toContain('主色是 #abcdef');
@@ -48,18 +46,16 @@ describe('renderPrompt', () => {
     expect(text).toContain('浅色（#f5f6fa）');
   });
 
-  it('仅描述模式不含【参考实现】；自定义检查与放在哪生效', () => {
+  it('仅描述模式不含【参考实现】；自定义检查生效', () => {
     const text = renderPrompt({
       meta: fixtureMeta,
       promptMd: fixturePromptMd,
       values: defaultValues(fixtureMeta),
       bg: { mode: 'custom', color: '#334455' },
-      placement: '导航栏下方',
       includeCode: false,
     });
     expect(text).not.toContain('【参考实现】');
     expect(text).toContain('自定义检查一');
-    expect(text).toContain('【放在哪】\n导航栏下方');
     expect(text).toContain('自定义颜色 #334455');
   });
 
@@ -69,7 +65,6 @@ describe('renderPrompt', () => {
       promptMd: fixturePromptMd,
       values: defaultValues(fixtureMeta),
       bg: { mode: 'dark' },
-      placement: '',
       includeCode: false,
     });
     expect(text).toContain('共 3 张');
@@ -80,16 +75,15 @@ describe('renderPrompt', () => {
     expect(tech).toContain('aria-roledescription="carousel"');
   });
 
-  it('placement 为空时输出引导占位句并附建议', () => {
+  it('【放在哪】为固定引导句并附 prompt.md 的位置建议', () => {
     const text = renderPrompt({
       meta: fixtureMeta,
       promptMd: fixturePromptMd,
       values: defaultValues(fixtureMeta),
       bg: { mode: 'dark' },
-      placement: '',
       includeCode: false,
     });
-    expect(text).toContain('请把效果加到：＿＿＿');
+    expect(text).toContain('【放在哪】\n请先根据我的页面结构推荐 1-2 个合适的位置并问我确认');
     expect(text).toContain('建议：放在页面顶部');
   });
 });

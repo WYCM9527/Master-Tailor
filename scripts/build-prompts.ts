@@ -41,7 +41,6 @@ for (const slug of dirs) {
     promptMd,
     values,
     bg: { mode: 'dark' },
-    placement: '',
     includeCode: true,
     exportedCode,
   });

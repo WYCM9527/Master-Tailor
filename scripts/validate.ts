@@ -119,7 +119,12 @@ for (const slug of dirs) {
   // ---- 轮播基线（sub 为 carousel 的效果强制）----
   // 纯 CSS 实现（如 scroll-snap 版）可在注释中说明原生能力以满足关键字检查
   if (meta.sub === 'carousel') {
-    for (const keyword of ['aria-roledescription', 'keydown', 'prefers-reduced-motion', 'pointerdown']) {
+    for (const keyword of [
+      'aria-roledescription',
+      'keydown',
+      'prefers-reduced-motion',
+      'pointerdown',
+    ]) {
       if (!html.includes(keyword)) {
         fail(slug, `轮播效果缺少基线能力关键字「${keyword}」（无障碍 / 键盘 / 降级 / 拖拽）`);
       }
@@ -152,7 +157,9 @@ for (const slug of dirs) {
         (p.type === 'range' && typeof value === 'number' && value >= p.min && value <= p.max) ||
         (p.type === 'toggle' && typeof value === 'boolean') ||
         (p.type === 'color' && typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)) ||
-        (p.type === 'select' && typeof value === 'string' && p.options.some((o) => o.value === value)) ||
+        (p.type === 'select' &&
+          typeof value === 'string' &&
+          p.options.some((o) => o.value === value)) ||
         (p.type === 'text' && typeof value === 'string') ||
         (p.type === 'font' && typeof value === 'string' && fontIds.has(value)) ||
         (p.type === 'image' && typeof value === 'string' && value.startsWith('/samples/'));
