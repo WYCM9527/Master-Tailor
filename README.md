@@ -6,7 +6,7 @@
 
 ## 使用方式（给访客）
 
-1. **挑一个效果**：左侧两级侧边栏按「分类 → 触发方式（默认效果 / 鼠标悬浮 / 点击效果 / 滚动触发）」浏览，卡片全部是实时渲染的迷你预览
+1. **挑一个效果**：左侧两级侧边栏浏览——原有分类按触发方式细分，「多卡/图展示」按形态细分（轮播图 / 图片对比 / 滚动堆叠）；卡片全部是实时渲染的迷你预览
 2. **调成你要的样子**：右侧面板改颜色、拖滑块，预览 / prompt / 代码三者实时同步
 3. **复制 prompt 粘给你的 AI**：Trae、Qoder、Cursor、Claude Code、扣子编程、CodeBuddy、豆包网页版……任何能写代码的 AI 都可以
 
@@ -43,12 +43,13 @@ effects/<slug>/
 
 ### meta.json
 
-- `category`：`background | button | text | card | loading | canvas`（侧边栏一级）
-- `trigger`：`idle | hover | click | scroll`（侧边栏二级：默认效果 / 鼠标悬浮 / 点击效果 / 滚动触发）
-- `params[]`：7 种控件类型 `color | range | toggle | select | text | font | image`
+- `category`：`background | button | text | card | showcase | loading | canvas`（侧边栏一级）
+- `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表——原有 6 类的子类是触发方式（`idle | hover | click | scroll`），「多卡/图展示」的子类是 `carousel | compare | stack-scroll`
+- `params[]`：8 种控件类型 `color | range | toggle | select | text | font | image | images`
   - `target: "css"` → 值注入 `:root` 的 `--mt-<key>`，调参时**热更新**（动画不重置）
   - `target: "config"` → 值注入 JS 顶部 `const CONFIG` 块，调参时**防抖重建**预览
   - `text` 只允许 config；`font` 只允许 css（值为字体表 id）；`image` 默认值必须是 `/samples/…`
+  - `images`（图片列表，轮播用）：只允许 config，列表项为 `{src, caption}`，声明 `min / max / captions`；面板中每槽位可换示例图 / 上传 / 填标题并可增减张数；CONFIG 中必须写成**单行数组** `slides: [ ... ], // 注释`；导出代码与 prompt 一律写 `./slide-1.jpg …` 占位；分享链接编码为「示例图索引:标题」列表（上传的图回退示例图）
 - `presets[]`：2–4 套，必须含 `id: "default"`（values 可为空对象），values 只写与默认不同的键
 - `thumb.mode`：`live`（效果自身一直在动）或 `autoplay`（依赖鼠标/点击/滚动，需要演示块）
 - `source.kind`：`original`（原创）/ `reference`（参考 MIT/BSD/CC0 实现后自写）/ `visual-inspiration`（仅视觉灵感，未读其源码）
@@ -74,21 +75,25 @@ if (window.__MT_ENV && window.__MT_ENV.thumb) {
 ### prompt.md
 
 - 必须有 `## 效果描述`（人话讲清楚长什么样、怎么动、什么时候触发；`{{key}}` 会被替换为当前参数的人话表述，`{{bg}}` 为底色描述）
-- 可选 `## 完成后请检查`（验收清单，缺省用全局默认三条）与 `## 放在哪`（位置建议）
+- 可选 `## 技术要求补充`（追加在全局【技术要求】之后的效果专属要求，如轮播的无障碍 / 键盘 / 暂停约定）、`## 完成后请检查`（验收清单，缺省用全局默认三条）与 `## 放在哪`（位置建议）
+
+### 轮播基线（`sub: "carousel"` 的效果强制）
+
+validate 会检查 index.html 含四个基线能力关键字：`aria-roledescription`（轮播语义）、`keydown`（键盘切换）、`prefers-reduced-motion`（不自动播放降级）、`pointerdown`（拖拽/触摸）。纯 CSS 实现（如 scroll-snap 版）可在注释中如实说明原生能力。除此之外的约定基线：无缝循环、悬停/聚焦暂停自动播放、页面切后台暂停。新写轮播请从 `scripts/templates/carousel-core.html` 起步——它带完整的三态类切换骨架（无缝循环）、自动播放、Pointer Events 拖拽、三种分页器与 aria 结构，多数形态只需改「过渡层」CSS。
 
 最终 prompt 由引擎拼装为 8 段：任务 → 效果描述 → 参数 → 技术要求 → 放在哪 → 完成后请检查 → 如果遇到问题 → 参考实现（可开关）。
 
 ## 目录结构
 
 ```text
-effects/           # 18 个效果（内容层，唯一需要日常维护的目录）
-src/contract/      # 类型、zod schema、字体表、分类、registry（import.meta.glob 收集）
+effects/           # 52 个效果（内容层，唯一需要日常维护的目录）
+src/contract/      # 类型、zod schema、字体表、分类与子类、示例图表、registry（import.meta.glob 收集）
 src/engine/        # bakeCode（参数烘焙）、renderPrompt（8 段）、urlState（分享链接）、previewRuntime
 src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 卡片……
 src/app/           # HashRouter 页面：Home / EffectPage / NotFound
-scripts/           # validate（契约校验）、build-prompts（静态 md 端点）、prepare-fonts
+scripts/           # validate（契约校验）、build-prompts（静态 md 端点）、prepare-fonts、templates/（轮播核心模板）
 public/fonts/      # 自托管 OFL 字体（思源黑体 / 霞鹜文楷 / 得意黑 / JetBrains Mono）+ 许可文件
-public/samples/    # 3 张自制抽象 SVG 示例图（图片参数默认值）
+public/samples/    # 8 张自制抽象 SVG 示例图（图片 / 图片列表参数默认值）
 tests/             # 引擎单测
 ```
 
