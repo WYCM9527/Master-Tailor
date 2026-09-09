@@ -76,11 +76,8 @@ export function Gallery() {
     [inSelection, tag],
   );
 
-  const heading = !cat
-    ? '全部效果'
-    : sub
-      ? `${categoryName(cat)} · ${subDef(cat, sub).name}`
-      : categoryName(cat);
+  // 左上角只放当前层级的名字：选了二级就只显示二级
+  const heading = !cat ? '全部效果' : sub ? subDef(cat, sub).name : categoryName(cat);
   const subheading =
     cat && sub
       ? subDef(cat, sub).desc
