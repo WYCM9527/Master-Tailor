@@ -11,7 +11,7 @@
       "label": "轮播文案",
       "type": "text",
       "target": "config",
-      "default": "我们不做设计｜我们只是代码的裁缝师",
+      "default": "我们不做设计｜我们只是界面的裁缝师",
       "maxLength": 80,
       "help": "多句用「｜」分隔，会依次打出"
     },
