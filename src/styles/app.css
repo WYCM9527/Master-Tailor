@@ -639,15 +639,19 @@
   min-height: 56px;
   padding: 10px var(--pad);
 }
-.d-toolbar-group {
+/* 参数面板里的预览底色：三个方色块 */
+.bg-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+.bg-names {
+  margin-left: 4px;
+}
 .swatch {
   position: relative;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   border: 1px solid var(--line);
   overflow: hidden;
   cursor: pointer;

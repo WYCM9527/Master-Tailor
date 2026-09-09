@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import type {
+  BgSetting,
   ColorParam,
   EffectMeta,
   ImageParam,
@@ -12,6 +13,7 @@ import type {
   TextParam,
   Values,
 } from '../contract/types';
+import { BG_DARK, BG_LIGHT, bgColor } from '../contract/types';
 import { FONTS } from '../contract/fonts';
 import { SAMPLE_IMAGES } from '../contract/samples';
 import { applyPreset, defaultValues } from '../engine/urlState';
@@ -20,9 +22,11 @@ interface PanelProps {
   meta: EffectMeta;
   values: Values;
   onChange: (values: Values) => void;
+  bg: BgSetting;
+  onBgChange: (bg: BgSetting) => void;
 }
 
-export function ParamPanel({ meta, values, onChange }: PanelProps) {
+export function ParamPanel({ meta, values, onChange, bg, onBgChange }: PanelProps) {
   const setValue = (key: string, v: ParamValue) => onChange({ ...values, [key]: v });
 
   const isPresetActive = (presetId: string) => {
@@ -43,6 +47,8 @@ export function ParamPanel({ meta, values, onChange }: PanelProps) {
         <span className="mono">{String(meta.params.length).padStart(2, '0')}</span>
       </div>
       <div className="params-body">
+        <BgControl bg={bg} onChange={onBgChange} />
+
         <div className="control">
           <div className="control-head">
             <span className="control-label">预设</span>
@@ -82,6 +88,54 @@ export function ParamPanel({ meta, values, onChange }: PanelProps) {
         </div>
       </div>
     </aside>
+  );
+}
+
+/** 自定义底色的方形斜纹示意（不用彩色渐变） */
+const HATCH = 'repeating-linear-gradient(45deg, #fff 0 2px, #000 2px 5px)';
+
+/** 预览底色：深 / 浅 / 自定义，会写进 prompt 与导出代码 */
+function BgControl({ bg, onChange }: { bg: BgSetting; onChange: (bg: BgSetting) => void }) {
+  const customColor = bg.mode === 'custom' ? bg.color : '#22335c';
+  return (
+    <div className="control">
+      <div className="control-head">
+        <span className="control-label">预览底色</span>
+        <span className="control-value">{bgColor(bg)}</span>
+      </div>
+      <div className="bg-row">
+        <button
+          type="button"
+          className={`swatch${bg.mode === 'dark' ? ' active' : ''}`}
+          style={{ background: BG_DARK }}
+          title="深色底"
+          aria-label="深色底"
+          onClick={() => onChange({ mode: 'dark' })}
+        />
+        <button
+          type="button"
+          className={`swatch${bg.mode === 'light' ? ' active' : ''}`}
+          style={{ background: BG_LIGHT }}
+          title="浅色底"
+          aria-label="浅色底"
+          onClick={() => onChange({ mode: 'light' })}
+        />
+        <span
+          className={`swatch${bg.mode === 'custom' ? ' active' : ''}`}
+          style={{ background: bg.mode === 'custom' ? customColor : HATCH }}
+          title="自定义底色"
+        >
+          <input
+            type="color"
+            value={customColor}
+            onChange={(e) => onChange({ mode: 'custom', color: e.target.value })}
+            aria-label="自定义预览底色"
+          />
+        </span>
+        <span className="bg-names mono">深 / 浅 / 自定义</span>
+      </div>
+      <span className="control-help">底色会写进 prompt，让 AI 知道效果用在什么背景上。</span>
+    </div>
   );
 }
 
