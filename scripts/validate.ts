@@ -107,6 +107,23 @@ for (const slug of dirs) {
     if (p.type === 'image' && !existsSync(path.join(root, 'public', String(p.default)))) {
       fail(slug, `image 参数 ${p.key} 的默认示例图 ${p.default} 不存在`);
     }
+    if (p.type === 'images') {
+      for (const item of p.default) {
+        if (!existsSync(path.join(root, 'public', item.src))) {
+          fail(slug, `images 参数 ${p.key} 的默认示例图 ${item.src} 不存在`);
+        }
+      }
+    }
+  }
+
+  // ---- 轮播基线（sub 为 carousel 的效果强制）----
+  // 纯 CSS 实现（如 scroll-snap 版）可在注释中说明原生能力以满足关键字检查
+  if (meta.sub === 'carousel') {
+    for (const keyword of ['aria-roledescription', 'keydown', 'prefers-reduced-motion', 'pointerdown']) {
+      if (!html.includes(keyword)) {
+        fail(slug, `轮播效果缺少基线能力关键字「${keyword}」（无障碍 / 键盘 / 降级 / 拖拽）`);
+      }
+    }
   }
 
   // ---- thumb 演示块 ----

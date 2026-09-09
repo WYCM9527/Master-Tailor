@@ -19,6 +19,28 @@ describe('bakeCode', () => {
     expect(out).toContain('count: 7, // 数量');
   });
 
+  it('images 参数：预览用真实地址，导出替换为 ./slide-N.jpg 并保留行内注释', () => {
+    const values = {
+      ...defaultValues(fixtureMeta),
+      slides: [
+        { src: 'blob:local-upload', caption: '上传图，含逗号' },
+        { src: '/samples/sample-5.svg', caption: '' },
+      ],
+    };
+    const preview = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#000000', mode: 'preview' });
+    expect(preview).toContain('"src":"blob:local-upload"');
+    expect(preview).toContain('/samples/sample-5.svg');
+
+    const out = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#000000', mode: 'export' });
+    expect(out).toContain('"src":"./slide-1.jpg","caption":"上传图，含逗号"');
+    expect(out).toContain('"src":"./slide-2.jpg"');
+    expect(out).not.toContain('blob:local-upload');
+    expect(out).toMatch(/slides: \[.*\], \/\/ 幻灯片列表/);
+    expect(out).toContain('./slide-1.jpg、./slide-2.jpg …，请按顺序替换');
+    // 后续条目不被数组替换破坏
+    expect(out).toContain('text: "你好，世界", // 文字内容');
+  });
+
   it('导出模式：剥离 thumb 块、图片写占位路径、附文件头注释', () => {
     const values = { ...defaultValues(fixtureMeta), photo: 'blob:http-local-preview' };
     const out = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#0a0a0f', mode: 'export' });

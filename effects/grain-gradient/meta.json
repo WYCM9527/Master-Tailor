@@ -2,7 +2,7 @@
   "slug": "grain-gradient",
   "name": "噪点胶片渐变",
   "category": "background",
-  "trigger": "idle",
+  "sub": "idle",
   "tags": ["渐变", "噪点", "胶片感"],
   "summary": "双色渐变叠加细腻胶片噪点，安静高级的氛围底",
   "params": [

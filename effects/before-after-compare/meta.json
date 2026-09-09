@@ -1,0 +1,97 @@
+{
+  "slug": "before-after-compare",
+  "name": "前后对比滑块",
+  "category": "showcase",
+  "sub": "compare",
+  "tags": [
+    "对比",
+    "拖拽",
+    "滑块"
+  ],
+  "summary": "拖动分割线，左右对比两张图的前后差异",
+  "params": [
+    {
+      "key": "beforeSrc",
+      "label": "「前」图",
+      "type": "image",
+      "target": "config",
+      "default": "/samples/sample-2.svg"
+    },
+    {
+      "key": "afterSrc",
+      "label": "「后」图",
+      "type": "image",
+      "target": "config",
+      "default": "/samples/sample-1.svg"
+    },
+    {
+      "key": "startPos",
+      "label": "初始位置",
+      "type": "range",
+      "target": "config",
+      "min": 10,
+      "max": 90,
+      "step": 5,
+      "default": 50,
+      "displayUnit": "%"
+    },
+    {
+      "key": "lineWidth",
+      "label": "分割线粗细",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 6,
+      "step": 1,
+      "default": 3,
+      "unit": "px"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "容器圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "reveal-left",
+      "name": "先看一小条",
+      "values": {
+        "startPos": 15
+      }
+    },
+    {
+      "id": "thin-cyan",
+      "name": "细线青色",
+      "values": {
+        "lineWidth": 2,
+        "accent": "#00e5ff",
+        "startPos": 60
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "original"
+  }
+}

@@ -1013,6 +1013,57 @@ input[type='range']::-moz-range-thumb {
   display: none;
 }
 
+/* 图片列表控件（轮播） */
+.slides-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.slide-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.slide-slot-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slide-slot-row input[type='text'] {
+  flex: 1;
+  min-width: 0;
+}
+.slide-thumb {
+  flex: none;
+}
+.slide-noc {
+  flex: 1;
+}
+.slide-remove {
+  flex: none;
+  padding: 4px 10px;
+  font-size: 16px;
+  line-height: 1;
+}
+.slide-remove:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.slide-picker {
+  padding: 8px;
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-sm);
+}
+.slide-add {
+  align-self: flex-start;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+.slide-add:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .panel-footer {
   display: flex;
   justify-content: flex-end;

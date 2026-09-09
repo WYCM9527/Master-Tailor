@@ -2,7 +2,7 @@
   "slug": "typewriter",
   "name": "打字机文字",
   "category": "text",
-  "trigger": "idle",
+  "sub": "idle",
   "tags": ["打字机", "轮播", "光标"],
   "summary": "文字逐字打出再逐字删除，光标一闪一闪，多句轮播",
   "params": [

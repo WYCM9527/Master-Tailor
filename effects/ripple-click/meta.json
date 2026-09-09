@@ -2,7 +2,7 @@
   "slug": "ripple-click",
   "name": "点击涟漪",
   "category": "button",
-  "trigger": "click",
+  "sub": "click",
   "tags": ["点击反馈", "微交互"],
   "summary": "点击按钮时从点击处扩散出一圈水波涟漪",
   "params": [

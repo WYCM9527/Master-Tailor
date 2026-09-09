@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>居中露边轮播</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #f9cf00;    /* 强调色：分页圆点 */
+    --mt-duration: 0.55s;    /* 切换过渡时长 */
+    --mt-rounded: 14px;      /* 卡片圆角 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-carousel {
+    position: relative;
+    width: min(760px, 94vw);
+    height: min(400px, 60vh);
+    outline: none;
+    touch-action: pan-y;
+    cursor: grab;
+  }
+  .mt-carousel.dragging { cursor: grabbing; }
+  .mt-carousel:focus-visible { outline: 2px solid var(--mt-accent); outline-offset: 4px; }
+
+  /* 每张封面绝对居中，具体位置由 JS 按「与当前张的距离」计算 */
+  .mt-cover {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 62%;
+    aspect-ratio: 16 / 10;
+    margin: 0;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5);
+    transition: transform var(--mt-duration) cubic-bezier(0.33, 1, 0.68, 1), filter var(--mt-duration) ease;
+    cursor: pointer;
+    background: linear-gradient(135deg, #1a1c2c, #2a2f4a);
+  }
+  .mt-cover img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .mt-cover .mt-caption {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 36px 16px 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.62));
+  }
+
+  .mt-pager { position: absolute; left: 0; right: 0; bottom: -6px; display: flex; justify-content: center; gap: 7px; }
+  .mt-pager .dot {
+    width: 8px; height: 8px;
+    border: none; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    cursor: pointer; padding: 0;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .mt-pager .dot.active { background: var(--mt-accent); transform: scale(1.25); }
+
+  /* 用户开启「减少动态效果」：位置瞬间到位、不自动轮播（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-cover { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-carousel" id="mtRoot"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.svg","caption":""},{"src":"/samples/sample-2.svg","caption":""},{"src":"/samples/sample-3.svg","caption":""},{"src":"/samples/sample-4.svg","caption":""},{"src":"/samples/sample-5.svg","caption":""},{"src":"/samples/sample-6.svg","caption":""}], // 封面列表
+    interval: 4,     // 自动播放间隔（秒，0 为不自动播放）
+    sideScale: 0.82, // 两侧邻卡的缩小比例
+    dim: 0.55,       // 两侧邻卡的亮度（1 为不压暗）
+    gap: 56,         // 相邻卡片的水平间距（占容器宽度的百分比）
+  };
+
+  (function () {
+    const root = document.getElementById('mtRoot');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const slides = CONFIG.slides;
+    const total = slides.length;
+    let index = 0;
+
+    root.setAttribute('role', 'region');
+    root.setAttribute('aria-roledescription', 'carousel');
+    root.setAttribute('aria-label', '居中露边轮播');
+    root.setAttribute('tabindex', '0');
+
+    const covers = slides.map((s, i) => {
+      const el = document.createElement('figure');
+      el.className = 'mt-cover';
+      el.setAttribute('role', 'group');
+      el.setAttribute('aria-roledescription', 'slide');
+      el.setAttribute('aria-label', '第 ' + (i + 1) + ' 张，共 ' + total + ' 张');
+      const img = document.createElement('img');
+      img.src = s.src;
+      img.alt = s.caption || '第 ' + (i + 1) + ' 张卡片';
+      img.loading = 'lazy';
+      el.appendChild(img);
+      if (s.caption) {
+        const cap = document.createElement('div');
+        cap.className = 'mt-caption';
+        cap.textContent = s.caption;
+        el.appendChild(cap);
+      }
+      // 点击侧面的卡片直接跳到它
+      el.addEventListener('click', () => { if (i !== index) goTo(i); });
+      root.appendChild(el);
+      return el;
+    });
+
+    // 环形偏移：把每张卡的位置折算到 [-total/2, total/2]，首尾相接无缝循环
+    function offsetOf(i) {
+      let off = (i - index + total) % total;
+      if (off > total / 2) off -= total;
+      return off;
+    }
+
+    // 核心：激活卡居中原大，相邻卡在两侧露出边（缩小、压暗）
+    function layout() {
+      for (let i = 0; i < total; i++) {
+        const off = offsetOf(i);
+        const abs = Math.abs(off);
+        const x = off * CONFIG.gap;                    // 水平散开：±1 的卡各露出一条边
+        const scale = off === 0 ? 1 : CONFIG.sideScale; // 邻卡缩小
+        covers[i].style.transform =
+          'translate(-50%, -50%) translateX(' + x + '%) scale(' + scale + ')';
+        covers[i].style.zIndex = String(total - abs);
+        covers[i].style.filter = 'brightness(' + (off === 0 ? 1 : Math.max(0.3, CONFIG.dim - (abs - 1) * 0.18)) + ')';
+        covers[i].setAttribute('aria-hidden', off === 0 ? 'false' : 'true');
+      }
+      updatePager();
+    }
+
+    function goTo(next) {
+      index = (next + total) % total;
+      layout();
+    }
+    const nextSlide = () => goTo(index + 1);
+    const prevSlide = () => goTo(index - 1);
+
+    // 自动播放：悬停 / 聚焦 / 后台暂停；reduced-motion 不启动
+    let timer = null;
+    function play() {
+      if (timer || CONFIG.interval <= 0 || reduceMotion || total < 2) return;
+      timer = setInterval(nextSlide, CONFIG.interval * 1000);
+    }
+    function pause() { clearInterval(timer); timer = null; }
+    root.addEventListener('mouseenter', pause);
+    root.addEventListener('mouseleave', play);
+    root.addEventListener('focusin', pause);
+    root.addEventListener('focusout', play);
+    document.addEventListener('visibilitychange', () => (document.hidden ? pause() : play()));
+    play();
+
+    // 拖拽 / 触摸（Pointer Events）
+    let dragStartX = null, dragDx = 0, dragged = false;
+    root.addEventListener('pointerdown', (e) => {
+      dragStartX = e.clientX; dragDx = 0; dragged = false;
+      root.classList.add('dragging');
+      root.setPointerCapture(e.pointerId);
+    });
+    root.addEventListener('pointermove', (e) => {
+      if (dragStartX === null) return;
+      dragDx = e.clientX - dragStartX;
+      if (Math.abs(dragDx) > 8) dragged = true;
+    });
+    root.addEventListener('pointerup', () => {
+      root.classList.remove('dragging');
+      if (dragStartX === null) return;
+      if (Math.abs(dragDx) > 50) (dragDx < 0 ? nextSlide : prevSlide)();
+      dragStartX = null;
+    });
+    root.addEventListener('pointercancel', () => { root.classList.remove('dragging'); dragStartX = null; });
+    // 拖拽后抑制点击跳卡
+    root.addEventListener('click', (e) => { if (dragged) e.stopPropagation(); }, true);
+
+    // 键盘
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+    });
+
+    // 分页圆点
+    const pager = document.createElement('div');
+    pager.className = 'mt-pager';
+    const dots = slides.map((_s, i) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'dot';
+      dot.setAttribute('aria-label', '跳到第 ' + (i + 1) + ' 张');
+      dot.addEventListener('click', () => goTo(i));
+      pager.appendChild(dot);
+      return dot;
+    });
+    root.appendChild(pager);
+    function updatePager() { dots.forEach((d, i) => d.classList.toggle('active', i === index)); }
+
+    layout();
+  })();
+</script>
+</body>
+</html>

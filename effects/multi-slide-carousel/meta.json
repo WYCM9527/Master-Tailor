@@ -1,0 +1,152 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "original"
+  },
+  "slug": "multi-slide-carousel",
+  "name": "多张并排轮播",
+  "tags": [
+    "轮播",
+    "多张可见",
+    "卡片"
+  ],
+  "summary": "同屏并排多张卡片，一格一格向左滚动",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 10,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "卡片一"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "卡片二"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "卡片三"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "卡片四"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "卡片五"
+        },
+        {
+          "src": "/samples/sample-6.svg",
+          "caption": "卡片六"
+        }
+      ]
+    },
+    {
+      "key": "perView",
+      "label": "同屏张数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "interval",
+      "label": "自动滚动间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 3.5,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.5,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "gap",
+      "label": "卡片间距",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 32,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "key": "arrows",
+      "label": "显示左右箭头",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "dense",
+      "name": "密排五张",
+      "values": {
+        "perView": 5,
+        "gap": 10,
+        "interval": 2.5,
+        "duration": 0.4
+      }
+    },
+    {
+      "id": "duo",
+      "name": "双张大图",
+      "values": {
+        "perView": 2,
+        "gap": 24,
+        "interval": 5,
+        "accent": "#00e5ff"
+      }
+    }
+  ]
+}

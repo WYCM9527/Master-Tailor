@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>前后对比滑块</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;       /* 页面底色 */
+    --mt-accent: #f9cf00;   /* 强调色：分割线与手柄 */
+    --mt-pos: 50%;          /* 分割线初始位置（由 JS 实时更新） */
+    --mt-lineWidth: 3px;    /* 分割线粗细 */
+    --mt-rounded: 14px;     /* 容器圆角 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-compare {
+    position: relative;
+    width: min(680px, 92vw);
+    aspect-ratio: 16 / 10;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    outline: none;
+    touch-action: pan-y;
+    cursor: ew-resize;
+    background: #14151f;
+  }
+  .mt-compare:focus-visible { outline: 2px solid var(--mt-accent); outline-offset: 4px; }
+
+  .mt-compare img {
+    position: absolute;
+    inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  /* 上层（对比后的图）：用 clip-path 只露出分割线左侧 */
+  .mt-after {
+    clip-path: inset(0 calc(100% - var(--mt-pos)) 0 0);
+  }
+
+  /* 角标：左「前」右「后」 */
+  .mt-tag {
+    position: absolute;
+    top: 12px;
+    z-index: 2;
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: rgba(10, 10, 15, 0.6);
+    color: #fff;
+    font-size: 12.5px;
+    letter-spacing: 0.08em;
+    pointer-events: none;
+  }
+  .mt-tag.before { right: 12px; }
+  .mt-tag.after { left: 12px; }
+
+  /* 分割线 + 圆形手柄 */
+  .mt-divider {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: var(--mt-pos);
+    width: var(--mt-lineWidth);
+    transform: translateX(-50%);
+    background: var(--mt-accent);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .mt-handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--mt-accent);
+    color: #191400;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  }
+
+  /* 位置变化的平滑过渡只在键盘操作时启用（拖拽要跟手，不能有过渡） */
+  .mt-compare.smooth .mt-after { transition: clip-path 0.2s ease; }
+  .mt-compare.smooth .mt-divider { transition: left 0.2s ease; }
+
+  /* 用户开启「减少动态效果」：键盘步进也不做过渡（本效果无自动动画） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-compare.smooth .mt-after, .mt-compare.smooth .mt-divider { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-compare" id="mtRoot">
+  <img class="mt-before" id="mtBefore" src="/samples/sample-2.svg" alt="对比前的图片">
+  <img class="mt-after" id="mtAfter" src="/samples/sample-1.svg" alt="对比后的图片">
+  <span class="mt-tag before">前</span>
+  <span class="mt-tag after">后</span>
+  <div class="mt-divider" aria-hidden="true"><div class="mt-handle">‹›</div></div>
+</div>
+<script>
+  const CONFIG = {
+    beforeSrc: "/samples/sample-2.svg", // 「前」图（右侧露出的原图）
+    afterSrc: "/samples/sample-1.svg",  // 「后」图（左侧露出的效果图）
+    startPos: 50, // 分割线初始位置（%）
+  };
+
+  (function () {
+    const root = document.getElementById('mtRoot');
+    document.getElementById('mtBefore').src = CONFIG.beforeSrc;
+    document.getElementById('mtAfter').src = CONFIG.afterSrc;
+
+    // 无障碍：把整个对比区当成一个滑块
+    root.setAttribute('role', 'slider');
+    root.setAttribute('aria-label', '前后对比分割线位置');
+    root.setAttribute('aria-valuemin', '0');
+    root.setAttribute('aria-valuemax', '100');
+    root.setAttribute('tabindex', '0');
+
+    let pos = Math.max(0, Math.min(100, CONFIG.startPos));
+
+    function render() {
+      document.documentElement.style.setProperty('--mt-pos', pos.toFixed(2) + '%');
+      root.setAttribute('aria-valuenow', String(Math.round(pos)));
+      root.setAttribute('aria-valuetext', '显示 ' + Math.round(pos) + '% 的对比后图片');
+    }
+
+    // 拖拽 / 点按（Pointer Events）：按下即吸到指针位置，移动实时跟随
+    let dragging = false;
+    function moveTo(clientX) {
+      const rect = root.getBoundingClientRect();
+      pos = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+      render();
+    }
+    root.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      root.classList.remove('smooth'); // 拖拽必须跟手，不带过渡
+      root.setPointerCapture(e.pointerId);
+      moveTo(e.clientX);
+    });
+    root.addEventListener('pointermove', (e) => { if (dragging) moveTo(e.clientX); });
+    root.addEventListener('pointerup', () => { dragging = false; });
+    root.addEventListener('pointercancel', () => { dragging = false; });
+
+    // 键盘：← / → 按 4% 步进，带一点平滑；Home / End 直达两端
+    root.addEventListener('keydown', (e) => {
+      const step = 4;
+      let next = null;
+      if (e.key === 'ArrowRight') next = pos + step;
+      if (e.key === 'ArrowLeft') next = pos - step;
+      if (e.key === 'Home') next = 0;
+      if (e.key === 'End') next = 100;
+      if (next !== null) {
+        e.preventDefault();
+        root.classList.add('smooth');
+        pos = Math.max(0, Math.min(100, next));
+        render();
+      }
+    });
+
+    render();
+
+    /* @mt:thumb-start */
+    if (window.__MT_ENV && window.__MT_ENV.thumb && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // 缩略图演示：分割线左右缓慢摆动；父页面转发真实指针时优先跟随
+      let lastReal = 0;
+      window.__mtOnPointer = (x) => {
+        lastReal = performance.now();
+        const rect = root.getBoundingClientRect();
+        pos = Math.max(0, Math.min(100, (x / rect.width) * 100));
+        render();
+      };
+      (function autoDemo() {
+        if (document.hidden) { requestAnimationFrame(autoDemo); return; }
+        if (performance.now() - lastReal > 1200) {
+          pos = 50 + Math.sin(performance.now() / 900) * 32;
+          render();
+        }
+        requestAnimationFrame(autoDemo);
+      })();
+    }
+    /* @mt:thumb-end */
+  })();
+</script>
+</body>
+</html>

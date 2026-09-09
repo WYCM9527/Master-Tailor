@@ -1,0 +1,102 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "original"
+  },
+  "slug": "logo-marquee",
+  "name": "Logo 墙跑马灯",
+  "tags": [
+    "跑马灯",
+    "品牌墙",
+    "无限滚动"
+  ],
+  "summary": "品牌名一条龙匀速滚过，两端渐隐，悬停暂停",
+  "params": [
+    {
+      "key": "brands",
+      "label": "品牌名列表",
+      "type": "text",
+      "target": "config",
+      "default": "裁缝大师｜星轨科技｜琥珀云｜山脊实验室｜蔷薇设计｜苔原数据｜峡谷网络",
+      "maxLength": 80,
+      "help": "用「｜」分隔"
+    },
+    {
+      "key": "speed",
+      "label": "滚动速度",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 60,
+      "step": 2,
+      "default": 28,
+      "help": "越大越快"
+    },
+    {
+      "key": "gap",
+      "label": "品牌间距",
+      "type": "range",
+      "target": "css",
+      "min": 32,
+      "max": 120,
+      "step": 4,
+      "default": 64,
+      "unit": "px"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 14,
+      "max": 36,
+      "step": 2,
+      "default": 22,
+      "unit": "px"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#aab0c0"
+    },
+    {
+      "key": "hoverColor",
+      "label": "悬停高亮色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "bold-fast",
+      "name": "醒目快滚",
+      "values": {
+        "speed": 46,
+        "fontSize": 30,
+        "color": "#f2f3f8"
+      }
+    },
+    {
+      "id": "subtle",
+      "name": "低调衬底",
+      "values": {
+        "speed": 16,
+        "fontSize": 16,
+        "gap": 48,
+        "color": "#6d7285"
+      }
+    }
+  ]
+}

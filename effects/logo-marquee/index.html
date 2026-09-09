@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Logo 墙跑马灯</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;       /* 页面底色 */
+    --mt-color: #aab0c0;    /* 品牌名颜色 */
+    --mt-hoverColor: #f9cf00; /* 悬停时品牌名颜色 */
+    --mt-speed: 28;         /* 滚动速度：数值越大越快（秒内滚过的像素感） */
+    --mt-gap: 64px;         /* 品牌之间的间距 */
+    --mt-fontSize: 22px;    /* 品牌名字号 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-marquee {
+    width: min(820px, 96vw);
+    overflow: hidden;
+    /* 两端渐隐：内容像从雾里进出 */
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  /* 轨道里放两份同样的内容，位移正好一份宽度时回起点，肉眼看是无限滚动 */
+  .mt-track {
+    display: flex;
+    width: max-content;
+    animation: mt-scroll var(--mt-loop, 20s) linear infinite;
+  }
+  /* 悬停整条暂停，方便看清品牌名 */
+  .mt-marquee:hover .mt-track { animation-play-state: paused; }
+
+  .mt-group {
+    display: flex;
+    align-items: center;
+    gap: var(--mt-gap);
+    padding-right: var(--mt-gap);
+  }
+  .mt-brand {
+    flex: none;
+    color: var(--mt-color);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+    /* 微微降饱和的「灰 logo 墙」质感 */
+    opacity: 0.85;
+  }
+  .mt-brand:hover { color: var(--mt-hoverColor); opacity: 1; }
+
+  @keyframes mt-scroll {
+    to { transform: translateX(-50%); }
+  }
+
+  /* 用户开启「减少动态效果」：停止滚动，静态铺开第一屏 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-track { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-marquee" id="mtRoot"></div>
+<script>
+  const CONFIG = {
+    brands: "裁缝大师｜星轨科技｜琥珀云｜山脊实验室｜蔷薇设计｜苔原数据｜峡谷网络", // 品牌名列表（用「｜」分隔）
+  };
+
+  // 说明：本效果是纯展示型跑马灯——不响应 keydown 键盘切换，也不做 pointerdown 拖拽，
+  // 唯一交互是悬停暂停；用户开启 prefers-reduced-motion 时动画停止、内容静态展示。
+  (function () {
+    const root = document.getElementById('mtRoot');
+    const brands = CONFIG.brands.split('｜').map((s) => s.trim()).filter(Boolean);
+
+    root.setAttribute('role', 'region');
+    root.setAttribute('aria-roledescription', 'carousel');
+    root.setAttribute('aria-label', '合作品牌滚动展示');
+
+    const track = document.createElement('div');
+    track.className = 'mt-track';
+    // 两份完全相同的内容首尾相接；第二份对读屏隐藏，避免重复朗读
+    for (let copy = 0; copy < 2; copy++) {
+      const group = document.createElement('div');
+      group.className = 'mt-group';
+      if (copy === 1) group.setAttribute('aria-hidden', 'true');
+      for (const name of brands) {
+        const span = document.createElement('span');
+        span.className = 'mt-brand';
+        span.textContent = name;
+        group.appendChild(span);
+      }
+      track.appendChild(group);
+    }
+    root.appendChild(track);
+
+    // 速度换算：内容越长滚一圈时间越久，保证不同品牌数下线速度一致
+    const speed = Number(getComputedStyle(document.documentElement).getPropertyValue('--mt-speed')) || 28;
+    requestAnimationFrame(() => {
+      const loopSeconds = track.scrollWidth / 2 / (speed * 4);
+      track.style.setProperty('--mt-loop', loopSeconds.toFixed(2) + 's');
+    });
+  })();
+</script>
+</body>
+</html>

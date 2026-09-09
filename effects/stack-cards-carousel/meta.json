@@ -1,0 +1,133 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Swiper cards effect 一类的堆叠轮播",
+    "url": "https://swiperjs.com/demos",
+    "license": "未使用其代码"
+  },
+  "slug": "stack-cards-carousel",
+  "name": "卡片堆叠轮播",
+  "tags": [
+    "轮播",
+    "堆叠",
+    "卡片"
+  ],
+  "summary": "一沓卡片，顶卡飞走露出下一张，循环不断",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "第一张 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "第二张 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "第三张 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "第四张 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "第五张 · 蔷薇暮色"
+        }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "自动切换间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 3.5,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.5,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "stackDepth",
+      "label": "层叠强度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "default": 1,
+      "help": "下层卡片缩小与下移的幅度倍率"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 18,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "loose",
+      "name": "松散一沓",
+      "values": {
+        "stackDepth": 1.8,
+        "interval": 4,
+        "duration": 0.7
+      }
+    },
+    {
+      "id": "tight",
+      "name": "紧凑快切",
+      "values": {
+        "stackDepth": 0.6,
+        "interval": 2.5,
+        "duration": 0.35,
+        "accent": "#ff4d6d"
+      }
+    }
+  ]
+}

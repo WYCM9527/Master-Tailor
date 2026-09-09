@@ -1,20 +1,20 @@
-import { useId, useRef } from 'react';
+import { useId, useRef, useState } from 'react';
 import type {
   ColorParam,
   EffectMeta,
   ImageParam,
+  ImagesParam,
   Param,
   ParamValue,
   RangeParam,
   SelectParam,
+  SlideItem,
   TextParam,
   Values,
 } from '../contract/types';
 import { FONTS } from '../contract/fonts';
+import { SAMPLE_IMAGES } from '../contract/samples';
 import { applyPreset, defaultValues } from '../engine/urlState';
-
-/** 站内示例图（public/samples/，也是图片参数在分享链接里唯一允许的取值） */
-export const SAMPLE_IMAGES = ['/samples/sample-1.svg', '/samples/sample-2.svg', '/samples/sample-3.svg'];
 
 interface PanelProps {
   meta: EffectMeta;
@@ -27,7 +27,11 @@ export function ParamPanel({ meta, values, onChange }: PanelProps) {
 
   const isPresetActive = (presetId: string) => {
     const presetValues = applyPreset(meta, presetId);
-    return meta.params.every((p) => (values[p.key] ?? p.default) === presetValues[p.key]);
+    // JSON 比较：images 参数的值是对象数组，引用比较永远不等
+    return meta.params.every(
+      (p) =>
+        JSON.stringify(values[p.key] ?? p.default) === JSON.stringify(presetValues[p.key]),
+    );
   };
 
   return (
@@ -123,6 +127,8 @@ function Control({ param, value, onChange }: ControlProps) {
       );
     case 'image':
       return <ImageControl param={param} value={String(value)} onChange={onChange} />;
+    case 'images':
+      return <ImagesControl param={param} value={value as SlideItem[]} onChange={onChange} />;
   }
 }
 
@@ -241,6 +247,123 @@ function TextControl({
         aria-label={param.label}
       />
       {param.help && <span className="control-help">{param.help}</span>}
+    </div>
+  );
+}
+
+/**
+ * 图片列表控件（轮播等多图效果）：
+ * 每个槽位 = 当前图缩略 + 标题输入 + 删除；点击缩略图展开示例图选择与上传。
+ */
+function ImagesControl({
+  param,
+  value,
+  onChange,
+}: {
+  param: ImagesParam;
+  value: SlideItem[];
+  onChange: (v: ParamValue) => void;
+}) {
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const fileInputId = useId();
+
+  const update = (index: number, patch: Partial<SlideItem>) => {
+    onChange(value.map((s, i) => (i === index ? { ...s, ...patch } : s)));
+  };
+  const remove = (index: number) => {
+    setExpanded(null);
+    onChange(value.filter((_, i) => i !== index));
+  };
+  const add = () => {
+    // 新槽位轮流取示例图，避免连续同图
+    const src = SAMPLE_IMAGES[value.length % SAMPLE_IMAGES.length];
+    onChange([...value, { src, caption: '' }]);
+  };
+  const onUpload = (index: number, file: File | undefined) => {
+    if (!file) return;
+    update(index, { src: URL.createObjectURL(file) });
+    setExpanded(null);
+  };
+
+  return (
+    <div className="control">
+      <div className="control-head">
+        <span className="control-label">{param.label}</span>
+        <span className="control-value">
+          {value.length} / {param.max} 张
+        </span>
+      </div>
+      <div className="slides-list">
+        {value.map((slide, i) => (
+          <div className="slide-slot" key={i}>
+            <div className="slide-slot-row">
+              <button
+                type="button"
+                className="image-option slide-thumb"
+                title="更换这张图"
+                onClick={() => setExpanded(expanded === i ? null : i)}
+              >
+                <img src={slide.src} alt={`第 ${i + 1} 张`} />
+              </button>
+              {param.captions ? (
+                <input
+                  type="text"
+                  value={slide.caption}
+                  maxLength={30}
+                  placeholder={`第 ${i + 1} 张的标题（可留空）`}
+                  onChange={(e) => update(i, { caption: e.target.value })}
+                  aria-label={`第 ${i + 1} 张的标题`}
+                />
+              ) : (
+                <span className="muted slide-noc">第 {i + 1} 张</span>
+              )}
+              <button
+                type="button"
+                className="btn-ghost btn slide-remove"
+                disabled={value.length <= param.min}
+                title={value.length <= param.min ? `至少 ${param.min} 张` : '删除这张'}
+                onClick={() => remove(i)}
+              >
+                ×
+              </button>
+            </div>
+            {expanded === i && (
+              <div className="image-options slide-picker">
+                {SAMPLE_IMAGES.map((src, si) => (
+                  <button
+                    type="button"
+                    key={src}
+                    className={`image-option${slide.src === src ? ' active' : ''}`}
+                    onClick={() => {
+                      update(i, { src });
+                      setExpanded(null);
+                    }}
+                    title={`示例图 ${si + 1}`}
+                  >
+                    <img src={src} alt={`示例图 ${si + 1}`} />
+                  </button>
+                ))}
+                <label className="image-upload" htmlFor={`${fileInputId}-${i}`} title="上传自己的图片（仅本地预览）">
+                  +
+                  <input
+                    id={`${fileInputId}-${i}`}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => onUpload(i, e.target.files?.[0])}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+        ))}
+        <button type="button" className="btn slide-add" disabled={value.length >= param.max} onClick={add}>
+          + 添加一张
+        </button>
+      </div>
+      <span className="control-help">
+        上传的图片只在你的浏览器里预览；导出代码与 prompt 会写占位路径 ./slide-1.jpg …，分享链接不包含上传的图片。
+        {param.help ? ` ${param.help}` : ''}
+      </span>
     </div>
   );
 }

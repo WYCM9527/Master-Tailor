@@ -1,5 +1,5 @@
-import type { BgSetting, EffectMeta, Param, ParamValue, Values } from '../contract/types';
-import { BG_DARK, BG_LIGHT, bgColor } from '../contract/types';
+import type { BgSetting, EffectMeta, Param, ParamValue, SlideItem, Values } from '../contract/types';
+import { BG_DARK, BG_LIGHT, bgColor, slidePlaceholder } from '../contract/types';
 import { fontById } from '../contract/fonts';
 
 /**
@@ -24,6 +24,8 @@ interface PromptSections {
   description: string;
   checks?: string;
   placementHint?: string;
+  /** 追加在全局【技术要求】之后的效果专属要求（如轮播的无障碍 / 键盘 / 暂停） */
+  techExtra?: string;
 }
 
 /** 解析 prompt.md：按 ## 标题切分 */
@@ -43,6 +45,7 @@ export function parsePromptMd(md: string): PromptSections {
     description: sections['效果描述'] ?? '',
     checks: sections['完成后请检查'],
     placementHint: sections['放在哪'],
+    techExtra: sections['技术要求补充'],
   };
 }
 
@@ -67,6 +70,14 @@ export function humanValue(param: Param, value: ParamValue): string {
     }
     case 'image':
       return '占位路径 ./your-image.jpg（生成后我会换成自己的图片）';
+    case 'images': {
+      const slides = value as SlideItem[];
+      const items = slides.map((s, i) => {
+        const caption = param.captions && s.caption.trim() ? `，标题「${s.caption.trim()}」` : '';
+        return `第 ${i + 1} 张 ${slidePlaceholder(i)}${caption}`;
+      });
+      return `共 ${slides.length} 张（占位路径，生成后我会换成自己的图片）：${items.join('；')}`;
+    }
   }
 }
 
@@ -111,14 +122,15 @@ export function renderPrompt(o: PromptOptions): string {
   paramLines.push(`- 我的页面底色：${bgHuman(bg)}（效果要在这个底色上好看）`);
   parts.push(`【参数】\n${paramLines.join('\n')}`);
 
-  // 4.【技术要求】
-  parts.push(
-    `【技术要求】\n` +
-      `- 用原生 HTML/CSS/JS 实现，不要引入任何第三方库、框架或外部资源（不要 CDN、不要外链字体和图片）\n` +
-      `- 尊重系统的 prefers-reduced-motion 设置：用户开启「减少动态效果」时，动画停止或降级为静态\n` +
-      `- 动画用 CSS animation 或 requestAnimationFrame 实现，页面切到后台时暂停，不要空耗性能\n` +
-      `- 只新增代码，不要修改、删除或覆盖我页面里已有的内容和样式`,
-  );
+  // 4.【技术要求】（全局四条 + 效果专属补充）
+  const techLines = [
+    `- 用原生 HTML/CSS/JS 实现，不要引入任何第三方库、框架或外部资源（不要 CDN、不要外链字体和图片）`,
+    `- 尊重系统的 prefers-reduced-motion 设置：用户开启「减少动态效果」时，动画停止或降级为静态`,
+    `- 动画用 CSS animation 或 requestAnimationFrame 实现，页面切到后台时暂停，不要空耗性能`,
+    `- 只新增代码，不要修改、删除或覆盖我页面里已有的内容和样式`,
+  ];
+  if (sections.techExtra) techLines.push(sections.techExtra);
+  parts.push(`【技术要求】\n${techLines.join('\n')}`);
 
   // 5.【放在哪】
   const placement = o.placement.trim();

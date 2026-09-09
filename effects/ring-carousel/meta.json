@@ -1,0 +1,141 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Intro to CSS 3D Transforms 的 carousel 一章",
+    "url": "https://3dtransforms.desandro.com/carousel",
+    "license": "思路参考，代码自写"
+  },
+  "slug": "ring-carousel",
+  "name": "3D 环形轮播",
+  "tags": [
+    "轮播",
+    "3D",
+    "旋转"
+  ],
+  "summary": "图片贴在一个看不见的圆环上，整环转动展示",
+  "params": [
+    {
+      "key": "slides",
+      "label": "环上的图片",
+      "type": "images",
+      "target": "config",
+      "min": 6,
+      "max": 10,
+      "captions": false,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-6.svg",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-7.svg",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-8.svg",
+          "caption": ""
+        }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "自动旋转间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 3.5,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.8,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "dimBack",
+      "label": "后方压暗",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "转到环后方的卡片亮度降低，增强前后层次"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "gallery",
+      "name": "慢转画廊",
+      "values": {
+        "interval": 5,
+        "duration": 1.2
+      }
+    },
+    {
+      "id": "flat-bright",
+      "name": "均亮快转",
+      "values": {
+        "dimBack": false,
+        "interval": 2.5,
+        "duration": 0.5,
+        "accent": "#00e5ff"
+      }
+    }
+  ]
+}

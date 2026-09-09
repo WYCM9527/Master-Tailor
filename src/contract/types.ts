@@ -7,16 +7,25 @@
  * - prompt.md   中文效果描述模板（含 {{key}} 占位符）
  */
 
-export type CategoryId = 'background' | 'button' | 'text' | 'card' | 'loading' | 'canvas';
+export type CategoryId =
+  | 'background'
+  | 'button'
+  | 'text'
+  | 'card'
+  | 'loading'
+  | 'canvas'
+  | 'showcase';
 
 /**
- * 触发方式（侧边栏的第二级分类）：
- * - idle   默认效果：不需要任何操作，一直在动或静态呈现
- * - hover  鼠标悬浮：鼠标移入、悬停或移动时触发
- * - click  点击效果：点击 / 按下时触发
- * - scroll 滚动触发：页面滚动到位置时触发
+ * 二级分类（侧边栏第二级）：每个一级分类在 CATEGORIES 中自声明子类表。
+ * 原有 6 类的子类是触发方式（idle / hover / click / scroll）；
+ * 「多卡/图展示」的子类是 carousel / compare / stack-scroll。
  */
-export type TriggerId = 'idle' | 'hover' | 'click' | 'scroll';
+export interface SubDef {
+  id: string;
+  name: string;
+  desc: string;
+}
 
 /**
  * 参数注入目标：
@@ -84,6 +93,29 @@ export interface ImageParam extends BaseParam {
   default: string;
 }
 
+/** 图片列表的一项：图 + 标题（captions 为 false 的效果忽略标题） */
+export interface SlideItem {
+  src: string;
+  caption: string;
+}
+
+/**
+ * 图片列表参数（轮播等多图效果用）：
+ * - 面板中每个槽位 = 示例图选择 / 本地上传 + 标题输入，可在 [min, max] 内增减张数
+ * - 默认值必须全部来自 /samples/
+ * - 导出代码与 prompt 一律写占位路径 ./slide-1.jpg …；分享链接只保存示例图选择与标题
+ * - 契约约定 CONFIG 中写成单行数组：`slides: [ ... ], // 注释`
+ */
+export interface ImagesParam extends BaseParam {
+  type: 'images';
+  target: 'config';
+  min: number;
+  max: number;
+  /** 是否在面板中提供每张图的标题输入 */
+  captions: boolean;
+  default: SlideItem[];
+}
+
 export type Param =
   | ColorParam
   | RangeParam
@@ -91,9 +123,10 @@ export type Param =
   | SelectParam
   | TextParam
   | FontParam
-  | ImageParam;
+  | ImageParam
+  | ImagesParam;
 
-export type ParamValue = string | number | boolean;
+export type ParamValue = string | number | boolean | SlideItem[];
 export type Values = Record<string, ParamValue>;
 
 export interface Preset {
@@ -119,8 +152,8 @@ export interface EffectMeta {
   slug: string;
   name: string;
   category: CategoryId;
-  /** 触发方式：决定效果在侧边栏里归入哪个二级分类 */
-  trigger: TriggerId;
+  /** 二级分类 id：必须属于所在分类在 CATEGORIES 中声明的子类表 */
+  sub: string;
   tags: string[];
   summary: string;
   params: Param[];
@@ -166,3 +199,8 @@ export function bgColor(bg: BgSetting): string {
 
 /** 导出代码与 prompt 中图片参数的占位路径 */
 export const IMAGE_PLACEHOLDER = './your-image.jpg';
+
+/** 图片列表参数的占位路径（第 n 张，从 1 开始） */
+export function slidePlaceholder(index: number): string {
+  return `./slide-${index + 1}.jpg`;
+}

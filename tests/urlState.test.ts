@@ -44,4 +44,32 @@ describe('urlState', () => {
     expect(decoded.values.count).toBe(1); // clamp 到 min
     expect(decoded.bg).toEqual({ mode: 'dark' }); // 非法 bg 回退
   });
+
+  it('images：默认值不进 URL；改动后编码往返一致；blob 槽位回退示例图', () => {
+    const state = defaultState(fixtureMeta);
+    expect(encodeState(fixtureMeta, state).get('slides')).toBeNull();
+
+    state.values.slides = [
+      { src: '/samples/sample-4.svg', caption: '标题，带逗号:和冒号' },
+      { src: 'blob:local-upload', caption: '上传' },
+    ];
+    const sp = encodeState(fixtureMeta, state);
+    expect(sp.get('slides')).not.toBeNull();
+    const decoded = decodeState(fixtureMeta, sp);
+    expect(decoded.values.slides).toEqual([
+      { src: '/samples/sample-4.svg', caption: '标题，带逗号:和冒号' },
+      { src: '/samples/sample-1.svg', caption: '上传' }, // blob 回退第一张示例图
+    ]);
+  });
+
+  it('images：非法编码回退默认，张数超上限被截断', () => {
+    const bad = decodeState(fixtureMeta, new URLSearchParams({ slides: 'x:aa,1:bb' }));
+    expect(bad.values.slides).toEqual(fixtureMeta.params[0].default);
+
+    const many = decodeState(
+      fixtureMeta,
+      new URLSearchParams({ slides: '0:,1:,2:,3:,4:,5:,6:,7:' }),
+    );
+    expect((many.values.slides as { src: string }[]).length).toBe(6); // max = 6
+  });
 });

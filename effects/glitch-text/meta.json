@@ -2,7 +2,7 @@
   "slug": "glitch-text",
   "name": "故障风文字",
   "category": "text",
-  "trigger": "idle",
+  "sub": "idle",
   "tags": [
     "故障",
     "赛博",

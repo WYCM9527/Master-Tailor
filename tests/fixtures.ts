@@ -5,10 +5,24 @@ export const fixtureMeta: EffectMeta = {
   slug: 'demo-effect',
   name: '演示效果',
   category: 'background',
-  trigger: 'idle',
+  sub: 'idle',
   tags: ['测试'],
   summary: '一个覆盖各种参数类型的演示效果',
   params: [
+    {
+      key: 'slides',
+      label: '幻灯片',
+      type: 'images',
+      target: 'config',
+      min: 2,
+      max: 6,
+      captions: true,
+      default: [
+        { src: '/samples/sample-1.svg', caption: '第一张' },
+        { src: '/samples/sample-2.svg', caption: '' },
+        { src: '/samples/sample-3.svg', caption: '三，带逗号' },
+      ],
+    },
     { key: 'color', label: '主色', type: 'color', target: 'css', default: '#f9cf00' },
     {
       key: 'speed',
@@ -67,6 +81,7 @@ export const fixtureHtml = `<!doctype html>
 <body>
 <script>
   const CONFIG = {
+    slides: [{"src":"/samples/sample-1.svg","caption":"第一张"},{"src":"/samples/sample-2.svg","caption":""},{"src":"/samples/sample-3.svg","caption":"三，带逗号"}], // 幻灯片列表
     text: "你好，世界", // 文字内容
     count: 3, // 数量
     photo: "/samples/sample-1.svg", // 图片
@@ -82,7 +97,10 @@ export const fixtureHtml = `<!doctype html>
 `;
 
 export const fixturePromptMd = `## 效果描述
-主色是 {{color}}，速度 {{speed}}，文字为 {{text}}，共 {{count}} 个，底色 {{bg}}。
+主色是 {{color}}，速度 {{speed}}，文字为 {{text}}，共 {{count}} 个，底色 {{bg}}，幻灯片：{{slides}}。
+
+## 技术要求补充
+- 轮播容器带 aria-roledescription="carousel"，支持键盘左右切换
 
 ## 完成后请检查
 - 自定义检查一

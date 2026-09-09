@@ -1,6 +1,6 @@
 import type { Effect } from './types';
 import { effectMetaSchema } from './schema';
-import { CATEGORIES, TRIGGERS } from './categories';
+import { CATEGORIES } from './categories';
 
 /**
  * 效果注册表：构建期用 import.meta.glob 自动收集 effects/<slug>/ 三件套。
@@ -38,7 +38,9 @@ const htmlBySlug = byPathSlug(htmlModules);
 const mdBySlug = byPathSlug(mdModules);
 
 const categoryOrder = new Map(CATEGORIES.map((c, i) => [c.id, i]));
-const triggerOrder = new Map(TRIGGERS.map((t, i) => [t.id, i]));
+// 二级分类顺序按各分类 subs 的声明顺序，key 为 `分类:子类`
+const subOrder = new Map<string, number>();
+for (const c of CATEGORIES) c.subs.forEach((s, i) => subOrder.set(`${c.id}:${s.id}`, i));
 
 const effects: Effect[] = [];
 for (const [path, mod] of Object.entries(metaModules)) {
@@ -61,14 +63,14 @@ for (const [path, mod] of Object.entries(metaModules)) {
   effects.push({ meta: parsed.data, html, promptMd });
 }
 
-// 排序：一级分类 → 触发方式 → slug，与侧边栏的层级顺序一致
+// 排序：一级分类 → 二级分类 → slug，与侧边栏的层级顺序一致
 effects.sort((a, b) => {
   const ca = categoryOrder.get(a.meta.category) ?? 99;
   const cb = categoryOrder.get(b.meta.category) ?? 99;
   if (ca !== cb) return ca - cb;
-  const ta = triggerOrder.get(a.meta.trigger) ?? 99;
-  const tb = triggerOrder.get(b.meta.trigger) ?? 99;
-  if (ta !== tb) return ta - tb;
+  const sa = subOrder.get(`${a.meta.category}:${a.meta.sub}`) ?? 99;
+  const sb = subOrder.get(`${b.meta.category}:${b.meta.sub}`) ?? 99;
+  if (sa !== sb) return sa - sb;
   return a.meta.slug.localeCompare(b.meta.slug);
 });
 

@@ -1,0 +1,159 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Glide.js peek / Splide padding 一类的露边轮播",
+    "url": "https://glidejs.com",
+    "license": "未使用其代码"
+  },
+  "slug": "peek-carousel",
+  "name": "居中露边轮播",
+  "tags": [
+    "轮播",
+    "多张可见",
+    "居中"
+  ],
+  "summary": "当前卡居中放大，两侧露出邻卡的边，暗示还能翻",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "第一张 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "第二张 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "第三张 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "第四张 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "第五张 · 蔷薇暮色"
+        },
+        {
+          "src": "/samples/sample-6.svg",
+          "caption": "第六张 · 靛蓝星轨"
+        }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "自动播放间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 4,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.55,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "sideScale",
+      "label": "邻卡缩小比例",
+      "type": "range",
+      "target": "config",
+      "min": 0.6,
+      "max": 0.95,
+      "step": 0.01,
+      "default": 0.82
+    },
+    {
+      "key": "dim",
+      "label": "邻卡亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.55,
+      "help": "1 为不压暗"
+    },
+    {
+      "key": "gap",
+      "label": "卡片间距",
+      "type": "range",
+      "target": "config",
+      "min": 40,
+      "max": 80,
+      "step": 2,
+      "default": 56,
+      "displayUnit": "%",
+      "help": "占容器宽度的百分比"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "tight",
+      "name": "紧凑叠边",
+      "values": {
+        "gap": 44,
+        "sideScale": 0.72,
+        "dim": 0.4
+      }
+    },
+    {
+      "id": "bright",
+      "name": "明亮并列",
+      "values": {
+        "dim": 1,
+        "sideScale": 0.9,
+        "gap": 68,
+        "accent": "#00e5ff"
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
   "slug": "shimmer-border-button",
   "name": "流光描边按钮",
   "category": "button",
-  "trigger": "idle",
+  "sub": "idle",
   "tags": ["流光", "描边", "科技感"],
   "summary": "一圈光带沿按钮边框不停流转，像霓虹描边",
   "params": [

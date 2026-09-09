@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>缩略图画廊</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #f9cf00;    /* 强调色：当前缩略图描边 */
+    --mt-duration: 0.45s;    /* 主图切换时长 */
+    --mt-thumbSize: 64px;    /* 缩略图高度 */
+    --mt-rounded: 14px;      /* 主图圆角 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-gallery {
+    width: min(640px, 92vw);
+    outline: none;
+  }
+  .mt-gallery:focus-visible { outline: 2px solid var(--mt-accent); outline-offset: 4px; }
+
+  /* 主图区：交叉淡化三态 */
+  .mt-main {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    touch-action: pan-y;
+    cursor: grab;
+    background: linear-gradient(135deg, #1a1c2c, #2a2f4a);
+  }
+  .mt-main.dragging { cursor: grabbing; }
+  .mt-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity var(--mt-duration) ease;
+  }
+  .mt-slide.is-active { opacity: 1; z-index: 1; }
+  .mt-slide img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .mt-caption {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 42px 18px 14px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.62));
+  }
+
+  /* 缩略图条：横向滚动，当前项亮框 */
+  .mt-thumbs {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    overflow-x: auto;
+    padding: 3px;
+    scrollbar-width: none;
+  }
+  .mt-thumbs::-webkit-scrollbar { display: none; }
+  .mt-thumb {
+    flex: none;
+    height: var(--mt-thumbSize);
+    aspect-ratio: 4 / 3;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0.55;
+    background: #14151f;
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+  }
+  .mt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mt-thumb:hover { opacity: 0.85; }
+  .mt-thumb.active { opacity: 1; border-color: var(--mt-accent); }
+
+  /* 用户开启「减少动态效果」：主图瞬间切换、不自动播放（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-slide { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-gallery" id="mtRoot"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.svg","caption":"图一 · 琥珀之夜"},{"src":"/samples/sample-2.svg","caption":"图二 · 海面日出"},{"src":"/samples/sample-3.svg","caption":"图三 · 山脊星光"},{"src":"/samples/sample-4.svg","caption":"图四 · 苔原晨雾"},{"src":"/samples/sample-5.svg","caption":"图五 · 蔷薇暮色"},{"src":"/samples/sample-6.svg","caption":"图六 · 靛蓝星轨"}], // 图片列表
+    interval: 4, // 自动播放间隔（秒，0 为不自动播放）
+  };
+
+  (function () {
+    const root = document.getElementById('mtRoot');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const slides = CONFIG.slides;
+    const total = slides.length;
+    let index = 0;
+
+    root.setAttribute('role', 'region');
+    root.setAttribute('aria-roledescription', 'carousel');
+    root.setAttribute('aria-label', '缩略图画廊');
+    root.setAttribute('tabindex', '0');
+
+    // 主图区
+    const main = document.createElement('div');
+    main.className = 'mt-main';
+    const slideEls = slides.map((s, i) => {
+      const el = document.createElement('figure');
+      el.className = 'mt-slide' + (i === 0 ? ' is-active' : '');
+      el.style.margin = '0';
+      el.setAttribute('role', 'group');
+      el.setAttribute('aria-roledescription', 'slide');
+      el.setAttribute('aria-label', '第 ' + (i + 1) + ' 张，共 ' + total + ' 张');
+      const img = document.createElement('img');
+      img.src = s.src;
+      img.alt = s.caption || '第 ' + (i + 1) + ' 张图片';
+      img.loading = i === 0 ? 'eager' : 'lazy';
+      el.appendChild(img);
+      if (s.caption) {
+        const cap = document.createElement('div');
+        cap.className = 'mt-caption';
+        cap.textContent = s.caption;
+        el.appendChild(cap);
+      }
+      main.appendChild(el);
+      return el;
+    });
+    root.appendChild(main);
+
+    // 缩略图条：点它切主图，当前项亮框并自动滚到可见
+    const thumbs = document.createElement('div');
+    thumbs.className = 'mt-thumbs';
+    const thumbEls = slides.map((s, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'mt-thumb' + (i === 0 ? ' active' : '');
+      btn.setAttribute('aria-label', '查看第 ' + (i + 1) + ' 张');
+      const img = document.createElement('img');
+      img.src = s.src;
+      img.alt = '';
+      img.loading = 'lazy';
+      btn.appendChild(img);
+      btn.addEventListener('click', () => goTo(i));
+      thumbs.appendChild(btn);
+      return btn;
+    });
+    root.appendChild(thumbs);
+
+    function goTo(next) {
+      next = (next + total) % total;
+      if (next === index) return;
+      slideEls[index].classList.remove('is-active');
+      slideEls[next].classList.add('is-active');
+      thumbEls[index].classList.remove('active');
+      thumbEls[next].classList.add('active');
+      index = next;
+      // 当前缩略图滚到可见（不带动页面滚动）
+      thumbEls[index].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', inline: 'center', block: 'nearest' });
+    }
+    const nextSlide = () => goTo(index + 1);
+    const prevSlide = () => goTo(index - 1);
+
+    // 自动播放：悬停 / 聚焦 / 后台暂停；reduced-motion 不启动
+    let timer = null;
+    function play() {
+      if (timer || CONFIG.interval <= 0 || reduceMotion || total < 2) return;
+      timer = setInterval(nextSlide, CONFIG.interval * 1000);
+    }
+    function pause() { clearInterval(timer); timer = null; }
+    root.addEventListener('mouseenter', pause);
+    root.addEventListener('mouseleave', play);
+    root.addEventListener('focusin', pause);
+    root.addEventListener('focusout', play);
+    document.addEventListener('visibilitychange', () => (document.hidden ? pause() : play()));
+    play();
+
+    // 主图拖拽 / 触摸（Pointer Events）
+    let dragStartX = null, dragDx = 0;
+    main.addEventListener('pointerdown', (e) => {
+      dragStartX = e.clientX; dragDx = 0;
+      main.classList.add('dragging');
+      main.setPointerCapture(e.pointerId);
+    });
+    main.addEventListener('pointermove', (e) => {
+      if (dragStartX === null) return;
+      dragDx = e.clientX - dragStartX;
+    });
+    main.addEventListener('pointerup', () => {
+      main.classList.remove('dragging');
+      if (dragStartX === null) return;
+      if (Math.abs(dragDx) > 50) (dragDx < 0 ? nextSlide : prevSlide)();
+      dragStartX = null;
+    });
+    main.addEventListener('pointercancel', () => { main.classList.remove('dragging'); dragStartX = null; });
+
+    // 键盘
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,21 +1,19 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { CategoryId, TriggerId } from '../../contract/types';
-import { CATEGORIES, TRIGGERS, categoryName, triggerById } from '../../contract/categories';
+import type { CategoryId } from '../../contract/types';
+import { CATEGORIES, categoryName, categorySubs, subDef } from '../../contract/categories';
 import { EFFECTS } from '../../contract/registry';
 import { EffectCard } from '../../components/EffectCard';
 
 const CATEGORY_IDS = new Set<string>(CATEGORIES.map((c) => c.id));
-const TRIGGER_IDS = new Set<string>(TRIGGERS.map((t) => t.id));
 
-function countIn(cat: CategoryId, trigger?: TriggerId): number {
-  return EFFECTS.filter((e) => e.meta.category === cat && (!trigger || e.meta.trigger === trigger))
-    .length;
+function countIn(cat: CategoryId, sub?: string): number {
+  return EFFECTS.filter((e) => e.meta.category === cat && (!sub || e.meta.sub === sub)).length;
 }
 
 /**
- * 首页：左侧两级侧边栏（分类 → 触发方式）+ 右侧效果网格。
- * 当前选择保存在 URL query（?cat=button&trigger=hover&tag=…），从详情页返回时筛选不丢。
+ * 首页：左侧两级侧边栏（分类 → 各分类自声明的二级分类）+ 右侧效果网格。
+ * 当前选择保存在 URL query（?cat=showcase&sub=carousel&tag=…），从详情页返回时筛选不丢。
  */
 export function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -24,18 +22,18 @@ export function Home() {
   const catParam = searchParams.get('cat');
   const cat: CategoryId | null =
     catParam && CATEGORY_IDS.has(catParam) ? (catParam as CategoryId) : null;
-  const triggerParam = searchParams.get('trigger');
-  const trigger: TriggerId | null =
-    cat && triggerParam && TRIGGER_IDS.has(triggerParam) ? (triggerParam as TriggerId) : null;
+  const subParam = searchParams.get('sub');
+  const sub: string | null =
+    cat && subParam && categorySubs(cat).some((s) => s.id === subParam) ? subParam : null;
   const tagParam = searchParams.get('tag');
 
   // 折叠状态是纯视图状态，留在组件内；默认全部展开
   const [collapsed, setCollapsed] = useState<ReadonlySet<CategoryId>>(new Set());
 
-  const select = (next: { cat?: CategoryId | null; trigger?: TriggerId | null; tag?: string | null }) => {
+  const select = (next: { cat?: CategoryId | null; sub?: string | null; tag?: string | null }) => {
     const params = new URLSearchParams();
     if (next.cat) params.set('cat', next.cat);
-    if (next.cat && next.trigger) params.set('trigger', next.trigger);
+    if (next.cat && next.sub) params.set('sub', next.sub);
     if (next.tag) params.set('tag', next.tag);
     setSearchParams(params, { replace: true });
   };
@@ -58,10 +56,8 @@ export function Home() {
 
   const inSelection = useMemo(
     () =>
-      EFFECTS.filter(
-        (e) => (!cat || e.meta.category === cat) && (!trigger || e.meta.trigger === trigger),
-      ),
-    [cat, trigger],
+      EFFECTS.filter((e) => (!cat || e.meta.category === cat) && (!sub || e.meta.sub === sub)),
+    [cat, sub],
   );
 
   const tags = useMemo(() => {
@@ -79,14 +75,15 @@ export function Home() {
 
   const heading = !cat
     ? '全部效果'
-    : trigger
-      ? `${categoryName(cat)} · ${triggerById(trigger).name}`
+    : sub
+      ? `${categoryName(cat)} · ${subDef(cat, sub).name}`
       : categoryName(cat);
-  const subheading = trigger
-    ? triggerById(trigger).desc
-    : cat
-      ? '在左侧按触发方式继续筛选，或直接挑一个'
-      : '左侧按分类与触发方式浏览，或直接挑一个喜欢的';
+  const subheading =
+    cat && sub
+      ? subDef(cat, sub).desc
+      : cat
+        ? '在左侧继续筛选，或直接挑一个'
+        : '左侧按分类浏览，或直接挑一个喜欢的';
 
   return (
     <div className="container home">
@@ -102,10 +99,10 @@ export function Home() {
 
         {CATEGORIES.map((c) => {
           const isOpen = !collapsed.has(c.id);
-          const subs = TRIGGERS.filter((t) => countIn(c.id, t.id) > 0);
+          const subs = c.subs.filter((s) => countIn(c.id, s.id) > 0);
           return (
             <div className="side-group" key={c.id}>
-              <div className={`side-cat${cat === c.id && !trigger ? ' active' : ''}`}>
+              <div className={`side-cat${cat === c.id && !sub ? ' active' : ''}`}>
                 <button
                   type="button"
                   className="side-label"
@@ -129,15 +126,15 @@ export function Home() {
               </div>
               {isOpen && (
                 <div className="side-subs">
-                  {subs.map((t) => (
+                  {subs.map((s) => (
                     <button
                       type="button"
-                      key={t.id}
-                      className={`side-item side-sub${cat === c.id && trigger === t.id ? ' active' : ''}`}
-                      onClick={() => select({ cat: c.id, trigger: t.id })}
+                      key={s.id}
+                      className={`side-item side-sub${cat === c.id && sub === s.id ? ' active' : ''}`}
+                      onClick={() => select({ cat: c.id, sub: s.id })}
                     >
-                      <span>{t.name}</span>
-                      <span className="side-count">{countIn(c.id, t.id)}</span>
+                      <span>{s.name}</span>
+                      <span className="side-count">{countIn(c.id, s.id)}</span>
                     </button>
                   ))}
                 </div>
@@ -185,7 +182,7 @@ export function Home() {
                   type="button"
                   key={t}
                   className={`chip${tag === t ? ' active' : ''}`}
-                  onClick={() => select({ cat, trigger, tag: tag === t ? null : t })}
+                  onClick={() => select({ cat, sub, tag: tag === t ? null : t })}
                 >
                   {t}
                 </button>

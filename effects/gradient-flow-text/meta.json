@@ -2,7 +2,7 @@
   "slug": "gradient-flow-text",
   "name": "渐变流动文字",
   "category": "text",
-  "trigger": "idle",
+  "sub": "idle",
   "tags": ["渐变", "流动", "标题"],
   "summary": "三色渐变在文字内部缓缓流动，字面像有光泽在走",
   "params": [

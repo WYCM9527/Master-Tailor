@@ -63,6 +63,23 @@ describe('renderPrompt', () => {
     expect(text).toContain('自定义颜色 #334455');
   });
 
+  it('images 占位符列出每张图与标题；【技术要求补充】并入技术要求段', () => {
+    const text = renderPrompt({
+      meta: fixtureMeta,
+      promptMd: fixturePromptMd,
+      values: defaultValues(fixtureMeta),
+      bg: { mode: 'dark' },
+      placement: '',
+      includeCode: false,
+    });
+    expect(text).toContain('共 3 张');
+    expect(text).toContain('第 1 张 ./slide-1.jpg，标题「第一张」');
+    expect(text).toContain('第 2 张 ./slide-2.jpg；'); // 空标题不输出「标题」
+    expect(text).toContain('第 3 张 ./slide-3.jpg，标题「三，带逗号」');
+    const tech = text.slice(text.indexOf('【技术要求】'), text.indexOf('【放在哪】'));
+    expect(tech).toContain('aria-roledescription="carousel"');
+  });
+
   it('placement 为空时输出引导占位句并附建议', () => {
     const text = renderPrompt({
       meta: fixtureMeta,

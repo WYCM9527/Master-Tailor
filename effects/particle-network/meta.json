@@ -2,7 +2,7 @@
   "slug": "particle-network",
   "name": "粒子星空连线",
   "category": "canvas",
-  "trigger": "idle",
+  "sub": "idle",
   "tags": ["粒子", "星空", "连线"],
   "summary": "漂浮的粒子在靠近时彼此连线，鼠标像引力源",
   "params": [

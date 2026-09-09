@@ -1,0 +1,134 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "original"
+  },
+  "slug": "thumbs-gallery-carousel",
+  "name": "缩略图画廊",
+  "tags": [
+    "轮播",
+    "画廊",
+    "缩略图"
+  ],
+  "summary": "大图配底部缩略图条，点小图切大图，商品详情页标配",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "图一 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "图二 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "图三 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "图四 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "图五 · 蔷薇暮色"
+        },
+        {
+          "src": "/samples/sample-6.svg",
+          "caption": "图六 · 靛蓝星轨"
+        }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "自动播放间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 4,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "大图切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.45,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "thumbSize",
+      "label": "缩略图高度",
+      "type": "range",
+      "target": "css",
+      "min": 44,
+      "max": 96,
+      "step": 4,
+      "default": 64,
+      "unit": "px"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "主图圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "product",
+      "name": "商品详情",
+      "values": {
+        "interval": 0,
+        "thumbSize": 56,
+        "rounded": 8
+      }
+    },
+    {
+      "id": "gallery",
+      "name": "影集慢放",
+      "values": {
+        "interval": 6,
+        "duration": 0.8,
+        "thumbSize": 80,
+        "accent": "#c084fc"
+      }
+    }
+  ]
+}

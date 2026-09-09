@@ -1,5 +1,5 @@
-import type { Param, ParamValue } from '../contract/types';
-import { IMAGE_PLACEHOLDER } from '../contract/types';
+import type { Param, ParamValue, SlideItem } from '../contract/types';
+import { IMAGE_PLACEHOLDER, slidePlaceholder } from '../contract/types';
 import { fontById } from '../contract/fonts';
 
 /**
@@ -23,7 +23,8 @@ export function toCssValue(param: Param, value: ParamValue, exportMode: boolean)
       return `url("${url}")`;
     }
     case 'text':
-      // schema 已禁止 text 参数注入 CSS，此分支仅作类型完备
+    case 'images':
+      // schema 已禁止 text / images 参数注入 CSS，此分支仅作类型完备
       return JSON.stringify(String(value));
   }
 }
@@ -32,6 +33,15 @@ export function toCssValue(param: Param, value: ParamValue, exportMode: boolean)
 export function toConfigValue(param: Param, value: ParamValue, exportMode: boolean): string {
   if (param.type === 'image') {
     return JSON.stringify(exportMode ? IMAGE_PLACEHOLDER : String(value));
+  }
+  if (param.type === 'images') {
+    // 单行对象数组；导出模式下图片地址替换为 ./slide-N.jpg 占位
+    const slides = value as SlideItem[];
+    const out = slides.map((s, i) => ({
+      src: exportMode ? slidePlaceholder(i) : s.src,
+      caption: s.caption,
+    }));
+    return JSON.stringify(out);
   }
   if (param.type === 'range') return String(Number(value));
   if (param.type === 'toggle') return value ? 'true' : 'false';

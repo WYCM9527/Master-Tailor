@@ -1,0 +1,207 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Ken Burns 经典纪录片技法（CSS 实现为通用模式）",
+    "url": "https://oliverjam.com/articles/ken-burns-hero-image",
+    "license": "思路参考，代码自写"
+  },
+  "slug": "kenburns-carousel",
+  "name": "Ken Burns 慢推拉",
+  "tags": [
+    "轮播",
+    "氛围",
+    "推拉"
+  ],
+  "summary": "每张图在停留期间被镜头缓缓推近，纪录片式的呼吸感",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "第一帧 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "第二帧 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "第三帧 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "第四帧 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "第五帧 · 蔷薇暮色"
+        }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "自动播放间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 7,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 1.0,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "zoom",
+      "label": "推拉幅度",
+      "type": "range",
+      "target": "css",
+      "min": 1.05,
+      "max": 1.35,
+      "step": 0.01,
+      "default": 1.16,
+      "help": "每张图停留期间放大到的倍数"
+    },
+    {
+      "key": "kbtime",
+      "label": "推拉时长",
+      "type": "range",
+      "target": "css",
+      "min": 5,
+      "max": 16,
+      "step": 0.5,
+      "default": 9,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "建议比自动播放间隔略长"
+    },
+    {
+      "key": "ratio",
+      "label": "容器宽高比",
+      "type": "select",
+      "target": "css",
+      "options": [
+        {
+          "value": "16 / 9",
+          "label": "16:9 宽屏"
+        },
+        {
+          "value": "21 / 9",
+          "label": "21:9 超宽"
+        },
+        {
+          "value": "4 / 3",
+          "label": "4:3 标准"
+        },
+        {
+          "value": "1 / 1",
+          "label": "1:1 方形"
+        }
+      ],
+      "default": "16 / 9"
+    },
+    {
+      "key": "pager",
+      "label": "分页器样式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "bullets",
+          "label": "圆点"
+        },
+        {
+          "value": "fraction",
+          "label": "数字（3 / 5）"
+        },
+        {
+          "value": "progress",
+          "label": "进度条"
+        },
+        {
+          "value": "none",
+          "label": "不显示"
+        }
+      ],
+      "default": "progress"
+    },
+    {
+      "key": "arrows",
+      "label": "显示左右箭头",
+      "type": "toggle",
+      "target": "config",
+      "default": false
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "cinema",
+      "name": "电影感",
+      "values": {
+        "ratio": "21 / 9",
+        "interval": 9,
+        "kbtime": 12,
+        "zoom": 1.22,
+        "pager": "none"
+      }
+    },
+    {
+      "id": "lively",
+      "name": "轻快相册",
+      "values": {
+        "interval": 4,
+        "duration": 0.6,
+        "kbtime": 6,
+        "zoom": 1.1,
+        "pager": "bullets",
+        "arrows": true
+      }
+    }
+  ]
+}

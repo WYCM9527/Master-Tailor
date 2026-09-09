@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { categorySubs } from './categories';
 
 /**
  * meta.json 的 zod 校验 schema。
@@ -79,6 +80,27 @@ const imageParam = z.object({
   default: z.string().startsWith('/samples/', '图片默认值必须是站内示例图（/samples/…）'),
 });
 
+const slideItem = z.object({
+  src: z.string().startsWith('/samples/', '图片列表默认值必须是站内示例图（/samples/…）'),
+  caption: z.string().max(30),
+});
+
+/** 图片列表参数只允许 config：多图必然驱动 DOM 结构 */
+const imagesParam = z
+  .object({
+    ...baseParam,
+    type: z.literal('images'),
+    target: z.literal('config'),
+    min: z.number().int().min(1),
+    max: z.number().int().max(12),
+    captions: z.boolean(),
+    default: z.array(slideItem),
+  })
+  .refine((p) => p.min <= p.max, { message: 'images 参数 min 必须 ≤ max' })
+  .refine((p) => p.default.length >= p.min && p.default.length <= p.max, {
+    message: 'images 默认张数必须落在 [min, max] 内',
+  });
+
 export const paramSchema = z.discriminatedUnion('type', [
   colorParam,
   rangeParam,
@@ -87,14 +109,15 @@ export const paramSchema = z.discriminatedUnion('type', [
   textParam,
   fontParam,
   imageParam,
+  imagesParam,
 ]);
 
 export const effectMetaSchema = z
   .object({
     slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'slug 必须是 kebab-case'),
     name: z.string().min(2),
-    category: z.enum(['background', 'button', 'text', 'card', 'loading', 'canvas']),
-    trigger: z.enum(['idle', 'hover', 'click', 'scroll']),
+    category: z.enum(['background', 'button', 'text', 'card', 'loading', 'canvas', 'showcase']),
+    sub: z.string().min(1),
     tags: z.array(z.string().min(1)).min(1).max(6),
     summary: z.string().min(6).max(60),
     params: z.array(paramSchema).min(1).max(10),
@@ -103,7 +126,10 @@ export const effectMetaSchema = z
         z.object({
           id: z.string().regex(/^[a-z0-9-]+$/),
           name: z.string().min(1),
-          values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
+          values: z.record(
+            z.string(),
+            z.union([z.string(), z.number(), z.boolean(), z.array(slideItem)]),
+          ),
         }),
       )
       .min(2)
@@ -118,6 +144,13 @@ export const effectMetaSchema = z
     promptEn: z.string().optional(),
   })
   .superRefine((meta, ctx) => {
+    const subs = categorySubs(meta.category);
+    if (!subs.some((s) => s.id === meta.sub)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `sub「${meta.sub}」不在分类「${meta.category}」的子类表（${subs.map((s) => s.id).join(' / ')}）中`,
+      });
+    }
     const keys = new Set(meta.params.map((p) => p.key));
     if (keys.size !== meta.params.length) {
       ctx.addIssue({ code: 'custom', message: '参数 key 不能重复' });

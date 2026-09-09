@@ -1,4 +1,5 @@
-import type { BgSetting, EffectMeta, EffectState, ParamValue, Values } from '../contract/types';
+import type { BgSetting, EffectMeta, EffectState, ParamValue, SlideItem, Values } from '../contract/types';
+import { sampleByIndex, sampleIndex } from '../contract/samples';
 
 /**
  * 详情页状态 <-> URL query 的双向编解码。
@@ -12,7 +13,10 @@ const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 export function defaultValues(meta: EffectMeta): Values {
   const values: Values = {};
-  for (const p of meta.params) values[p.key] = p.default;
+  for (const p of meta.params) {
+    // 图片列表是对象数组，必须深拷贝，避免面板编辑污染 meta 里的默认值
+    values[p.key] = p.type === 'images' ? p.default.map((s) => ({ ...s })) : p.default;
+  }
   return values;
 }
 
@@ -24,7 +28,11 @@ export function defaultState(meta: EffectMeta): EffectState {
 export function applyPreset(meta: EffectMeta, presetId: string): Values {
   const preset = meta.presets.find((p) => p.id === presetId);
   const values = defaultValues(meta);
-  if (preset) Object.assign(values, preset.values);
+  if (preset) {
+    for (const [k, v] of Object.entries(preset.values)) {
+      values[k] = Array.isArray(v) ? v.map((s) => ({ ...s })) : v;
+    }
+  }
   return values;
 }
 
@@ -33,11 +41,52 @@ function encodeValue(v: ParamValue): string {
   return String(v);
 }
 
+/**
+ * 图片列表编码为 `示例图索引:标题,示例图索引:标题`（标题 encodeURIComponent）。
+ * 上传的 blob 地址无法进 URL，槽位回退第一张示例图。
+ */
+function encodeSlides(slides: SlideItem[]): string {
+  return slides
+    .map((s) => {
+      const idx = Math.max(0, sampleIndex(s.src));
+      return `${idx}:${encodeURIComponent(s.caption)}`;
+    })
+    .join(',');
+}
+
+function decodeSlides(raw: string, min: number, max: number): SlideItem[] | undefined {
+  const items = raw.split(',').slice(0, max);
+  if (items.length < min) return undefined;
+  const slides: SlideItem[] = [];
+  for (const item of items) {
+    const sep = item.indexOf(':');
+    const idxRaw = sep === -1 ? item : item.slice(0, sep);
+    const idx = Number(idxRaw);
+    if (!Number.isInteger(idx) || idx < 0) return undefined;
+    let caption: string;
+    try {
+      caption = sep === -1 ? '' : decodeURIComponent(item.slice(sep + 1)).slice(0, 30);
+    } catch {
+      return undefined;
+    }
+    slides.push({ src: sampleByIndex(idx), caption });
+  }
+  return slides;
+}
+
 export function encodeState(meta: EffectMeta, state: EffectState): URLSearchParams {
   const sp = new URLSearchParams();
   for (const p of meta.params) {
     const v = state.values[p.key];
     if (v === undefined || v === p.default) continue;
+    if (p.type === 'images') {
+      const slides = v as SlideItem[];
+      // 与默认值等价（把 blob 槽位按回退规则归一后比较）则不写
+      const encoded = encodeSlides(slides);
+      if (encoded === encodeSlides(p.default)) continue;
+      sp.set(p.key, encoded);
+      continue;
+    }
     // 用户上传的图片（blob: 地址）无法进 URL，跳过；站内示例图路径可以
     if (p.type === 'image' && !String(v).startsWith('/samples/')) continue;
     sp.set(p.key, encodeValue(v));
@@ -70,6 +119,8 @@ function decodeValue(meta: EffectMeta, key: string, raw: string): ParamValue | u
       return raw;
     case 'image':
       return raw.startsWith('/samples/') ? raw : undefined;
+    case 'images':
+      return decodeSlides(raw, p.min, p.max);
   }
 }
 

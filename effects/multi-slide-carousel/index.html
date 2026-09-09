@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多张并排轮播</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #f9cf00;    /* 强调色：分页圆点与箭头悬停 */
+    --mt-duration: 0.5s;     /* 滚动过渡时长 */
+    --mt-gap: 16px;          /* 卡片间距 */
+    --mt-rounded: 14px;      /* 卡片圆角 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-carousel {
+    position: relative;
+    width: min(780px, 94vw);
+    outline: none;
+  }
+  .mt-carousel:focus-visible { outline: 2px solid var(--mt-accent); outline-offset: 4px; }
+
+  .mt-viewport {
+    overflow: hidden;
+    touch-action: pan-y;
+    cursor: grab;
+  }
+  .mt-viewport.dragging { cursor: grabbing; }
+
+  /* 轨道：所有卡片排成一行，滚动就是平移它 */
+  .mt-track {
+    display: flex;
+    gap: var(--mt-gap);
+    transition: transform var(--mt-duration) cubic-bezier(0.33, 1, 0.68, 1);
+    will-change: transform;
+  }
+  .mt-track.no-anim { transition: none; }
+
+  .mt-slide {
+    flex: none;
+    /* 每张宽度 = (100% - 间距 ×(可见数-1)) / 可见数，由 JS 按 CONFIG.perView 写入 --mt-per */
+    width: calc((100% - var(--mt-gap) * (var(--mt-per) - 1)) / var(--mt-per));
+    aspect-ratio: 4 / 3;
+    margin: 0;
+    position: relative;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1c2c, #2a2f4a);
+  }
+  .mt-slide img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .mt-slide .mt-caption {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 30px 12px 10px;
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 600;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.62));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mt-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 38px; height: 38px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(10, 10, 15, 0.55);
+    color: #fff;
+    font-size: 17px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .mt-arrow:hover { background: var(--mt-accent); color: #191400; }
+  .mt-arrow.prev { left: -14px; }
+  .mt-arrow.next { right: -14px; }
+
+  .mt-pager { margin-top: 14px; display: flex; justify-content: center; gap: 7px; }
+  .mt-pager .dot {
+    width: 8px; height: 8px;
+    border: none; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    cursor: pointer; padding: 0;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .mt-pager .dot.active { background: var(--mt-accent); transform: scale(1.25); }
+
+  /* 用户开启「减少动态效果」：滚动瞬间到位、不自动播放（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-track { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-carousel" id="mtRoot"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.svg","caption":"卡片一"},{"src":"/samples/sample-2.svg","caption":"卡片二"},{"src":"/samples/sample-3.svg","caption":"卡片三"},{"src":"/samples/sample-4.svg","caption":"卡片四"},{"src":"/samples/sample-5.svg","caption":"卡片五"},{"src":"/samples/sample-6.svg","caption":"卡片六"}], // 卡片列表
+    perView: 3,   // 同屏可见张数（2-5）
+    interval: 3.5, // 自动滚动间隔（秒，0 为不自动滚动）
+    arrows: true, // 是否显示左右箭头
+  };
+
+  (function () {
+    const root = document.getElementById('mtRoot');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const slides = CONFIG.slides;
+    const total = slides.length;
+    const per = Math.min(CONFIG.perView, total);
+    let index = 0; // 当前最左侧的真实卡序号
+
+    root.setAttribute('role', 'region');
+    root.setAttribute('aria-roledescription', 'carousel');
+    root.setAttribute('aria-label', '多张并排轮播');
+    root.setAttribute('tabindex', '0');
+    root.style.setProperty('--mt-per', String(per));
+
+    const viewport = document.createElement('div');
+    viewport.className = 'mt-viewport';
+    const track = document.createElement('div');
+    track.className = 'mt-track';
+    viewport.appendChild(track);
+    root.appendChild(viewport);
+
+    function makeSlide(s, i, isClone) {
+      const el = document.createElement('figure');
+      el.className = 'mt-slide';
+      el.setAttribute('role', 'group');
+      el.setAttribute('aria-roledescription', 'slide');
+      el.setAttribute('aria-label', '第 ' + (i + 1) + ' 张，共 ' + total + ' 张');
+      if (isClone) el.setAttribute('aria-hidden', 'true');
+      const img = document.createElement('img');
+      img.src = s.src;
+      img.alt = s.caption || '第 ' + (i + 1) + ' 张卡片';
+      img.loading = 'lazy';
+      el.appendChild(img);
+      if (s.caption) {
+        const cap = document.createElement('div');
+        cap.className = 'mt-caption';
+        cap.textContent = s.caption;
+        el.appendChild(cap);
+      }
+      return el;
+    }
+
+    // 无缝循环：真实卡两侧各克隆 per 张，滑进克隆区后瞬跳回真实区
+    slides.slice(-per).forEach((s, k) => track.appendChild(makeSlide(s, total - per + k, true)));
+    slides.forEach((s, i) => track.appendChild(makeSlide(s, i, false)));
+    slides.slice(0, per).forEach((s, k) => track.appendChild(makeSlide(s, k, true)));
+
+    // 位置 = -(index + per) 个「卡宽 + 间距」；用像素算保证 gap 精确
+    function slideStride() {
+      const first = track.children[0];
+      const gap = parseFloat(getComputedStyle(track).gap) || 0;
+      return first.getBoundingClientRect().width + gap;
+    }
+    function render(noAnim) {
+      track.classList.toggle('no-anim', Boolean(noAnim));
+      track.style.transform = 'translateX(' + (-(index + per) * slideStride()) + 'px)';
+      if (noAnim) void track.offsetWidth; // 立刻生效，下一次恢复过渡
+      track.classList.remove('no-anim');
+      updatePager();
+    }
+
+    let sliding = false;
+    function goTo(next) {
+      if (sliding) return;
+      sliding = true;
+      index = next;
+      render(false);
+    }
+    // 过渡结束：若滑进了克隆区，瞬跳回真实区同视觉位置
+    track.addEventListener('transitionend', (e) => {
+      if (e.target !== track) return;
+      sliding = false;
+      if (index < 0) { index += total; render(true); }
+      if (index >= total) { index -= total; render(true); }
+    });
+    if (reduceMotion) {
+      // 无过渡时不会触发 transitionend，直接在切换后归位
+      setInterval(() => {
+        if (index < 0) { index += total; render(true); }
+        if (index >= total) { index -= total; render(true); }
+        sliding = false;
+      }, 120);
+    }
+
+    const nextSlide = () => goTo(index + 1);
+    const prevSlide = () => goTo(index - 1);
+
+    // 自动滚动：悬停 / 聚焦 / 后台暂停；reduced-motion 不启动
+    let timer = null;
+    function play() {
+      if (timer || CONFIG.interval <= 0 || reduceMotion || total <= per) return;
+      timer = setInterval(nextSlide, CONFIG.interval * 1000);
+    }
+    function pause() { clearInterval(timer); timer = null; }
+    root.addEventListener('mouseenter', pause);
+    root.addEventListener('mouseleave', play);
+    root.addEventListener('focusin', pause);
+    root.addEventListener('focusout', play);
+    document.addEventListener('visibilitychange', () => (document.hidden ? pause() : play()));
+    play();
+
+    // 拖拽 / 触摸（Pointer Events）
+    let dragStartX = null, dragDx = 0;
+    viewport.addEventListener('pointerdown', (e) => {
+      dragStartX = e.clientX; dragDx = 0;
+      viewport.classList.add('dragging');
+      viewport.setPointerCapture(e.pointerId);
+    });
+    viewport.addEventListener('pointermove', (e) => {
+      if (dragStartX === null) return;
+      dragDx = e.clientX - dragStartX;
+    });
+    viewport.addEventListener('pointerup', () => {
+      viewport.classList.remove('dragging');
+      if (dragStartX === null) return;
+      if (Math.abs(dragDx) > 50) (dragDx < 0 ? nextSlide : prevSlide)();
+      dragStartX = null;
+    });
+    viewport.addEventListener('pointercancel', () => { viewport.classList.remove('dragging'); dragStartX = null; });
+
+    // 键盘
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+    });
+
+    // 箭头
+    if (CONFIG.arrows && total > per) {
+      for (const [cls, label, fn] of [['prev', '上一组', prevSlide], ['next', '下一组', nextSlide]]) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mt-arrow ' + cls;
+        btn.setAttribute('aria-label', label);
+        btn.textContent = cls === 'prev' ? '‹' : '›';
+        btn.addEventListener('click', fn);
+        root.appendChild(btn);
+      }
+    }
+
+    // 分页圆点：每个真实卡一个
+    const pager = document.createElement('div');
+    pager.className = 'mt-pager';
+    const dots = slides.map((_s, i) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'dot';
+      dot.setAttribute('aria-label', '跳到第 ' + (i + 1) + ' 张');
+      dot.addEventListener('click', () => goTo(i));
+      pager.appendChild(dot);
+      return dot;
+    });
+    root.appendChild(pager);
+    function updatePager() {
+      const active = ((index % total) + total) % total;
+      dots.forEach((d, i) => d.classList.toggle('active', i === active));
+    }
+
+    // 窗口变化后按新尺寸无动画重排
+    addEventListener('resize', () => render(true));
+    render(true);
+  })();
+</script>
+</body>
+</html>

@@ -26,12 +26,17 @@ function replaceCssVar(html: string, key: string, value: string): string {
   return html.replace(re, `$1${value}$2`);
 }
 
-/** 在 const CONFIG = { ... }; 块内替换某个 key 的值（保留行内注释） */
+/**
+ * 在 const CONFIG = { ... }; 块内替换某个 key 的值（保留行内注释）。
+ * 值可以是：单行数组字面量（images 参数，注释里不要出现 ] ）、字符串、其他标量。
+ */
 function replaceConfigKey(html: string, key: string, literal: string): string {
   const blockRe = /const CONFIG = \{[\s\S]*?\n\s*\};/;
   const block = html.match(blockRe);
   if (!block) return html;
-  const entryRe = new RegExp(`(\\b${key}\\s*:\\s*)("(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|[^,\\n]*)`);
+  const entryRe = new RegExp(
+    `(\\b${key}\\s*:\\s*)(\\[.*\\]|"(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|[^,\\n]*)`,
+  );
   const newBlock = block[0].replace(entryRe, (_m, head: string) => `${head}${literal}`);
   return html.replace(blockRe, () => newBlock);
 }
@@ -49,6 +54,9 @@ function exportHeader(meta: EffectMeta, values: Values): string {
   const imageParams = meta.params.filter((p) => p.type === 'image');
   if (imageParams.length > 0) {
     lines.push(`图片使用了占位路径 ./your-image.jpg，请替换为你自己的图片路径。`);
+  }
+  if (meta.params.some((p) => p.type === 'images')) {
+    lines.push(`图片使用了占位路径 ./slide-1.jpg、./slide-2.jpg …，请按顺序替换为你自己的图片路径。`);
   }
   const fontParams = meta.params.filter((p) => p.type === 'font');
   for (const p of fontParams) {
