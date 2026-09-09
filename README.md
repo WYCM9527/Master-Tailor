@@ -6,7 +6,7 @@
 
 ## 使用方式（给访客）
 
-1. **挑一个效果**：首页卡片全部是实时渲染的迷你预览
+1. **挑一个效果**：左侧两级侧边栏按「分类 → 触发方式（默认效果 / 鼠标悬浮 / 点击效果 / 滚动触发）」浏览，卡片全部是实时渲染的迷你预览
 2. **调成你要的样子**：右侧面板改颜色、拖滑块，预览 / prompt / 代码三者实时同步
 3. **复制 prompt 粘给你的 AI**：Trae、Qoder、Cursor、Claude Code、扣子编程、CodeBuddy、豆包网页版……任何能写代码的 AI 都可以
 
@@ -36,14 +36,15 @@ pnpm build          # validate + tsc + vite build + 生成 dist/prompts/*.md
 
 ```text
 effects/<slug>/
-  meta.json    # 名称 / 分类 / 标签 / 参数 schema / 预设 / thumb 模式 / 来源
+  meta.json    # 名称 / 分类 / 触发方式 / 标签 / 参数 schema / 预设 / thumb 模式 / 来源
   index.html   # 原生单文件实现（零依赖、零外链）
   prompt.md    # 中文效果描述模板（{{key}} 占位符引用参数）
 ```
 
 ### meta.json
 
-- `category`：`background | button | text | card | loading | canvas`
+- `category`：`background | button | text | card | loading | canvas`（侧边栏一级）
+- `trigger`：`idle | hover | click | scroll`（侧边栏二级：默认效果 / 鼠标悬浮 / 点击效果 / 滚动触发）
 - `params[]`：7 种控件类型 `color | range | toggle | select | text | font | image`
   - `target: "css"` → 值注入 `:root` 的 `--mt-<key>`，调参时**热更新**（动画不重置）
   - `target: "config"` → 值注入 JS 顶部 `const CONFIG` 块，调参时**防抖重建**预览

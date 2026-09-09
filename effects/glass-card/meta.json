@@ -2,6 +2,7 @@
   "slug": "glass-card",
   "name": "玻璃拟态卡片",
   "category": "card",
+  "trigger": "idle",
   "tags": ["玻璃拟态", "毛玻璃", "悬浮"],
   "summary": "磨砂玻璃卡片悬浮在图片上，背景透出朦胧色彩",
   "params": [

@@ -10,6 +10,15 @@
 export type CategoryId = 'background' | 'button' | 'text' | 'card' | 'loading' | 'canvas';
 
 /**
+ * 触发方式（侧边栏的第二级分类）：
+ * - idle   默认效果：不需要任何操作，一直在动或静态呈现
+ * - hover  鼠标悬浮：鼠标移入、悬停或移动时触发
+ * - click  点击效果：点击 / 按下时触发
+ * - scroll 滚动触发：页面滚动到位置时触发
+ */
+export type TriggerId = 'idle' | 'hover' | 'click' | 'scroll';
+
+/**
  * 参数注入目标：
  * - css    → 注入 :root 中的 --mt-<key> 变量，调参时热更新，动画不重置
  * - config → 注入 JS 顶部 const CONFIG 块，调参时防抖重建 iframe
@@ -110,6 +119,8 @@ export interface EffectMeta {
   slug: string;
   name: string;
   category: CategoryId;
+  /** 触发方式：决定效果在侧边栏里归入哪个二级分类 */
+  trigger: TriggerId;
   tags: string[];
   summary: string;
   params: Param[];

@@ -2,6 +2,7 @@
   "slug": "tilt-card",
   "name": "3D 倾斜卡片",
   "category": "card",
+  "trigger": "hover",
   "tags": ["3D", "鼠标跟随", "光泽"],
   "summary": "卡片跟着鼠标立体倾斜，表面滑过一层高光",
   "params": [

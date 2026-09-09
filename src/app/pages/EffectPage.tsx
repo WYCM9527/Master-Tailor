@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import type { Effect, EffectSource, EffectState } from '../../contract/types';
 import { BG_DARK, BG_LIGHT, bgColor } from '../../contract/types';
-import { categoryName } from '../../contract/categories';
+import { categoryName, triggerById } from '../../contract/categories';
 import { FONTS_CSS_HREF } from '../../contract/fonts';
 import { EFFECT_BY_SLUG } from '../../contract/registry';
 import { bakeCode, collectCssVars, configSignature } from '../../engine/bakeCode';
@@ -133,11 +133,13 @@ function EffectPage({ effect }: { effect: Effect }) {
   return (
     <div className="container effect-page">
       <div className="effect-head">
-        <Link to="/" className="back-link">
-          ← 全部效果
+        {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
+        <Link to={`/?cat=${meta.category}&trigger=${meta.trigger}`} className="back-link">
+          ← {categoryName(meta.category)} · {triggerById(meta.trigger).name}
         </Link>
         <h1 className="effect-title">{meta.name}</h1>
         <span className="card-cat">{categoryName(meta.category)}</span>
+        <span className="card-cat">{triggerById(meta.trigger).name}</span>
         <div className="effect-tags">
           {meta.tags.map((t) => (
             <span className="effect-tag" key={t}>

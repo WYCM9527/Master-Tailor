@@ -2,6 +2,7 @@
   "slug": "skeleton-shimmer",
   "name": "骨架屏扫光",
   "category": "loading",
+  "trigger": "idle",
   "tags": ["loading", "骨架屏", "占位"],
   "summary": "内容加载前的灰色骨架，一道高光周期性扫过",
   "params": [

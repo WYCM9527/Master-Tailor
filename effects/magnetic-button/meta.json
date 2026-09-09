@@ -2,6 +2,7 @@
   "slug": "magnetic-button",
   "name": "磁吸按钮",
   "category": "button",
+  "trigger": "hover",
   "tags": ["鼠标跟随", "微交互"],
   "summary": "鼠标靠近时按钮被轻轻吸过去，离开后弹回原位",
   "params": [

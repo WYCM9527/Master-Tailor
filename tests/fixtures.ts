@@ -5,6 +5,7 @@ export const fixtureMeta: EffectMeta = {
   slug: 'demo-effect',
   name: '演示效果',
   category: 'background',
+  trigger: 'idle',
   tags: ['测试'],
   summary: '一个覆盖各种参数类型的演示效果',
   params: [

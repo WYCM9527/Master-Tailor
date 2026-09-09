@@ -94,6 +94,7 @@ export const effectMetaSchema = z
     slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'slug 必须是 kebab-case'),
     name: z.string().min(2),
     category: z.enum(['background', 'button', 'text', 'card', 'loading', 'canvas']),
+    trigger: z.enum(['idle', 'hover', 'click', 'scroll']),
     tags: z.array(z.string().min(1)).min(1).max(6),
     summary: z.string().min(6).max(60),
     params: z.array(paramSchema).min(1).max(10),

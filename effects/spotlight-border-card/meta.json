@@ -2,6 +2,7 @@
   "slug": "spotlight-border-card",
   "name": "聚光边框卡片",
   "category": "card",
+  "trigger": "hover",
   "tags": ["描边", "鼠标跟随", "发光"],
   "summary": "鼠标靠近时，卡片边框上亮起一段跟随鼠标的光",
   "params": [

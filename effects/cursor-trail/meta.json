@@ -2,6 +2,7 @@
   "slug": "cursor-trail",
   "name": "鼠标流光拖尾",
   "category": "canvas",
+  "trigger": "hover",
   "tags": ["鼠标跟随", "流光", "拖尾"],
   "summary": "一条发光的丝带跟着鼠标游走，尾部渐渐消散",
   "params": [

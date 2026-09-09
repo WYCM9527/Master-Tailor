@@ -2,6 +2,7 @@
   "slug": "dot-grid-spotlight",
   "name": "点阵网格聚光",
   "category": "background",
+  "trigger": "hover",
   "tags": ["网格", "鼠标跟随", "科技感"],
   "summary": "均匀点阵背景，鼠标移到哪里哪里亮起一圈聚光",
   "params": [

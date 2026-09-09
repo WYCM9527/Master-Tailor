@@ -2,6 +2,7 @@
   "slug": "aurora-gradient",
   "name": "极光渐变流光",
   "category": "background",
+  "trigger": "idle",
   "tags": ["渐变", "氛围", "流动"],
   "summary": "缓慢流动的多色极光背景，适合首屏与登录页",
   "params": [

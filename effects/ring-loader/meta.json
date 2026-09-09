@@ -2,6 +2,7 @@
   "slug": "ring-loader",
   "name": "环形加载动画",
   "category": "loading",
+  "trigger": "idle",
   "tags": ["loading", "旋转", "等待"],
   "summary": "三种样式可选的旋转加载指示器：渐变环 / 点阵 / 双弧",
   "params": [
