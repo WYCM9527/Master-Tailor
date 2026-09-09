@@ -578,8 +578,11 @@
 .d-back {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  padding: 14px var(--pad-s);
   font-size: var(--fs-small);
+  white-space: nowrap;
   transition:
     background var(--ease),
     color var(--ease);
@@ -604,9 +607,17 @@
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
-.d-title p {
+.d-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+  padding: 14px var(--pad);
+}
+.d-summary p {
   color: var(--fg-dim);
   font-size: var(--fs-small);
+  line-height: 1.5;
 }
 .d-meta {
   display: flex;
@@ -625,6 +636,7 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  min-height: 56px;
   padding: 10px var(--pad);
 }
 .d-toolbar-group {
@@ -699,9 +711,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px var(--pad-s);
+  padding: 10px var(--pad-s);
   border-bottom: 1px solid var(--line);
-  min-height: 52px;
+  min-height: 56px;
 }
 .blk-title {
   display: flex;
@@ -718,17 +730,10 @@
   font-weight: 400;
 }
 
-/* Prompt Cell 底部操作：主按钮 + 仅描述开关 */
-.prompt-foot {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: var(--pad-s);
-  border-top: 1px solid var(--line);
-}
 .blk-actions {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
 }
 
 /* prompt */
@@ -1156,13 +1161,16 @@ input[type='color']::-webkit-color-swatch {
     grid-column: span 9;
   }
   .d-back {
-    grid-column: span 3;
+    grid-column: span 2;
   }
   .d-title {
-    grid-column: span 9;
+    grid-column: span 10;
+  }
+  .d-summary {
+    grid-column: span 6;
   }
   .d-meta {
-    grid-column: span 12;
+    grid-column: span 6;
   }
   .d-left {
     grid-column: span 12;
@@ -1218,10 +1226,19 @@ input[type='color']::-webkit-color-swatch {
     outline-color: var(--line-strong);
   }
   .d-back {
-    grid-column: span 12;
+    grid-column: span 3;
   }
   .d-title {
+    grid-column: span 9;
+  }
+  .d-summary {
     grid-column: span 12;
+  }
+  .d-meta {
+    grid-column: span 12;
+  }
+  .blk-head {
+    flex-wrap: wrap;
   }
   .howto-step {
     grid-column: span 12;

@@ -108,12 +108,19 @@ function EffectPage({ effect }: { effect: Effect }) {
       {/* 详情页不渲染站点 Header，这一行就是页头：返回 | 标题 | 标签 */}
       <div className="g12 first d-head">
         {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
-        <Link to={`/effects?cat=${meta.category}&sub=${meta.sub}`} className="cell span-2 d-back">
+        <Link
+          to={`/effects?cat=${meta.category}&sub=${meta.sub}`}
+          className="cell span-1 d-back"
+          title={`返回 ${categoryName(meta.category)} · ${subName}`}
+        >
           <span className="arrow">←</span>
-          {categoryName(meta.category)} · {subName}
+          返回
         </Link>
-        <div className="cell span-6 d-title">
+        <div className="cell span-4 d-title">
           <h1>{meta.name}</h1>
+        </div>
+        <div className="cell span-3 d-summary">
+          <span className="mono">简介</span>
           <p>{meta.summary}</p>
         </div>
         <div className="cell span-4 d-meta">
