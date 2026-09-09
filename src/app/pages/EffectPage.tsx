@@ -4,7 +4,7 @@ import type { Effect, EffectSource, EffectState } from '../../contract/types';
 import { BG_DARK, BG_LIGHT, bgColor } from '../../contract/types';
 import { categoryName, subDef } from '../../contract/categories';
 import { FONTS_CSS_HREF } from '../../contract/fonts';
-import { EFFECTS, EFFECT_BY_SLUG, effectNo } from '../../contract/registry';
+import { EFFECT_BY_SLUG, effectNo } from '../../contract/registry';
 import { bakeCode, collectCssVars, configSignature } from '../../engine/bakeCode';
 import { renderPrompt } from '../../engine/renderPrompt';
 import { decodeState, encodeState } from '../../engine/urlState';
@@ -129,7 +129,8 @@ function EffectPage({ effect }: { effect: Effect }) {
 
   return (
     <>
-      <div className="g12 d-head">
+      {/* 详情页不渲染站点 Header，这一行就是页头：返回 | 标题 | 标签 */}
+      <div className="g12 first d-head">
         {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
         <Link to={`/effects?cat=${meta.category}&sub=${meta.sub}`} className="cell span-2 d-back">
           <span className="arrow">←</span>
@@ -142,28 +143,14 @@ function EffectPage({ effect }: { effect: Effect }) {
           <h1>{meta.name}</h1>
           <p>{meta.summary}</p>
         </div>
-        <div className="span-4 sub d-meta">
-          <div className="cell span-4">
-            <span className="mono">Index</span>
-            <span className="val mono">
-              {effectNo(effect)} / {String(EFFECTS.length).padStart(3, '0')}
-            </span>
-          </div>
-          <div className="cell span-4">
-            <span className="mono">Category</span>
-            <span className="val">
-              {categoryName(meta.category)} · {subName}
-            </span>
-          </div>
-          <div className="cell span-4">
-            <span className="mono">Tags</span>
-            <div className="tag-row">
-              {meta.tags.map((t) => (
-                <span className="tag" key={t}>
-                  {t}
-                </span>
-              ))}
-            </div>
+        <div className="cell span-4 d-meta">
+          <span className="mono">Tags</span>
+          <div className="tag-row">
+            {meta.tags.map((t) => (
+              <span className="tag" key={t}>
+                {t}
+              </span>
+            ))}
           </div>
         </div>
       </div>

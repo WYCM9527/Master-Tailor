@@ -19,10 +19,12 @@ function ScrollToTop() {
 }
 
 export function App() {
+  // 详情页不要站点 Header：它自己的第一行（返回 | 标题 | 标签）就是页头
+  const isDetail = useLocation().pathname.startsWith('/e/');
   return (
     <>
       <ScrollToTop />
-      <TopBar />
+      {!isDetail && <TopBar />}
       <main>
         <Routes>
           <Route path="/" element={<Home />} />

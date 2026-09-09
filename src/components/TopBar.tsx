@@ -1,19 +1,11 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { randomSlug } from '../contract/registry';
 
 export const HOWTO_ID = 'howto';
 
-/** Header：整宽 12 栏网格行——品牌 2 栏（与效果页侧栏对齐）| slogan 4 栏 | 三个动作 Cell 各 2 栏 */
+/** Header：整宽 12 栏网格行——品牌 2 栏（与效果页侧栏对齐）| slogan 6 栏 | 两个动作 Cell 各 2 栏。详情页不渲染。 */
 export function TopBar() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const goRandom = () => {
-    // TopBar 位于 Routes 之外，从路径里解析当前 slug 以避免随机到同一个
-    const current = location.pathname.match(/^\/e\/([^/]+)/)?.[1];
-    const next = randomSlug(current);
-    if (next) navigate(`/e/${next}`);
-  };
 
   const goHowTo = () => {
     if (location.pathname === '/') {
@@ -30,7 +22,7 @@ export function TopBar() {
         裁缝大师
         <span className="mono">Master-Tailor</span>
       </Link>
-      <div className="cell span-4 hdr-slogan">
+      <div className="cell span-6 hdr-slogan">
         前端效果图鉴 · 挑一个，调一调，复制 prompt 粘给你的 AI
       </div>
       <Link
@@ -43,10 +35,6 @@ export function TopBar() {
       <button type="button" className="cell span-2 hdr-btn" onClick={goHowTo}>
         怎么用
         <span className="arrow">↓</span>
-      </button>
-      <button type="button" className="cell span-2 hdr-btn" onClick={goRandom}>
-        随机来一个
-        <span className="arrow">→</span>
       </button>
     </header>
   );

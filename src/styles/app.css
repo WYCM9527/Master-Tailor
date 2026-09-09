@@ -629,15 +629,11 @@
   color: var(--fg-dim);
   font-size: var(--fs-small);
 }
-.d-meta .cell {
+.d-meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-height: 56px;
+  gap: 10px;
   justify-content: center;
-}
-.d-meta .val {
-  font-size: var(--fs-small);
 }
 .d-meta .tag-row {
   gap: 4px;
@@ -1179,7 +1175,7 @@ input[type='color']::-webkit-color-swatch {
     grid-column: span 3;
   }
   .hdr-slogan {
-    grid-column: span 3;
+    grid-column: span 5;
   }
   .d-back {
     grid-column: span 3;
@@ -1189,10 +1185,6 @@ input[type='color']::-webkit-color-swatch {
   }
   .d-meta {
     grid-column: span 12;
-    grid-auto-flow: column;
-  }
-  .d-meta .cell {
-    grid-column: span 4;
   }
   .d-left {
     grid-column: span 12;
@@ -1235,7 +1227,7 @@ input[type='color']::-webkit-color-swatch {
     display: none;
   }
   .hdr-btn {
-    grid-column: span 4;
+    grid-column: span 6;
   }
   .step {
     grid-column: span 4;
@@ -1263,9 +1255,6 @@ input[type='color']::-webkit-color-swatch {
   }
   .d-title {
     grid-column: span 12;
-  }
-  .d-meta .cell {
-    grid-column: span 4;
   }
   .howto-step {
     grid-column: span 12;
