@@ -15,14 +15,14 @@
       "label": "「前」图",
       "type": "image",
       "target": "config",
-      "default": "/samples/sample-2.svg"
+      "default": "/samples/sample-4.webp"
     },
     {
       "key": "afterSrc",
       "label": "「后」图",
       "type": "image",
       "target": "config",
-      "default": "/samples/sample-1.svg"
+      "default": "/samples/sample-3.webp"
     },
     {
       "key": "startPos",

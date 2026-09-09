@@ -50,15 +50,15 @@ describe('urlState', () => {
     expect(encodeState(fixtureMeta, state).get('slides')).toBeNull();
 
     state.values.slides = [
-      { src: '/samples/sample-4.svg', caption: '标题，带逗号:和冒号' },
+      { src: '/samples/sample-4.webp', caption: '标题，带逗号:和冒号' },
       { src: 'blob:local-upload', caption: '上传' },
     ];
     const sp = encodeState(fixtureMeta, state);
     expect(sp.get('slides')).not.toBeNull();
     const decoded = decodeState(fixtureMeta, sp);
     expect(decoded.values.slides).toEqual([
-      { src: '/samples/sample-4.svg', caption: '标题，带逗号:和冒号' },
-      { src: '/samples/sample-1.svg', caption: '上传' }, // blob 回退第一张示例图
+      { src: '/samples/sample-4.webp', caption: '标题，带逗号:和冒号' },
+      { src: '/samples/sample-1.webp', caption: '上传' }, // blob 回退第一张示例图
     ]);
   });
 

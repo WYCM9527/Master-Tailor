@@ -6,7 +6,7 @@
   "tags": ["玻璃拟态", "毛玻璃", "悬浮"],
   "summary": "磨砂玻璃卡片悬浮在图片上，背景透出朦胧色彩",
   "params": [
-    { "key": "photo", "label": "背景图片", "type": "image", "target": "config", "default": "/samples/sample-2.svg" },
+    { "key": "photo", "label": "背景图片", "type": "image", "target": "config", "default": "/samples/sample-2.webp" },
     { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "Glass Card", "maxLength": 20 },
     {
       "key": "blur",
@@ -47,12 +47,12 @@
     {
       "id": "frosted",
       "name": "重度磨砂",
-      "values": { "blur": 34, "whiteness": 0.18, "photo": "/samples/sample-1.svg" }
+      "values": { "blur": 34, "whiteness": 0.18, "photo": "/samples/sample-1.webp" }
     },
     {
       "id": "clear",
       "name": "轻透静止",
-      "values": { "blur": 8, "whiteness": 0.05, "float": false, "photo": "/samples/sample-3.svg" }
+      "values": { "blur": 8, "whiteness": 0.05, "float": false, "photo": "/samples/sample-3.webp" }
     }
   ],
   "thumb": { "mode": "live" },

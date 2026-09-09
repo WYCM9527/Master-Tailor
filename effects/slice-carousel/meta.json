@@ -29,24 +29,24 @@
       "captions": true,
       "default": [
         {
-          "src": "/samples/sample-1.svg",
-          "caption": "第一帧 · 琥珀之夜"
+          "src": "/samples/sample-1.webp",
+          "caption": "第一帧 · 夜枭小憩"
         },
         {
-          "src": "/samples/sample-2.svg",
-          "caption": "第二帧 · 海面日出"
+          "src": "/samples/sample-2.webp",
+          "caption": "第二帧 · 海边老爷车"
         },
         {
-          "src": "/samples/sample-3.svg",
-          "caption": "第三帧 · 山脊星光"
+          "src": "/samples/sample-3.webp",
+          "caption": "第三帧 · 日落海滩"
         },
         {
-          "src": "/samples/sample-4.svg",
-          "caption": "第四帧 · 苔原晨雾"
+          "src": "/samples/sample-4.webp",
+          "caption": "第四帧 · 山谷晨光"
         },
         {
-          "src": "/samples/sample-5.svg",
-          "caption": "第五帧 · 蔷薇暮色"
+          "src": "/samples/sample-5.webp",
+          "caption": "第五帧 · 蓝天夹竹桃"
         }
       ]
     },

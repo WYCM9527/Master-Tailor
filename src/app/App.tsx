@@ -20,7 +20,8 @@ export function App() {
       </main>
       <footer className="footer">
         <div className="container">
-          裁缝大师 Master-Tailor · 个人项目 · 所有效果代码可自由复制使用 · 自托管字体均为 OFL 开源字体
+          裁缝大师 Master-Tailor · 个人项目 · 所有效果代码可自由复制使用 · 字体为 OFL 开源字体 ·
+          示例照片来自免费可商用素材库
         </div>
       </footer>
     </>

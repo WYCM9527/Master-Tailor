@@ -6,8 +6,8 @@
   "tags": ["3D", "鼠标跟随", "光泽"],
   "summary": "卡片跟着鼠标立体倾斜，表面滑过一层高光",
   "params": [
-    { "key": "photo", "label": "卡片图片", "type": "image", "target": "config", "default": "/samples/sample-1.svg" },
-    { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "极光计划", "maxLength": 16 },
+    { "key": "photo", "label": "卡片图片", "type": "image", "target": "config", "default": "/samples/sample-1.webp" },
+    { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "林间夜枭", "maxLength": 16 },
     {
       "key": "maxTilt",
       "label": "最大倾角",
@@ -38,12 +38,12 @@
     {
       "id": "strong",
       "name": "大幅倾斜",
-      "values": { "maxTilt": 22, "photo": "/samples/sample-3.svg", "title": "山脊之夜" }
+      "values": { "maxTilt": 22, "photo": "/samples/sample-3.webp", "title": "日落海滩" }
     },
     {
       "id": "calm",
       "name": "轻微立体",
-      "values": { "maxTilt": 7, "glare": false, "photo": "/samples/sample-2.svg", "title": "海面日出" }
+      "values": { "maxTilt": 7, "glare": false, "photo": "/samples/sample-2.webp", "title": "海边老爷车" }
     }
   ],
   "thumb": { "mode": "autoplay" },

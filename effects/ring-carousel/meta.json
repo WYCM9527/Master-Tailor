@@ -29,35 +29,35 @@
       "captions": false,
       "default": [
         {
-          "src": "/samples/sample-1.svg",
+          "src": "/samples/sample-1.webp",
           "caption": ""
         },
         {
-          "src": "/samples/sample-2.svg",
+          "src": "/samples/sample-2.webp",
           "caption": ""
         },
         {
-          "src": "/samples/sample-3.svg",
+          "src": "/samples/sample-3.webp",
           "caption": ""
         },
         {
-          "src": "/samples/sample-4.svg",
+          "src": "/samples/sample-4.webp",
           "caption": ""
         },
         {
-          "src": "/samples/sample-5.svg",
+          "src": "/samples/sample-5.webp",
           "caption": ""
         },
         {
-          "src": "/samples/sample-6.svg",
+          "src": "/samples/sample-6.webp",
           "caption": ""
         },
         {
-          "src": "/samples/sample-7.svg",
+          "src": "/samples/sample-7.webp",
           "caption": ""
         },
         {
-          "src": "/samples/sample-8.svg",
+          "src": "/samples/sample-8.webp",
           "caption": ""
         }
       ]

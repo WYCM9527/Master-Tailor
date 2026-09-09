@@ -15,12 +15,12 @@
       "max": 8,
       "captions": false,
       "default": [
-        { "src": "/samples/sample-1.svg", "caption": "" },
-        { "src": "/samples/sample-2.svg", "caption": "" },
-        { "src": "/samples/sample-3.svg", "caption": "" },
-        { "src": "/samples/sample-4.svg", "caption": "" },
-        { "src": "/samples/sample-5.svg", "caption": "" },
-        { "src": "/samples/sample-6.svg", "caption": "" }
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" }
       ]
     },
     {

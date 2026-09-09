@@ -26,35 +26,35 @@
       "captions": true,
       "default": [
         {
-          "src": "/samples/sample-1.svg",
+          "src": "/samples/sample-1.webp",
           "caption": "格子一"
         },
         {
-          "src": "/samples/sample-2.svg",
+          "src": "/samples/sample-2.webp",
           "caption": "格子二"
         },
         {
-          "src": "/samples/sample-3.svg",
+          "src": "/samples/sample-3.webp",
           "caption": "格子三"
         },
         {
-          "src": "/samples/sample-4.svg",
+          "src": "/samples/sample-4.webp",
           "caption": "格子四"
         },
         {
-          "src": "/samples/sample-5.svg",
+          "src": "/samples/sample-5.webp",
           "caption": "格子五"
         },
         {
-          "src": "/samples/sample-6.svg",
+          "src": "/samples/sample-6.webp",
           "caption": "格子六"
         },
         {
-          "src": "/samples/sample-7.svg",
+          "src": "/samples/sample-7.webp",
           "caption": "格子七"
         },
         {
-          "src": "/samples/sample-8.svg",
+          "src": "/samples/sample-8.webp",
           "caption": "格子八"
         }
       ]

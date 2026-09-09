@@ -24,12 +24,12 @@ describe('bakeCode', () => {
       ...defaultValues(fixtureMeta),
       slides: [
         { src: 'blob:local-upload', caption: '上传图，含逗号' },
-        { src: '/samples/sample-5.svg', caption: '' },
+        { src: '/samples/sample-5.webp', caption: '' },
       ],
     };
     const preview = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#000000', mode: 'preview' });
     expect(preview).toContain('"src":"blob:local-upload"');
-    expect(preview).toContain('/samples/sample-5.svg');
+    expect(preview).toContain('/samples/sample-5.webp');
 
     const out = bakeCode({ meta: fixtureMeta, html: fixtureHtml, values, bg: '#000000', mode: 'export' });
     expect(out).toContain('"src":"./slide-1.jpg","caption":"上传图，含逗号"');

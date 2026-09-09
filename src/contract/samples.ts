@@ -3,14 +3,14 @@
  * 图片 / 图片列表参数的默认值与分享链接编码都以这张表的索引为准，只增不删不改序。
  */
 export const SAMPLE_IMAGES = [
-  '/samples/sample-1.svg',
-  '/samples/sample-2.svg',
-  '/samples/sample-3.svg',
-  '/samples/sample-4.svg',
-  '/samples/sample-5.svg',
-  '/samples/sample-6.svg',
-  '/samples/sample-7.svg',
-  '/samples/sample-8.svg',
+  '/samples/sample-1.webp',
+  '/samples/sample-2.webp',
+  '/samples/sample-3.webp',
+  '/samples/sample-4.webp',
+  '/samples/sample-5.webp',
+  '/samples/sample-6.webp',
+  '/samples/sample-7.webp',
+  '/samples/sample-8.webp',
 ];
 
 export function sampleIndex(src: string): number {

@@ -93,7 +93,7 @@ src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板
 src/app/           # HashRouter 页面：Home / EffectPage / NotFound
 scripts/           # validate（契约校验）、build-prompts（静态 md 端点）、prepare-fonts、templates/（轮播核心模板）
 public/fonts/      # 自托管 OFL 字体（思源黑体 / 霞鹜文楷 / 得意黑 / JetBrains Mono）+ 许可文件
-public/samples/    # 8 张自制抽象 SVG 示例图（图片 / 图片列表参数默认值）
+public/samples/    # 8 张示例照片（免费可商用素材库，图片 / 图片列表参数默认值）
 tests/             # 引擎单测
 ```
 
@@ -102,3 +102,4 @@ tests/             # 引擎单测
 - 站点代码与所有效果实现均为本仓库原创（clean room：只阅读 MIT/BSD/CC0 许可的实现作参考；对 Commons Clause / 自有许可站点仅标注视觉灵感、不读其源码），效果代码可自由复制使用
 - 每个效果详情页底部标注来源与许可说明（`meta.json` 的 `source` 字段）
 - 自托管字体均为 OFL 1.1 开源许可，许可文本随字体文件放在 `public/fonts/<id>/`
+- `public/samples/` 的 8 张示例照片来自免费可商用素材库（Unsplash / Pexels 一类允许无署名使用的授权），仅作站内预览占位；导出代码与 prompt 中一律使用 `./your-image.jpg` / `./slide-N.jpg` 占位路径，不会把示例照片带进用户的项目

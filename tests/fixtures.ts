@@ -18,9 +18,9 @@ export const fixtureMeta: EffectMeta = {
       max: 6,
       captions: true,
       default: [
-        { src: '/samples/sample-1.svg', caption: '第一张' },
-        { src: '/samples/sample-2.svg', caption: '' },
-        { src: '/samples/sample-3.svg', caption: '三，带逗号' },
+        { src: '/samples/sample-1.webp', caption: '第一张' },
+        { src: '/samples/sample-2.webp', caption: '' },
+        { src: '/samples/sample-3.webp', caption: '三，带逗号' },
       ],
     },
     { key: 'color', label: '主色', type: 'color', target: 'css', default: '#f9cf00' },
@@ -51,7 +51,7 @@ export const fixtureMeta: EffectMeta = {
     { key: 'text', label: '文字内容', type: 'text', target: 'config', default: '你好，世界' },
     { key: 'count', label: '数量', type: 'range', target: 'config', min: 1, max: 9, step: 1, default: 3 },
     { key: 'font', label: '字体', type: 'font', target: 'css', default: 'system-sans' },
-    { key: 'photo', label: '图片', type: 'image', target: 'config', default: '/samples/sample-1.svg' },
+    { key: 'photo', label: '图片', type: 'image', target: 'config', default: '/samples/sample-1.webp' },
   ],
   presets: [
     { id: 'default', name: '默认', values: {} },
@@ -81,10 +81,10 @@ export const fixtureHtml = `<!doctype html>
 <body>
 <script>
   const CONFIG = {
-    slides: [{"src":"/samples/sample-1.svg","caption":"第一张"},{"src":"/samples/sample-2.svg","caption":""},{"src":"/samples/sample-3.svg","caption":"三，带逗号"}], // 幻灯片列表
+    slides: [{"src":"/samples/sample-1.webp","caption":"第一张"},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":"三，带逗号"}], // 幻灯片列表
     text: "你好，世界", // 文字内容
     count: 3, // 数量
-    photo: "/samples/sample-1.svg", // 图片
+    photo: "/samples/sample-1.webp", // 图片
   };
   /* @mt:thumb-start */
   if (window.__MT_ENV && window.__MT_ENV.thumb) {

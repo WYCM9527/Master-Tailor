@@ -29,24 +29,24 @@
       "captions": true,
       "default": [
         {
-          "src": "/samples/sample-1.svg",
-          "caption": "今晚的天色，琥珀味的"
+          "src": "/samples/sample-1.webp",
+          "caption": "树枝上的午睡"
         },
         {
-          "src": "/samples/sample-2.svg",
-          "caption": "海边的第五个清晨"
+          "src": "/samples/sample-2.webp",
+          "caption": "退休的老爷车"
         },
         {
-          "src": "/samples/sample-3.svg",
-          "caption": "翻过山脊就是星空"
+          "src": "/samples/sample-3.webp",
+          "caption": "金色的黄昏"
         },
         {
-          "src": "/samples/sample-4.svg",
-          "caption": "雾散之前"
+          "src": "/samples/sample-4.webp",
+          "caption": "山谷醒来"
         },
         {
-          "src": "/samples/sample-5.svg",
-          "caption": "收工，晚安"
+          "src": "/samples/sample-5.webp",
+          "caption": "夹竹桃开了"
         }
       ]
     },
