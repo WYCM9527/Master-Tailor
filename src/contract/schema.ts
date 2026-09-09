@@ -158,12 +158,18 @@ export const effectMetaSchema = z
     for (const preset of meta.presets) {
       for (const k of Object.keys(preset.values)) {
         if (!keys.has(k)) {
-          ctx.addIssue({ code: 'custom', message: `预设「${preset.name}」引用了不存在的参数 ${k}` });
+          ctx.addIssue({
+            code: 'custom',
+            message: `预设「${preset.name}」引用了不存在的参数 ${k}`,
+          });
         }
       }
     }
     if (!meta.presets.some((p) => p.id === 'default')) {
-      ctx.addIssue({ code: 'custom', message: '必须包含 id 为 default 的预设（values 可为空对象）' });
+      ctx.addIssue({
+        code: 'custom',
+        message: '必须包含 id 为 default 的预设（values 可为空对象）',
+      });
     }
   });
 

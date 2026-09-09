@@ -1,4 +1,11 @@
-import type { BgSetting, EffectMeta, Param, ParamValue, SlideItem, Values } from '../contract/types';
+import type {
+  BgSetting,
+  EffectMeta,
+  Param,
+  ParamValue,
+  SlideItem,
+  Values,
+} from '../contract/types';
 import { BG_DARK, BG_LIGHT, bgColor, slidePlaceholder } from '../contract/types';
 import { fontById } from '../contract/fonts';
 
@@ -110,7 +117,9 @@ export function renderPrompt(o: PromptOptions): string {
   const parts: string[] = [];
 
   // 1.【任务】
-  parts.push(`【任务】\n请在我的网页里加入「${meta.name}」效果（${meta.summary}）。下面有效果说明、具体参数和技术要求，请严格按参数实现。`);
+  parts.push(
+    `【任务】\n请在我的网页里加入「${meta.name}」效果（${meta.summary}）。下面有效果说明、具体参数和技术要求，请严格按参数实现。`,
+  );
 
   // 2.【效果描述】
   parts.push(`【效果描述】\n${fillPlaceholders(sections.description, meta, values, bg)}`);
@@ -144,9 +153,7 @@ export function renderPrompt(o: PromptOptions): string {
   }
 
   // 6.【完成后请检查】
-  const checks = sections.checks
-    ? sections.checks
-    : DEFAULT_CHECKS.map((c) => `- ${c}`).join('\n');
+  const checks = sections.checks ? sections.checks : DEFAULT_CHECKS.map((c) => `- ${c}`).join('\n');
   parts.push(`【完成后请检查】\n${checks}`);
 
   // 7.【如果遇到问题】

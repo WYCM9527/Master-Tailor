@@ -56,12 +56,16 @@ function exportHeader(meta: EffectMeta, values: Values): string {
     lines.push(`图片使用了占位路径 ./your-image.jpg，请替换为你自己的图片路径。`);
   }
   if (meta.params.some((p) => p.type === 'images')) {
-    lines.push(`图片使用了占位路径 ./slide-1.jpg、./slide-2.jpg …，请按顺序替换为你自己的图片路径。`);
+    lines.push(
+      `图片使用了占位路径 ./slide-1.jpg、./slide-2.jpg …，请按顺序替换为你自己的图片路径。`,
+    );
   }
   const fontParams = meta.params.filter((p) => p.type === 'font');
   for (const p of fontParams) {
     const v = String(values[p.key] ?? p.default);
-    lines.push(`字体「${p.label}」当前选择 ${v}：代码只声明 font-family，未安装该字体时会自动退回系统字体。`);
+    lines.push(
+      `字体「${p.label}」当前选择 ${v}：代码只声明 font-family，未安装该字体时会自动退回系统字体。`,
+    );
   }
   return `<!--\n  ${lines.join('\n  ')}\n-->\n`;
 }
@@ -93,7 +97,10 @@ export function bakeCode(o: BakeOptions): string {
   if (exportMode) {
     html = stripThumbBlocks(html);
     // 文件头注释放在 doctype 之后，避免触发浏览器怪异模式
-    html = html.replace(/<!doctype html>\s*/i, (m) => m.trimEnd() + '\n' + exportHeader(o.meta, o.values));
+    html = html.replace(
+      /<!doctype html>\s*/i,
+      (m) => m.trimEnd() + '\n' + exportHeader(o.meta, o.values),
+    );
     return html;
   }
 
@@ -107,7 +114,11 @@ export function bakeCode(o: BakeOptions): string {
 }
 
 /** 详情页热更新：由当前值生成要 postMessage 的 CSS 变量表 */
-export function collectCssVars(meta: EffectMeta, values: Values, bg: string): Record<string, string> {
+export function collectCssVars(
+  meta: EffectMeta,
+  values: Values,
+  bg: string,
+): Record<string, string> {
   const vars: Record<string, string> = { '--mt-bg': bg };
   for (const p of meta.params) {
     if (p.target !== 'css') continue;

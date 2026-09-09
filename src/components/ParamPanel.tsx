@@ -29,28 +29,31 @@ export function ParamPanel({ meta, values, onChange }: PanelProps) {
     const presetValues = applyPreset(meta, presetId);
     // JSON 比较：images 参数的值是对象数组，引用比较永远不等
     return meta.params.every(
-      (p) =>
-        JSON.stringify(values[p.key] ?? p.default) === JSON.stringify(presetValues[p.key]),
+      (p) => JSON.stringify(values[p.key] ?? p.default) === JSON.stringify(presetValues[p.key]),
     );
   };
 
   return (
-    <aside className="param-panel glass">
-      <div className="block-head">
-        <span className="block-title">
+    <aside className="params" aria-label="参数">
+      <div className="blk-head">
+        <span className="mono">
           参数
-          <span className="hint">调整会实时进入预览、prompt 和代码</span>
+          <span className="hint">实时进入预览、prompt 和代码</span>
         </span>
+        <span className="mono">{String(meta.params.length).padStart(2, '0')}</span>
       </div>
-      <div className="block-body">
+      <div className="params-body">
         <div className="control">
-          <span className="control-label">预设</span>
-          <div className="preset-row">
+          <div className="control-head">
+            <span className="control-label">预设</span>
+            <span className="control-value">{meta.presets.length} 组</span>
+          </div>
+          <div className="tag-row">
             {meta.presets.map((preset) => (
               <button
                 type="button"
                 key={preset.id}
-                className={`chip${isPresetActive(preset.id) ? ' active' : ''}`}
+                className={`tag${isPresetActive(preset.id) ? ' active' : ''}`}
                 onClick={() => onChange(applyPreset(meta, preset.id))}
               >
                 {preset.name}
@@ -68,9 +71,13 @@ export function ParamPanel({ meta, values, onChange }: PanelProps) {
           />
         ))}
 
-        <div className="panel-footer">
-          <button type="button" className="btn btn-ghost" onClick={() => onChange(defaultValues(meta))}>
-            重置参数
+        <div className="params-foot">
+          <button
+            type="button"
+            className="btn btn-block"
+            onClick={() => onChange(defaultValues(meta))}
+          >
+            重置参数 <span className="arrow">↺</span>
           </button>
         </div>
       </div>
@@ -93,7 +100,7 @@ function Control({ param, value, onChange }: ControlProps) {
     case 'toggle':
       return (
         <div className="control">
-          <label className="switch-row control-head" style={{ cursor: 'pointer' }}>
+          <label className="control-head" style={{ cursor: 'pointer', marginBottom: 0 }}>
             <span className="control-label">{param.label}</span>
             <button
               type="button"
@@ -319,7 +326,7 @@ function ImagesControl({
               )}
               <button
                 type="button"
-                className="btn-ghost btn slide-remove"
+                className="btn slide-remove"
                 disabled={value.length <= param.min}
                 title={value.length <= param.min ? `至少 ${param.min} 张` : '删除这张'}
                 onClick={() => remove(i)}
@@ -343,7 +350,11 @@ function ImagesControl({
                     <img src={src} alt={`示例图 ${si + 1}`} />
                   </button>
                 ))}
-                <label className="image-upload" htmlFor={`${fileInputId}-${i}`} title="上传自己的图片（仅本地预览）">
+                <label
+                  className="image-upload"
+                  htmlFor={`${fileInputId}-${i}`}
+                  title="上传自己的图片（仅本地预览）"
+                >
                   +
                   <input
                     id={`${fileInputId}-${i}`}
@@ -356,12 +367,18 @@ function ImagesControl({
             )}
           </div>
         ))}
-        <button type="button" className="btn slide-add" disabled={value.length >= param.max} onClick={add}>
-          + 添加一张
+        <button
+          type="button"
+          className="btn slide-add"
+          disabled={value.length >= param.max}
+          onClick={add}
+        >
+          添加一张 <span className="arrow">+</span>
         </button>
       </div>
       <span className="control-help">
-        上传的图片只在你的浏览器里预览；导出代码与 prompt 会写占位路径 ./slide-1.jpg …，分享链接不包含上传的图片。
+        上传的图片只在你的浏览器里预览；导出代码与 prompt 会写占位路径 ./slide-1.jpg
+        …，分享链接不包含上传的图片。
         {param.help ? ` ${param.help}` : ''}
       </span>
     </div>

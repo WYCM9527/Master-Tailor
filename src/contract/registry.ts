@@ -47,7 +47,10 @@ for (const [path, mod] of Object.entries(metaModules)) {
   const slug = slugFromPath(path);
   const parsed = effectMetaSchema.safeParse(mod.default);
   if (!parsed.success) {
-    console.error(`[registry] effects/${slug}/meta.json 不符合契约，已跳过：`, parsed.error.message);
+    console.error(
+      `[registry] effects/${slug}/meta.json 不符合契约，已跳过：`,
+      parsed.error.message,
+    );
     continue;
   }
   const html = htmlBySlug.get(slug);
@@ -75,6 +78,11 @@ effects.sort((a, b) => {
 });
 
 export const EFFECTS: readonly Effect[] = effects;
+
+/** 全站统一编号（按侧边栏顺序 001 起），用于卡片与详情页的 Mono 元数据 */
+export function effectNo(effect: Effect): string {
+  return String(effects.indexOf(effect) + 1).padStart(3, '0');
+}
 
 export const EFFECT_BY_SLUG: ReadonlyMap<string, Effect> = new Map(
   effects.map((e) => [e.meta.slug, e]),

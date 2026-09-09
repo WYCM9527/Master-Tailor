@@ -4,13 +4,13 @@ import type { Effect, EffectSource, EffectState } from '../../contract/types';
 import { BG_DARK, BG_LIGHT, bgColor } from '../../contract/types';
 import { categoryName, subDef } from '../../contract/categories';
 import { FONTS_CSS_HREF } from '../../contract/fonts';
-import { EFFECT_BY_SLUG } from '../../contract/registry';
+import { EFFECTS, EFFECT_BY_SLUG, effectNo } from '../../contract/registry';
 import { bakeCode, collectCssVars, configSignature } from '../../engine/bakeCode';
 import { renderPrompt } from '../../engine/renderPrompt';
 import { decodeState, encodeState } from '../../engine/urlState';
 import { ParamPanel } from '../../components/ParamPanel';
 import { PreviewFrame } from '../../components/PreviewFrame';
-import { PromptPanel } from '../../components/PromptPanel';
+import { PromptActions, PromptCell } from '../../components/PromptPanel';
 import { CodePanel } from '../../components/CodePanel';
 import { NotFound } from './NotFound';
 
@@ -29,7 +29,7 @@ function sourceLine(source: EffectSource) {
         {source.name}
       </a>
     ) : (
-      source.name ?? null
+      (source.name ?? null)
     );
   switch (source.kind) {
     case 'original':
@@ -45,6 +45,9 @@ function sourceLine(source: EffectSource) {
       return <>视觉灵感来自 {link}（未使用其代码），本站实现为自写，可自由复制使用。</>;
   }
 }
+
+/** 自定义底色的方形斜纹示意（不用彩色渐变） */
+const HATCH = 'repeating-linear-gradient(45deg, #fff 0 2px, #000 2px 5px)';
 
 function EffectPage({ effect }: { effect: Effect }) {
   const { meta } = effect;
@@ -129,96 +132,124 @@ function EffectPage({ effect }: { effect: Effect }) {
 
   const setBg = (bgSetting: EffectState['bg']) => setState((s) => ({ ...s, bg: bgSetting }));
   const customColor = state.bg.mode === 'custom' ? state.bg.color : '#22335c';
+  const subName = subDef(meta.category, meta.sub).name;
 
   return (
-    <div className="container effect-page">
-      <div className="effect-head">
+    <>
+      <div className="g12 d-head">
         {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
-        <Link to={`/?cat=${meta.category}&sub=${meta.sub}`} className="back-link">
-          ← {categoryName(meta.category)} · {subDef(meta.category, meta.sub).name}
+        <Link to={`/?cat=${meta.category}&sub=${meta.sub}`} className="cell span-3 d-back">
+          <span className="arrow">←</span>
+          {categoryName(meta.category)} · {subName}
         </Link>
-        <h1 className="effect-title">{meta.name}</h1>
-        <span className="card-cat">{categoryName(meta.category)}</span>
-        <span className="card-cat">{subDef(meta.category, meta.sub).name}</span>
-        <div className="effect-tags">
-          {meta.tags.map((t) => (
-            <span className="effect-tag" key={t}>
-              {t}
+        <div className="cell span-6 d-title">
+          <span className="mono">
+            No. {effectNo(effect)} · {categoryName(meta.category)} / {subName}
+          </span>
+          <h1>{meta.name}</h1>
+          <p>{meta.summary}</p>
+        </div>
+        <div className="span-3 sub d-meta">
+          <div className="cell span-3">
+            <span className="mono">Index</span>
+            <span className="val mono">
+              {effectNo(effect)} / {String(EFFECTS.length).padStart(3, '0')}
             </span>
-          ))}
+          </div>
+          <div className="cell span-3">
+            <span className="mono">Category</span>
+            <span className="val">
+              {categoryName(meta.category)} · {subName}
+            </span>
+          </div>
+          <div className="cell span-3">
+            <span className="mono">Tags</span>
+            <div className="tag-row">
+              {meta.tags.map((t) => (
+                <span className="tag" key={t}>
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="effect-layout">
-        <div className="effect-main">
-          <div className="preview-wrap glass">
-            <div className="preview-toolbar">
-              <div className="preview-toolbar-group">
-                <span className="toolbar-label">预览底色</span>
-                <button
-                  type="button"
-                  className={`bg-swatch${state.bg.mode === 'dark' ? ' active' : ''}`}
-                  style={{ background: BG_DARK }}
-                  title="深色底"
-                  onClick={() => setBg({ mode: 'dark' })}
+      <div className="g12 d-body">
+        <div className="span-9 sub d-left">
+          <div className="cell span-9 d-toolbar">
+            <div className="d-toolbar-group">
+              <span className="mono">预览底色</span>
+              <button
+                type="button"
+                className={`swatch${state.bg.mode === 'dark' ? ' active' : ''}`}
+                style={{ background: BG_DARK }}
+                title="深色底"
+                aria-label="深色底"
+                onClick={() => setBg({ mode: 'dark' })}
+              />
+              <button
+                type="button"
+                className={`swatch${state.bg.mode === 'light' ? ' active' : ''}`}
+                style={{ background: BG_LIGHT }}
+                title="浅色底"
+                aria-label="浅色底"
+                onClick={() => setBg({ mode: 'light' })}
+              />
+              <span
+                className={`swatch${state.bg.mode === 'custom' ? ' active' : ''}`}
+                style={{ background: state.bg.mode === 'custom' ? customColor : HATCH }}
+                title="自定义底色"
+              >
+                <input
+                  type="color"
+                  value={customColor}
+                  onChange={(e) => setBg({ mode: 'custom', color: e.target.value })}
+                  aria-label="自定义预览底色"
                 />
-                <button
-                  type="button"
-                  className={`bg-swatch${state.bg.mode === 'light' ? ' active' : ''}`}
-                  style={{ background: BG_LIGHT }}
-                  title="浅色底"
-                  onClick={() => setBg({ mode: 'light' })}
-                />
-                <span
-                  className={`bg-swatch${state.bg.mode === 'custom' ? ' active' : ''}`}
-                  style={{
-                    background:
-                      state.bg.mode === 'custom'
-                        ? customColor
-                        : 'conic-gradient(#f9cf00, #3d5afe, #00bcd4, #f9cf00)',
-                  }}
-                  title="自定义底色"
-                >
-                  <input
-                    type="color"
-                    value={customColor}
-                    onChange={(e) => setBg({ mode: 'custom', color: e.target.value })}
-                    aria-label="自定义预览底色"
-                  />
-                </span>
-                <span className="muted">底色会写进 prompt，让 AI 知道效果用在什么背景上</span>
-              </div>
-              <div className="preview-toolbar-group">
-                <button type="button" className="btn" onClick={enterFullscreen}>
-                  全屏预览
-                </button>
-              </div>
+              </span>
+              <span className="dim" style={{ fontSize: 12 }}>
+                底色会写进 prompt，让 AI 知道效果用在什么背景上
+              </span>
             </div>
-            <div className="preview-stage" ref={stageRef}>
-              <PreviewFrame srcdoc={srcdoc} cssVars={cssVars} title={`${meta.name} 实时预览`} />
+            <div className="d-toolbar-group">
+              <span className="mono">{state.bg.mode === 'custom' ? customColor : bg}</span>
+              <button type="button" className="btn" onClick={enterFullscreen}>
+                全屏预览 <span className="arrow">↗</span>
+              </button>
             </div>
           </div>
-
-          <PromptPanel
+          <div className="cell span-9 d-stage tight" ref={stageRef}>
+            <PreviewFrame srcdoc={srcdoc} cssVars={cssVars} title={`${meta.name} 实时预览`} />
+          </div>
+          <PromptCell
             promptText={promptText}
             placement={state.placement}
             onPlacementChange={(v) => setState((s) => ({ ...s, placement: v }))}
-            includeCode={state.includeCode}
-            onIncludeCodeChange={(v) => setState((s) => ({ ...s, includeCode: v }))}
-            getShareUrl={getShareUrl}
           />
-
-          <CodePanel code={exportCode} slug={meta.slug} />
-
-          <p className="source-note">{sourceLine(meta.source)}</p>
         </div>
 
-        <ParamPanel
-          meta={meta}
-          values={state.values}
-          onChange={(values) => setState((s) => ({ ...s, values }))}
-        />
+        <div className="cell span-3 d-right-col">
+          <div className="d-right">
+            <PromptActions
+              promptText={promptText}
+              includeCode={state.includeCode}
+              onIncludeCodeChange={(v) => setState((s) => ({ ...s, includeCode: v }))}
+              getShareUrl={getShareUrl}
+            />
+            <ParamPanel
+              meta={meta}
+              values={state.values}
+              onChange={(values) => setState((s) => ({ ...s, values }))}
+            />
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div className="g12">
+        <CodePanel code={exportCode} slug={meta.slug} />
+        <p className="cell span-12 d-source">{sourceLine(meta.source)}</p>
+      </div>
+    </>
   );
 }

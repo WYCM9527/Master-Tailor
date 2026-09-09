@@ -1,4 +1,11 @@
-import type { BgSetting, EffectMeta, EffectState, ParamValue, SlideItem, Values } from '../contract/types';
+import type {
+  BgSetting,
+  EffectMeta,
+  EffectState,
+  ParamValue,
+  SlideItem,
+  Values,
+} from '../contract/types';
 import { sampleByIndex, sampleIndex } from '../contract/samples';
 
 /**

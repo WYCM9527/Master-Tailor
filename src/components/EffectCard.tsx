@@ -2,16 +2,19 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Effect } from '../contract/types';
 import { BG_DARK } from '../contract/types';
-import { categoryName } from '../contract/categories';
+import { subDef } from '../contract/categories';
 import { FONTS_CSS_HREF } from '../contract/fonts';
+import { effectNo } from '../contract/registry';
 import { bakeCode } from '../engine/bakeCode';
 import { defaultValues } from '../engine/urlState';
 
 /**
- * 首页效果卡片：
- * - IntersectionObserver 首次进入视口才挂载 iframe（懒加载）
- * - iframe 常态 pointer-events:none，整卡可点击进详情
- * - 卡片把真实鼠标坐标 postMessage 给 iframe，交互类效果的 thumb 演示块可跟随真实指针
+ * 首页效果 Cell（占 3 栏）：
+ * - 顶部 Mono 元数据条（编号 · 子类）
+ * - 预览铺满 Cell（4:3），IntersectionObserver 首次进入视口才挂载 iframe
+ * - 底部标题条，悬停整条黑白反转、箭头右移
+ * - iframe 常态 pointer-events:none，整 Cell 可点击进详情；
+ *   Cell 把真实鼠标坐标 postMessage 给 iframe，交互类效果的 thumb 演示块可跟随真实指针
  */
 export function EffectCard({ effect }: { effect: Effect }) {
   const { meta } = effect;
@@ -61,10 +64,14 @@ export function EffectCard({ effect }: { effect: Effect }) {
   return (
     <Link
       to={`/e/${meta.slug}`}
-      className="card glass"
+      className="cell span-3 card"
       ref={rootRef}
       onMouseMove={forwardPointer}
     >
+      <div className="card-meta">
+        <span className="mono">No. {effectNo(effect)}</span>
+        <span className="mono">{subDef(meta.category, meta.sub).name}</span>
+      </div>
       <div className="card-preview">
         {mounted ? (
           <iframe
@@ -79,12 +86,12 @@ export function EffectCard({ effect }: { effect: Effect }) {
           <div className="card-skeleton" />
         )}
       </div>
-      <div className="card-info">
-        <div className="card-title-row">
-          <span className="card-name">{meta.name}</span>
-          <span className="card-cat">{categoryName(meta.category)}</span>
-        </div>
-        <span className="card-summary">{meta.summary}</span>
+      <div className="card-caption">
+        <span>
+          <span className="name">{meta.name}</span>
+          <span className="summary">{meta.summary}</span>
+        </span>
+        <span className="arrow">→</span>
       </div>
     </Link>
   );

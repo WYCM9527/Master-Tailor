@@ -8,13 +8,7 @@
  */
 
 export type CategoryId =
-  | 'background'
-  | 'button'
-  | 'text'
-  | 'card'
-  | 'loading'
-  | 'canvas'
-  | 'showcase';
+  'background' | 'button' | 'text' | 'card' | 'loading' | 'canvas' | 'showcase';
 
 /**
  * 二级分类（侧边栏第二级）：每个一级分类在 CATEGORIES 中自声明子类表。
