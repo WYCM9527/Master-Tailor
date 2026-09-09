@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>杂志翻页轮播</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #f9cf00;    /* 强调色：数字角标 */
+    --mt-duration: 0.9s;     /* 翻页时长 */
+    --mt-ratio: 3 / 4;       /* 页面宽高比（竖版像杂志） */
+    --mt-rounded: 10px;      /* 页面圆角 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-book {
+    position: relative;
+    width: min(380px, 78vw);
+    aspect-ratio: var(--mt-ratio);
+    outline: none;
+    /* 翻页的纵深感 */
+    perspective: 1400px;
+    touch-action: pan-y;
+    cursor: grab;
+  }
+  .mt-book.dragging { cursor: grabbing; }
+  .mt-book:focus-visible { outline: 2px solid var(--mt-accent); outline-offset: 6px; }
+  /* 书脊：左侧一条淡淡的装订阴影 */
+  .mt-book::before {
+    content: '';
+    position: absolute;
+    left: -2px; top: 2%; bottom: 2%;
+    width: 10px;
+    border-radius: 6px 0 0 6px;
+    background: linear-gradient(90deg, rgba(0,0,0,0.6), transparent);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* 每一页：绕左侧书脊翻起（三态：待翻 / 在场 / 已翻走） */
+  .mt-page {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1c2c, #2a2f4a);
+    transform-origin: left center;
+    transform: rotateY(0deg);
+    transition: transform var(--mt-duration) cubic-bezier(0.45, 0.05, 0.35, 1);
+    backface-visibility: hidden;
+    box-shadow: 6px 10px 30px rgba(0, 0, 0, 0.4);
+  }
+  /* 已翻走的页：绕书脊翻到左后方 */
+  .mt-page.is-prev { transform: rotateY(-150deg); }
+  .mt-page img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  /* 翻动时页面上的动态光影：像纸面在光下弯过去 */
+  .mt-page::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, rgba(0, 0, 0, 0.35), transparent 46%);
+    opacity: 0;
+    transition: opacity calc(var(--mt-duration) * 0.5) ease;
+    pointer-events: none;
+  }
+  .mt-page.is-prev::after { opacity: 1; }
+  .mt-page .mt-caption {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 40px 16px 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.62));
+  }
+
+  .mt-fraction {
+    position: absolute;
+    bottom: -34px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: rgba(10, 10, 15, 0.6);
+    color: var(--mt-accent);
+    font-size: 12.5px;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* 用户开启「减少动态效果」：翻页瞬间完成、不自动翻（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-page, .mt-page::after { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-book" id="mtRoot"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.svg","caption":"第一页 · 琥珀之夜"},{"src":"/samples/sample-2.svg","caption":"第二页 · 海面日出"},{"src":"/samples/sample-3.svg","caption":"第三页 · 山脊星光"},{"src":"/samples/sample-4.svg","caption":"第四页 · 苔原晨雾"},{"src":"/samples/sample-5.svg","caption":"第五页 · 蔷薇暮色"}], // 页面列表
+    interval: 4, // 自动翻页间隔（秒，0 为不自动翻）
+  };
+
+  (function () {
+    const root = document.getElementById('mtRoot');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const slides = CONFIG.slides;
+    const total = slides.length;
+    let index = 0;
+
+    root.setAttribute('role', 'region');
+    root.setAttribute('aria-roledescription', 'carousel');
+    root.setAttribute('aria-label', '杂志翻页轮播');
+    root.setAttribute('tabindex', '0');
+
+    const pageEls = slides.map((s, i) => {
+      const el = document.createElement('figure');
+      el.className = 'mt-page';
+      el.setAttribute('role', 'group');
+      el.setAttribute('aria-roledescription', 'slide');
+      el.setAttribute('aria-label', '第 ' + (i + 1) + ' 页，共 ' + total + ' 页');
+      const img = document.createElement('img');
+      img.src = s.src;
+      img.alt = s.caption || '第 ' + (i + 1) + ' 页';
+      img.loading = i === 0 ? 'eager' : 'lazy';
+      el.appendChild(img);
+      if (s.caption) {
+        const cap = document.createElement('div');
+        cap.className = 'mt-caption';
+        cap.textContent = s.caption;
+        el.appendChild(cap);
+      }
+      root.appendChild(el);
+      return el;
+    });
+
+    const fraction = document.createElement('div');
+    fraction.className = 'mt-fraction';
+    fraction.setAttribute('aria-hidden', 'true');
+    root.appendChild(fraction);
+
+    // 像一本摞好的书：当前页最上，后面的页按顺序垫底
+    function zorder() {
+      for (let i = 0; i < total; i++) {
+        const off = (i - index + total) % total;
+        pageEls[i].style.zIndex = String(total - off + (pageEls[i].classList.contains('is-prev') ? total : 0));
+        pageEls[i].setAttribute('aria-hidden', off === 0 ? 'false' : 'true');
+      }
+      fraction.textContent = (index + 1) + ' / ' + total;
+    }
+
+    // 翻到下一页：当前页绕书脊翻走；翻回：上一页从翻走态转回来
+    function nextSlide() {
+      pageEls[index].classList.add('is-prev');
+      index = (index + 1) % total;
+      if (index === 0) {
+        // 翻完一轮：全部复位（合上书重来）
+        for (const el of pageEls) el.classList.remove('is-prev');
+      }
+      zorder();
+    }
+    function prevSlide() {
+      index = (index - 1 + total) % total;
+      pageEls[index].classList.remove('is-prev');
+      zorder();
+    }
+
+    // 自动翻页：悬停 / 聚焦 / 后台暂停；reduced-motion 不启动
+    let timer = null;
+    function play() {
+      if (timer || CONFIG.interval <= 0 || reduceMotion || total < 2) return;
+      timer = setInterval(nextSlide, CONFIG.interval * 1000);
+    }
+    function pause() { clearInterval(timer); timer = null; }
+    root.addEventListener('mouseenter', pause);
+    root.addEventListener('mouseleave', play);
+    root.addEventListener('focusin', pause);
+    root.addEventListener('focusout', play);
+    document.addEventListener('visibilitychange', () => (document.hidden ? pause() : play()));
+    play();
+
+    // 拖拽 / 触摸（Pointer Events）：左滑翻页、右滑翻回
+    let dragStartX = null, dragDx = 0;
+    root.addEventListener('pointerdown', (e) => {
+      dragStartX = e.clientX; dragDx = 0;
+      root.classList.add('dragging');
+      root.setPointerCapture(e.pointerId);
+    });
+    root.addEventListener('pointermove', (e) => {
+      if (dragStartX === null) return;
+      dragDx = e.clientX - dragStartX;
+    });
+    root.addEventListener('pointerup', () => {
+      root.classList.remove('dragging');
+      if (dragStartX === null) return;
+      if (Math.abs(dragDx) > 50) (dragDx < 0 ? nextSlide : prevSlide)();
+      dragStartX = null;
+    });
+    root.addEventListener('pointercancel', () => { root.classList.remove('dragging'); dragStartX = null; });
+
+    // 键盘
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+    });
+
+    zorder();
+  })();
+</script>
+</body>
+</html>

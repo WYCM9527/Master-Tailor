@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原生滚动轮播（scroll-snap）</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #f9cf00;    /* 强调色：当前圆点 */
+    --mt-gap: 14px;          /* 卡片间距 */
+    --mt-cardW: 68%;         /* 每张卡占视口的宽度 */
+    --mt-rounded: 14px;      /* 卡片圆角 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-carousel { width: min(720px, 92vw); outline: none; }
+  .mt-carousel:focus-within { outline: none; }
+
+  /*
+    核心是纯 CSS：overflow 滚动 + scroll-snap 逐张吸附。
+    拖拽（触摸板 / 触屏原生支持）、惯性、键盘（聚焦后方向键）都由浏览器原生提供，
+    本文件仅用十几行 JS 做「圆点与滚动位置同步」这一件事。
+  */
+  .mt-scroller {
+    display: flex;
+    gap: var(--mt-gap);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    padding: 4px;
+    scrollbar-width: none;
+    /* 平滑滚动；用户开启「减少动态效果」时浏览器自动改为瞬时 */
+    scroll-behavior: smooth;
+  }
+  .mt-scroller::-webkit-scrollbar { display: none; }
+
+  .mt-slide {
+    flex: none;
+    width: var(--mt-cardW);
+    aspect-ratio: 16 / 10;
+    margin: 0;
+    position: relative;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1c2c, #2a2f4a);
+    scroll-snap-align: center;
+    /* 防止一次惯性甩过多张 */
+    scroll-snap-stop: always;
+  }
+  .mt-slide img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+  }
+  .mt-caption {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 36px 16px 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.62));
+  }
+
+  .mt-pager { margin-top: 12px; display: flex; justify-content: center; gap: 7px; }
+  .mt-pager .dot {
+    width: 8px; height: 8px;
+    border: none; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    cursor: pointer; padding: 0;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .mt-pager .dot.active { background: var(--mt-accent); transform: scale(1.25); }
+
+  /* 用户开启「减少动态效果」：滚动改为瞬时（无自动播放，本效果由用户驱动） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-scroller { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-carousel" id="mtRoot"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.svg","caption":"第一张 · 琥珀之夜"},{"src":"/samples/sample-2.svg","caption":"第二张 · 海面日出"},{"src":"/samples/sample-3.svg","caption":"第三张 · 山脊星光"},{"src":"/samples/sample-4.svg","caption":"第四张 · 苔原晨雾"},{"src":"/samples/sample-5.svg","caption":"第五张 · 蔷薇暮色"}], // 卡片列表
+  };
+
+  // 说明：滚动、拖拽（pointerdown 由浏览器原生滚动接管，触屏/触摸板直接可拖）、
+  // 惯性吸附、聚焦后的 keydown 方向键滚动，全部是浏览器原生行为——这就是 scroll-snap 版的意义。
+  // JS 只负责：生成卡片、圆点跳转（scrollIntoView）、滚动时高亮当前圆点。
+  (function () {
+    const root = document.getElementById('mtRoot');
+    const slides = CONFIG.slides;
+    const total = slides.length;
+
+    root.setAttribute('role', 'region');
+    root.setAttribute('aria-roledescription', 'carousel');
+    root.setAttribute('aria-label', '原生滚动轮播');
+
+    const scroller = document.createElement('div');
+    scroller.className = 'mt-scroller';
+    scroller.setAttribute('tabindex', '0'); // 聚焦后浏览器原生支持方向键滚动
+    const slideEls = slides.map((s, i) => {
+      const el = document.createElement('figure');
+      el.className = 'mt-slide';
+      el.setAttribute('role', 'group');
+      el.setAttribute('aria-roledescription', 'slide');
+      el.setAttribute('aria-label', '第 ' + (i + 1) + ' 张，共 ' + total + ' 张');
+      const img = document.createElement('img');
+      img.src = s.src;
+      img.alt = s.caption || '第 ' + (i + 1) + ' 张卡片';
+      img.loading = 'lazy';
+      el.appendChild(img);
+      if (s.caption) {
+        const cap = document.createElement('div');
+        cap.className = 'mt-caption';
+        cap.textContent = s.caption;
+        el.appendChild(cap);
+      }
+      scroller.appendChild(el);
+      return el;
+    });
+    root.appendChild(scroller);
+
+    const pager = document.createElement('div');
+    pager.className = 'mt-pager';
+    const dots = slides.map((_s, i) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'dot' + (i === 0 ? ' active' : '');
+      dot.setAttribute('aria-label', '滚到第 ' + (i + 1) + ' 张');
+      // 用 scrollIntoView 而不是锚点：不会把整个页面滚动到顶部
+      dot.addEventListener('click', () =>
+        slideEls[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }));
+      pager.appendChild(dot);
+      return dot;
+    });
+    root.appendChild(pager);
+
+    // 滚动位置 -> 当前圆点（IntersectionObserver 找视口中央的卡）
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const idx = slideEls.indexOf(entry.target);
+            dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+          }
+        }
+      },
+      { root: scroller, threshold: 0.6 },
+    );
+    slideEls.forEach((el) => io.observe(el));
+  })();
+</script>
+</body>
+</html>

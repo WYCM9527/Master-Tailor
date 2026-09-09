@@ -1,0 +1,165 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Codrops 经典 slice / slit slideshow 技法",
+    "url": "https://tympanus.net/codrops/tag/slideshow/",
+    "license": "思路参考，代码自写"
+  },
+  "slug": "slice-carousel",
+  "name": "百叶窗切片轮播",
+  "tags": [
+    "轮播",
+    "切片",
+    "百叶窗"
+  ],
+  "summary": "旧图被切成竖条交替飞走，露出下一张",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "第一帧 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "第二帧 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "第三帧 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "第四帧 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "第五帧 · 蔷薇暮色"
+        }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "自动播放间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 4,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "切片消失时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.5,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "stagger",
+      "label": "切片错开延迟",
+      "type": "range",
+      "target": "css",
+      "min": 0.02,
+      "max": 0.12,
+      "step": 0.01,
+      "default": 0.06,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "slices",
+      "label": "切片条数",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 12,
+      "step": 1,
+      "default": 7
+    },
+    {
+      "key": "ratio",
+      "label": "容器宽高比",
+      "type": "select",
+      "target": "css",
+      "options": [
+        {
+          "value": "16 / 9",
+          "label": "16:9 宽屏"
+        },
+        {
+          "value": "4 / 3",
+          "label": "4:3 标准"
+        },
+        {
+          "value": "1 / 1",
+          "label": "1:1 方形"
+        }
+      ],
+      "default": "16 / 9"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "blinds",
+      "name": "细密百叶",
+      "values": {
+        "slices": 12,
+        "stagger": 0.03,
+        "duration": 0.4
+      }
+    },
+    {
+      "id": "chunky",
+      "name": "大块慢裂",
+      "values": {
+        "slices": 4,
+        "stagger": 0.1,
+        "duration": 0.8,
+        "accent": "#00e5ff"
+      }
+    }
+  ]
+}

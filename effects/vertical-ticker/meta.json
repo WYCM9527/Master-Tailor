@@ -1,0 +1,111 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "original"
+  },
+  "slug": "vertical-ticker",
+  "name": "竖向新闻滚动条",
+  "tags": [
+    "跑马灯",
+    "公告",
+    "文字"
+  ],
+  "summary": "一行公告栏，条目向上滚动轮换",
+  "params": [
+    {
+      "key": "items",
+      "label": "滚动条目",
+      "type": "text",
+      "target": "config",
+      "default": "新版本已上线，速度提升 40%｜今晚 8 点直播答疑，欢迎围观｜中秋活动：全场素材限时免费｜招募内测用户，参与有礼",
+      "maxLength": 120,
+      "help": "用「｜」分隔"
+    },
+    {
+      "key": "label",
+      "label": "前缀标签",
+      "type": "text",
+      "target": "config",
+      "default": "公告",
+      "maxLength": 4
+    },
+    {
+      "key": "interval",
+      "label": "自动滚动间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 3,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "滚动切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.45,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "fontSize",
+      "label": "条目字号",
+      "type": "range",
+      "target": "css",
+      "min": 13,
+      "max": 20,
+      "step": 1,
+      "default": 15,
+      "unit": "px"
+    },
+    {
+      "key": "color",
+      "label": "条目文字色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "urgent",
+      "name": "红色快报",
+      "values": {
+        "accent": "#ff4d6d",
+        "label": "快讯",
+        "interval": 2
+      }
+    },
+    {
+      "id": "calm",
+      "name": "低调通知",
+      "values": {
+        "accent": "#4ade80",
+        "interval": 5,
+        "fontSize": 14
+      }
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "original"
+  },
+  "slug": "dual-marquee",
+  "name": "反向双排跑马灯",
+  "tags": [
+    "跑马灯",
+    "品牌墙",
+    "双排"
+  ],
+  "summary": "两排品牌名一排向左一排向右，交错滚动",
+  "params": [
+    {
+      "key": "brands",
+      "label": "品牌名列表",
+      "type": "text",
+      "target": "config",
+      "default": "裁缝大师｜星轨科技｜琥珀云｜山脊实验室｜蔷薇设计｜苔原数据｜峡谷网络",
+      "maxLength": 80,
+      "help": "用「｜」分隔"
+    },
+    {
+      "key": "speed",
+      "label": "滚动速度",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 60,
+      "step": 2,
+      "default": 24,
+      "help": "越大越快"
+    },
+    {
+      "key": "gap",
+      "label": "品牌间距",
+      "type": "range",
+      "target": "css",
+      "min": 32,
+      "max": 120,
+      "step": 4,
+      "default": 64,
+      "unit": "px"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 14,
+      "max": 36,
+      "step": 2,
+      "default": 22,
+      "unit": "px"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#aab0c0"
+    },
+    {
+      "key": "hoverColor",
+      "label": "悬停高亮色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "wall",
+      "name": "大字品牌墙",
+      "values": {
+        "fontSize": 32,
+        "speed": 18,
+        "color": "#f2f3f8",
+        "gap": 88
+      }
+    },
+    {
+      "id": "ticker",
+      "name": "细密快滚",
+      "values": {
+        "fontSize": 15,
+        "speed": 44,
+        "gap": 40,
+        "color": "#6d7285"
+      }
+    }
+  ]
+}

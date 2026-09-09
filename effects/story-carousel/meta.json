@@ -1,0 +1,113 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Instagram Stories 交互（通用模式）",
+    "url": "https://web.dev/articles/codelab-building-a-stories-component",
+    "license": "未使用其代码"
+  },
+  "slug": "story-carousel",
+  "name": "Story 进度条轮播",
+  "tags": [
+    "轮播",
+    "进度条",
+    "故事"
+  ],
+  "summary": "顶部分段进度条自动走，点两侧翻页、按住暂停",
+  "params": [
+    {
+      "key": "slides",
+      "label": "故事列表",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "今晚的天色，琥珀味的"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "海边的第五个清晨"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "翻过山脊就是星空"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "雾散之前"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "收工，晚安"
+        }
+      ]
+    },
+    {
+      "key": "perSlide",
+      "label": "每张停留",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 8,
+      "step": 0.5,
+      "default": 4,
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "author",
+      "label": "名字",
+      "type": "text",
+      "target": "config",
+      "default": "裁缝大师",
+      "maxLength": 12
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "容器圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "quick",
+      "name": "快节奏",
+      "values": {
+        "perSlide": 2.5
+      }
+    },
+    {
+      "id": "long-look",
+      "name": "慢慢看",
+      "values": {
+        "perSlide": 7,
+        "accent": "#c084fc"
+      }
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动堆叠卡片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #f9cf00;    /* 强调色：卡片序号 */
+    --mt-shrink: 0.06;       /* 被压住的卡片每层缩小的比例 */
+    --mt-topGap: 18px;       /* 相邻卡片吸顶后的错位高度 */
+    --mt-rounded: 18px;      /* 卡片圆角 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  /* 演示用滚动容器（真实使用时就是页面本身的滚动） */
+  .mt-scroll {
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .mt-scroll::-webkit-scrollbar { display: none; }
+  .mt-lead {
+    height: 34vh;
+    display: grid;
+    place-items: center;
+    color: #6d7285;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+  }
+  .mt-stack-zone {
+    width: min(560px, 88vw);
+    margin: 0 auto;
+    padding-bottom: 30vh;
+  }
+
+  /* 每张卡：sticky 吸顶；后来的卡滚上来叠在前一张上面，
+     前一张被 JS 按「被盖住的程度」缩小压暗 */
+  .mt-card {
+    position: sticky;
+    margin: 0 0 12vh;
+    height: 54vh;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1c2c, #2a2f4a);
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+    transform-origin: center top;
+    will-change: transform, filter;
+  }
+  .mt-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .mt-card .mt-caption {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 46px 20px 16px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.62));
+  }
+  .mt-card .num {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    font-family: ui-monospace, monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--mt-accent);
+    background: rgba(10, 10, 15, 0.55);
+    border-radius: 999px;
+    padding: 3px 12px;
+  }
+
+  /* 用户开启「减少动态效果」：不做缩放压暗，只保留 sticky 叠放（JS 同步跳过） */
+</style>
+</head>
+<body>
+<div class="mt-scroll" id="mtScroll">
+  <div class="mt-lead">↓ 往下滚动，卡片会一张叠上一张 ↓</div>
+  <div class="mt-stack-zone" id="mtZone"></div>
+</div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.svg","caption":"第一章 · 琥珀之夜"},{"src":"/samples/sample-2.svg","caption":"第二章 · 海面日出"},{"src":"/samples/sample-3.svg","caption":"第三章 · 山脊星光"},{"src":"/samples/sample-4.svg","caption":"第四章 · 苔原晨雾"},{"src":"/samples/sample-5.svg","caption":"第五章 · 蔷薇暮色"}], // 卡片列表
+  };
+
+  // 滚动堆叠：本效果由页面滚动驱动（无自动播放、无键盘/拖拽切换的概念，
+  // 滚动本身就是原生交互）；prefers-reduced-motion 时只保留 sticky 叠放、
+  // 去掉缩放与压暗动画。
+  (function () {
+    const scroller = document.getElementById('mtScroll');
+    const zone = document.getElementById('mtZone');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const slides = CONFIG.slides;
+    const total = slides.length;
+
+    zone.setAttribute('role', 'region');
+    zone.setAttribute('aria-label', '滚动堆叠卡片');
+
+    const cards = slides.map((s, i) => {
+      const el = document.createElement('figure');
+      el.className = 'mt-card';
+      // 每张卡吸顶位置逐层下移一点，叠起来能看到上面每张的一条边
+      el.style.top = 'calc(4vh + ' + i + ' * var(--mt-topGap))';
+      el.style.zIndex = String(i + 1);
+      const img = document.createElement('img');
+      img.src = s.src;
+      img.alt = s.caption || '第 ' + (i + 1) + ' 张卡片';
+      img.loading = 'lazy';
+      el.appendChild(img);
+      const num = document.createElement('span');
+      num.className = 'num';
+      num.textContent = (i + 1) + ' / ' + total;
+      el.appendChild(num);
+      if (s.caption) {
+        const cap = document.createElement('div');
+        cap.className = 'mt-caption';
+        cap.textContent = s.caption;
+        el.appendChild(cap);
+      }
+      zone.appendChild(el);
+      return el;
+    });
+
+    // 滚动时：被下一张盖住的卡按盖住程度缩小、压暗（rAF 节流）
+    let ticking = false;
+    function update() {
+      ticking = false;
+      if (reduceMotion) return;
+      const shrink = Number(getComputedStyle(document.documentElement).getPropertyValue('--mt-shrink')) || 0.06;
+      for (let i = 0; i < total - 1; i++) {
+        const mine = cards[i].getBoundingClientRect();
+        const nextTop = cards[i + 1].getBoundingClientRect().top;
+        // progress: 下一张卡从我底部推进到我顶部的过程 0 → 1
+        const progress = Math.min(1, Math.max(0, (mine.bottom - nextTop) / mine.height));
+        cards[i].style.transform = 'scale(' + (1 - progress * shrink) + ')';
+        cards[i].style.filter = 'brightness(' + (1 - progress * 0.35) + ')';
+      }
+    }
+    scroller.addEventListener('scroll', () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    // 页面切到后台时不需要处理：滚动停了 update 自然不再触发
+    update();
+
+    /* @mt:thumb-start */
+    if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+      // 缩略图演示：容器自动往复滚动，展示叠卡过程
+      let dir = 1;
+      setInterval(() => {
+        if (document.hidden) return;
+        scroller.scrollTop += 3 * dir;
+        const max = scroller.scrollHeight - scroller.clientHeight;
+        if (scroller.scrollTop >= max - 2) dir = -1;
+        if (scroller.scrollTop <= 2) dir = 1;
+      }, 24);
+    }
+    /* @mt:thumb-end */
+  })();
+</script>
+</body>
+</html>

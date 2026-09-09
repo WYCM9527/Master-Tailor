@@ -1,0 +1,142 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "实体书翻页 / StPageFlip 一类交互",
+    "url": "https://nodlik.github.io/StPageFlip/",
+    "license": "未使用其代码"
+  },
+  "slug": "page-flip-carousel",
+  "name": "杂志翻页轮播",
+  "tags": [
+    "轮播",
+    "3D",
+    "翻页"
+  ],
+  "summary": "页面绕左侧书脊翻起，像翻一本杂志",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "第一页 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "第二页 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "第三页 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "第四页 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "第五页 · 蔷薇暮色"
+        }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "自动翻页间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 4,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "翻页时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.9,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "ratio",
+      "label": "页面宽高比",
+      "type": "select",
+      "target": "css",
+      "options": [
+        {
+          "value": "3 / 4",
+          "label": "3:4 杂志"
+        },
+        {
+          "value": "1 / 1",
+          "label": "1:1 方形"
+        },
+        {
+          "value": "4 / 3",
+          "label": "4:3 横版"
+        }
+      ],
+      "default": "3 / 4"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "页面圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 10,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "swift",
+      "name": "快翻",
+      "values": {
+        "duration": 0.6,
+        "interval": 3
+      }
+    },
+    {
+      "id": "album",
+      "name": "方形画册",
+      "values": {
+        "ratio": "1 / 1",
+        "duration": 1.1,
+        "interval": 6,
+        "accent": "#c084fc"
+      }
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "经典照片堆 / 洗牌交互",
+    "url": "https://freefrontend.com/css-carousels/",
+    "license": "未使用其代码"
+  },
+  "slug": "shuffle-stack-carousel",
+  "name": "纸堆洗牌轮播",
+  "tags": [
+    "轮播",
+    "堆叠",
+    "洗牌"
+  ],
+  "summary": "随手叠放的一沓照片，顶张随机甩向一侧像在洗牌",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "照片一 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "照片二 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "照片三 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "照片四 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "照片五 · 蔷薇暮色"
+        }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "自动洗牌间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 3,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.55,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "stackDepth",
+      "label": "纸堆松散度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "default": 1.2,
+      "help": "下层照片错位与旋转的幅度倍率"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "照片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "messy",
+      "name": "越乱越像",
+      "values": {
+        "stackDepth": 1.9,
+        "interval": 2.5
+      }
+    },
+    {
+      "id": "neat",
+      "name": "整齐快抽",
+      "values": {
+        "stackDepth": 0.6,
+        "duration": 0.4,
+        "accent": "#00e5ff"
+      }
+    }
+  ]
+}

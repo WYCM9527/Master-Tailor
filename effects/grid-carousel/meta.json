@@ -1,0 +1,153 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "original"
+  },
+  "slug": "grid-carousel",
+  "name": "网格分页轮播",
+  "tags": [
+    "轮播",
+    "网格",
+    "分页"
+  ],
+  "summary": "2 行 N 列的图片墙，整页整页横向翻",
+  "params": [
+    {
+      "key": "slides",
+      "label": "格子列表",
+      "type": "images",
+      "target": "config",
+      "min": 6,
+      "max": 12,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "格子一"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "格子二"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "格子三"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "格子四"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "格子五"
+        },
+        {
+          "src": "/samples/sample-6.svg",
+          "caption": "格子六"
+        },
+        {
+          "src": "/samples/sample-7.svg",
+          "caption": "格子七"
+        },
+        {
+          "src": "/samples/sample-8.svg",
+          "caption": "格子八"
+        }
+      ]
+    },
+    {
+      "key": "cols",
+      "label": "每页列数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3,
+      "help": "每页格子数 = 2 行 × 列数"
+    },
+    {
+      "key": "interval",
+      "label": "自动翻页间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 4,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "翻页时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.55,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "gap",
+      "label": "格子间距",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 24,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "格子圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "quad",
+      "name": "2×2 大格",
+      "values": {
+        "cols": 2,
+        "gap": 16,
+        "interval": 5
+      }
+    },
+    {
+      "id": "dense",
+      "name": "2×4 密墙",
+      "values": {
+        "cols": 4,
+        "gap": 8,
+        "duration": 0.4,
+        "accent": "#00e5ff"
+      }
+    }
+  ]
+}

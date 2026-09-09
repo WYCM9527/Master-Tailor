@@ -1,0 +1,176 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "original"
+  },
+  "slug": "flip-carousel",
+  "name": "卡片翻面轮播",
+  "tags": [
+    "轮播",
+    "3D",
+    "翻面"
+  ],
+  "summary": "整张卡绕中轴翻面，像翻一枚硬币看背面",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "第一帧 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "第二帧 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "第三帧 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "第四帧 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "第五帧 · 蔷薇暮色"
+        }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "自动播放间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 4,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.8,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "ratio",
+      "label": "容器宽高比",
+      "type": "select",
+      "target": "css",
+      "options": [
+        {
+          "value": "16 / 9",
+          "label": "16:9 宽屏"
+        },
+        {
+          "value": "21 / 9",
+          "label": "21:9 超宽"
+        },
+        {
+          "value": "4 / 3",
+          "label": "4:3 标准"
+        },
+        {
+          "value": "1 / 1",
+          "label": "1:1 方形"
+        }
+      ],
+      "default": "4 / 3"
+    },
+    {
+      "key": "pager",
+      "label": "分页器样式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "bullets",
+          "label": "圆点"
+        },
+        {
+          "value": "fraction",
+          "label": "数字（3 / 5）"
+        },
+        {
+          "value": "progress",
+          "label": "进度条"
+        },
+        {
+          "value": "none",
+          "label": "不显示"
+        }
+      ],
+      "default": "fraction"
+    },
+    {
+      "key": "arrows",
+      "label": "显示左右箭头",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "coin",
+      "name": "快翻硬币",
+      "values": {
+        "interval": 2.5,
+        "duration": 0.5,
+        "ratio": "1 / 1"
+      }
+    },
+    {
+      "id": "slow-wide",
+      "name": "宽幅慢翻",
+      "values": {
+        "ratio": "16 / 9",
+        "duration": 1.1,
+        "interval": 6,
+        "accent": "#c084fc"
+      }
+    }
+  ]
+}

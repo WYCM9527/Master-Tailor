@@ -1,0 +1,119 @@
+{
+  "slug": "stacking-cards-scroll",
+  "name": "滚动堆叠卡片",
+  "category": "showcase",
+  "sub": "stack-scroll",
+  "tags": [
+    "滚动",
+    "堆叠",
+    "sticky"
+  ],
+  "summary": "页面往下滚，卡片一张叠上一张，旧卡缩小退后",
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "params": [
+    {
+      "key": "slides",
+      "label": "卡片列表",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "第一章 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "第二章 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "第三章 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "第四章 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "第五章 · 蔷薇暮色"
+        }
+      ]
+    },
+    {
+      "key": "shrink",
+      "label": "缩小幅度",
+      "type": "range",
+      "target": "css",
+      "min": 0.02,
+      "max": 0.12,
+      "step": 0.01,
+      "default": 0.06,
+      "help": "被盖住的卡完全压底时缩小的比例"
+    },
+    {
+      "key": "topGap",
+      "label": "叠边高度",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 40,
+      "step": 2,
+      "default": 18,
+      "unit": "px",
+      "help": "每张卡吸顶后露出的上一张边缘"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 18,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "deep-shrink",
+      "name": "明显退后",
+      "values": {
+        "shrink": 0.11,
+        "topGap": 26
+      }
+    },
+    {
+      "id": "flat",
+      "name": "平整贴合",
+      "values": {
+        "shrink": 0.03,
+        "topGap": 10,
+        "accent": "#00e5ff"
+      }
+    }
+  ],
+  "source": {
+    "kind": "reference",
+    "name": "CSS sticky 堆叠卡片（scroll-driven 常见模式）",
+    "url": "https://scroll-driven-animations.style/",
+    "license": "思路参考，代码自写"
+  }
+}

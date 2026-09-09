@@ -1,0 +1,126 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "original"
+  },
+  "slug": "timeline-carousel",
+  "name": "时间线轮播",
+  "tags": [
+    "轮播",
+    "时间线",
+    "里程碑"
+  ],
+  "summary": "底部一条年份时间轴，点节点看对应年份的故事",
+  "params": [
+    {
+      "key": "slides",
+      "label": "里程碑列表",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "品牌诞生，第一间工作室"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "第一款产品上线"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "用户突破一百万"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "海外市场启航"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "新总部落成"
+        }
+      ]
+    },
+    {
+      "key": "years",
+      "label": "年份列表",
+      "type": "text",
+      "target": "config",
+      "default": "2019｜2021｜2022｜2024｜2026",
+      "maxLength": 60,
+      "help": "用「｜」分隔，与图片一一对应"
+    },
+    {
+      "key": "interval",
+      "label": "自动前进间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 4,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动播放"
+    },
+    {
+      "key": "duration",
+      "label": "切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.6,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "图片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "story",
+      "name": "慢速讲述",
+      "values": {
+        "interval": 6,
+        "duration": 0.9
+      }
+    },
+    {
+      "id": "crisp",
+      "name": "利落切换",
+      "values": {
+        "interval": 3,
+        "duration": 0.4,
+        "accent": "#00e5ff"
+      }
+    }
+  ]
+}

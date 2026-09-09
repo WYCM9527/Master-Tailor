@@ -1,0 +1,116 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "original"
+  },
+  "slug": "snap-carousel",
+  "name": "原生滚动轮播",
+  "tags": [
+    "轮播",
+    "scroll-snap",
+    "轻量"
+  ],
+  "summary": "纯 CSS scroll-snap 驱动：原生手感的逐张吸附滚动",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "第一张 · 琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "第二张 · 海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "第三张 · 山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "第四张 · 苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "第五张 · 蔷薇暮色"
+        }
+      ]
+    },
+    {
+      "key": "cardW",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "css",
+      "min": 40,
+      "max": 100,
+      "step": 2,
+      "default": 68,
+      "unit": "%",
+      "help": "占视口宽度的比例，小于 100% 会露出邻卡"
+    },
+    {
+      "key": "gap",
+      "label": "卡片间距",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 28,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "full",
+      "name": "整屏一张",
+      "values": {
+        "cardW": 100,
+        "gap": 8
+      }
+    },
+    {
+      "id": "peeky",
+      "name": "多露邻卡",
+      "values": {
+        "cardW": 52,
+        "gap": 18,
+        "accent": "#00e5ff"
+      }
+    }
+  ]
+}

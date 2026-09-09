@@ -1,0 +1,141 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Netflix 首页海报行交互",
+    "url": "https://css-tricks.com/how-to-re-create-a-nifty-netflix-animation-in-css/",
+    "license": "未使用其代码"
+  },
+  "slug": "netflix-row-carousel",
+  "name": "影视行悬停放大",
+  "tags": [
+    "轮播",
+    "悬停",
+    "海报墙"
+  ],
+  "summary": "一行海报，摸到哪张哪张放大浮起，邻居让位",
+  "params": [
+    {
+      "key": "slides",
+      "label": "海报列表",
+      "type": "images",
+      "target": "config",
+      "min": 6,
+      "max": 10,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "琥珀之夜"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "海面日出"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "山脊星光"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "苔原晨雾"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "蔷薇暮色"
+        },
+        {
+          "src": "/samples/sample-6.svg",
+          "caption": "靛蓝星轨"
+        },
+        {
+          "src": "/samples/sample-7.svg",
+          "caption": "峡谷余晖"
+        },
+        {
+          "src": "/samples/sample-8.svg",
+          "caption": "紫罗兰夜"
+        }
+      ]
+    },
+    {
+      "key": "scale",
+      "label": "悬停放大倍数",
+      "type": "range",
+      "target": "css",
+      "min": 1.1,
+      "max": 1.6,
+      "step": 0.05,
+      "default": 1.35
+    },
+    {
+      "key": "duration",
+      "label": "放大过渡时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.3,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "gap",
+      "label": "海报间距",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 24,
+      "step": 2,
+      "default": 10,
+      "unit": "px"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "海报圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 8,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "big-pop",
+      "name": "大幅弹出",
+      "values": {
+        "scale": 1.55,
+        "duration": 0.35
+      }
+    },
+    {
+      "id": "subtle",
+      "name": "轻抬即可",
+      "values": {
+        "scale": 1.18,
+        "duration": 0.22,
+        "accent": "#ff4d6d"
+      }
+    }
+  ]
+}

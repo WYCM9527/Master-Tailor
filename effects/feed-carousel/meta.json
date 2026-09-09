@@ -1,0 +1,114 @@
+{
+  "category": "showcase",
+  "sub": "carousel",
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "抖音式竖向 feed（通用移动端模式）",
+    "url": "https://web.dev/articles/codelab-building-a-stories-component",
+    "license": "未使用其代码"
+  },
+  "slug": "feed-carousel",
+  "name": "竖向沉浸 Feed",
+  "tags": [
+    "轮播",
+    "竖向",
+    "短视频风"
+  ],
+  "summary": "手机屏式的竖向内容流，滚轮和上下滑一屏一条",
+  "params": [
+    {
+      "key": "slides",
+      "label": "内容列表",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.svg",
+          "caption": "入夜后的琥珀色天空，好看到不想睡"
+        },
+        {
+          "src": "/samples/sample-2.svg",
+          "caption": "清晨五点的海，只有浪的声音"
+        },
+        {
+          "src": "/samples/sample-3.svg",
+          "caption": "山脊线上的星光，值得爬这一趟"
+        },
+        {
+          "src": "/samples/sample-4.svg",
+          "caption": "苔原的晨雾像一层薄纱"
+        },
+        {
+          "src": "/samples/sample-5.svg",
+          "caption": "蔷薇色的暮色，今天的收尾"
+        }
+      ]
+    },
+    {
+      "key": "author",
+      "label": "作者名",
+      "type": "text",
+      "target": "config",
+      "default": "@裁缝大师",
+      "maxLength": 16
+    },
+    {
+      "key": "duration",
+      "label": "翻页时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.45,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#f9cf00"
+    },
+    {
+      "key": "rounded",
+      "label": "容器圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "snappy",
+      "name": "快速刷",
+      "values": {
+        "duration": 0.3
+      }
+    },
+    {
+      "id": "cinematic",
+      "name": "慢滑大片",
+      "values": {
+        "duration": 0.7,
+        "accent": "#ff4d6d"
+      }
+    }
+  ]
+}

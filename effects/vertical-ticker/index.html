@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>竖向新闻滚动条</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #f9cf00;    /* 强调色：前缀标签底色 */
+    --mt-duration: 0.45s;    /* 滚动切换时长 */
+    --mt-fontSize: 15px;     /* 条目字号 */
+    --mt-color: #f2f3f8;     /* 条目文字颜色 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-ticker {
+    display: flex;
+    align-items: stretch;
+    width: min(640px, 92vw);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #14151f;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    outline: none;
+    cursor: default;
+  }
+  .mt-ticker:focus-visible { box-shadow: 0 0 0 2px var(--mt-accent); }
+
+  .mt-label {
+    flex: none;
+    display: grid;
+    place-items: center;
+    padding: 0 14px;
+    background: var(--mt-accent);
+    color: #191400;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+  }
+
+  /* 视口只有一行高，条目上下滑动换行 */
+  .mt-view {
+    position: relative;
+    flex: 1;
+    height: 44px;
+    overflow: hidden;
+  }
+  .mt-item {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-size: var(--mt-fontSize);
+    color: var(--mt-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transform: translateY(100%);
+    transition: transform var(--mt-duration) cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  .mt-item.is-active { transform: none; }
+  .mt-item.is-prev { transform: translateY(-100%); }
+
+  /* 用户开启「减少动态效果」：瞬间换行、不自动滚动（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-item { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-ticker" id="mtRoot"></div>
+<script>
+  const CONFIG = {
+    items: "新版本已上线，速度提升 40%｜今晚 8 点直播答疑，欢迎围观｜中秋活动：全场素材限时免费｜招募内测用户，参与有礼", // 滚动条目（用「｜」分隔）
+    label: "公告",   // 前缀标签文字
+    interval: 3,    // 自动滚动间隔（秒，0 为不自动滚动）
+  };
+
+  (function () {
+    const root = document.getElementById('mtRoot');
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const items = CONFIG.items.split('｜').map((s) => s.trim()).filter(Boolean);
+    const total = items.length;
+    let index = 0;
+
+    root.setAttribute('role', 'region');
+    root.setAttribute('aria-roledescription', 'carousel');
+    root.setAttribute('aria-label', CONFIG.label + '滚动条');
+    root.setAttribute('tabindex', '0');
+
+    const label = document.createElement('div');
+    label.className = 'mt-label';
+    label.textContent = CONFIG.label;
+    root.appendChild(label);
+
+    const view = document.createElement('div');
+    view.className = 'mt-view';
+    view.setAttribute('aria-live', CONFIG.interval > 0 ? 'off' : 'polite');
+    const itemEls = items.map((text, i) => {
+      const el = document.createElement('div');
+      el.className = 'mt-item' + (i === 0 ? ' is-active' : '');
+      el.setAttribute('role', 'group');
+      el.setAttribute('aria-roledescription', 'slide');
+      el.setAttribute('aria-label', '第 ' + (i + 1) + ' 条，共 ' + total + ' 条');
+      el.textContent = text;
+      view.appendChild(el);
+      return el;
+    });
+    root.appendChild(view);
+
+    // 三态类切换：新条从下滑入、旧条向上滑出（prev 方向相反）
+    function goTo(next, dir) {
+      next = (next + total) % total;
+      if (next === index || total < 2) return;
+      const current = itemEls[index];
+      const target = itemEls[next];
+      target.style.transition = 'none';
+      target.classList.toggle('is-prev', dir < 0);
+      void target.offsetWidth;
+      target.style.transition = '';
+      current.classList.remove('is-active');
+      current.classList.toggle('is-prev', dir > 0);
+      target.classList.remove('is-prev');
+      target.classList.add('is-active');
+      index = next;
+    }
+    const nextItem = () => goTo(index + 1, 1);
+    const prevItem = () => goTo(index - 1, -1);
+
+    // 自动滚动：悬停 / 聚焦 / 后台暂停；reduced-motion 不启动
+    let timer = null;
+    function play() {
+      if (timer || CONFIG.interval <= 0 || reduceMotion || total < 2) return;
+      timer = setInterval(nextItem, CONFIG.interval * 1000);
+    }
+    function pause() { clearInterval(timer); timer = null; }
+    root.addEventListener('mouseenter', pause);
+    root.addEventListener('mouseleave', play);
+    root.addEventListener('focusin', pause);
+    root.addEventListener('focusout', play);
+    document.addEventListener('visibilitychange', () => (document.hidden ? pause() : play()));
+    play();
+
+    // 上下拖动（Pointer Events）：向上滑看下一条，向下滑看上一条
+    let dragStartY = null, dragDy = 0;
+    view.addEventListener('pointerdown', (e) => {
+      dragStartY = e.clientY; dragDy = 0;
+      view.setPointerCapture(e.pointerId);
+    });
+    view.addEventListener('pointermove', (e) => {
+      if (dragStartY === null) return;
+      dragDy = e.clientY - dragStartY;
+    });
+    view.addEventListener('pointerup', () => {
+      if (dragStartY === null) return;
+      if (Math.abs(dragDy) > 24) (dragDy < 0 ? nextItem : prevItem)();
+      dragStartY = null;
+    });
+    view.addEventListener('pointercancel', () => { dragStartY = null; });
+
+    // 键盘：↑ / ↓ 切换条目
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); nextItem(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); prevItem(); }
+    });
+  })();
+</script>
+</body>
+</html>
