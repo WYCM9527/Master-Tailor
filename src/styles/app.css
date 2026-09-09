@@ -132,6 +132,12 @@
   width: 100%;
   justify-content: space-between;
 }
+/* 纯图标方按钮（与常规按钮等高） */
+.btn-icon {
+  width: 35px;
+  padding: 10px 0;
+  font-size: 15px;
+}
 .btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -630,15 +636,6 @@
   gap: 4px;
 }
 
-.d-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  min-height: 56px;
-  padding: 10px var(--pad);
-}
 /* 参数面板里的预览底色：三个方色块 */
 .bg-row {
   display: flex;
@@ -843,10 +840,6 @@
   color: var(--fg-mute);
   line-height: 1.5;
 }
-.params-foot {
-  padding-top: 14px;
-}
-
 input[type='text'],
 select {
   width: 100%;

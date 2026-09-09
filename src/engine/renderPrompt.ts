@@ -1,17 +1,11 @@
-import type {
-  BgSetting,
-  EffectMeta,
-  Param,
-  ParamValue,
-  SlideItem,
-  Values,
-} from '../contract/types';
-import { BG_DARK, BG_LIGHT, bgColor, slidePlaceholder } from '../contract/types';
+import type { EffectMeta, Param, ParamValue, SlideItem, Values } from '../contract/types';
+import { slidePlaceholder } from '../contract/types';
 import { fontById } from '../contract/fonts';
 
 /**
  * 渲染 7 段式中文 prompt：
  * 任务 → 效果描述 → 参数 → 技术要求 → 完成后请检查 → 如果遇到问题 → 参考实现（可选）
+ * 预览底色只影响站内预览与导出代码的页面底色，不写进 prompt 正文。
  */
 
 export interface PromptOptions {
@@ -19,7 +13,6 @@ export interface PromptOptions {
   /** effects/<slug>/prompt.md 原文 */
   promptMd: string;
   values: Values;
-  bg: BgSetting;
   includeCode: boolean;
   /** includeCode 时附带的导出版代码（bakeCode export 模式产物） */
   exportedCode?: string;
@@ -84,16 +77,9 @@ export function humanValue(param: Param, value: ParamValue): string {
   }
 }
 
-function bgHuman(bg: BgSetting): string {
-  if (bg.mode === 'dark') return `深色（${BG_DARK}）`;
-  if (bg.mode === 'light') return `浅色（${BG_LIGHT}）`;
-  return `自定义颜色 ${bg.color}`;
-}
-
 /** 替换效果描述中的 {{key}} 占位符 */
-function fillPlaceholders(text: string, meta: EffectMeta, values: Values, bg: BgSetting): string {
+function fillPlaceholders(text: string, meta: EffectMeta, values: Values): string {
   return text.replace(/\{\{(\w+)\}\}/g, (_m, key: string) => {
-    if (key === 'bg') return bgHuman(bg);
     const param = meta.params.find((p) => p.key === key);
     if (!param) return _m;
     return humanValue(param, values[key] ?? param.default);
@@ -107,7 +93,7 @@ const DEFAULT_CHECKS = [
 ];
 
 export function renderPrompt(o: PromptOptions): string {
-  const { meta, values, bg } = o;
+  const { meta, values } = o;
   const sections = parsePromptMd(o.promptMd);
 
   const parts: string[] = [];
@@ -118,13 +104,12 @@ export function renderPrompt(o: PromptOptions): string {
   );
 
   // 2.【效果描述】
-  parts.push(`【效果描述】\n${fillPlaceholders(sections.description, meta, values, bg)}`);
+  parts.push(`【效果描述】\n${fillPlaceholders(sections.description, meta, values)}`);
 
   // 3.【参数】
   const paramLines = meta.params.map(
     (p) => `- ${p.label}：${humanValue(p, values[p.key] ?? p.default)}`,
   );
-  paramLines.push(`- 我的页面底色：${bgHuman(bg)}（效果要在这个底色上好看）`);
   parts.push(`【参数】\n${paramLines.join('\n')}`);
 
   // 4.【技术要求】（全局四条 + 效果专属补充）
@@ -157,5 +142,3 @@ export function renderPrompt(o: PromptOptions): string {
 
   return parts.join('\n\n');
 }
-
-export { bgColor };

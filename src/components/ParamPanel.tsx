@@ -24,9 +24,11 @@ interface PanelProps {
   onChange: (values: Values) => void;
   bg: BgSetting;
   onBgChange: (bg: BgSetting) => void;
+  /** 让预览舞台进入全屏 */
+  onFullscreen: () => void;
 }
 
-export function ParamPanel({ meta, values, onChange, bg, onBgChange }: PanelProps) {
+export function ParamPanel({ meta, values, onChange, bg, onBgChange, onFullscreen }: PanelProps) {
   const setValue = (key: string, v: ParamValue) => onChange({ ...values, [key]: v });
 
   const isPresetActive = (presetId: string) => {
@@ -44,7 +46,20 @@ export function ParamPanel({ meta, values, onChange, bg, onBgChange }: PanelProp
           参数
           <span className="hint mono">实时进入预览、Prompt 和代码</span>
         </span>
-        <span className="mono">{String(meta.params.length).padStart(2, '0')}</span>
+        <div className="blk-actions">
+          <button type="button" className="btn" onClick={onFullscreen}>
+            全屏预览 <span className="arrow">↗</span>
+          </button>
+          <button
+            type="button"
+            className="btn btn-icon"
+            title="重置参数"
+            aria-label="重置参数"
+            onClick={() => onChange(defaultValues(meta))}
+          >
+            ↺
+          </button>
+        </div>
       </div>
       <div className="params-body">
         <BgControl bg={bg} onChange={onBgChange} />
@@ -76,16 +91,6 @@ export function ParamPanel({ meta, values, onChange, bg, onBgChange }: PanelProp
             onChange={(v) => setValue(param.key, v)}
           />
         ))}
-
-        <div className="params-foot">
-          <button
-            type="button"
-            className="btn btn-block"
-            onClick={() => onChange(defaultValues(meta))}
-          >
-            重置参数 <span className="arrow">↺</span>
-          </button>
-        </div>
       </div>
     </aside>
   );
@@ -94,7 +99,7 @@ export function ParamPanel({ meta, values, onChange, bg, onBgChange }: PanelProp
 /** 自定义底色的方形斜纹示意（不用彩色渐变） */
 const HATCH = 'repeating-linear-gradient(45deg, #fff 0 2px, #000 2px 5px)';
 
-/** 预览底色：深 / 浅 / 自定义，会写进 prompt 与导出代码 */
+/** 预览底色：深 / 浅 / 自定义，只影响预览与导出代码的页面底色 */
 function BgControl({ bg, onChange }: { bg: BgSetting; onChange: (bg: BgSetting) => void }) {
   const customColor = bg.mode === 'custom' ? bg.color : '#22335c';
   return (
@@ -134,7 +139,7 @@ function BgControl({ bg, onChange }: { bg: BgSetting; onChange: (bg: BgSetting) 
         </span>
         <span className="bg-names mono">深 / 浅 / 自定义</span>
       </div>
-      <span className="control-help">底色会写进 prompt，让 AI 知道效果用在什么背景上。</span>
+      <span className="control-help">只影响预览与导出代码的页面底色，不写进 prompt。</span>
     </div>
   );
 }

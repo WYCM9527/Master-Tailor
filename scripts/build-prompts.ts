@@ -40,7 +40,6 @@ for (const slug of dirs) {
     meta,
     promptMd,
     values,
-    bg: { mode: 'dark' },
     includeCode: true,
     exportedCode,
   });

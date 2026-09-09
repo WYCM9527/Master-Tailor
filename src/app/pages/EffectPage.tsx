@@ -85,11 +85,10 @@ function EffectPage({ effect }: { effect: Effect }) {
         meta,
         promptMd: effect.promptMd,
         values: state.values,
-        bg: state.bg,
         includeCode: state.includeCode,
         exportedCode: state.includeCode ? exportCode : undefined,
       }),
-    [meta, effect.promptMd, state, exportCode],
+    [meta, effect.promptMd, state.values, state.includeCode, exportCode],
   );
 
   const stageRef = useRef<HTMLDivElement>(null);
@@ -167,12 +166,6 @@ function EffectPage({ effect }: { effect: Effect }) {
 
       <div className="g12 d-body">
         <div className="span-8 sub d-left">
-          <div className="cell span-8 d-toolbar">
-            <span className="mono">预览 · 底色 {bg}</span>
-            <button type="button" className="btn" onClick={enterFullscreen}>
-              全屏预览 <span className="arrow">↗</span>
-            </button>
-          </div>
           <div className={`cell span-8 d-stage tight${idle ? ' idle' : ''}`} ref={stageRef}>
             <PreviewFrame srcdoc={srcdoc} cssVars={cssVars} title={`${meta.name} 实时预览`} />
             {isFullscreen && (
@@ -196,6 +189,7 @@ function EffectPage({ effect }: { effect: Effect }) {
               onChange={(values) => setState((s) => ({ ...s, values }))}
               bg={state.bg}
               onBgChange={(bgSetting) => setState((s) => ({ ...s, bg: bgSetting }))}
+              onFullscreen={enterFullscreen}
             />
           </div>
         </div>

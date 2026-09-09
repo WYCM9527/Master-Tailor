@@ -14,12 +14,11 @@ const SECTIONS = [
 ];
 
 describe('renderPrompt', () => {
-  it('包含全部 7 段且顺序正确，不含【放在哪】', () => {
+  it('包含全部 7 段且顺序正确，不含【放在哪】与底色', () => {
     const text = renderPrompt({
       meta: fixtureMeta,
       promptMd: fixturePromptMd,
       values: defaultValues(fixtureMeta),
-      bg: { mode: 'dark' },
       includeCode: true,
       exportedCode: '<!doctype html><html></html>',
     });
@@ -30,20 +29,19 @@ describe('renderPrompt', () => {
       last = idx;
     }
     expect(text).not.toContain('放在哪');
+    expect(text).not.toContain('页面底色');
   });
 
-  it('占位符替换为人话：颜色 hex、速度带单位、文字带引号、bg 描述', () => {
+  it('占位符替换为人话：颜色 hex、速度带单位、文字带引号', () => {
     const text = renderPrompt({
       meta: fixtureMeta,
       promptMd: fixturePromptMd,
       values: { ...defaultValues(fixtureMeta), color: '#abcdef', speed: 2.5 },
-      bg: { mode: 'light' },
       includeCode: false,
     });
     expect(text).toContain('主色是 #abcdef');
     expect(text).toContain('速度 2.5×');
     expect(text).toContain('文字为 「你好，世界」');
-    expect(text).toContain('浅色（#f5f6fa）');
   });
 
   it('仅描述模式不含【参考实现】；自定义检查生效', () => {
@@ -51,12 +49,10 @@ describe('renderPrompt', () => {
       meta: fixtureMeta,
       promptMd: fixturePromptMd,
       values: defaultValues(fixtureMeta),
-      bg: { mode: 'custom', color: '#334455' },
       includeCode: false,
     });
     expect(text).not.toContain('【参考实现】');
     expect(text).toContain('自定义检查一');
-    expect(text).toContain('自定义颜色 #334455');
   });
 
   it('images 占位符列出每张图与标题；【技术要求补充】并入技术要求段', () => {
@@ -64,7 +60,6 @@ describe('renderPrompt', () => {
       meta: fixtureMeta,
       promptMd: fixturePromptMd,
       values: defaultValues(fixtureMeta),
-      bg: { mode: 'dark' },
       includeCode: false,
     });
     expect(text).toContain('共 3 张');

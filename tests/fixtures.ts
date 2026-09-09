@@ -112,7 +112,7 @@ export const fixtureHtml = `<!doctype html>
 `;
 
 export const fixturePromptMd = `## 效果描述
-主色是 {{color}}，速度 {{speed}}，文字为 {{text}}，共 {{count}} 个，底色 {{bg}}，幻灯片：{{slides}}。
+主色是 {{color}}，速度 {{speed}}，文字为 {{text}}，共 {{count}} 个，幻灯片：{{slides}}。
 
 ## 技术要求补充
 - 轮播容器带 aria-roledescription="carousel"，支持键盘左右切换
