@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { CategoryId } from '../../contract/types';
 import { CATEGORIES } from '../../contract/categories';
 import { EFFECTS } from '../../contract/registry';
@@ -20,14 +19,6 @@ function countIn(cat: CategoryId, sub?: string): number {
  * 效果网格本身在 /effects（Gallery）。
  */
 export function Home() {
-  const location = useLocation();
-
-  // 从其他页面点「怎么用」跳回来时滚到对应区块
-  useEffect(() => {
-    const target = (location.state as { scrollTo?: string } | null)?.scrollTo;
-    if (target) document.getElementById(target)?.scrollIntoView({ block: 'start' });
-  }, [location.state]);
-
   return (
     <>
       <section className="g12 hero" aria-label="站点介绍">

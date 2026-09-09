@@ -1,4 +1,4 @@
-import { HOWTO_ID } from './TopBar';
+const HOWTO_ID = 'howto';
 
 const TOOLS: { name: string; where: string }[] = [
   { name: 'Trae', where: '打开右侧 AI 对话框（Builder 模式），把 prompt 粘进输入框发送' },

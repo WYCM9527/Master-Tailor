@@ -8,13 +8,12 @@ import { Gallery } from './pages/Gallery';
 import { EffectRoute } from './pages/EffectPage';
 import { NotFound } from './pages/NotFound';
 
-/** 路由切换时回到页顶（首页「怎么用」跳转自带 scrollTo，交给首页处理） */
+/** 路由切换时回到页顶 */
 function ScrollToTop() {
-  const { pathname, state } = useLocation();
+  const { pathname } = useLocation();
   useEffect(() => {
-    if ((state as { scrollTo?: string } | null)?.scrollTo) return;
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [pathname, state]);
+  }, [pathname]);
   return null;
 }
 

@@ -182,25 +182,12 @@
 .hdr-brand .mono {
   color: var(--fg-mute);
 }
-.hdr-slogan {
-  color: var(--fg-dim);
-  font-size: var(--fs-small);
-}
-.hdr-btn {
-  justify-content: space-between;
-  width: 100%;
-  font-size: var(--fs-small);
-  transition:
-    background var(--ease),
-    color var(--ease);
-}
-.hdr-btn:hover,
-.hdr-btn.active {
+.hdr-brand:hover {
   background: var(--fg);
   color: var(--bg);
 }
-.hdr-btn:hover .arrow {
-  transform: translateX(4px);
+.hdr-brand:hover .mono {
+  color: var(--bg);
 }
 
 /* ============================================================
@@ -1174,8 +1161,8 @@ input[type='color']::-webkit-color-swatch {
   .hdr-brand {
     grid-column: span 3;
   }
-  .hdr-slogan {
-    grid-column: span 5;
+  .hdr-fill {
+    grid-column: span 9;
   }
   .d-back {
     grid-column: span 3;
@@ -1221,13 +1208,10 @@ input[type='color']::-webkit-color-swatch {
     --pad-l: 20px;
   }
   .hdr-brand {
-    grid-column: span 12;
+    grid-column: span 5;
   }
-  .hdr .hdr-slogan {
-    display: none;
-  }
-  .hdr-btn {
-    grid-column: span 6;
+  .hdr-fill {
+    grid-column: span 7;
   }
   .step {
     grid-column: span 4;
