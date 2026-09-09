@@ -36,9 +36,9 @@ export function ParamPanel({ meta, values, onChange }: PanelProps) {
   return (
     <aside className="params" aria-label="参数">
       <div className="blk-head">
-        <span className="mono">
+        <span className="blk-title">
           参数
-          <span className="hint">实时进入预览、prompt 和代码</span>
+          <span className="hint mono">实时进入预览、Prompt 和代码</span>
         </span>
         <span className="mono">{String(meta.params.length).padStart(2, '0')}</span>
       </div>

@@ -4,13 +4,13 @@ import type { Effect, EffectState } from '../../contract/types';
 import { BG_DARK, BG_LIGHT, bgColor } from '../../contract/types';
 import { categoryName, subDef } from '../../contract/categories';
 import { FONTS_CSS_HREF } from '../../contract/fonts';
-import { EFFECT_BY_SLUG, effectNo } from '../../contract/registry';
+import { EFFECT_BY_SLUG } from '../../contract/registry';
 import { bakeCode, collectCssVars, configSignature } from '../../engine/bakeCode';
 import { renderPrompt } from '../../engine/renderPrompt';
 import { decodeState, encodeState } from '../../engine/urlState';
 import { ParamPanel } from '../../components/ParamPanel';
 import { PreviewFrame } from '../../components/PreviewFrame';
-import { PromptActions, PromptCell } from '../../components/PromptPanel';
+import { PromptCell } from '../../components/PromptPanel';
 import { CodePanel } from '../../components/CodePanel';
 import { NotFound } from './NotFound';
 
@@ -113,9 +113,6 @@ function EffectPage({ effect }: { effect: Effect }) {
           {categoryName(meta.category)} · {subName}
         </Link>
         <div className="cell span-6 d-title">
-          <span className="mono">
-            No. {effectNo(effect)} · {categoryName(meta.category)} / {subName}
-          </span>
           <h1>{meta.name}</h1>
           <p>{meta.summary}</p>
         </div>
@@ -182,16 +179,13 @@ function EffectPage({ effect }: { effect: Effect }) {
             promptText={promptText}
             placement={state.placement}
             onPlacementChange={(v) => setState((s) => ({ ...s, placement: v }))}
+            includeCode={state.includeCode}
+            onIncludeCodeChange={(v) => setState((s) => ({ ...s, includeCode: v }))}
           />
         </div>
 
         <div className="cell span-4 d-right-col">
           <div className="d-right">
-            <PromptActions
-              promptText={promptText}
-              includeCode={state.includeCode}
-              onIncludeCodeChange={(v) => setState((s) => ({ ...s, includeCode: v }))}
-            />
             <ParamPanel
               meta={meta}
               values={state.values}

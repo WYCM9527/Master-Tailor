@@ -111,10 +111,10 @@ export function CodePanel({ code, slug }: Props) {
       onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
     >
       <summary className="blk-head">
-        <span className="mono">
+        <span className="blk-title">
           <span className="fold">▸</span>
           参考代码
-          <span className="hint">
+          <span className="hint mono">
             原生 HTML 单文件，参数已按当前值写入 · {code.split('\n').length} 行
           </span>
         </span>

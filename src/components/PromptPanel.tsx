@@ -1,52 +1,27 @@
 import { CopyButton } from './CopyButton';
 
-interface ActionsProps {
-  promptText: string;
-  includeCode: boolean;
-  onIncludeCodeChange: (v: boolean) => void;
-}
-
-/** 右列顶部的操作 Cell：主 CTA 常驻视口 */
-export function PromptActions({ promptText, includeCode, onIncludeCodeChange }: ActionsProps) {
-  return (
-    <div className="d-actions">
-      <CopyButton
-        getText={() => promptText}
-        label="复制 prompt"
-        doneLabel="prompt 已复制"
-        primary
-        large
-        block
-      />
-      <label className="switch-row">
-        仅描述（不附参考代码）
-        <button
-          type="button"
-          role="switch"
-          aria-checked={!includeCode}
-          aria-label="仅复制效果描述，不附参考代码"
-          className={`toggle${!includeCode ? ' on' : ''}`}
-          onClick={() => onIncludeCodeChange(!includeCode)}
-        />
-      </label>
-    </div>
-  );
-}
-
 interface PromptProps {
   promptText: string;
   placement: string;
   onPlacementChange: (v: string) => void;
+  includeCode: boolean;
+  onIncludeCodeChange: (v: boolean) => void;
 }
 
-/** 左列的 prompt Cell：放在哪 + 全文 */
-export function PromptCell({ promptText, placement, onPlacementChange }: PromptProps) {
+/** 左列的 Prompt Cell：头部 → 放在哪 → 全文 → 底部操作（复制 / 仅描述） */
+export function PromptCell({
+  promptText,
+  placement,
+  onPlacementChange,
+  includeCode,
+  onIncludeCodeChange,
+}: PromptProps) {
   return (
     <section className="cell span-8 d-prompt" aria-label="Prompt">
       <div className="blk-head">
-        <span className="mono">
+        <span className="blk-title">
           Prompt
-          <span className="hint">复制后粘给任何 AI 编程工具</span>
+          <span className="hint mono">复制后粘给任何 AI 编程工具</span>
         </span>
         <span className="mono">{promptText.length} 字</span>
       </div>
@@ -62,6 +37,26 @@ export function PromptCell({ promptText, placement, onPlacementChange }: PromptP
         />
       </div>
       <pre className="prompt-text">{promptText}</pre>
+      <div className="prompt-foot">
+        <CopyButton
+          getText={() => promptText}
+          label="复制 Prompt"
+          doneLabel="Prompt 已复制"
+          primary
+          large
+        />
+        <label className="switch-row">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!includeCode}
+            aria-label="仅复制效果描述，不附参考代码"
+            className={`toggle${!includeCode ? ' on' : ''}`}
+            onClick={() => onIncludeCodeChange(!includeCode)}
+          />
+          仅描述（不附参考代码）
+        </label>
+      </div>
     </section>
   );
 }

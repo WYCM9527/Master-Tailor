@@ -594,15 +594,15 @@
 .d-title {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
   justify-content: center;
-  padding: var(--pad-l) var(--pad);
+  padding: 14px var(--pad);
 }
 .d-title h1 {
-  font-size: var(--fs-h1);
+  font-size: clamp(24px, 2.4vw, 34px);
   font-weight: 700;
   letter-spacing: -0.02em;
-  line-height: 1.05;
+  line-height: 1.1;
 }
 .d-title p {
   color: var(--fg-dim);
@@ -611,8 +611,9 @@
 .d-meta {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   justify-content: center;
+  padding: 14px var(--pad);
 }
 .d-meta .tag-row {
   gap: 4px;
@@ -682,17 +683,9 @@
   display: flex;
   flex-direction: column;
 }
-.d-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: var(--pad-s);
-  border-bottom: 1px solid var(--line);
-}
 .switch-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   font-size: 12.5px;
   color: var(--fg-dim);
@@ -700,21 +693,38 @@
   padding: 4px 0;
 }
 
-/* 区块头（prompt / 代码 / 参数） */
+/* 区块头（Prompt / 代码 / 参数）：标题大字 + Mono 提示 */
 .blk-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px var(--pad-s);
+  padding: 12px var(--pad-s);
   border-bottom: 1px solid var(--line);
-  min-height: 44px;
+  min-height: 52px;
+}
+.blk-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .blk-head .hint {
-  margin-left: 10px;
   text-transform: none;
   letter-spacing: 0;
   color: var(--fg-mute);
+  font-weight: 400;
+}
+
+/* Prompt Cell 底部操作：主按钮 + 仅描述开关 */
+.prompt-foot {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: var(--pad-s);
+  border-top: 1px solid var(--line);
 }
 .blk-actions {
   display: flex;
@@ -1163,14 +1173,6 @@ input[type='color']::-webkit-color-swatch {
   .d-right {
     position: static;
     max-height: none;
-  }
-  .d-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  .d-actions .btn-block {
-    width: auto;
   }
   .howto-step {
     grid-column: span 4;
