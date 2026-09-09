@@ -35,6 +35,7 @@ export const fixtureMeta: EffectMeta = {
       default: 1,
       unit: '',
       displayUnit: '×',
+      help: '1× 是常速',
     },
     {
       key: 'size',
@@ -113,6 +114,9 @@ export const fixtureHtml = `<!doctype html>
 
 export const fixturePromptMd = `## 效果描述
 主色是 {{color}}，速度 {{speed}}，文字为 {{text}}，共 {{count}} 个，幻灯片：{{slides}}。
+
+## 实现提示
+用 transform: translateX 三态过渡实现滑动
 
 ## 技术要求补充
 - 轮播容器带 aria-roledescription="carousel"，支持键盘左右切换

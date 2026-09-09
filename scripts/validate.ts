@@ -143,10 +143,21 @@ for (const slug of dirs) {
   if (!/^##\s+效果描述\s*$/m.test(md)) fail(slug, 'prompt.md 缺少 "## 效果描述" 一节');
   const paramKeys = new Set(meta.params.map((p) => p.key));
   for (const m of md.matchAll(/\{\{(\w+)\}\}/g)) {
-    if (m[1] !== 'bg' && !paramKeys.has(m[1])) {
-      fail(slug, `prompt.md 引用了不存在的占位符 {{${m[1]}}}`);
-    }
+    if (!paramKeys.has(m[1])) fail(slug, `prompt.md 引用了不存在的占位符 {{${m[1]}}}`);
   }
+
+  // 效果描述文案规则（.cursor/rules/prompt-copy.mdc）：只写体验，不写数值 / 占位符 / 实现手段
+  const desc =
+    md.match(/^##\s+效果描述\s*$\n([\s\S]*?)(?=^##\s|\s*$(?![\s\S]))/m)?.[1]?.trim() ?? '';
+  if (desc.length > 220)
+    fail(slug, `效果描述 ${desc.length} 字，超过 200 字上限（含标点留 20 字余量）`);
+  if (/\{\{/.test(desc)) fail(slug, '效果描述里不要用 {{key}} 占位符，数值统一由【参数】段列出');
+  if (/实现提示/.test(desc)) fail(slug, '实现提示要放在独立的 "## 实现提示" 小节');
+  const IMPL_TERMS =
+    /transform|translate|rotate[XYZ]?\(|perspective|clip-path|backdrop-filter|keyframes|requestAnimationFrame|IntersectionObserver|z-index|position:|flex-grow|scroll-snap|mask-image|(linear|radial|conic)-gradient|steps\(|@property|aria-|role=|\bcanvas\b/i;
+  const term = desc.match(IMPL_TERMS);
+  if (term)
+    fail(slug, `效果描述里出现实现术语「${term[0]}」，请改用用户能感知的说法或移到 "## 实现提示"`);
 
   // ---- 预设值合法 ----
   for (const preset of meta.presets) {

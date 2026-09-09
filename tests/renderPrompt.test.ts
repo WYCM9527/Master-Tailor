@@ -44,15 +44,37 @@ describe('renderPrompt', () => {
     expect(text).toContain('文字为 「你好，世界」');
   });
 
-  it('仅描述模式不含【参考实现】；自定义检查生效', () => {
+  it('仅描述模式不含【参考实现】但含【实现提示】；附代码时反之', () => {
+    const noCode = renderPrompt({
+      meta: fixtureMeta,
+      promptMd: fixturePromptMd,
+      values: defaultValues(fixtureMeta),
+      includeCode: false,
+    });
+    expect(noCode).not.toContain('【参考实现】');
+    expect(noCode).toContain('【实现提示】\n用 transform: translateX 三态过渡实现滑动');
+    expect(noCode).toContain('自定义检查一');
+
+    const withCode = renderPrompt({
+      meta: fixtureMeta,
+      promptMd: fixturePromptMd,
+      values: defaultValues(fixtureMeta),
+      includeCode: true,
+      exportedCode: '<html></html>',
+    });
+    expect(withCode).toContain('【参考实现】');
+    expect(withCode).not.toContain('【实现提示】');
+  });
+
+  it('【参数】每行带 help 说明数字含义', () => {
     const text = renderPrompt({
       meta: fixtureMeta,
       promptMd: fixturePromptMd,
       values: defaultValues(fixtureMeta),
       includeCode: false,
     });
-    expect(text).not.toContain('【参考实现】');
-    expect(text).toContain('自定义检查一');
+    expect(text).toContain('- 速度：1×（1× 是常速）');
+    expect(text).toContain('- 主色：#f9cf00\n'); // 无 help 不加括号
   });
 
   it('images 占位符列出每张图与标题；【技术要求补充】并入技术要求段', () => {

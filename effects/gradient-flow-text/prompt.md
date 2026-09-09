@@ -1,7 +1,8 @@
 ## 效果描述
-一行大标题文字 {{content}}（字号 {{fontSize}}、字体 {{font}}），文字本身没有纯色，而是被一条 {{colorA}} → {{colorB}} → {{colorC}} 的斜向渐变填充；渐变在文字内部持续向一个方向缓缓流动（速度 {{speed}}），像字面上有一层光泽在走。渐变首尾同色，所以流动是无缝循环的，看不到跳变接缝。
+一行大标题文字，文字本身没有纯色，而是被一条从渐变色 A 经渐变色 B 到渐变色 C 的斜向渐变填充；渐变在文字内部持续朝一个方向缓缓流动，像字面上有一层光泽在走。渐变首尾同色，流动无缝循环，看不到跳变接缝。
 
-实现提示：`background: linear-gradient(...)` + `background-size: 300% 100%` + `background-clip: text; color: transparent`，再用 keyframes 平移 background-position 到 300% 即可无缝循环。
+## 实现提示
+`background: linear-gradient(...)` + `background-size: 300% 100%` + `background-clip: text; color: transparent`，再用 keyframes 平移 background-position 到 300% 即可无缝循环。
 
 ## 完成后请检查
 - 文字内部有三色渐变且在持续流动，速度与参数一致，循环处无闪跳

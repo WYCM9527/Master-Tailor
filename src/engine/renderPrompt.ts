@@ -4,7 +4,10 @@ import { fontById } from '../contract/fonts';
 
 /**
  * 渲染 7 段式中文 prompt：
- * 任务 → 效果描述 → 参数 → 技术要求 → 完成后请检查 → 如果遇到问题 → 参考实现（可选）
+ * 任务 → 效果描述 → 参数 → 技术要求 →（实现提示，仅在不附代码时）→ 完成后请检查 → 如果遇到问题 → 参考实现（可选）
+ *
+ * 原则：每个事实只出现一次——效果描述只写体验，数值全在【参数】（附 help），
+ * 技术路线在【实现提示】/【参考实现】。文案规则见 .cursor/rules/prompt-copy.mdc。
  * 预览底色只影响站内预览与导出代码的页面底色，不写进 prompt 正文。
  */
 
@@ -23,6 +26,8 @@ interface PromptSections {
   checks?: string;
   /** 追加在全局【技术要求】之后的效果专属要求（如轮播的无障碍 / 键盘 / 暂停） */
   techExtra?: string;
+  /** 给 AI 的技术路线，只在「仅描述」（不附参考代码）模式输出 */
+  hints?: string;
 }
 
 /** 解析 prompt.md：按 ## 标题切分 */
@@ -42,6 +47,7 @@ export function parsePromptMd(md: string): PromptSections {
     description: sections['效果描述'] ?? '',
     checks: sections['完成后请检查'],
     techExtra: sections['技术要求补充'],
+    hints: sections['实现提示'],
   };
 }
 
@@ -106,10 +112,11 @@ export function renderPrompt(o: PromptOptions): string {
   // 2.【效果描述】
   parts.push(`【效果描述】\n${fillPlaceholders(sections.description, meta, values)}`);
 
-  // 3.【参数】
-  const paramLines = meta.params.map(
-    (p) => `- ${p.label}：${humanValue(p, values[p.key] ?? p.default)}`,
-  );
+  // 3.【参数】：值 + help（help 解释「这个数字是什么意思」，是参数语义的唯一出处）
+  const paramLines = meta.params.map((p) => {
+    const help = p.help ? `（${p.help}）` : '';
+    return `- ${p.label}：${humanValue(p, values[p.key] ?? p.default)}${help}`;
+  });
   parts.push(`【参数】\n${paramLines.join('\n')}`);
 
   // 4.【技术要求】（全局四条 + 效果专属补充）
@@ -121,6 +128,11 @@ export function renderPrompt(o: PromptOptions): string {
   ];
   if (sections.techExtra) techLines.push(sections.techExtra);
   parts.push(`【技术要求】\n${techLines.join('\n')}`);
+
+  // 4b.【实现提示】：不附参考代码时，用技术路线补上「怎么做」
+  if (!o.includeCode && sections.hints) {
+    parts.push(`【实现提示】\n${sections.hints}`);
+  }
 
   // 5.【完成后请检查】
   const checks = sections.checks ? sections.checks : DEFAULT_CHECKS.map((c) => `- ${c}`).join('\n');
