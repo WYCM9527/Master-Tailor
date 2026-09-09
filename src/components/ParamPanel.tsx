@@ -377,8 +377,7 @@ function ImagesControl({
         </button>
       </div>
       <span className="control-help">
-        上传的图片只在你的浏览器里预览；导出代码与 prompt 会写占位路径 ./slide-1.jpg
-        …，分享链接不包含上传的图片。
+        上传的图片只在你的浏览器里预览；导出代码与 prompt 会写占位路径 ./slide-1.jpg …。
         {param.help ? ` ${param.help}` : ''}
       </span>
     </div>
@@ -432,7 +431,7 @@ function ImageControl({
       </div>
       <span className="control-help">
         上传的图片只在你的浏览器里预览，不会上传到任何服务器；导出代码与 prompt 会写占位路径
-        ./your-image.jpg，分享链接不包含上传的图片。
+        ./your-image.jpg。
       </span>
     </div>
   );

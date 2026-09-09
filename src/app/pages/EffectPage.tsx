@@ -120,13 +120,6 @@ function EffectPage({ effect }: { effect: Effect }) {
     [meta, effect.promptMd, state, exportCode],
   );
 
-  // 事件处理器闭包随每次渲染更新，点击时拿到的 state 就是最新值
-  const getShareUrl = () => {
-    const sp = encodeState(meta, state);
-    const qs = sp.toString();
-    return `${location.origin}${location.pathname}#/e/${meta.slug}${qs ? `?${qs}` : ''}`;
-  };
-
   const stageRef = useRef<HTMLDivElement>(null);
   const enterFullscreen = () => void stageRef.current?.requestFullscreen?.();
 
@@ -235,7 +228,6 @@ function EffectPage({ effect }: { effect: Effect }) {
               promptText={promptText}
               includeCode={state.includeCode}
               onIncludeCodeChange={(v) => setState((s) => ({ ...s, includeCode: v }))}
-              getShareUrl={getShareUrl}
             />
             <ParamPanel
               meta={meta}

@@ -4,16 +4,10 @@ interface ActionsProps {
   promptText: string;
   includeCode: boolean;
   onIncludeCodeChange: (v: boolean) => void;
-  getShareUrl: () => string;
 }
 
 /** 右列顶部的操作 Cell：主 CTA 常驻视口 */
-export function PromptActions({
-  promptText,
-  includeCode,
-  onIncludeCodeChange,
-  getShareUrl,
-}: ActionsProps) {
+export function PromptActions({ promptText, includeCode, onIncludeCodeChange }: ActionsProps) {
   return (
     <div className="d-actions">
       <CopyButton
@@ -35,7 +29,6 @@ export function PromptActions({
           onClick={() => onIncludeCodeChange(!includeCode)}
         />
       </label>
-      <CopyButton getText={getShareUrl} label="复制分享链接" doneLabel="链接已复制" block />
     </div>
   );
 }
