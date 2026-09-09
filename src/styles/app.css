@@ -567,17 +567,9 @@
   align-items: flex-end;
 }
 
-/* ============================================================
-   Footer
-   ============================================================ */
-.foot .cell {
-  display: flex;
-  align-items: center;
-  min-height: 48px;
-  padding: 0 var(--pad);
-}
-.foot .cell.right {
-  justify-content: flex-end;
+/* 页面底边收口线（无 footer） */
+.page-end {
+  border-top: 1px solid var(--line);
 }
 
 /* ============================================================
@@ -793,16 +785,6 @@
 }
 .code-view code {
   font-family: inherit;
-}
-
-.d-source {
-  color: var(--fg-dim);
-  font-size: var(--fs-small);
-}
-.d-source a {
-  color: var(--fg);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 /* ============================================================
@@ -1250,13 +1232,6 @@ input[type='color']::-webkit-color-swatch {
   }
   .tool-note {
     grid-column: span 12;
-  }
-  .foot .cell {
-    grid-column: span 12;
-    min-height: 40px;
-  }
-  .foot .cell.right {
-    justify-content: flex-start;
   }
   .prompt-text {
     max-height: 400px;

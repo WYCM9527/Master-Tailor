@@ -1,8 +1,6 @@
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { TopBar } from '../components/TopBar';
-import { CATEGORIES } from '../contract/categories';
-import { EFFECTS } from '../contract/registry';
 import { Home } from './pages/Home';
 import { Gallery } from './pages/Gallery';
 import { EffectRoute } from './pages/EffectPage';
@@ -32,14 +30,8 @@ export function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
-      <footer className="g12 foot">
-        <div className="cell span-3 mono">裁缝大师 · MASTER-TAILOR</div>
-        <div className="cell span-6 mono">
-          {String(EFFECTS.length).padStart(2, '0')} EFFECTS ·{' '}
-          {String(CATEGORIES.length).padStart(2, '0')} CATEGORIES · 所有效果代码可自由复制使用
-        </div>
-        <div className="cell span-3 mono right">字体 OFL · 示例照片 免费可商用</div>
-      </footer>
+      {/* 页面底边：最后一段网格的收口线 */}
+      <div className="page-end" aria-hidden="true" />
     </>
   );
 }

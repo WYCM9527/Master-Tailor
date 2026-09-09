@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import type { Effect, EffectSource, EffectState } from '../../contract/types';
+import type { Effect, EffectState } from '../../contract/types';
 import { BG_DARK, BG_LIGHT, bgColor } from '../../contract/types';
 import { categoryName, subDef } from '../../contract/categories';
 import { FONTS_CSS_HREF } from '../../contract/fonts';
@@ -20,30 +20,6 @@ export function EffectRoute() {
   if (!effect) return <NotFound />;
   // key 保证切换效果时整页状态重置
   return <EffectPage key={effect.meta.slug} effect={effect} />;
-}
-
-function sourceLine(source: EffectSource) {
-  const link =
-    source.url && source.name ? (
-      <a href={source.url} target="_blank" rel="noreferrer">
-        {source.name}
-      </a>
-    ) : (
-      (source.name ?? null)
-    );
-  switch (source.kind) {
-    case 'original':
-      return <>原创效果，代码由本站自写，可自由复制使用。</>;
-    case 'reference':
-      return (
-        <>
-          实现思路参考了开源项目 {link}
-          {source.license ? `（${source.license} 许可）` : ''}，代码为本站重写，可自由复制使用。
-        </>
-      );
-    case 'visual-inspiration':
-      return <>视觉灵感来自 {link}（未使用其代码），本站实现为自写，可自由复制使用。</>;
-  }
 }
 
 /** 自定义底色的方形斜纹示意（不用彩色渐变） */
@@ -227,7 +203,6 @@ function EffectPage({ effect }: { effect: Effect }) {
 
       <div className="g12">
         <CodePanel code={exportCode} slug={meta.slug} />
-        <p className="cell span-12 d-source">{sourceLine(meta.source)}</p>
       </div>
     </>
   );
