@@ -10,8 +10,8 @@ import { BG_DARK, BG_LIGHT, bgColor, slidePlaceholder } from '../contract/types'
 import { fontById } from '../contract/fonts';
 
 /**
- * 渲染 8 段式中文 prompt：
- * 任务 → 效果描述 → 参数 → 技术要求 → 放在哪（固定引导 + 效果建议）→ 完成后请检查 → 如果遇到问题 → 参考实现（可选）
+ * 渲染 7 段式中文 prompt：
+ * 任务 → 效果描述 → 参数 → 技术要求 → 完成后请检查 → 如果遇到问题 → 参考实现（可选）
  */
 
 export interface PromptOptions {
@@ -28,7 +28,6 @@ export interface PromptOptions {
 interface PromptSections {
   description: string;
   checks?: string;
-  placementHint?: string;
   /** 追加在全局【技术要求】之后的效果专属要求（如轮播的无障碍 / 键盘 / 暂停） */
   techExtra?: string;
 }
@@ -49,7 +48,6 @@ export function parsePromptMd(md: string): PromptSections {
   return {
     description: sections['效果描述'] ?? '',
     checks: sections['完成后请检查'],
-    placementHint: sections['放在哪'],
     techExtra: sections['技术要求补充'],
   };
 }
@@ -139,24 +137,18 @@ export function renderPrompt(o: PromptOptions): string {
   if (sections.techExtra) techLines.push(sections.techExtra);
   parts.push(`【技术要求】\n${techLines.join('\n')}`);
 
-  // 5.【放在哪】：不再由用户填写，固定让 AI 先推荐位置再确认；prompt.md 的「## 放在哪」作为建议附上
-  const hint = sections.placementHint ? `\n（建议：${sections.placementHint}）` : '';
-  parts.push(
-    `【放在哪】\n请先根据我的页面结构推荐 1-2 个合适的位置并问我确认，不要自行大改页面${hint}`,
-  );
-
-  // 6.【完成后请检查】
+  // 5.【完成后请检查】
   const checks = sections.checks ? sections.checks : DEFAULT_CHECKS.map((c) => `- ${c}`).join('\n');
   parts.push(`【完成后请检查】\n${checks}`);
 
-  // 7.【如果遇到问题】
+  // 6.【如果遇到问题】
   parts.push(
     `【如果遇到问题】\n` +
       `- 如果我的项目用了 React / Vue 等框架，请把这段效果改写成对应框架的组件，但保持视觉和参数完全一致\n` +
       `- 如果找不到合适的插入位置，或者和现有样式冲突，先停下来问我，不要擅自改动我页面的其他部分`,
   );
 
-  // 8.【参考实现】
+  // 7.【参考实现】
   if (o.includeCode && o.exportedCode) {
     parts.push(
       `【参考实现】\n下面是一份可以直接运行的完整实现（参数值已调好）。请以它为准复现效果，可以按我的项目结构改造，但不要改变视觉表现：\n\n\`\`\`html\n${o.exportedCode.trim()}\n\`\`\``,

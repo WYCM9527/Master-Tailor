@@ -8,14 +8,13 @@ const SECTIONS = [
   '【效果描述】',
   '【参数】',
   '【技术要求】',
-  '【放在哪】',
   '【完成后请检查】',
   '【如果遇到问题】',
   '【参考实现】',
 ];
 
 describe('renderPrompt', () => {
-  it('包含全部 8 段且顺序正确', () => {
+  it('包含全部 7 段且顺序正确，不含【放在哪】', () => {
     const text = renderPrompt({
       meta: fixtureMeta,
       promptMd: fixturePromptMd,
@@ -30,6 +29,7 @@ describe('renderPrompt', () => {
       expect(idx, `缺少 ${s}`).toBeGreaterThan(last);
       last = idx;
     }
+    expect(text).not.toContain('放在哪');
   });
 
   it('占位符替换为人话：颜色 hex、速度带单位、文字带引号、bg 描述', () => {
@@ -71,19 +71,7 @@ describe('renderPrompt', () => {
     expect(text).toContain('第 1 张 ./slide-1.jpg，标题「第一张」');
     expect(text).toContain('第 2 张 ./slide-2.jpg；'); // 空标题不输出「标题」
     expect(text).toContain('第 3 张 ./slide-3.jpg，标题「三，带逗号」');
-    const tech = text.slice(text.indexOf('【技术要求】'), text.indexOf('【放在哪】'));
+    const tech = text.slice(text.indexOf('【技术要求】'), text.indexOf('【完成后请检查】'));
     expect(tech).toContain('aria-roledescription="carousel"');
-  });
-
-  it('【放在哪】为固定引导句并附 prompt.md 的位置建议', () => {
-    const text = renderPrompt({
-      meta: fixtureMeta,
-      promptMd: fixturePromptMd,
-      values: defaultValues(fixtureMeta),
-      bg: { mode: 'dark' },
-      includeCode: false,
-    });
-    expect(text).toContain('【放在哪】\n请先根据我的页面结构推荐 1-2 个合适的位置并问我确认');
-    expect(text).toContain('建议：放在页面顶部');
   });
 });

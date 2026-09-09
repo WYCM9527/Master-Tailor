@@ -74,13 +74,13 @@ if (window.__MT_ENV && window.__MT_ENV.thumb) {
 ### prompt.md
 
 - 必须有 `## 效果描述`（人话讲清楚长什么样、怎么动、什么时候触发；`{{key}}` 会被替换为当前参数的人话表述，`{{bg}}` 为底色描述）
-- 可选 `## 技术要求补充`（追加在全局【技术要求】之后的效果专属要求，如轮播的无障碍 / 键盘 / 暂停约定）、`## 完成后请检查`（验收清单，缺省用全局默认三条）与 `## 放在哪`（位置建议）
+- 可选 `## 技术要求补充`（追加在全局【技术要求】之后的效果专属要求，如轮播的无障碍 / 键盘 / 暂停约定）与 `## 完成后请检查`（验收清单，缺省用全局默认三条）
 
 ### 轮播基线（`sub: "carousel"` 的效果强制）
 
 validate 会检查 index.html 含四个基线能力关键字：`aria-roledescription`（轮播语义）、`keydown`（键盘切换）、`prefers-reduced-motion`（不自动播放降级）、`pointerdown`（拖拽/触摸）。纯 CSS 实现（如 scroll-snap 版）可在注释中如实说明原生能力。除此之外的约定基线：无缝循环、悬停/聚焦暂停自动播放、页面切后台暂停。新写轮播请从 `scripts/templates/carousel-core.html` 起步——它带完整的三态类切换骨架（无缝循环）、自动播放、Pointer Events 拖拽、三种分页器与 aria 结构，多数形态只需改「过渡层」CSS。
 
-最终 prompt 由引擎拼装为 8 段：任务 → 效果描述 → 参数 → 技术要求 → 放在哪（固定引导 AI 先推荐位置再确认，附 `## 放在哪` 的建议）→ 完成后请检查 → 如果遇到问题 → 参考实现（可开关）。
+最终 prompt 由引擎拼装为 7 段：任务 → 效果描述 → 参数 → 技术要求 → 完成后请检查 → 如果遇到问题 → 参考实现（可开关）。
 
 ## 站点视觉：Monochrome Full-Bleed Swiss Grid
 
@@ -99,7 +99,7 @@ validate 会检查 index.html 含四个基线能力关键字：`aria-roledescrip
 ```text
 effects/           # 52 个效果（内容层，唯一需要日常维护的目录）
 src/contract/      # 类型、zod schema、字体表、分类与子类、示例图表、registry（import.meta.glob 收集）
-src/engine/        # bakeCode（参数烘焙）、renderPrompt（8 段）、urlState（分享链接）、previewRuntime
+src/engine/        # bakeCode（参数烘焙）、renderPrompt（7 段）、urlState（参数 ↔ URL）、previewRuntime
 src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 效果 Cell / 怎么用区块……
 src/app/           # HashRouter 页面：Home（海报首页 + 分类索引 + 怎么用）/ Gallery（/effects 效果页）/ EffectPage / NotFound
 src/styles/        # tokens（灰阶 / 间距 / 字号）、base（reset）、app（12 栏网格与全部组件样式）
