@@ -90,7 +90,7 @@ validate 会检查 index.html 含四个基线能力关键字：`aria-roledescrip
 - 纯黑白灰七级灰阶（`tokens.css`），零彩色；当前项 / 悬停 / 焦点一律用黑白反转表达
 - 全部直角（`base.css` 全局 `border-radius: 0 !important`），无阴影、无 Glow、无玻璃拟态、无渐变
 - 12 栏全出血网格：`.g12` 容器 `gap: 1px` + 线色背景画线，Cell 自铺黑底；子区域用 `subgrid` 让纵线全页贯通
-- 分区只靠 1px 线；Cell 内边距 16–32px；桌面侧栏 3 栏 + 效果 Cell 3 栏×3，平板侧栏变顶部分类带 + 4 栏×3，手机 6 栏×2
+- 分区只靠 1px 线；Cell 内边距 16–32px；效果页桌面侧栏 2 栏（与 Header 品牌 Cell 同宽）+ 效果区 10 栏内部 3 列，平板侧栏变顶部分类带，手机 2 列
 - 字体：思源黑体 400/700 做正文与巨字，JetBrains Mono 做所有元数据（编号 / 计数 / 标签 / 参数值）
 - 悬停只允许：反转、边框点亮（`outline` 压在 1px gap 上）、箭头位移 4px
 - 效果 `index.html` 内部样式是内容，不受以上约束
@@ -102,7 +102,7 @@ effects/           # 52 个效果（内容层，唯一需要日常维护的目�
 src/contract/      # 类型、zod schema、字体表、分类与子类、示例图表、registry（import.meta.glob 收集）
 src/engine/        # bakeCode（参数烘焙）、renderPrompt（8 段）、urlState（分享链接）、previewRuntime
 src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 效果 Cell / 怎么用区块……
-src/app/           # HashRouter 页面：Home / EffectPage / NotFound
+src/app/           # HashRouter 页面：Home（海报首页 + 分类索引 + 怎么用）/ Gallery（/effects 效果页）/ EffectPage / NotFound
 src/styles/        # tokens（灰阶 / 间距 / 字号）、base（reset）、app（12 栏网格与全部组件样式）
 scripts/           # validate（契约校验）、build-prompts（静态 md 端点）、prepare-fonts、templates/（轮播核心模板）
 public/fonts/      # 自托管 OFL 字体（思源黑体 / 霞鹜文楷 / 得意黑 / JetBrains Mono）+ 许可文件

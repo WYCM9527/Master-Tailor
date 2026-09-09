@@ -4,6 +4,7 @@ import { TopBar } from '../components/TopBar';
 import { CATEGORIES } from '../contract/categories';
 import { EFFECTS } from '../contract/registry';
 import { Home } from './pages/Home';
+import { Gallery } from './pages/Gallery';
 import { EffectRoute } from './pages/EffectPage';
 import { NotFound } from './pages/NotFound';
 
@@ -25,6 +26,7 @@ export function App() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/effects" element={<Gallery />} />
           <Route path="/e/:slug" element={<EffectRoute />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

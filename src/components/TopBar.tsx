@@ -3,7 +3,7 @@ import { randomSlug } from '../contract/registry';
 
 export const HOWTO_ID = 'howto';
 
-/** Header：整宽 12 栏网格行——品牌 3 栏（与首页侧栏对齐）| slogan 5 栏 | 两个动作 Cell 各 2 栏 */
+/** Header：整宽 12 栏网格行——品牌 2 栏（与效果页侧栏对齐）| slogan 4 栏 | 三个动作 Cell 各 2 栏 */
 export function TopBar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,13 +26,20 @@ export function TopBar() {
 
   return (
     <header className="g12 first hdr">
-      <Link to="/" className="cell span-3 hdr-brand">
+      <Link to="/" className="cell span-2 hdr-brand">
         裁缝大师
         <span className="mono">Master-Tailor</span>
       </Link>
-      <div className="cell span-5 hdr-slogan">
+      <div className="cell span-4 hdr-slogan">
         前端效果图鉴 · 挑一个，调一调，复制 prompt 粘给你的 AI
       </div>
+      <Link
+        to="/effects"
+        className={`cell span-2 hdr-btn${location.pathname === '/effects' ? ' active' : ''}`}
+      >
+        全部效果
+        <span className="arrow">→</span>
+      </Link>
       <button type="button" className="cell span-2 hdr-btn" onClick={goHowTo}>
         怎么用
         <span className="arrow">↓</span>

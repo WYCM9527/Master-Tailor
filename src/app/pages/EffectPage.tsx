@@ -138,7 +138,7 @@ function EffectPage({ effect }: { effect: Effect }) {
     <>
       <div className="g12 d-head">
         {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
-        <Link to={`/?cat=${meta.category}&sub=${meta.sub}`} className="cell span-3 d-back">
+        <Link to={`/effects?cat=${meta.category}&sub=${meta.sub}`} className="cell span-2 d-back">
           <span className="arrow">←</span>
           {categoryName(meta.category)} · {subName}
         </Link>
@@ -149,20 +149,20 @@ function EffectPage({ effect }: { effect: Effect }) {
           <h1>{meta.name}</h1>
           <p>{meta.summary}</p>
         </div>
-        <div className="span-3 sub d-meta">
-          <div className="cell span-3">
+        <div className="span-4 sub d-meta">
+          <div className="cell span-4">
             <span className="mono">Index</span>
             <span className="val mono">
               {effectNo(effect)} / {String(EFFECTS.length).padStart(3, '0')}
             </span>
           </div>
-          <div className="cell span-3">
+          <div className="cell span-4">
             <span className="mono">Category</span>
             <span className="val">
               {categoryName(meta.category)} · {subName}
             </span>
           </div>
-          <div className="cell span-3">
+          <div className="cell span-4">
             <span className="mono">Tags</span>
             <div className="tag-row">
               {meta.tags.map((t) => (
@@ -176,8 +176,8 @@ function EffectPage({ effect }: { effect: Effect }) {
       </div>
 
       <div className="g12 d-body">
-        <div className="span-9 sub d-left">
-          <div className="cell span-9 d-toolbar">
+        <div className="span-8 sub d-left">
+          <div className="cell span-8 d-toolbar">
             <div className="d-toolbar-group">
               <span className="mono">预览底色</span>
               <button
@@ -219,7 +219,7 @@ function EffectPage({ effect }: { effect: Effect }) {
               </button>
             </div>
           </div>
-          <div className="cell span-9 d-stage tight" ref={stageRef}>
+          <div className="cell span-8 d-stage tight" ref={stageRef}>
             <PreviewFrame srcdoc={srcdoc} cssVars={cssVars} title={`${meta.name} 实时预览`} />
           </div>
           <PromptCell
@@ -229,7 +229,7 @@ function EffectPage({ effect }: { effect: Effect }) {
           />
         </div>
 
-        <div className="cell span-3 d-right-col">
+        <div className="cell span-4 d-right-col">
           <div className="d-right">
             <PromptActions
               promptText={promptText}

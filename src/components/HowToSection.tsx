@@ -14,7 +14,7 @@ const TOOLS: { name: string; where: string }[] = [
 ];
 
 const STEPS: { title: string; desc: string }[] = [
-  { title: '挑一个效果', desc: '在上面的网格里点开你喜欢的效果。' },
+  { title: '挑一个效果', desc: '进入「全部效果」，按分类浏览，点开你喜欢的那个。' },
   { title: '调成你要的样子', desc: '右侧面板拖滑块、换颜色、改文字，预览会实时变化。' },
   { title: '复制 prompt 粘给 AI', desc: '点「复制 prompt」，粘到你常用的 AI 编程工具里发送即可。' },
 ];

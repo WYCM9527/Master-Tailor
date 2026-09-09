@@ -49,7 +49,7 @@ interface PromptProps {
 /** 左列的 prompt Cell：放在哪 + 全文 */
 export function PromptCell({ promptText, placement, onPlacementChange }: PromptProps) {
   return (
-    <section className="cell span-9 d-prompt" aria-label="Prompt">
+    <section className="cell span-8 d-prompt" aria-label="Prompt">
       <div className="blk-head">
         <span className="mono">
           Prompt

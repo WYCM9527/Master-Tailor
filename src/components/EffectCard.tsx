@@ -9,7 +9,7 @@ import { bakeCode } from '../engine/bakeCode';
 import { defaultValues } from '../engine/urlState';
 
 /**
- * 首页效果 Cell（占 3 栏）：
+ * 效果页的效果 Cell（效果区内部 3 列之一）：
  * - 顶部 Mono 元数据条（编号 · 子类）
  * - 预览铺满 Cell（4:3），IntersectionObserver 首次进入视口才挂载 iframe
  * - 底部标题条，悬停整条黑白反转、箭头右移
@@ -62,12 +62,7 @@ export function EffectCard({ effect }: { effect: Effect }) {
   };
 
   return (
-    <Link
-      to={`/e/${meta.slug}`}
-      className="cell span-3 card"
-      ref={rootRef}
-      onMouseMove={forwardPointer}
-    >
+    <Link to={`/e/${meta.slug}`} className="cell card" ref={rootRef} onMouseMove={forwardPointer}>
       <div className="card-meta">
         <span className="mono">No. {effectNo(effect)}</span>
         <span className="mono">{subDef(meta.category, meta.sub).name}</span>
