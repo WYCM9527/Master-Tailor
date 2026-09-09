@@ -367,13 +367,6 @@
   font-size: var(--fs-mono);
   color: var(--fg-mute);
 }
-.side-row:hover,
-.side-row.active,
-.side-row.active .count,
-.side-row:hover .count {
-  background: var(--fg);
-  color: var(--bg);
-}
 .side-cat {
   display: flex;
   border-bottom: 1px solid var(--line);
@@ -390,6 +383,16 @@
 }
 .side-all {
   border-bottom: 1px solid var(--line);
+}
+/* 反转态必须写在层级色之后，且特异性不低于 .side-cat .side-row，否则一级行选中后白字压白底 */
+.side-row:hover,
+.side-row.active,
+.side-cat .side-row:hover,
+.side-cat .side-row.active,
+.side-row.active .count,
+.side-row:hover .count {
+  background: var(--fg);
+  color: var(--bg);
 }
 .side-fold {
   flex: 0 0 36px;
