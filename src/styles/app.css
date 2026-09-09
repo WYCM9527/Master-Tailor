@@ -359,12 +359,6 @@
     background var(--ease),
     color var(--ease);
 }
-.side-row .idx {
-  font-family: var(--font-mono);
-  font-size: var(--fs-mono);
-  color: var(--fg-mute);
-  min-width: 26px;
-}
 .side-row .name {
   flex: 1;
 }
@@ -375,9 +369,7 @@
 }
 .side-row:hover,
 .side-row.active,
-.side-row.active .idx,
 .side-row.active .count,
-.side-row:hover .idx,
 .side-row:hover .count {
   background: var(--fg);
   color: var(--bg);
@@ -416,9 +408,6 @@
 .side-sub {
   padding-left: calc(var(--pad-s) + 12px);
   font-size: 12.5px;
-}
-.side-sub .idx {
-  min-width: 34px;
 }
 
 .main {
@@ -470,12 +459,6 @@
   z-index: 2;
   outline: 1px solid var(--line-strong);
   outline-offset: 0;
-}
-.card-meta {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--line);
 }
 .card-preview {
   position: relative;

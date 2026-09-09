@@ -97,12 +97,11 @@ export function Gallery() {
             className={`side-row side-all${!cat ? ' active' : ''}`}
             onClick={() => select({})}
           >
-            <span className="idx">00</span>
             <span className="name">全部</span>
             <span className="count">{EFFECTS.length}</span>
           </button>
 
-          {CATEGORIES.map((c, ci) => {
+          {CATEGORIES.map((c) => {
             const isOpen = !collapsed.has(c.id);
             const subs = c.subs.filter((s) => countIn(c.id, s.id) > 0);
             return (
@@ -116,7 +115,6 @@ export function Gallery() {
                       expand(c.id);
                     }}
                   >
-                    <span className="idx">{pad2(ci + 1)}</span>
                     <span className="name">{c.name}</span>
                     <span className="count">{countIn(c.id)}</span>
                   </button>
@@ -132,16 +130,13 @@ export function Gallery() {
                 </div>
                 {isOpen && (
                   <div className="side-subs">
-                    {subs.map((s, si) => (
+                    {subs.map((s) => (
                       <button
                         type="button"
                         key={s.id}
                         className={`side-row side-sub${cat === c.id && sub === s.id ? ' active' : ''}`}
                         onClick={() => select({ cat: c.id, sub: s.id })}
                       >
-                        <span className="idx">
-                          {pad2(ci + 1)}.{si + 1}
-                        </span>
                         <span className="name">{s.name}</span>
                         <span className="count">{countIn(c.id, s.id)}</span>
                       </button>
