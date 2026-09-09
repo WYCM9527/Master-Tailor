@@ -682,6 +682,25 @@
   aspect-ratio: auto;
   max-height: none;
 }
+/* 全屏时右上角的退出按钮：无操作 2 秒后淡出（.idle） */
+.fs-exit {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+  transition:
+    opacity 200ms linear,
+    background var(--ease),
+    color var(--ease),
+    border-color var(--ease);
+}
+.fs-exit:hover .arrow {
+  transform: none;
+}
+.d-stage.idle .fs-exit {
+  opacity: 0;
+  pointer-events: none;
+}
 
 /* 右列：操作 + 参数，整列 sticky */
 .d-right-col {

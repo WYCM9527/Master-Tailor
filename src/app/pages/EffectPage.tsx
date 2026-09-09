@@ -97,6 +97,42 @@ function EffectPage({ effect }: { effect: Effect }) {
 
   const stageRef = useRef<HTMLDivElement>(null);
   const enterFullscreen = () => void stageRef.current?.requestFullscreen?.();
+  const exitFullscreen = () => void document.exitFullscreen?.();
+
+  // 全屏态：右上角「退出预览」按钮，无操作 2 秒后隐藏。
+  // iframe 盖住整个舞台时父页面收不到鼠标事件，所以活动信号来自预览 runtime 的 mt:activity 消息。
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [idle, setIdle] = useState(false);
+  useEffect(() => {
+    const onChange = () => {
+      const fs = document.fullscreenElement === stageRef.current;
+      setIsFullscreen(fs);
+      if (!fs) setIdle(false);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const IDLE_MS = 2000;
+    let timer = window.setTimeout(() => setIdle(true), IDLE_MS);
+    const wake = () => {
+      setIdle(false);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setIdle(true), IDLE_MS);
+    };
+    const onMessage = (e: MessageEvent) => {
+      if ((e.data as { type?: string } | null)?.type === 'mt:activity') wake();
+    };
+    const stage = stageRef.current;
+    window.addEventListener('message', onMessage);
+    stage?.addEventListener('pointermove', wake);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('message', onMessage);
+      stage?.removeEventListener('pointermove', wake);
+    };
+  }, [isFullscreen]);
 
   const setBg = (bgSetting: EffectState['bg']) => setState((s) => ({ ...s, bg: bgSetting }));
   const customColor = state.bg.mode === 'custom' ? state.bg.color : '#22335c';
@@ -178,8 +214,13 @@ function EffectPage({ effect }: { effect: Effect }) {
               </button>
             </div>
           </div>
-          <div className="cell span-8 d-stage tight" ref={stageRef}>
+          <div className={`cell span-8 d-stage tight${idle ? ' idle' : ''}`} ref={stageRef}>
             <PreviewFrame srcdoc={srcdoc} cssVars={cssVars} title={`${meta.name} 实时预览`} />
+            {isFullscreen && (
+              <button type="button" className="btn fs-exit" onClick={exitFullscreen}>
+                退出预览 <span className="arrow">×</span>
+              </button>
+            )}
           </div>
           <PromptCell
             promptText={promptText}
