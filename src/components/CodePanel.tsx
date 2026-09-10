@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ThemeRegistrationRaw } from 'shiki/core';
+import { ContentModal } from './ContentModal';
 import { CopyButton } from './CopyButton';
 
 interface Props {
@@ -78,11 +79,13 @@ function getHighlighter() {
   return highlighterPromise;
 }
 
+/** 左列下半的参考代码 Cell（占 4 栏）：头部（标题 + 复制）→ 截断预览 → 底栏（下载 + 查看全文）；全文在弹窗里高亮显示 */
 export function CodePanel({ code, slug }: Props) {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState('');
+  const lines = code.split('\n').length;
 
-  // 展开后才做语法高亮（Shiki 按需动态加载）；参数变化时跟随刷新
+  // 打开弹窗后才做语法高亮（Shiki 按需动态加载）；参数变化时跟随刷新
   useEffect(() => {
     if (!open) return;
     let alive = true;
@@ -104,43 +107,59 @@ export function CodePanel({ code, slug }: Props) {
     URL.revokeObjectURL(url);
   };
 
+  const copy = <CopyButton getText={() => code} label="复制代码" />;
+  const downloadBtn = (
+    <button type="button" className="btn" onClick={download}>
+      下载 HTML <span className="arrow">↓</span>
+    </button>
+  );
+
   return (
-    <details
-      className="cell span-12 d-code"
-      open={open}
-      onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
-    >
-      <summary className="blk-head">
+    <section className="cell span-4 blk" aria-label="参考代码">
+      <div className="blk-head">
         <span className="blk-title">
-          <span className="fold">▸</span>
           参考代码
-          <span className="hint mono">
-            原生 HTML 单文件，参数已按当前值写入 · {code.split('\n').length} 行
-          </span>
+          <span className="hint mono">{lines} 行</span>
         </span>
-        <div className="blk-actions" onClick={(e) => e.preventDefault()}>
-          <CopyButton getText={() => code} label="复制代码" />
-          <button
-            type="button"
-            className="btn"
-            onClick={(e) => {
-              e.preventDefault();
-              download();
-            }}
-          >
-            下载 HTML <span className="arrow">↓</span>
-          </button>
-        </div>
-      </summary>
-      {highlighted ? (
-        <div className="code-view" dangerouslySetInnerHTML={{ __html: highlighted }} />
-      ) : (
-        <div className="code-view">
-          <pre>
-            <code>{code}</code>
-          </pre>
-        </div>
-      )}
-    </details>
+        <div className="blk-actions">{copy}</div>
+      </div>
+      <button
+        type="button"
+        className="blk-preview"
+        onClick={() => setOpen(true)}
+        aria-label="查看参考代码全文"
+      >
+        <pre className="code-text">{code}</pre>
+      </button>
+      <div className="blk-foot">
+        {downloadBtn}
+        <button type="button" className="btn" onClick={() => setOpen(true)}>
+          查看全文 <span className="arrow">↗</span>
+        </button>
+      </div>
+
+      <ContentModal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="参考代码"
+        meta={`原生 HTML 单文件，参数已按当前值写入 · ${lines} 行`}
+        actions={
+          <>
+            {downloadBtn}
+            {copy}
+          </>
+        }
+      >
+        {highlighted ? (
+          <div className="code-view" dangerouslySetInnerHTML={{ __html: highlighted }} />
+        ) : (
+          <div className="code-view">
+            <pre>
+              <code>{code}</code>
+            </pre>
+          </div>
+        )}
+      </ContentModal>
+    </section>
   );
 }

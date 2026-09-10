@@ -174,11 +174,13 @@ function EffectPage({ effect }: { effect: Effect }) {
               </button>
             )}
           </div>
+          {/* 预览下方：Prompt 与参考代码各占 4 栏，均分左列 */}
           <PromptCell
             promptText={promptText}
             includeCode={state.includeCode}
             onIncludeCodeChange={(v) => setState((s) => ({ ...s, includeCode: v }))}
           />
+          <CodePanel code={exportCode} slug={meta.slug} />
         </div>
 
         <div className="cell span-4 d-right-col">
@@ -193,10 +195,6 @@ function EffectPage({ effect }: { effect: Effect }) {
             />
           </div>
         </div>
-      </div>
-
-      <div className="g12">
-        <CodePanel code={exportCode} slug={meta.slug} />
       </div>
     </>
   );

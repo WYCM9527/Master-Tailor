@@ -765,11 +765,41 @@
   gap: 12px;
 }
 
-/* prompt */
-.d-prompt {
+/* Prompt / 参考代码 Cell：头部 → 截断预览（可点开弹窗）→ 底栏 */
+.blk {
   padding: 0;
+  display: flex;
+  flex-direction: column;
 }
-.prompt-text {
+.blk-preview {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--ease);
+}
+.blk-preview:hover {
+  background: var(--k1);
+}
+.blk-preview .prompt-text,
+.blk-preview .code-text {
+  max-height: none;
+  overflow: hidden;
+}
+.blk-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px var(--pad-s);
+  border-top: 1px solid var(--line);
+  margin-top: auto;
+}
+.prompt-text,
+.code-text {
   margin: 0;
   padding: var(--pad);
   font-family: var(--font-mono);
@@ -778,29 +808,42 @@
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--k5);
-  max-height: 560px;
-  overflow: auto;
+}
+.code-text {
+  white-space: pre;
+  line-height: 1.6;
 }
 
-/* 代码 */
-.d-code {
+/* 方形弹窗 */
+.modal {
   padding: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--fg);
+  width: min(1120px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
 }
-.d-code summary {
-  list-style: none;
-  cursor: pointer;
+.modal::backdrop {
+  background: rgba(0, 0, 0, 0.72);
 }
-.d-code summary::-webkit-details-marker {
-  display: none;
+.modal-inner {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 50px);
 }
-.d-code .fold {
-  display: inline-block;
-  width: 14px;
-  transition: transform var(--ease);
+.modal-head {
+  flex: 0 0 auto;
 }
-.d-code[open] .fold {
-  transform: rotate(90deg);
+.modal-body {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 0;
 }
+.modal-body .code-view {
+  max-height: none;
+}
+
+/* 代码高亮容器 */
 .code-view {
   max-height: 640px;
   overflow: auto;
@@ -1186,6 +1229,9 @@ input[type='color']::-webkit-color-swatch {
   .d-left {
     grid-column: span 12;
   }
+  .blk {
+    grid-column: span 6;
+  }
   .d-right-col {
     grid-column: span 12;
   }
@@ -1250,6 +1296,16 @@ input[type='color']::-webkit-color-swatch {
   }
   .blk-head {
     flex-wrap: wrap;
+  }
+  .blk {
+    grid-column: span 12;
+  }
+  .blk-preview {
+    height: 220px;
+  }
+  .modal {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
   }
   .howto-step {
     grid-column: span 12;

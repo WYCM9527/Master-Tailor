@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { ContentModal } from './ContentModal';
 import { CopyButton } from './CopyButton';
 
 interface PromptProps {
@@ -6,36 +8,66 @@ interface PromptProps {
   onIncludeCodeChange: (v: boolean) => void;
 }
 
-/** 左列的 Prompt Cell：头部（标题 + 仅描述开关 + 复制按钮）→ 全文 */
+/** 左列下半的 Prompt Cell（占 4 栏）：头部（标题 + 复制）→ 截断预览 → 底栏（仅描述开关 + 查看全文）；全文在弹窗里 */
 export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: PromptProps) {
+  const [open, setOpen] = useState(false);
+  const meta = `${promptText.length} 字`;
+
+  const toggle = (
+    <label className="switch-row">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={!includeCode}
+        aria-label="仅复制效果描述，不附参考代码"
+        className={`toggle${!includeCode ? ' on' : ''}`}
+        onClick={() => onIncludeCodeChange(!includeCode)}
+      />
+      仅描述（不附参考代码）
+    </label>
+  );
+  const copy = (
+    <CopyButton getText={() => promptText} label="复制 Prompt" doneLabel="Prompt 已复制" primary />
+  );
+
   return (
-    <section className="cell span-8 d-prompt" aria-label="Prompt">
+    <section className="cell span-4 blk" aria-label="Prompt">
       <div className="blk-head">
         <span className="blk-title">
           Prompt
-          <span className="hint mono">复制后粘给任何 AI 编程工具 · {promptText.length} 字</span>
+          <span className="hint mono">{meta}</span>
         </span>
-        <div className="blk-actions">
-          <label className="switch-row">
-            <button
-              type="button"
-              role="switch"
-              aria-checked={!includeCode}
-              aria-label="仅复制效果描述，不附参考代码"
-              className={`toggle${!includeCode ? ' on' : ''}`}
-              onClick={() => onIncludeCodeChange(!includeCode)}
-            />
-            仅描述（不附参考代码）
-          </label>
-          <CopyButton
-            getText={() => promptText}
-            label="复制 Prompt"
-            doneLabel="Prompt 已复制"
-            primary
-          />
-        </div>
+        <div className="blk-actions">{copy}</div>
       </div>
-      <pre className="prompt-text">{promptText}</pre>
+      <button
+        type="button"
+        className="blk-preview"
+        onClick={() => setOpen(true)}
+        aria-label="查看 Prompt 全文"
+      >
+        <pre className="prompt-text">{promptText}</pre>
+      </button>
+      <div className="blk-foot">
+        {toggle}
+        <button type="button" className="btn" onClick={() => setOpen(true)}>
+          查看全文 <span className="arrow">↗</span>
+        </button>
+      </div>
+
+      <ContentModal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Prompt"
+        meta={`复制后粘给任何 AI 编程工具 · ${meta}`}
+        actions={
+          <>
+            {toggle}
+            {copy}
+          </>
+        }
+      >
+        <pre className="prompt-text">{promptText}</pre>
+      </ContentModal>
     </section>
   );
 }
