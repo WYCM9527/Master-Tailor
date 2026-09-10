@@ -13,7 +13,7 @@ import { PreviewFrame } from '../../components/PreviewFrame';
 import { PromptCell } from '../../components/PromptPanel';
 import { CodePanel } from '../../components/CodePanel';
 import { EffectNav } from '../../components/EffectNav';
-import { IconArrowLeft, IconMenu } from '../../components/Icons';
+import { IconArrowLeft, IconClose, IconMenu } from '../../components/Icons';
 import { NotFound } from './NotFound';
 
 export function EffectRoute() {
@@ -143,15 +143,16 @@ function EffectPage({ effect }: { effect: Effect }) {
       {/* 详情页不渲染站点 Header：左列第一行（目录 | 返回 | 标题 | 标签）就是页头，右列整高都是参数面板 */}
       <div className="g12 first d-body">
         <div className="span-9 sub d-left">
+          {/* 与抽屉联动：展开时变 ×（按钮悬浮在遮罩之上），点击收起变回三横杠 */}
           <button
             type="button"
             className={`cell span-1 d-nav${navOpen ? ' active' : ''}`}
             aria-expanded={navOpen}
-            aria-label="效果目录"
-            title="效果目录"
+            aria-label={navOpen ? '收起效果目录' : '展开效果目录'}
+            title={navOpen ? '收起效果目录' : '展开效果目录'}
             onClick={() => setNavOpen((v) => !v)}
           >
-            <IconMenu width={20} height={20} />
+            {navOpen ? <IconClose width={20} height={20} /> : <IconMenu width={20} height={20} />}
           </button>
           {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
           <Link
@@ -168,7 +169,6 @@ function EffectPage({ effect }: { effect: Effect }) {
             <h1 style={{ viewTransitionName: 'title' }}>{meta.name}</h1>
           </div>
           <div className="cell span-3 d-meta">
-            <span className="mono">Tags</span>
             <div className="tag-row">
               {meta.tags.map((t) => (
                 <span className="tag" key={t}>

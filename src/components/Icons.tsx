@@ -35,11 +35,13 @@ export function IconMenu(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-/** Prompt：直角对话气泡（要粘给 AI 的话） */
+/** Prompt：折角文档 + 文本行 */
 export function IconPrompt(props: SVGProps<SVGSVGElement>) {
   return (
     <Svg {...props}>
-      <path d="M1.5 2.5h13V11H8.5L5 14v-3H1.5z" />
+      <path d="M3 1.5h6.5l3.5 3.5v9.5H3z" />
+      <path d="M9.5 1.5V5H13" />
+      <path d="M5.5 8.5h5M5.5 11h5" />
     </Svg>
   );
 }

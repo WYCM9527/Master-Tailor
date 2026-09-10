@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../contract/categories';
 import { EFFECTS } from '../contract/registry';
-import { IconMenu } from './Icons';
 
 interface Props {
   /** 当前效果 slug，用于高亮 */
@@ -27,19 +26,15 @@ export function EffectNav({ current, open, onClose }: Props) {
   return (
     <>
       <div className="nav-scrim" onClick={onClose} aria-hidden="true" />
+      {/* 抽屉从页头下方滑出：页头的目录按钮（此时为 ×）保持可见、负责收起 */}
       <aside className="nav-drawer" aria-label="效果目录">
         <div className="blk-head nav-head">
           <span className="blk-title">
-            <IconMenu />
             目录
             <span className="hint mono">{EFFECTS.length} 个效果</span>
           </span>
-          <div className="blk-actions">
-            <button type="button" className="btn" onClick={onClose}>
-              收起
-            </button>
-          </div>
         </div>
+
         <div className="nav-body">
           {CATEGORIES.map((c) => {
             const inCat = EFFECTS.filter((e) => e.meta.category === c.id);

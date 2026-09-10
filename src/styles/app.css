@@ -597,6 +597,11 @@
   background: var(--fg);
   color: var(--bg);
 }
+/* 抽屉展开时按钮浮在遮罩之上（此时图标为 ×），点击即收起 */
+.d-nav.active {
+  position: relative;
+  z-index: 21;
+}
 .d-back {
   display: flex;
   align-items: center;
@@ -619,6 +624,7 @@
 .d-title {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 0 var(--pad);
 }
 .d-title h1 {
@@ -633,6 +639,7 @@
 .d-meta {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   padding: 0 var(--pad);
 }
@@ -858,7 +865,8 @@
 }
 .nav-drawer {
   position: fixed;
-  top: 0;
+  /* 从页头行（55px + 1px 栏线）下方滑出，不遮住目录按钮 */
+  top: 56px;
   left: 0;
   bottom: 0;
   z-index: 20;
