@@ -8,6 +8,12 @@ const TRIGGER_SUBS: SubDef[] = [
   { id: 'scroll', name: '滚动触发', desc: '页面滚动到指定位置时触发' },
 ];
 
+/** 「文字效果」：触发方式之外，多一类持续滚动 / 轮换的纯文字条目 */
+const TEXT_SUBS: SubDef[] = [
+  ...TRIGGER_SUBS,
+  { id: 'marquee', name: '跑马灯', desc: '品牌名、公告等纯文字条目持续滚动或逐条轮换' },
+];
+
 /** 「多卡/图展示」的二级分类：按内容形态 */
 const SHOWCASE_SUBS: SubDef[] = [
   { id: 'carousel', name: '轮播图', desc: '多张图片或卡片按节奏轮流展示' },
@@ -19,7 +25,7 @@ const SHOWCASE_SUBS: SubDef[] = [
 export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
   { id: 'background', name: '背景与氛围', subs: TRIGGER_SUBS },
   { id: 'button', name: '按钮与交互', subs: TRIGGER_SUBS },
-  { id: 'text', name: '文字效果', subs: TRIGGER_SUBS },
+  { id: 'text', name: '文字效果', subs: TEXT_SUBS },
   { id: 'card', name: '卡片与悬停', subs: TRIGGER_SUBS },
   { id: 'showcase', name: '多卡/图展示', subs: SHOWCASE_SUBS },
   { id: 'loading', name: '加载与进场', subs: TRIGGER_SUBS },
