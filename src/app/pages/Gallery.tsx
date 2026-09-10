@@ -129,11 +129,7 @@ export function Gallery() {
                     aria-expanded={isOpen}
                     aria-label={`${isOpen ? '收起' : '展开'}${c.name}`}
                   >
-                    {isOpen ? (
-                      <IconMinus width={12} height={12} />
-                    ) : (
-                      <IconPlus width={12} height={12} />
-                    )}
+                    {isOpen ? <IconMinus size={12} /> : <IconPlus size={12} />}
                   </button>
                 </div>
                 {isOpen && (

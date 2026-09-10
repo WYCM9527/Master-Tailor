@@ -170,8 +170,7 @@ function EffectPage({ effect }: { effect: Effect }) {
             onClick={() => toggleNav(true)}
           >
             <IconMenu
-              width={20}
-              height={20}
+              size={20}
               style={{ viewTransitionName: navOpen ? undefined : 'nav-toggle' }}
             />
           </button>

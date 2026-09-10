@@ -45,7 +45,7 @@ export function EffectNav({ current, open, onClose, onNavigate }: Props) {
               title="收起效果目录"
               onClick={onClose}
             >
-              <IconClose width={20} height={20} style={{ viewTransitionName: 'nav-toggle' }} />
+              <IconClose size={20} style={{ viewTransitionName: 'nav-toggle' }} />
             </button>
           </div>
         </div>

@@ -1,113 +1,65 @@
-import type { SVGProps } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Close,
+  Code,
+  FileText,
+  HamburgerButton,
+  Minus,
+  Plus,
+  SettingConfig,
+} from '@icon-park/react';
 
 /**
- * 站内图标：统一直角线条——方头线帽（square cap）、尖角连接（miter join），
- * 不用圆角与曲线，与 Swiss Grid 的凌厉线条一致。
- * 线宽 1.5（16px 画布上 2px 的密度过高，笔画多的图标会糊成一团）。默认 16px，随文字颜色。
+ * 站内图标统一取自字节开源 IconPark（https://iconpark.oceanengine.com/official，Apache-2.0）。
+ * 本文件是唯一入口：outline 主题、strokeWidth 4（48 画布，16px 显示时约等于 1.33px）、
+ * 方头线帽（square）+ 尖角连接（miter），与 Swiss Grid 的直角线条一致。
+ * 新增图标请到 IconPark 官网检索后在此包装，不要手绘 path、不要引入其他图标库；
+ * 完整规则见 .cursor/rules/icons.mdc。
  */
-function Svg({ children, className, ...rest }: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      className={['icon', className ?? ''].filter(Boolean).join(' ')}
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="square"
-      strokeLinejoin="miter"
-      aria-hidden="true"
-      focusable="false"
-      {...rest}
-    >
-      {children}
-    </svg>
-  );
+
+interface IconProps {
+  /** 显示尺寸，默认 16 */
+  size?: number | string;
+  className?: string;
+  style?: CSSProperties;
 }
 
-/** 菜单：三条横杠 */
-export function IconMenu(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Svg {...props}>
-      <path d="M1.5 3.5h13M1.5 8h13M1.5 12.5h13" />
-    </Svg>
-  );
+type IconParkComponent = (props: Record<string, unknown>) => ReactElement;
+
+function wrap(Comp: IconParkComponent) {
+  return function Icon({ size = 16, className, style }: IconProps) {
+    return (
+      <Comp
+        theme="outline"
+        size={size}
+        strokeWidth={4}
+        strokeLinecap="square"
+        strokeLinejoin="miter"
+        className={['icon', className].filter(Boolean).join(' ')}
+        style={style}
+        aria-hidden="true"
+      />
+    );
+  };
 }
 
-/** Prompt：折角文档 + 文本行 */
-export function IconPrompt(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Svg {...props}>
-      <path d="M3 1.5h6.5l3.5 3.5v9.5H3z" />
-      <path d="M9.5 1.5V5H13" />
-      <path d="M5.5 8.5h5M5.5 11h5" />
-    </Svg>
-  );
-}
-
-/** 代码：尖括号 < / > */
-export function IconCode(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Svg {...props}>
-      <path d="M4.5 3.5L1 8l3.5 4.5M11.5 3.5L15 8l-3.5 4.5M9.5 2l-3 12" />
-    </Svg>
-  );
-}
-
-/** 参数：三条滑轨 + 方形滑块 */
-export function IconParams(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Svg {...props}>
-      <path d="M1 3.5h14M1 8h14M1 12.5h14" />
-      <rect x="9.5" y="2" width="3" height="3" fill="currentColor" stroke="none" />
-      <rect x="3.5" y="6.5" width="3" height="3" fill="currentColor" stroke="none" />
-      <rect x="10.5" y="11" width="3" height="3" fill="currentColor" stroke="none" />
-    </Svg>
-  );
-}
-
-/** 右箭头 → */
-export function IconArrowRight(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Svg {...props}>
-      <path d="M2 8h11M9 3l5 5-5 5" />
-    </Svg>
-  );
-}
-
-/** 左箭头 ← */
-export function IconArrowLeft(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Svg {...props}>
-      <path d="M14 8H3M7 3L2 8l5 5" />
-    </Svg>
-  );
-}
-
-/** 加号 + */
-export function IconPlus(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Svg {...props}>
-      <path d="M8 2v12M2 8h12" />
-    </Svg>
-  );
-}
-
-/** 减号 − */
-export function IconMinus(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Svg {...props}>
-      <path d="M2 8h12" />
-    </Svg>
-  );
-}
-
-/** 叉 ×（删除 / 关闭） */
-export function IconClose(props: SVGProps<SVGSVGElement>) {
-  return (
-    <Svg {...props}>
-      <path d="M3 3l10 10M13 3L3 13" />
-    </Svg>
-  );
-}
+/** 菜单：三条横杠（hamburger-button） */
+export const IconMenu = wrap(HamburgerButton as IconParkComponent);
+/** Prompt：文档（file-text） */
+export const IconPrompt = wrap(FileText as IconParkComponent);
+/** 代码：尖括号（code） */
+export const IconCode = wrap(Code as IconParkComponent);
+/** 参数：滑轨（setting-config） */
+export const IconParams = wrap(SettingConfig as IconParkComponent);
+/** 右箭头（arrow-right） */
+export const IconArrowRight = wrap(ArrowRight as IconParkComponent);
+/** 左箭头（arrow-left） */
+export const IconArrowLeft = wrap(ArrowLeft as IconParkComponent);
+/** 加号（plus） */
+export const IconPlus = wrap(Plus as IconParkComponent);
+/** 减号（minus） */
+export const IconMinus = wrap(Minus as IconParkComponent);
+/** 叉：删除 / 关闭（close） */
+export const IconClose = wrap(Close as IconParkComponent);

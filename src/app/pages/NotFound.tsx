@@ -11,7 +11,7 @@ export function NotFound() {
       <Link to="/" viewTransition className="cell span-3 step step-cta">
         <span className="mono">BACK</span>
         <b>
-          回到效果图鉴 <IconArrowRight className="arrow" width={18} height={18} />
+          回到效果图鉴 <IconArrowRight className="arrow" size={18} />
         </b>
       </Link>
     </div>

@@ -1,0 +1,38 @@
+---
+description: 图标统一取自字节开源 IconPark——站点侧经 Icons.tsx 包装，效果示例内联 SVG，参数固定
+globs: src/**/*.tsx,src/**/*.css,effects/**/index.html
+alwaysApply: false
+---
+
+# 图标规则：只用 IconPark
+
+所有图标（站点 chrome 与效果示例）一律来自字节开源 [IconPark](https://iconpark.oceanengine.com/official)（Apache-2.0）。不要手绘 path，不要引入其他图标库，不要用 Unicode 字符（→ × + − ▸ 等）当图标。
+
+## 统一参数
+
+- 主题 `outline`，48 画布 `strokeWidth 4`（16px 显示时约 1.33px）
+- `stroke-linecap: square`、`stroke-linejoin: miter`（直角规格，配合站点 Swiss Grid）
+- 颜色一律 `currentColor`，随所在文字反转；默认显示尺寸 16px
+
+## 站点侧（src/**）
+
+- 唯一入口是 [src/components/Icons.tsx](src/components/Icons.tsx)：到 IconPark 官网检索图标名 → 从 `@icon-park/react` 导入 → 用文件内的 `wrap()` 包装后导出 `IconXxx`
+- 业务代码只 import `Icons.tsx` 的导出，传 `size` / `className` / `style`；不要在业务代码里直接引 `@icon-park/react`
+- CSS 里需要图标（如 select 下拉箭头）时，把 IconPark 的 path 转成 SVG data URI，同样带 square cap 参数
+
+## 效果示例（effects/**/index.html）
+
+- 效果是零依赖单文件，不能装包：从 IconPark 官网复制该图标的 SVG 源码内联，保留 48 viewBox 与 stroke 参数，颜色改为 `currentColor` 或效果的 CSS 变量
+- 内联时在旁边注释图标名，方便回溯，如 `<!-- IconPark: arrow-right -->`
+
+## 已用图标对照
+
+| 导出名 | IconPark 名 | 用途 |
+| --- | --- | --- |
+| IconMenu | hamburger-button | 目录开关 |
+| IconPrompt | file-text | Prompt 区块 |
+| IconCode | code | 参考代码区块 |
+| IconParams | setting-config | 参数面板 |
+| IconArrowRight / Left | arrow-right / arrow-left | 导航箭头 |
+| IconPlus / Minus | plus / minus | 折叠、添加 |
+| IconClose | close | 关闭、删除 |
