@@ -813,15 +813,20 @@
   max-height: calc(100vh - 48px);
 }
 .modal::backdrop {
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(0, 0, 0, 0.9);
 }
 .modal-inner {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 50px);
 }
+/* 弹窗内部的分割线统一用白色：头部底线、按钮之间的竖线 */
 .modal-head {
   flex: 0 0 auto;
+  border-bottom-color: var(--line-strong);
+}
+.modal-head .blk-actions > .btn {
+  border-left-color: var(--line-strong);
 }
 .modal-body {
   flex: 1 1 auto;
