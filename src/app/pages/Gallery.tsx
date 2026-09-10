@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useViewTransitionState } from 'react-router-dom';
 import type { CategoryId } from '../../contract/types';
 import { CATEGORIES, categoryName, categorySubs, subDef } from '../../contract/categories';
 import { EFFECTS } from '../../contract/registry';
@@ -21,6 +21,9 @@ const pad2 = (n: number) => String(n).padStart(2, '0');
  */
 export function Gallery() {
   const [searchParams, setSearchParams] = useSearchParams();
+  // 仅在与首页互转期间给大标题挂 heading 名（与首页入口格形变承接）；
+  // 效果页 ↔ 详情页的转场不涉及它，保持干净的整页淡化
+  const toHome = useViewTransitionState('/');
 
   // URL 是选择状态的唯一事实源；非法值一律当作未选
   const catParam = searchParams.get('cat');
@@ -152,7 +155,7 @@ export function Gallery() {
       <div className="main">
         <div className="cell filter">
           <div className="filter-head">
-            <h2>{heading}</h2>
+            <h2 style={{ viewTransitionName: toHome ? 'heading' : undefined }}>{heading}</h2>
             <span className="mono">{pad2(filtered.length)} items</span>
           </div>
           <p className="desc">{subheading}</p>

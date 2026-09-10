@@ -10,16 +10,19 @@
   animation-timing-function: linear;
 }
 
-/* 承接元素：快起慢落的形变（苹果式从容） */
+/* 承接元素：快起慢落的形变（苹果式从容）
+   heading = 首页入口格标题 ↔ 效果页大标题（第二期） */
 ::view-transition-group(stage),
-::view-transition-group(title) {
+::view-transition-group(title),
+::view-transition-group(heading) {
   animation-duration: 420ms;
   animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 ::view-transition-group(stage) {
   z-index: 2;
 }
-::view-transition-group(title) {
+::view-transition-group(title),
+::view-transition-group(heading) {
   z-index: 3;
 }
 

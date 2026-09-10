@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useViewTransitionState } from 'react-router-dom';
 import type { CategoryId } from '../../contract/types';
 import { CATEGORIES } from '../../contract/categories';
 import { EFFECTS } from '../../contract/registry';
@@ -11,6 +11,13 @@ function countIn(cat: CategoryId, sub?: string): number {
 }
 
 /**
+ * 记住最近一次进入效果页的入口格（模块级，跨路由存活）。
+ * 所有入口 Link 的 pathname 都是 /effects，useViewTransitionState 无法区分点的是哪一格，
+ * 转场期间只让这一格的标题持有 heading 名——正向长成效果页大标题，返回时大标题缩回同一格。
+ */
+let lastEffectsEntry: string | null = null;
+
+/**
  * 首页 = 海报：
  *   Hero 行（巨字 8 栏 + 元数据 4 栏）
  *   三步 Cell + 「浏览全部效果」大入口 Cell
@@ -19,6 +26,12 @@ function countIn(cat: CategoryId, sub?: string): number {
  * 效果网格本身在 /effects（Gallery）。
  */
 export function Home() {
+  // 与 /effects 互转（含浏览器后退）期间为 true
+  const toEffects = useViewTransitionState('/effects');
+  const headingName = (entry: string): React.CSSProperties => ({
+    viewTransitionName: toEffects && lastEffectsEntry === entry ? 'heading' : undefined,
+  });
+
   return (
     <>
       <section className="g12 hero" aria-label="站点介绍">
@@ -55,9 +68,14 @@ export function Home() {
           <span className="idx">03</span>
           <b>复制 prompt 粘给你的 AI</b>
         </div>
-        <Link to="/effects" viewTransition className="cell span-6 step step-cta">
+        <Link
+          to="/effects"
+          viewTransition
+          className="cell span-6 step step-cta"
+          onClick={() => (lastEffectsEntry = 'cta')}
+        >
           <span className="mono">Index · 全部效果入口</span>
-          <b>
+          <b style={headingName('cta')}>
             浏览全部 {EFFECTS.length} 个效果 <span className="arrow">→</span>
           </b>
         </Link>
@@ -68,12 +86,17 @@ export function Home() {
           <h2>分类索引</h2>
           <span className="mono">{pad2(CATEGORIES.length)} categories · 点进任意一格</span>
         </div>
-        <Link to="/effects" viewTransition className="cell span-4 cat-cell">
+        <Link
+          to="/effects"
+          viewTransition
+          className="cell span-4 cat-cell"
+          onClick={() => (lastEffectsEntry = 'all')}
+        >
           <div className="cat-top">
             <span className="mono">00</span>
             <span className="mono">{pad2(EFFECTS.length)} effects</span>
           </div>
-          <h3>全部效果</h3>
+          <h3 style={headingName('all')}>全部效果</h3>
           <p className="cat-subs">不分类，从头到尾全部看一遍。</p>
           <div className="cat-foot">
             <span className="mono">All</span>
@@ -88,12 +111,13 @@ export function Home() {
               viewTransition
               className="cell span-4 cat-cell"
               key={c.id}
+              onClick={() => (lastEffectsEntry = c.id)}
             >
               <div className="cat-top">
                 <span className="mono">{pad2(i + 1)}</span>
                 <span className="mono">{pad2(countIn(c.id))} effects</span>
               </div>
-              <h3>{c.name}</h3>
+              <h3 style={headingName(c.id)}>{c.name}</h3>
               <p className="cat-subs">
                 {subs.map((s) => `${s.name} ${countIn(c.id, s.id)}`).join(' · ')}
               </p>

@@ -96,7 +96,7 @@ validate 会检查 index.html 含四个基线能力关键字：`aria-roledescrip
 - 分区只靠 1px 线；Cell 内边距 16–32px；效果页桌面侧栏 2 栏（与 Header 品牌 Cell 同宽）+ 效果区 10 栏内部 3 列，平板侧栏变顶部分类带，手机 2 列
 - 字体：思源黑体 400/700 做正文与巨字，JetBrains Mono 做所有元数据（编号 / 计数 / 标签 / 参数值）
 - 悬停只允许：反转、边框点亮（`outline` 压在 1px gap 上）、箭头位移 4px
-- 路由转场（`src/styles/transitions.css`）：承接元素为效果卡预览 ↔ 详情页舞台（`stage`）与卡标题 ↔ 详情页 h1（`title`），形变 420ms `cubic-bezier(0.2, 0.8, 0.2, 1)`，其余内容 200ms 交叉淡化；浏览器后退自动反向并由 `<ScrollRestoration>` 恢复滚动位置；`prefers-reduced-motion` 下全部关闭；不支持 View Transitions 的浏览器回退为硬切
+- 路由转场（`src/styles/transitions.css`）：承接元素为效果卡预览 ↔ 详情页舞台（`stage`）、卡标题 ↔ 详情页 h1（`title`）、首页入口格标题 ↔ 效果页大标题（`heading`，被点击的那一格由模块级 `lastEffectsEntry` 记录），形变 420ms `cubic-bezier(0.2, 0.8, 0.2, 1)`，其余内容 200ms 交叉淡化；浏览器后退自动反向并由 `<ScrollRestoration>` 恢复滚动位置；`prefers-reduced-motion` 下全部关闭；不支持 View Transitions 的浏览器回退为硬切
 - 效果 `index.html` 内部样式是内容，不受以上约束
 
 ## 目录结构
