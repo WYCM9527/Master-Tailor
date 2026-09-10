@@ -136,7 +136,7 @@ function EffectPage({ effect }: { effect: Effect }) {
     <>
       {/* 详情页不渲染站点 Header：左列第一行（返回 | 标题 | 标签）就是页头，右列整高都是参数面板 */}
       <div className="g12 first d-body">
-        <div className="span-8 sub d-left">
+        <div className="span-9 sub d-left">
           {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
           <Link
             to={`/effects?cat=${meta.category}&sub=${meta.sub}`}
@@ -146,7 +146,7 @@ function EffectPage({ effect }: { effect: Effect }) {
             <span className="arrow">←</span>
             返回
           </Link>
-          <div className="cell span-4 d-title">
+          <div className="cell span-5 d-title">
             <h1>{meta.name}</h1>
           </div>
           <div className="cell span-3 d-meta">
@@ -160,7 +160,7 @@ function EffectPage({ effect }: { effect: Effect }) {
             </div>
           </div>
 
-          <div className={`cell span-8 d-stage tight${idle ? ' idle' : ''}`} ref={stageRef}>
+          <div className={`cell span-9 d-stage tight${idle ? ' idle' : ''}`} ref={stageRef}>
             <PreviewFrame srcdoc={srcdoc} cssVars={cssVars} title={`${meta.name} 实时预览`} />
             {isFullscreen && (
               <button type="button" className="btn fs-exit" onClick={exitFullscreen}>
@@ -168,16 +168,18 @@ function EffectPage({ effect }: { effect: Effect }) {
               </button>
             )}
           </div>
-          {/* 预览下方：Prompt 与参考代码各占 4 栏，均分左列 */}
-          <PromptCell
-            promptText={promptText}
-            includeCode={state.includeCode}
-            onIncludeCodeChange={(v) => setState((s) => ({ ...s, includeCode: v }))}
-          />
-          <CodePanel code={exportCode} slug={meta.slug} />
+          {/* 预览下方：Prompt 与参考代码各占一半 */}
+          <div className="blk-row">
+            <PromptCell
+              promptText={promptText}
+              includeCode={state.includeCode}
+              onIncludeCodeChange={(v) => setState((s) => ({ ...s, includeCode: v }))}
+            />
+            <CodePanel code={exportCode} slug={meta.slug} />
+          </div>
         </div>
 
-        <div className="cell span-4 d-right-col">
+        <div className="cell span-3 d-right-col">
           <div className="d-right">
             <ParamPanel
               meta={meta}

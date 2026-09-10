@@ -763,11 +763,21 @@
 .d-left {
   grid-template-rows: auto auto minmax(0, 1fr);
 }
+/* Prompt 与参考代码所在行：左列通宽，内部 1:1 均分，1px gap 画线 */
+.blk-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  min-height: 0;
+}
 .blk {
   padding: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 .blk-preview {
   position: relative;
@@ -1231,9 +1241,6 @@ input[type='color']::-webkit-color-swatch {
     grid-column: span 12;
     grid-template-rows: auto;
   }
-  .blk {
-    grid-column: span 6;
-  }
   .blk-preview {
     flex: 0 0 260px;
   }
@@ -1299,8 +1306,8 @@ input[type='color']::-webkit-color-swatch {
   .blk-head {
     flex-wrap: wrap;
   }
-  .blk {
-    grid-column: span 12;
+  .blk-row {
+    grid-template-columns: 1fr;
   }
   .modal {
     width: calc(100vw - 16px);

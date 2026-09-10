@@ -42,10 +42,7 @@ export function ParamPanel({ meta, values, onChange, bg, onBgChange, onFullscree
   return (
     <aside className="params" aria-label="参数">
       <div className="blk-head">
-        <span className="blk-title">
-          参数
-          <span className="hint mono">实时进入预览、Prompt 和代码</span>
-        </span>
+        <span className="blk-title">参数</span>
         <div className="blk-actions">
           <button type="button" className="btn" onClick={onFullscreen}>
             全屏预览

@@ -38,7 +38,7 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
   );
 
   return (
-    <section className="cell span-4 blk" aria-label="Prompt">
+    <section className="cell blk" aria-label="Prompt">
       <div className="blk-head">
         <span className="blk-title">
           Prompt

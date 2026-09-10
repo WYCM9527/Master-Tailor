@@ -122,7 +122,7 @@ export function CodePanel({ code, slug }: Props) {
   );
 
   return (
-    <section className="cell span-4 blk" aria-label="参考代码">
+    <section className="cell blk" aria-label="参考代码">
       <div className="blk-head">
         <span className="blk-title">
           参考代码
