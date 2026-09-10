@@ -110,7 +110,7 @@ export function CodePanel({ code, slug }: Props) {
   const copy = <CopyButton getText={() => code} label="复制代码" />;
   const downloadBtn = (
     <button type="button" className="btn" onClick={download}>
-      下载 HTML <span className="arrow">↓</span>
+      下载 HTML
     </button>
   );
 
@@ -132,10 +132,13 @@ export function CodePanel({ code, slug }: Props) {
         <pre className="code-text">{code}</pre>
       </button>
       <div className="blk-foot">
-        {downloadBtn}
-        <button type="button" className="btn" onClick={() => setOpen(true)}>
-          查看全文 <span className="arrow">↗</span>
-        </button>
+        <span className="mono blk-foot-note">单文件 · 双击即可在浏览器打开</span>
+        <div className="blk-actions">
+          {downloadBtn}
+          <button type="button" className="btn" onClick={() => setOpen(true)}>
+            查看全文
+          </button>
+        </div>
       </div>
 
       <ContentModal

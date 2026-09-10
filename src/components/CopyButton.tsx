@@ -5,21 +5,10 @@ interface Props {
   getText: () => string;
   label: string;
   doneLabel?: string;
-  primary?: boolean;
-  large?: boolean;
-  block?: boolean;
   className?: string;
 }
 
-export function CopyButton({
-  getText,
-  label,
-  doneLabel = '已复制',
-  primary,
-  large,
-  block,
-  className,
-}: Props) {
+export function CopyButton({ getText, label, doneLabel = '已复制', className }: Props) {
   const [done, setDone] = useState(false);
   const timer = useRef<number | undefined>(undefined);
 
@@ -44,20 +33,13 @@ export function CopyButton({
     timer.current = window.setTimeout(() => setDone(false), 1600);
   };
 
-  const cls = [
-    'btn',
-    primary ? 'btn-primary' : '',
-    large ? 'btn-lg' : '',
-    block ? 'btn-block' : '',
-    className ?? '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <button type="button" className={cls} onClick={onClick}>
-      <span>{done ? doneLabel : label}</span>
-      <span className="arrow">{done ? '✓' : '→'}</span>
+    <button
+      type="button"
+      className={['btn', className ?? ''].filter(Boolean).join(' ')}
+      onClick={onClick}
+    >
+      {done ? doneLabel : label}
     </button>
   );
 }

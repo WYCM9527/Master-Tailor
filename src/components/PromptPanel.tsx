@@ -27,7 +27,7 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
     </label>
   );
   const copy = (
-    <CopyButton getText={() => promptText} label="复制 Prompt" doneLabel="Prompt 已复制" primary />
+    <CopyButton getText={() => promptText} label="复制 Prompt" doneLabel="Prompt 已复制" />
   );
 
   return (
@@ -49,9 +49,11 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
       </button>
       <div className="blk-foot">
         {toggle}
-        <button type="button" className="btn" onClick={() => setOpen(true)}>
-          查看全文 <span className="arrow">↗</span>
-        </button>
+        <div className="blk-actions">
+          <button type="button" className="btn" onClick={() => setOpen(true)}>
+            查看全文
+          </button>
+        </div>
       </div>
 
       <ContentModal

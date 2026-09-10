@@ -48,16 +48,15 @@ export function ParamPanel({ meta, values, onChange, bg, onBgChange, onFullscree
         </span>
         <div className="blk-actions">
           <button type="button" className="btn" onClick={onFullscreen}>
-            全屏预览 <span className="arrow">↗</span>
+            全屏预览
           </button>
           <button
             type="button"
-            className="btn btn-icon"
-            title="重置参数"
-            aria-label="重置参数"
+            className="btn"
+            title="恢复全部参数为默认值"
             onClick={() => onChange(defaultValues(meta))}
           >
-            ↺
+            重置
           </button>
         </div>
       </div>
@@ -385,7 +384,7 @@ function ImagesControl({
               )}
               <button
                 type="button"
-                className="btn slide-remove"
+                className="btn btn-ghost slide-remove"
                 disabled={value.length <= param.min}
                 title={value.length <= param.min ? `至少 ${param.min} 张` : '删除这张'}
                 onClick={() => remove(i)}
@@ -428,11 +427,11 @@ function ImagesControl({
         ))}
         <button
           type="button"
-          className="btn slide-add"
+          className="btn btn-ghost slide-add"
           disabled={value.length >= param.max}
           onClick={add}
         >
-          添加一张 <span className="arrow">+</span>
+          添加一张
         </button>
       </div>
       <span className="control-help">

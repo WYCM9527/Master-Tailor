@@ -40,14 +40,8 @@ export function ContentModal({ open, onClose, title, meta, actions, children }: 
           </span>
           <div className="blk-actions">
             {actions}
-            <button
-              type="button"
-              className="btn btn-icon"
-              title="关闭"
-              aria-label="关闭"
-              onClick={onClose}
-            >
-              ×
+            <button type="button" className="btn" onClick={onClose}>
+              关闭
             </button>
           </div>
         </div>

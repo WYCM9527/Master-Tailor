@@ -170,7 +170,7 @@ function EffectPage({ effect }: { effect: Effect }) {
             <PreviewFrame srcdoc={srcdoc} cssVars={cssVars} title={`${meta.name} 实时预览`} />
             {isFullscreen && (
               <button type="button" className="btn fs-exit" onClick={exitFullscreen}>
-                退出预览 <span className="arrow">×</span>
+                退出预览
               </button>
             )}
           </div>
