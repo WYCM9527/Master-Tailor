@@ -451,7 +451,8 @@
 }
 .card-preview {
   position: relative;
-  aspect-ratio: 4 / 3;
+  /* 与详情页舞台（.d-stage）同比例，转场形变为纯平移 + 等比放大 */
+  aspect-ratio: 16 / 9;
   background: #0a0a0f;
   overflow: hidden;
   border-bottom: 1px solid var(--line);

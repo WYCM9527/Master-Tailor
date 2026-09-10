@@ -156,6 +156,7 @@ function EffectPage({ effect }: { effect: Effect }) {
           {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
           <Link
             to={`/effects?cat=${meta.category}&sub=${meta.sub}`}
+            viewTransition
             className="cell span-1 d-back"
             title={`返回 ${categoryName(meta.category)} · ${subName}`}
           >
@@ -163,7 +164,8 @@ function EffectPage({ effect }: { effect: Effect }) {
             返回
           </Link>
           <div className="cell span-4 d-title">
-            <h1>{meta.name}</h1>
+            {/* 转场承接：与效果卡标题共享 title 名 */}
+            <h1 style={{ viewTransitionName: 'title' }}>{meta.name}</h1>
           </div>
           <div className="cell span-3 d-meta">
             <span className="mono">Tags</span>
@@ -176,7 +178,12 @@ function EffectPage({ effect }: { effect: Effect }) {
             </div>
           </div>
 
-          <div className={`cell span-9 d-stage tight${idle ? ' idle' : ''}`} ref={stageRef}>
+          {/* 转场承接：与效果卡预览共享 stage 名 */}
+          <div
+            className={`cell span-9 d-stage tight${idle ? ' idle' : ''}`}
+            ref={stageRef}
+            style={{ viewTransitionName: 'stage' }}
+          >
             <PreviewFrame srcdoc={srcdoc} cssVars={cssVars} title={`${meta.name} 实时预览`} />
             {isFullscreen && (
               <button type="button" className="btn fs-exit" onClick={exitFullscreen}>

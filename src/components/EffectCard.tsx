@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useViewTransitionState } from 'react-router-dom';
 import type { Effect } from '../contract/types';
 import { BG_DARK } from '../contract/types';
 import { FONTS_CSS_HREF } from '../contract/fonts';
@@ -8,16 +8,20 @@ import { defaultValues } from '../engine/urlState';
 
 /**
  * 效果页的效果 Cell（效果区内部 3 列之一）：
- * - 预览铺满 Cell（4:3），IntersectionObserver 首次进入视口才挂载 iframe
+ * - 预览铺满 Cell（16:9，与详情页舞台同比例），IntersectionObserver 首次进入视口才挂载 iframe
  * - 底部标题条，悬停整条黑白反转、箭头右移
  * - iframe 常态 pointer-events:none，整 Cell 可点击进详情；
  *   Cell 把真实鼠标坐标 postMessage 给 iframe，交互类效果的 thumb 演示块可跟随真实指针
+ * - 转场承接：仅当本卡参与转场时给预览挂 stage、标题挂 title，
+ *   与详情页的舞台 / h1 形成共享元素形变（文档内名字唯一）
  */
 export function EffectCard({ effect }: { effect: Effect }) {
   const { meta } = effect;
   const rootRef = useRef<HTMLAnchorElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mounted, setMounted] = useState(false);
+  const to = `/e/${meta.slug}`;
+  const transitioning = useViewTransitionState(to);
 
   useEffect(() => {
     const el = rootRef.current;
@@ -59,8 +63,11 @@ export function EffectCard({ effect }: { effect: Effect }) {
   };
 
   return (
-    <Link to={`/e/${meta.slug}`} className="cell card" ref={rootRef} onMouseMove={forwardPointer}>
-      <div className="card-preview">
+    <Link to={to} viewTransition className="cell card" ref={rootRef} onMouseMove={forwardPointer}>
+      <div
+        className="card-preview"
+        style={{ viewTransitionName: transitioning ? 'stage' : undefined }}
+      >
         {mounted ? (
           <iframe
             ref={iframeRef}
@@ -76,7 +83,12 @@ export function EffectCard({ effect }: { effect: Effect }) {
       </div>
       <div className="card-caption">
         <span>
-          <span className="name">{meta.name}</span>
+          <span
+            className="name"
+            style={{ viewTransitionName: transitioning ? 'title' : undefined }}
+          >
+            {meta.name}
+          </span>
           <span className="summary">{meta.summary}</span>
         </span>
         <span className="arrow">→</span>

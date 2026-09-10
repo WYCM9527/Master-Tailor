@@ -55,7 +55,7 @@ export function Home() {
           <span className="idx">03</span>
           <b>复制 prompt 粘给你的 AI</b>
         </div>
-        <Link to="/effects" className="cell span-6 step step-cta">
+        <Link to="/effects" viewTransition className="cell span-6 step step-cta">
           <span className="mono">Index · 全部效果入口</span>
           <b>
             浏览全部 {EFFECTS.length} 个效果 <span className="arrow">→</span>
@@ -68,7 +68,7 @@ export function Home() {
           <h2>分类索引</h2>
           <span className="mono">{pad2(CATEGORIES.length)} categories · 点进任意一格</span>
         </div>
-        <Link to="/effects" className="cell span-4 cat-cell">
+        <Link to="/effects" viewTransition className="cell span-4 cat-cell">
           <div className="cat-top">
             <span className="mono">00</span>
             <span className="mono">{pad2(EFFECTS.length)} effects</span>
@@ -83,7 +83,12 @@ export function Home() {
         {CATEGORIES.map((c, i) => {
           const subs = c.subs.filter((s) => countIn(c.id, s.id) > 0);
           return (
-            <Link to={`/effects?cat=${c.id}`} className="cell span-4 cat-cell" key={c.id}>
+            <Link
+              to={`/effects?cat=${c.id}`}
+              viewTransition
+              className="cell span-4 cat-cell"
+              key={c.id}
+            >
               <div className="cat-top">
                 <span className="mono">{pad2(i + 1)}</span>
                 <span className="mono">{pad2(countIn(c.id))} effects</span>

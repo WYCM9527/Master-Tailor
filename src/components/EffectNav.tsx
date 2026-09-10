@@ -57,6 +57,7 @@ export function EffectNav({ current, open, onClose }: Props) {
                         <Link
                           key={e.meta.slug}
                           to={`/e/${e.meta.slug}`}
+                          viewTransition
                           className={`nav-item${e.meta.slug === current ? ' active' : ''}`}
                           aria-current={e.meta.slug === current ? 'page' : undefined}
                           onClick={onClose}

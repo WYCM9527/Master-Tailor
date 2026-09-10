@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 export function TopBar() {
   return (
     <header className="g12 first hdr">
-      <Link to="/" className="cell span-2 hdr-brand">
+      <Link to="/" viewTransition className="cell span-2 hdr-brand">
         裁缝大师
         <span className="mono">Master-Tailor</span>
       </Link>

@@ -7,7 +7,7 @@ export function NotFound() {
         <h1>404</h1>
         <p className="muted">这块布料不存在，可能被裁掉了。</p>
       </div>
-      <Link to="/" className="cell span-3 step step-cta">
+      <Link to="/" viewTransition className="cell span-3 step step-cta">
         <span className="mono">BACK</span>
         <b>
           回到效果图鉴 <span className="arrow">→</span>

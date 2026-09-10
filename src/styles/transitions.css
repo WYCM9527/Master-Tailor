@@ -1,0 +1,41 @@
+/* 路由转场（View Transitions API）
+   承接元素：效果卡预览 ↔ 详情页舞台（stage）、效果卡标题 ↔ 详情页 h1（title）。
+   命名规则：详情页固定持名；效果卡只在自己参与转场时（useViewTransitionState）持名，保证文档内唯一。
+   不支持该 API 的浏览器由 React Router 回退为普通导航（硬切）。 */
+
+/* 其余内容：交叉淡化，比形变短一半，承接元素落定前页面已就位 */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: linear;
+}
+
+/* 承接元素：快起慢落的形变（苹果式从容） */
+::view-transition-group(stage),
+::view-transition-group(title) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+::view-transition-group(stage) {
+  z-index: 2;
+}
+::view-transition-group(title) {
+  z-index: 3;
+}
+
+/* 保险：新旧快照比例即便有细微差异也不拉伸，按容器裁切 */
+::view-transition-old(stage),
+::view-transition-new(stage) {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 系统开启「减少动态效果」时关闭全部转场动画（等效瞬间切换） */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
