@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ThemeRegistrationRaw } from 'shiki/core';
 import { ContentModal } from './ContentModal';
 import { CopyButton } from './CopyButton';
+import { IconCode } from './Icons';
 
 interface Props {
   /** 导出版代码（当前参数已烘焙） */
@@ -125,6 +126,7 @@ export function CodePanel({ code, slug }: Props) {
     <section className="cell blk" aria-label="参考代码">
       <div className="blk-head">
         <span className="blk-title">
+          <IconCode />
           参考代码
           <span className="hint mono">{lines} 行</span>
         </span>
@@ -147,6 +149,7 @@ export function CodePanel({ code, slug }: Props) {
         open={open}
         onClose={() => setOpen(false)}
         title="参考代码"
+        icon={<IconCode />}
         meta={`原生 HTML 单文件，参数已按当前值写入 · ${lines} 行`}
         actions={
           <>

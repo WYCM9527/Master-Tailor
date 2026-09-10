@@ -740,11 +740,20 @@
 }
 .blk-title {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
+}
+/* 直角图标：随文字颜色，不缩放 */
+.icon {
+  display: inline-block;
+  flex: none;
+}
+.blk-title .icon {
+  width: 16px;
+  height: 16px;
 }
 .blk-head .hint {
   text-transform: none;

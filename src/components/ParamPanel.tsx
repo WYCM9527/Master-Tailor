@@ -15,6 +15,7 @@ import type {
 } from '../contract/types';
 import { BG_DARK, BG_LIGHT, bgColor } from '../contract/types';
 import { FONTS } from '../contract/fonts';
+import { IconParams } from './Icons';
 import { SAMPLE_IMAGES } from '../contract/samples';
 import { applyPreset, defaultValues } from '../engine/urlState';
 
@@ -42,7 +43,10 @@ export function ParamPanel({ meta, values, onChange, bg, onBgChange, onFullscree
   return (
     <aside className="params" aria-label="参数">
       <div className="blk-head">
-        <span className="blk-title">参数</span>
+        <span className="blk-title">
+          <IconParams />
+          参数
+        </span>
         <div className="blk-actions">
           <button type="button" className="btn" onClick={onFullscreen}>
             全屏预览

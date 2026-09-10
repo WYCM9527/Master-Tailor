@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../contract/categories';
 import { EFFECTS } from '../contract/registry';
+import { IconMenu } from './Icons';
 
 interface Props {
   /** 当前效果 slug，用于高亮 */
@@ -29,6 +30,7 @@ export function EffectNav({ current, open, onClose }: Props) {
       <aside className="nav-drawer" aria-label="效果目录">
         <div className="blk-head nav-head">
           <span className="blk-title">
+            <IconMenu />
             目录
             <span className="hint mono">{EFFECTS.length} 个效果</span>
           </span>

@@ -13,6 +13,7 @@ import { PreviewFrame } from '../../components/PreviewFrame';
 import { PromptCell } from '../../components/PromptPanel';
 import { CodePanel } from '../../components/CodePanel';
 import { EffectNav } from '../../components/EffectNav';
+import { IconMenu } from '../../components/Icons';
 import { NotFound } from './NotFound';
 
 export function EffectRoute() {
@@ -146,9 +147,11 @@ function EffectPage({ effect }: { effect: Effect }) {
             type="button"
             className={`cell span-1 d-nav${navOpen ? ' active' : ''}`}
             aria-expanded={navOpen}
+            aria-label="效果目录"
+            title="效果目录"
             onClick={() => setNavOpen((v) => !v)}
           >
-            目录
+            <IconMenu width={20} height={20} />
           </button>
           {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
           <Link

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ContentModal } from './ContentModal';
 import { CopyButton } from './CopyButton';
+import { IconPrompt } from './Icons';
 
 interface PromptProps {
   promptText: string;
@@ -41,6 +42,7 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
     <section className="cell blk" aria-label="Prompt">
       <div className="blk-head">
         <span className="blk-title">
+          <IconPrompt />
           Prompt
           <span className="hint mono">{meta}</span>
         </span>
@@ -63,6 +65,7 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
         open={open}
         onClose={() => setOpen(false)}
         title="Prompt"
+        icon={<IconPrompt />}
         meta={`复制后粘给任何 AI 编程工具 · ${meta}`}
         actions={
           <>
