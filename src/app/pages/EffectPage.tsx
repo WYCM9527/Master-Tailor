@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import type { Effect, EffectState } from '../../contract/types';
 import { bgColor } from '../../contract/types';
@@ -136,23 +137,43 @@ function EffectPage({ effect }: { effect: Effect }) {
 
   // 悬浮目录（左侧抽屉），切换效果时随页面重建自动关闭
   const [navOpen, setNavOpen] = useState(false);
+  // 开关走与路由转场同款的 View Transition：☰（左上角）与 ×（抽屉头部右侧）共享 nav-toggle 名，
+  // 图标随开合在两个位置之间形变；不支持的浏览器直接切换
+  const toggleNav = (open: boolean) => {
+    if (!document.startViewTransition) {
+      setNavOpen(open);
+      return;
+    }
+    document.startViewTransition(() => {
+      flushSync(() => setNavOpen(open));
+    });
+  };
 
   return (
     <>
-      <EffectNav current={meta.slug} open={navOpen} onClose={() => setNavOpen(false)} />
+      <EffectNav
+        current={meta.slug}
+        open={navOpen}
+        onClose={() => toggleNav(false)}
+        onNavigate={() => setNavOpen(false)}
+      />
       {/* 详情页不渲染站点 Header：左列第一行（目录 | 返回 | 标题 | 标签）就是页头，右列整高都是参数面板 */}
       <div className="g12 first d-body">
         <div className="span-9 sub d-left">
-          {/* 展开后抽屉盖住此格，图标「移动」到抽屉头部右侧变 ×（见 EffectNav） */}
+          {/* 展开后抽屉盖住此格，开关图标沿转场从这里飞到抽屉头部右侧 */}
           <button
             type="button"
             className="cell span-1 d-nav"
             aria-expanded={navOpen}
             aria-label="展开效果目录"
             title="展开效果目录"
-            onClick={() => setNavOpen(true)}
+            onClick={() => toggleNav(true)}
           >
-            <IconMenu width={20} height={20} />
+            <IconMenu
+              width={20}
+              height={20}
+              style={{ viewTransitionName: navOpen ? undefined : 'nav-toggle' }}
+            />
           </button>
           {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
           <Link

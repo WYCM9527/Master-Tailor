@@ -26,6 +26,36 @@
   z-index: 3;
 }
 
+/* 目录开关：☰（页面左上角）↔ ×（抽屉头部右侧），同款形变；抽屉本体从左滑入滑出 */
+::view-transition-group(nav-toggle) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 22;
+}
+.nav-drawer {
+  view-transition-name: nav-drawer;
+}
+::view-transition-group(nav-drawer) {
+  z-index: 21;
+}
+/* :only-child = 只在单侧存在（开 / 关）时滑动；路由切换两侧都有抽屉时不横跳 */
+::view-transition-new(nav-drawer):only-child {
+  animation: vt-nav-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+::view-transition-old(nav-drawer):only-child {
+  animation: vt-nav-out 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes vt-nav-in {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes vt-nav-out {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
 /* 保险：新旧快照比例即便有细微差异也不拉伸，按容器裁切 */
 ::view-transition-old(stage),
 ::view-transition-new(stage) {

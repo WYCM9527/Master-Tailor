@@ -8,11 +8,14 @@ interface Props {
   /** 当前效果 slug，用于高亮 */
   current: string;
   open: boolean;
+  /** 收起（带图标形变转场） */
   onClose: () => void;
+  /** 点目录项跳转时的收起（不启动自己的转场，避免与路由转场冲突） */
+  onNavigate: () => void;
 }
 
 /** 详情页的悬浮效果目录：按 分类 → 子类 → 效果 列出全部效果，点任一项直接切换 */
-export function EffectNav({ current, open, onClose }: Props) {
+export function EffectNav({ current, open, onClose, onNavigate }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -27,7 +30,7 @@ export function EffectNav({ current, open, onClose }: Props) {
   return (
     <>
       <div className="nav-scrim" onClick={onClose} aria-hidden="true" />
-      {/* 通屏抽屉盖住页头的目录按钮，图标「移动」到头部右侧变 ×，点击收起 */}
+      {/* 通屏抽屉盖住页头的目录按钮；开关图标共享 nav-toggle 名，随转场从左上角形变到头部右侧 */}
       <aside className="nav-drawer" aria-label="效果目录">
         <div className="blk-head nav-head">
           <span className="blk-title">
@@ -42,7 +45,7 @@ export function EffectNav({ current, open, onClose }: Props) {
               title="收起效果目录"
               onClick={onClose}
             >
-              <IconClose width={20} height={20} />
+              <IconClose width={20} height={20} style={{ viewTransitionName: 'nav-toggle' }} />
             </button>
           </div>
         </div>
@@ -67,7 +70,7 @@ export function EffectNav({ current, open, onClose }: Props) {
                           viewTransition
                           className={`nav-item${e.meta.slug === current ? ' active' : ''}`}
                           aria-current={e.meta.slug === current ? 'page' : undefined}
-                          onClick={onClose}
+                          onClick={onNavigate}
                         >
                           {e.meta.name}
                         </Link>
