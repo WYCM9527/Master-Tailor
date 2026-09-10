@@ -13,7 +13,7 @@ import { PreviewFrame } from '../../components/PreviewFrame';
 import { PromptCell } from '../../components/PromptPanel';
 import { CodePanel } from '../../components/CodePanel';
 import { EffectNav } from '../../components/EffectNav';
-import { IconArrowLeft, IconClose, IconMenu } from '../../components/Icons';
+import { IconArrowLeft, IconMenu } from '../../components/Icons';
 import { NotFound } from './NotFound';
 
 export function EffectRoute() {
@@ -143,16 +143,16 @@ function EffectPage({ effect }: { effect: Effect }) {
       {/* 详情页不渲染站点 Header：左列第一行（目录 | 返回 | 标题 | 标签）就是页头，右列整高都是参数面板 */}
       <div className="g12 first d-body">
         <div className="span-9 sub d-left">
-          {/* 与抽屉联动：展开时变 ×（按钮悬浮在遮罩之上），点击收起变回三横杠 */}
+          {/* 展开后抽屉盖住此格，图标「移动」到抽屉头部右侧变 ×（见 EffectNav） */}
           <button
             type="button"
-            className={`cell span-1 d-nav${navOpen ? ' active' : ''}`}
+            className="cell span-1 d-nav"
             aria-expanded={navOpen}
-            aria-label={navOpen ? '收起效果目录' : '展开效果目录'}
-            title={navOpen ? '收起效果目录' : '展开效果目录'}
-            onClick={() => setNavOpen((v) => !v)}
+            aria-label="展开效果目录"
+            title="展开效果目录"
+            onClick={() => setNavOpen(true)}
           >
-            {navOpen ? <IconClose width={20} height={20} /> : <IconMenu width={20} height={20} />}
+            <IconMenu width={20} height={20} />
           </button>
           {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
           <Link

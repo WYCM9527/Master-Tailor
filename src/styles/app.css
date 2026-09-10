@@ -592,15 +592,9 @@
     background var(--ease),
     color var(--ease);
 }
-.d-nav:hover,
-.d-nav.active {
+.d-nav:hover {
   background: var(--fg);
   color: var(--bg);
-}
-/* 抽屉展开时按钮浮在遮罩之上（此时图标为 ×），点击即收起 */
-.d-nav.active {
-  position: relative;
-  z-index: 21;
 }
 .d-back {
   display: flex;
@@ -865,8 +859,7 @@
 }
 .nav-drawer {
   position: fixed;
-  /* 从页头行（55px + 1px 栏线）下方滑出，不遮住目录按钮 */
-  top: 56px;
+  top: 0;
   left: 0;
   bottom: 0;
   z-index: 20;
@@ -875,6 +868,11 @@
   flex-direction: column;
   background: var(--bg);
   border-right: 1px solid var(--line-strong);
+}
+/* 头部右侧的收起 ×：透明底图标钮，与头部等高 */
+.nav-close {
+  border-left: 1px solid var(--line);
+  padding: 0 18px;
 }
 .nav-head {
   flex: 0 0 auto;

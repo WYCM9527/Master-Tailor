@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CATEGORIES } from '../contract/categories';
 import { EFFECTS } from '../contract/registry';
+import { IconClose } from './Icons';
 
 interface Props {
   /** 当前效果 slug，用于高亮 */
@@ -26,13 +27,24 @@ export function EffectNav({ current, open, onClose }: Props) {
   return (
     <>
       <div className="nav-scrim" onClick={onClose} aria-hidden="true" />
-      {/* 抽屉从页头下方滑出：页头的目录按钮（此时为 ×）保持可见、负责收起 */}
+      {/* 通屏抽屉盖住页头的目录按钮，图标「移动」到头部右侧变 ×，点击收起 */}
       <aside className="nav-drawer" aria-label="效果目录">
         <div className="blk-head nav-head">
           <span className="blk-title">
             目录
             <span className="hint mono">{EFFECTS.length} 个效果</span>
           </span>
+          <div className="blk-actions">
+            <button
+              type="button"
+              className="btn btn-ghost nav-close"
+              aria-label="收起效果目录"
+              title="收起效果目录"
+              onClick={onClose}
+            >
+              <IconClose width={20} height={20} />
+            </button>
+          </div>
         </div>
 
         <div className="nav-body">
