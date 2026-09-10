@@ -750,7 +750,8 @@
   min-height: 0;
   padding: 0 18px;
   border: 0;
-  border-left: 1px solid var(--line);
+  /* 白按钮之间用深色描边分割（白线在白底上看不见） */
+  border-left: 1px solid var(--bg);
 }
 
 /* Prompt / 参考代码 Cell：头部 → 截断预览（可点开弹窗）→ 底栏 */
@@ -820,13 +821,10 @@
   flex-direction: column;
   max-height: calc(100vh - 50px);
 }
-/* 弹窗内部的分割线统一用白色：头部底线、按钮之间的竖线 */
+/* 弹窗内部的结构线用白色（头部底线）；按钮之间仍是深色描边 */
 .modal-head {
   flex: 0 0 auto;
   border-bottom-color: var(--line-strong);
-}
-.modal-head .blk-actions > .btn {
-  border-left-color: var(--line-strong);
 }
 .modal-body {
   flex: 1 1 auto;
