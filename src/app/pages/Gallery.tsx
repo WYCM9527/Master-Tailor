@@ -43,7 +43,8 @@ export function Gallery() {
     if (next.cat) params.set('cat', next.cat);
     if (next.cat && next.sub) params.set('sub', next.sub);
     if (next.tag) params.set('tag', next.tag);
-    setSearchParams(params, { replace: true });
+    // preventScrollReset：筛选只换 query，不要被 ScrollRestoration 拉回页顶
+    setSearchParams(params, { replace: true, preventScrollReset: true });
   };
 
   const expand = (c: CategoryId) =>

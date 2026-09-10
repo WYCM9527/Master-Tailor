@@ -139,6 +139,12 @@ for (const slug of dirs) {
     fail(slug, 'thumb.mode 为 autoplay 但 index.html 没有 @mt:thumb 演示块');
   }
 
+  // 效果运行在与站点同源的 srcdoc iframe 里：scrollIntoView 会连带滚动宿主页面（自动播放时页面被反复拽走）。
+  // 一律改用滚动容器自身的 scrollTo。
+  if (/scrollIntoView/.test(html)) {
+    fail(slug, 'index.html 使用了 scrollIntoView（会连带滚动宿主页面），请改用容器自身的 scrollTo');
+  }
+
   // ---- prompt.md ----
   if (!/^##\s+效果描述\s*$/m.test(md)) fail(slug, 'prompt.md 缺少 "## 效果描述" 一节');
   const paramKeys = new Set(meta.params.map((p) => p.key));

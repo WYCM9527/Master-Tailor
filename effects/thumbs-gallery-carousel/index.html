@@ -170,8 +170,13 @@
       thumbEls[index].classList.remove('active');
       thumbEls[next].classList.add('active');
       index = next;
-      // 当前缩略图滚到可见（不带动页面滚动）
-      thumbEls[index].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', inline: 'center', block: 'nearest' });
+      // 当前缩略图滚到条的可见区中间：只滚缩略图条自己，
+      // 不用「滚入视野」类 API——那会连带滚动所有祖先容器（包括宿主页面）。
+      const t = thumbEls[index];
+      thumbs.scrollTo({
+        left: t.offsetLeft - (thumbs.clientWidth - t.offsetWidth) / 2,
+        behavior: reduceMotion ? 'auto' : 'smooth',
+      });
     }
     const nextSlide = () => goTo(index + 1);
     const prevSlide = () => goTo(index - 1);

@@ -98,7 +98,7 @@
 
   // 说明：滚动、拖拽（pointerdown 由浏览器原生滚动接管，触屏/触摸板直接可拖）、
   // 惯性吸附、聚焦后的 keydown 方向键滚动，全部是浏览器原生行为——这就是 scroll-snap 版的意义。
-  // JS 只负责：生成卡片、圆点跳转（scrollIntoView）、滚动时高亮当前圆点。
+  // JS 只负责：生成卡片、圆点跳转（容器 scrollTo）、滚动时高亮当前圆点。
   (function () {
     const root = document.getElementById('mtRoot');
     const slides = CONFIG.slides;
@@ -140,9 +140,14 @@
       dot.type = 'button';
       dot.className = 'dot' + (i === 0 ? ' active' : '');
       dot.setAttribute('aria-label', '滚到第 ' + (i + 1) + ' 张');
-      // 用 scrollIntoView 而不是锚点：不会把整个页面滚动到顶部
-      dot.addEventListener('click', () =>
-        slideEls[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }));
+      // 只滚动轮播容器自己（「滚入视野」类 API 和锚点都会连带滚动宿主页面）
+      dot.addEventListener('click', () => {
+        const el = slideEls[i];
+        scroller.scrollTo({
+          left: el.offsetLeft - (scroller.clientWidth - el.offsetWidth) / 2,
+          behavior: 'smooth',
+        });
+      });
       pager.appendChild(dot);
       return dot;
     });

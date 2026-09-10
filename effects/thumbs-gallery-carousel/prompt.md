@@ -2,7 +2,7 @@
 上方是大图区，有标题的图底部带渐变标题条，大图切换用交叉淡化。下方一条横向缩略图：非当前项半透明，鼠标掠过变亮，当前项完全不透明并带一圈强调色描边；点任何缩略图大图立即切过去，当前缩略图还会自动平滑滚到条的可见区中间。大图按自动播放间隔自动轮播，悬停暂停；在大图上左右拖拽也能翻。
 
 ## 实现提示
-缩略图条 overflow-x: auto，当前项用 scrollIntoView({ inline: 'center', block: 'nearest' }) 居中；大图淡化用 opacity 三态过渡；缩略图高度写成 CSS 变量。
+缩略图条 overflow-x: auto，当前项用条自身的 scrollTo({ left: 缩略图.offsetLeft − (条宽 − 缩略图宽)/2 }) 居中（不要用 scrollIntoView，会连带滚动整个页面）；大图淡化用 opacity 三态过渡；缩略图高度写成 CSS 变量。
 
 ## 技术要求补充
 - 支持鼠标拖拽和触摸滑动切换（用 Pointer Events 统一处理）

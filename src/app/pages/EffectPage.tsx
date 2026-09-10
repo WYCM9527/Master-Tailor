@@ -33,7 +33,8 @@ function EffectPage({ effect }: { effect: Effect }) {
 
   useEffect(() => {
     const t = window.setTimeout(() => {
-      setSearchParams(encodeState(meta, state), { replace: true });
+      // preventScrollReset：参数同步进 URL 的 replace 不触发 ScrollRestoration 回顶
+      setSearchParams(encodeState(meta, state), { replace: true, preventScrollReset: true });
     }, 250);
     return () => window.clearTimeout(t);
   }, [state, meta, setSearchParams]);
