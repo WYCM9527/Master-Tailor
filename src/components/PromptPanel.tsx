@@ -12,6 +12,8 @@ interface PromptProps {
 export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: PromptProps) {
   const [open, setOpen] = useState(false);
   const meta = `${promptText.length} 字`;
+  // 预览框只是「露一角」：截前 40 行，避免把整篇塞进 DOM 再靠 overflow 藏起来
+  const preview = promptText.split('\n').slice(0, 40).join('\n');
 
   const toggle = (
     <label className="switch-row" title="只复制效果描述，不附参考代码">
@@ -54,7 +56,7 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
         onClick={() => setOpen(true)}
         aria-label="查看 Prompt 全文"
       >
-        <pre className="prompt-text">{promptText}</pre>
+        <pre className="prompt-text">{preview}</pre>
       </button>
 
       <ContentModal

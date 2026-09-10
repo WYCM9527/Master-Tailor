@@ -84,6 +84,8 @@ export function CodePanel({ code, slug }: Props) {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState('');
   const lines = code.split('\n').length;
+  // 预览框只露前 40 行，全文在弹窗里
+  const preview = code.split('\n').slice(0, 40).join('\n');
 
   // 打开弹窗后才做语法高亮（Shiki 按需动态加载）；参数变化时跟随刷新
   useEffect(() => {
@@ -138,7 +140,7 @@ export function CodePanel({ code, slug }: Props) {
         onClick={() => setOpen(true)}
         aria-label="查看参考代码全文"
       >
-        <pre className="code-text">{code}</pre>
+        <pre className="code-text">{preview}</pre>
       </button>
 
       <ContentModal
