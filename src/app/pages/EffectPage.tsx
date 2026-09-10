@@ -12,6 +12,7 @@ import { ParamPanel } from '../../components/ParamPanel';
 import { PreviewFrame } from '../../components/PreviewFrame';
 import { PromptCell } from '../../components/PromptPanel';
 import { CodePanel } from '../../components/CodePanel';
+import { EffectNav } from '../../components/EffectNav';
 import { NotFound } from './NotFound';
 
 export function EffectRoute() {
@@ -132,11 +133,23 @@ function EffectPage({ effect }: { effect: Effect }) {
 
   const subName = subDef(meta.category, meta.sub).name;
 
+  // 悬浮目录（左侧抽屉），切换效果时随页面重建自动关闭
+  const [navOpen, setNavOpen] = useState(false);
+
   return (
     <>
-      {/* 详情页不渲染站点 Header：左列第一行（返回 | 标题 | 标签）就是页头，右列整高都是参数面板 */}
+      <EffectNav current={meta.slug} open={navOpen} onClose={() => setNavOpen(false)} />
+      {/* 详情页不渲染站点 Header：左列第一行（目录 | 返回 | 标题 | 标签）就是页头，右列整高都是参数面板 */}
       <div className="g12 first d-body">
         <div className="span-9 sub d-left">
+          <button
+            type="button"
+            className={`cell span-1 d-nav${navOpen ? ' active' : ''}`}
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((v) => !v)}
+          >
+            目录
+          </button>
           {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
           <Link
             to={`/effects?cat=${meta.category}&sub=${meta.sub}`}
@@ -146,7 +159,7 @@ function EffectPage({ effect }: { effect: Effect }) {
             <span className="arrow">←</span>
             返回
           </Link>
-          <div className="cell span-5 d-title">
+          <div className="cell span-4 d-title">
             <h1>{meta.name}</h1>
           </div>
           <div className="cell span-3 d-meta">

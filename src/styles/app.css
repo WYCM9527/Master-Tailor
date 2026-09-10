@@ -566,10 +566,28 @@
    详情页
    ============================================================ */
 /* 左列页头三格：55px + 1px 栏线 = 右侧参数头的 56px（含其底边线），两条横线重合 */
+.d-nav,
 .d-back,
 .d-title,
 .d-meta {
   min-height: 55px;
+}
+/* 目录开关格：与返回格同款 */
+.d-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--pad-s);
+  font-size: var(--fs-small);
+  font-weight: 700;
+  transition:
+    background var(--ease),
+    color var(--ease);
+}
+.d-nav:hover,
+.d-nav.active {
+  background: var(--fg);
+  color: var(--bg);
 }
 .d-back {
   display: flex;
@@ -812,6 +830,64 @@
 .code-text {
   white-space: pre;
   line-height: 1.6;
+}
+
+/* 详情页悬浮目录：左侧抽屉 + 遮罩 */
+.nav-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: rgba(0, 0, 0, 0.7);
+}
+.nav-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 20;
+  width: min(380px, 90vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-right: 1px solid var(--line-strong);
+}
+.nav-head {
+  flex: 0 0 auto;
+  border-bottom-color: var(--line-strong);
+}
+.nav-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+}
+.nav-cat {
+  border-bottom: 1px solid var(--line);
+}
+.nav-cat-name {
+  padding: 14px var(--pad-s) 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.nav-sub {
+  display: flex;
+  flex-direction: column;
+}
+.nav-sub-name {
+  padding: 8px var(--pad-s) 4px;
+}
+.nav-item {
+  display: block;
+  padding: 8px var(--pad-s) 8px calc(var(--pad-s) + 12px);
+  font-size: var(--fs-small);
+  color: var(--fg-dim);
+  transition:
+    background var(--ease),
+    color var(--ease);
+}
+.nav-item:hover,
+.nav-item.active {
+  background: var(--fg);
+  color: var(--bg);
 }
 
 /* 方形弹窗 */
@@ -1224,11 +1300,14 @@ input[type='color']::-webkit-color-swatch {
   .hdr-fill {
     grid-column: span 9;
   }
+  .d-nav {
+    grid-column: span 2;
+  }
   .d-back {
     grid-column: span 2;
   }
   .d-title {
-    grid-column: span 6;
+    grid-column: span 4;
   }
   .d-meta {
     grid-column: span 4;
@@ -1294,11 +1373,14 @@ input[type='color']::-webkit-color-swatch {
   .card:hover {
     outline-color: var(--line-strong);
   }
+  .d-nav {
+    grid-column: span 3;
+  }
   .d-back {
     grid-column: span 3;
   }
   .d-title {
-    grid-column: span 9;
+    grid-column: span 6;
   }
   .d-meta {
     grid-column: span 12;
