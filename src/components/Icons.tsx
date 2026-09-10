@@ -1,13 +1,13 @@
 import type { SVGProps } from 'react';
 
 /**
- * 站内图标：全部直角、方头线帽（square cap / miter join），不用圆角与曲线，
- * 与 Swiss Grid 的凌厉线条一致。默认 16px，随文字颜色。
+ * 站内图标：统一 2px 直角线条——方头线帽（square cap）、尖角连接（miter join），
+ * 不用圆角与曲线，与 Swiss Grid 的凌厉线条一致。默认 16px，随文字颜色。
  */
-function Svg({ children, ...rest }: SVGProps<SVGSVGElement>) {
+function Svg({ children, className, ...rest }: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      className="icon"
+      className={['icon', className ?? ''].filter(Boolean).join(' ')}
       width="16"
       height="16"
       viewBox="0 0 16 16"
@@ -60,6 +60,51 @@ export function IconParams(props: SVGProps<SVGSVGElement>) {
       <rect x="9" y="1.5" width="3" height="4" fill="currentColor" stroke="none" />
       <rect x="3" y="6" width="3" height="4" fill="currentColor" stroke="none" />
       <rect x="10" y="10.5" width="3" height="4" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
+/** 右箭头 → */
+export function IconArrowRight(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...props}>
+      <path d="M2 8h11M9 3l5 5-5 5" />
+    </Svg>
+  );
+}
+
+/** 左箭头 ← */
+export function IconArrowLeft(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...props}>
+      <path d="M14 8H3M7 3L2 8l5 5" />
+    </Svg>
+  );
+}
+
+/** 加号 + */
+export function IconPlus(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...props}>
+      <path d="M8 2v12M2 8h12" />
+    </Svg>
+  );
+}
+
+/** 减号 − */
+export function IconMinus(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...props}>
+      <path d="M2 8h12" />
+    </Svg>
+  );
+}
+
+/** 叉 ×（删除 / 关闭） */
+export function IconClose(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Svg {...props}>
+      <path d="M3 3l10 10M13 3L3 13" />
     </Svg>
   );
 }

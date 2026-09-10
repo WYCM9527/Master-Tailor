@@ -4,6 +4,7 @@ import type { CategoryId } from '../../contract/types';
 import { CATEGORIES, categoryName, categorySubs, subDef } from '../../contract/categories';
 import { EFFECTS } from '../../contract/registry';
 import { EffectCard } from '../../components/EffectCard';
+import { IconMinus, IconPlus } from '../../components/Icons';
 
 const CATEGORY_IDS = new Set<string>(CATEGORIES.map((c) => c.id));
 /** 桌面 / 平板每行效果数（效果区内部 3 列） */
@@ -128,7 +129,11 @@ export function Gallery() {
                     aria-expanded={isOpen}
                     aria-label={`${isOpen ? '收起' : '展开'}${c.name}`}
                   >
-                    {isOpen ? '−' : '+'}
+                    {isOpen ? (
+                      <IconMinus width={12} height={12} />
+                    ) : (
+                      <IconPlus width={12} height={12} />
+                    )}
                   </button>
                 </div>
                 {isOpen && (

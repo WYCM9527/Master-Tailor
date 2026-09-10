@@ -15,7 +15,7 @@ import type {
 } from '../contract/types';
 import { BG_DARK, BG_LIGHT, bgColor } from '../contract/types';
 import { FONTS } from '../contract/fonts';
-import { IconParams } from './Icons';
+import { IconClose, IconParams, IconPlus } from './Icons';
 import { SAMPLE_IMAGES } from '../contract/samples';
 import { applyPreset, defaultValues } from '../engine/urlState';
 
@@ -390,7 +390,7 @@ function ImagesControl({
                 title={value.length <= param.min ? `至少 ${param.min} 张` : '删除这张'}
                 onClick={() => remove(i)}
               >
-                ×
+                <IconClose width={12} height={12} />
               </button>
             </div>
             {expanded === i && (
@@ -414,7 +414,7 @@ function ImagesControl({
                   htmlFor={`${fileInputId}-${i}`}
                   title="上传自己的图片（仅本地预览）"
                 >
-                  +
+                  <IconPlus width={14} height={14} />
                   <input
                     id={`${fileInputId}-${i}`}
                     type="file"

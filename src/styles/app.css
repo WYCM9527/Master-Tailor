@@ -81,8 +81,11 @@
 .dim {
   color: var(--fg-mute);
 }
+/* 箭头图标（2px 直角 SVG）：悬停沿方向位移 4px */
 .arrow {
   display: inline-block;
+  flex: none;
+  vertical-align: -0.15em;
   transition: transform var(--ease);
 }
 
@@ -294,10 +297,6 @@
   justify-content: space-between;
   align-items: flex-end;
 }
-.cat-cell .arrow {
-  font-size: 22px;
-  line-height: 1;
-}
 .cat-cell:hover {
   background: var(--fg);
   color: var(--bg);
@@ -491,8 +490,7 @@
   line-height: 1.5;
 }
 .card-caption .arrow {
-  font-size: 18px;
-  line-height: 1.2;
+  margin-top: 3px;
 }
 .card:hover .card-caption {
   background: var(--fg);
@@ -1016,17 +1014,12 @@ input[type='text']::placeholder {
 }
 select {
   appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--fg) 50%),
-    linear-gradient(135deg, var(--fg) 50%, transparent 50%);
-  background-position:
-    calc(100% - 15px) 55%,
-    calc(100% - 10px) 55%;
-  background-size:
-    5px 5px,
-    5px 5px;
+  /* 下拉箭头与 Icons 同规格：2px 方头直角折线 */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='M2.5 4.5 L6 8 L9.5 4.5'/%3E%3C/svg%3E");
+  background-position: calc(100% - 10px) center;
+  background-size: 12px 12px;
   background-repeat: no-repeat;
-  padding-right: 30px;
+  padding-right: 32px;
 }
 
 input[type='range'] {

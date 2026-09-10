@@ -1,4 +1,5 @@
 import { Link, useViewTransitionState } from 'react-router-dom';
+import { IconArrowRight } from '../../components/Icons';
 import type { CategoryId } from '../../contract/types';
 import { CATEGORIES } from '../../contract/categories';
 import { EFFECTS } from '../../contract/registry';
@@ -76,7 +77,8 @@ export function Home() {
         >
           <span className="mono">Index · 全部效果入口</span>
           <b style={headingName('cta')}>
-            浏览全部 {EFFECTS.length} 个效果 <span className="arrow">→</span>
+            浏览全部 {EFFECTS.length} 个效果{' '}
+            <IconArrowRight className="arrow" width={18} height={18} />
           </b>
         </Link>
       </section>
@@ -100,7 +102,7 @@ export function Home() {
           <p className="cat-subs">不分类，从头到尾全部看一遍。</p>
           <div className="cat-foot">
             <span className="mono">All</span>
-            <span className="arrow">→</span>
+            <IconArrowRight className="arrow" width={20} height={20} />
           </div>
         </Link>
         {CATEGORIES.map((c, i) => {
@@ -123,7 +125,7 @@ export function Home() {
               </p>
               <div className="cat-foot">
                 <span className="mono">{c.id}</span>
-                <span className="arrow">→</span>
+                <IconArrowRight className="arrow" width={20} height={20} />
               </div>
             </Link>
           );

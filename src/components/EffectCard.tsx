@@ -5,6 +5,7 @@ import { BG_DARK } from '../contract/types';
 import { FONTS_CSS_HREF } from '../contract/fonts';
 import { bakeCode } from '../engine/bakeCode';
 import { defaultValues } from '../engine/urlState';
+import { IconArrowRight } from './Icons';
 
 /**
  * 效果页的效果 Cell（效果区内部 3 列之一）：
@@ -91,7 +92,7 @@ export function EffectCard({ effect }: { effect: Effect }) {
           </span>
           <span className="summary">{meta.summary}</span>
         </span>
-        <span className="arrow">→</span>
+        <IconArrowRight className="arrow card-arrow" />
       </div>
     </Link>
   );

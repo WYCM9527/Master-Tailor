@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { IconArrowRight } from '../../components/Icons';
 
 export function NotFound() {
   return (
@@ -10,7 +11,7 @@ export function NotFound() {
       <Link to="/" viewTransition className="cell span-3 step step-cta">
         <span className="mono">BACK</span>
         <b>
-          回到效果图鉴 <span className="arrow">→</span>
+          回到效果图鉴 <IconArrowRight className="arrow" width={18} height={18} />
         </b>
       </Link>
     </div>

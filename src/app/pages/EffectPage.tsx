@@ -13,7 +13,7 @@ import { PreviewFrame } from '../../components/PreviewFrame';
 import { PromptCell } from '../../components/PromptPanel';
 import { CodePanel } from '../../components/CodePanel';
 import { EffectNav } from '../../components/EffectNav';
-import { IconMenu } from '../../components/Icons';
+import { IconArrowLeft, IconMenu } from '../../components/Icons';
 import { NotFound } from './NotFound';
 
 export function EffectRoute() {
@@ -160,7 +160,7 @@ function EffectPage({ effect }: { effect: Effect }) {
             className="cell span-1 d-back"
             title={`返回 ${categoryName(meta.category)} · ${subName}`}
           >
-            <span className="arrow">←</span>
+            <IconArrowLeft className="arrow arrow-back" />
             返回
           </Link>
           <div className="cell span-4 d-title">
