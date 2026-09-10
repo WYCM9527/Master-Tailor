@@ -7,20 +7,28 @@ import { bakeCode } from '../engine/bakeCode';
 import { defaultValues } from '../engine/urlState';
 import { IconArrowRight } from './Icons';
 
+/** 卡片预览的设计视口：效果按这个尺寸渲染（与详情页舞台比例一致），再整体等比缩进卡片 */
+const DESIGN_W = 1280;
+const DESIGN_H = 720;
+
 /**
  * 效果页的效果 Cell（效果区内部 3 列之一）：
  * - 预览铺满 Cell（16:9，与详情页舞台同比例），IntersectionObserver 首次进入视口才挂载 iframe
+ * - iframe 固定按 1280×720 设计视口渲染，再 transform: scale 等比缩小到卡片宽度——
+ *   避免整屏效果在小视口下文字换行 / 溢出错乱（如竖向沉浸 Feed）
  * - 底部标题条，悬停整条黑白反转、箭头右移
  * - iframe 常态 pointer-events:none，整 Cell 可点击进详情；
- *   Cell 把真实鼠标坐标 postMessage 给 iframe，交互类效果的 thumb 演示块可跟随真实指针
+ *   Cell 把真实鼠标坐标（换算回设计坐标）postMessage 给 iframe，thumb 演示块可跟随真实指针
  * - 转场承接：仅当本卡参与转场时给预览挂 stage、标题挂 title，
  *   与详情页的舞台 / h1 形成共享元素形变（文档内名字唯一）
  */
 export function EffectCard({ effect }: { effect: Effect }) {
   const { meta } = effect;
   const rootRef = useRef<HTMLAnchorElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mounted, setMounted] = useState(false);
+  const [scale, setScale] = useState(0);
   const to = `/e/${meta.slug}`;
   const transitioning = useViewTransitionState(to);
 
@@ -40,6 +48,15 @@ export function EffectCard({ effect }: { effect: Effect }) {
     return () => io.disconnect();
   }, []);
 
+  // 卡片宽度 → 缩放比（随窗口尺寸变化持续更新）
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setScale(el.clientWidth / DESIGN_W));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const srcdoc = useMemo(() => {
     if (!mounted) return '';
     return bakeCode({
@@ -55,10 +72,11 @@ export function EffectCard({ effect }: { effect: Effect }) {
 
   const forwardPointer = (e: React.MouseEvent) => {
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!iframe || scale <= 0) return;
     const rect = iframe.getBoundingClientRect();
+    // 视觉坐标换算回 1280×720 设计坐标
     iframe.contentWindow?.postMessage(
-      { type: 'mt:pointer', x: e.clientX - rect.left, y: e.clientY - rect.top },
+      { type: 'mt:pointer', x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale },
       '*',
     );
   };
@@ -66,10 +84,11 @@ export function EffectCard({ effect }: { effect: Effect }) {
   return (
     <Link to={to} viewTransition className="cell card" ref={rootRef} onMouseMove={forwardPointer}>
       <div
+        ref={previewRef}
         className="card-preview"
         style={{ viewTransitionName: transitioning ? 'stage' : undefined }}
       >
-        {mounted ? (
+        {mounted && scale > 0 ? (
           <iframe
             ref={iframeRef}
             srcDoc={srcdoc}
@@ -77,6 +96,9 @@ export function EffectCard({ effect }: { effect: Effect }) {
             title={`${meta.name} 预览`}
             loading="lazy"
             tabIndex={-1}
+            width={DESIGN_W}
+            height={DESIGN_H}
+            style={{ transform: `scale(${scale})` }}
           />
         ) : (
           <div className="card-skeleton" />
