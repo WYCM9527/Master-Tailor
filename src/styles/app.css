@@ -88,7 +88,7 @@
 
 /* ============================================================
    按钮：统一白底黑字，无图标；悬停黑白反转。
-   放在 .blk-head / .blk-foot 等横条里时通栏高度、与条的边线融合。
+   放在 .blk-head 等横条的 .blk-actions 里时通栏高度、与条的边线融合。
    ============================================================ */
 .btn {
   display: inline-flex;
@@ -756,7 +756,7 @@
   position: relative;
   display: block;
   width: 100%;
-  height: 300px;
+  height: 348px;
   overflow: hidden;
   text-align: left;
   cursor: pointer;
@@ -769,20 +769,6 @@
 .blk-preview .code-text {
   max-height: none;
   overflow: hidden;
-}
-.blk-foot {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 0 0 var(--pad-s);
-  min-height: 48px;
-  border-top: 1px solid var(--line);
-  margin-top: auto;
-}
-.blk-foot > .switch-row,
-.blk-foot > .blk-foot-note {
-  align-self: center;
 }
 .prompt-text,
 .code-text {

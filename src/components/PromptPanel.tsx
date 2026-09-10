@@ -14,7 +14,7 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
   const meta = `${promptText.length} 字`;
 
   const toggle = (
-    <label className="switch-row">
+    <label className="switch-row" title="只复制效果描述，不附参考代码">
       <button
         type="button"
         role="switch"
@@ -23,11 +23,16 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
         className={`toggle${!includeCode ? ' on' : ''}`}
         onClick={() => onIncludeCodeChange(!includeCode)}
       />
-      仅描述（不附参考代码）
+      仅描述
     </label>
   );
   const copy = (
     <CopyButton getText={() => promptText} label="复制 Prompt" doneLabel="Prompt 已复制" />
+  );
+  const viewAll = (
+    <button type="button" className="btn" onClick={() => setOpen(true)}>
+      查看全文
+    </button>
   );
 
   return (
@@ -37,7 +42,11 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
           Prompt
           <span className="hint mono">{meta}</span>
         </span>
-        <div className="blk-actions">{copy}</div>
+        <div className="blk-actions">
+          {toggle}
+          {viewAll}
+          {copy}
+        </div>
       </div>
       <button
         type="button"
@@ -47,14 +56,6 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
       >
         <pre className="prompt-text">{promptText}</pre>
       </button>
-      <div className="blk-foot">
-        {toggle}
-        <div className="blk-actions">
-          <button type="button" className="btn" onClick={() => setOpen(true)}>
-            查看全文
-          </button>
-        </div>
-      </div>
 
       <ContentModal
         open={open}
