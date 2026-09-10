@@ -131,6 +131,25 @@ for (const slug of dirs) {
     }
   }
 
+  // ---- 转场基线（category 为 transition 的效果强制）----
+  if (meta.category === 'transition') {
+    if (meta.sub === 'scroll') {
+      // 滚动接力：滚动驱动动画必须 @supports 渐进增强，终态写成默认样式
+      for (const keyword of ['animation-timeline', '@supports', 'prefers-reduced-motion']) {
+        if (!html.includes(keyword)) {
+          fail(slug, `滚动接力转场缺少基线能力关键字「${keyword}」（滚动驱动 / 渐进增强 / 降级）`);
+        }
+      }
+    } else {
+      // 页面间转场：View Transitions 为主引擎，必须带 CSS 回退路径与降级
+      for (const keyword of ['startViewTransition', 'prefers-reduced-motion', '@mt:fallback']) {
+        if (!html.includes(keyword)) {
+          fail(slug, `转场效果缺少基线能力关键字「${keyword}」（视图过渡 / 降级 / 无 API 回退）`);
+        }
+      }
+    }
+  }
+
   // ---- thumb 演示块 ----
   const thumbStarts = (html.match(/\/\* @mt:thumb-start \*\//g) ?? []).length;
   const thumbEnds = (html.match(/\/\* @mt:thumb-end \*\//g) ?? []).length;
@@ -160,7 +179,7 @@ for (const slug of dirs) {
   if (/\{\{/.test(desc)) fail(slug, '效果描述里不要用 {{key}} 占位符，数值统一由【参数】段列出');
   if (/实现提示/.test(desc)) fail(slug, '实现提示要放在独立的 "## 实现提示" 小节');
   const IMPL_TERMS =
-    /transform|translate|rotate[XYZ]?\(|perspective|clip-path|backdrop-filter|keyframes|requestAnimationFrame|IntersectionObserver|z-index|position:|flex-grow|scroll-snap|mask-image|(linear|radial|conic)-gradient|steps\(|@property|aria-|role=|\bcanvas\b/i;
+    /transform|translate|rotate[XYZ]?\(|perspective|clip-path|backdrop-filter|keyframes|requestAnimationFrame|IntersectionObserver|z-index|position:|flex-grow|scroll-snap|mask-image|(linear|radial|conic)-gradient|steps\(|@property|aria-|role=|\bcanvas\b|view-transition|startViewTransition|animation-timeline/i;
   const term = desc.match(IMPL_TERMS);
   if (term)
     fail(slug, `效果描述里出现实现术语「${term[0]}」，请改用用户能感知的说法或移到 "## 实现提示"`);

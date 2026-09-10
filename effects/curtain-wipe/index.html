@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>幕布擦除转场</title>
+    <style>
+      :root {
+        --mt-bg: #0a0a0f; /* 页面底色 */
+        --mt-imageA: url('/samples/sample-6.webp'); /* 第一幕海报 */
+        --mt-imageB: url('/samples/sample-7.webp'); /* 第二幕海报 */
+        --mt-duration: 0.6s; /* 转场时长 */
+        --mt-accent: #ffffff; /* 强调色：标题与按钮 */
+        --wipe-ease: cubic-bezier(0.65, 0, 0.35, 1); /* 幕布专用缓动：两头稳中间快 */
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--mt-bg);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        color: #f2f2f7;
+      }
+
+      /* ===== 舞台：两幕海报互斥显示 ===== */
+      .mt-app {
+        position: relative;
+        width: min(880px, 94vw);
+        height: min(560px, 92vh);
+        border-radius: 18px;
+        overflow: clip;
+        background: #101016;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+      }
+      .page {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        display: grid;
+        place-items: end start;
+      }
+      .page[hidden] {
+        display: none;
+      }
+      .page::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(transparent 40%, rgba(0, 0, 0, 0.65));
+        pointer-events: none;
+      }
+      .page-a {
+        background-image: var(--mt-imageA);
+      }
+      .page-b {
+        background-image: var(--mt-imageB);
+      }
+      .poster-copy {
+        position: relative;
+        z-index: 1;
+        padding: 0 44px 48px;
+      }
+      .poster-copy h1 {
+        margin: 0 0 6px;
+        font-size: clamp(30px, 5.4vw, 52px);
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: var(--mt-accent);
+        outline: none;
+      }
+      .poster-copy p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 15px;
+      }
+      .stage-btn {
+        position: absolute;
+        z-index: 2;
+        bottom: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 999px;
+        padding: 9px 20px;
+        background: rgba(10, 10, 15, 0.45);
+        color: var(--mt-accent);
+        font: inherit;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .stage-btn:focus-visible {
+        outline: 2px solid var(--mt-accent);
+        outline-offset: 2px;
+      }
+      .stage-btn.next {
+        right: 22px;
+      }
+      .stage-btn.prev {
+        left: 22px;
+      }
+
+      /* ===== 过渡层：幕布擦除 =====
+         前进：新幕在上层，从选定一侧擦入直至盖满；返回：旧幕原路擦走露出底下一幕。
+         方向由 <html data-dir> 选 keyframes，返回严格反向。 */
+      ::view-transition-old(page),
+      ::view-transition-new(page) {
+        animation-duration: var(--mt-duration);
+        animation-timing-function: var(--wipe-ease);
+        animation-fill-mode: both;
+      }
+      /* 前进：new 在上层擦入，old 静止垫底 */
+      html[data-vt='forward']::view-transition-old(page) {
+        animation-name: hold-still;
+      }
+      html[data-dir='right'][data-vt='forward']::view-transition-new(page) {
+        animation-name: wipe-in-right;
+      }
+      html[data-dir='left'][data-vt='forward']::view-transition-new(page) {
+        animation-name: wipe-in-left;
+      }
+      html[data-dir='up'][data-vt='forward']::view-transition-new(page) {
+        animation-name: wipe-in-up;
+      }
+      html[data-dir='down'][data-vt='forward']::view-transition-new(page) {
+        animation-name: wipe-in-down;
+      }
+      /* 返回：old 提到上层原路擦走，new 静止垫底 */
+      html[data-vt='back']::view-transition-old(page) {
+        z-index: 1;
+      }
+      html[data-vt='back']::view-transition-new(page) {
+        animation-name: hold-still;
+      }
+      html[data-dir='right'][data-vt='back']::view-transition-old(page) {
+        animation-name: wipe-out-right;
+      }
+      html[data-dir='left'][data-vt='back']::view-transition-old(page) {
+        animation-name: wipe-out-left;
+      }
+      html[data-dir='up'][data-vt='back']::view-transition-old(page) {
+        animation-name: wipe-out-up;
+      }
+      html[data-dir='down'][data-vt='back']::view-transition-old(page) {
+        animation-name: wipe-out-down;
+      }
+
+      /* 垫底幕保持原样不淡出（覆盖默认交叉淡化） */
+      @keyframes hold-still {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      /* 擦入：clip 边界从一侧推到另一侧；擦走为同路反向 */
+      @keyframes wipe-in-right {
+        from {
+          clip-path: inset(0 0 0 100%);
+        }
+        to {
+          clip-path: inset(0);
+        }
+      }
+      @keyframes wipe-out-right {
+        from {
+          clip-path: inset(0);
+        }
+        to {
+          clip-path: inset(0 0 0 100%);
+        }
+      }
+      @keyframes wipe-in-left {
+        from {
+          clip-path: inset(0 100% 0 0);
+        }
+        to {
+          clip-path: inset(0);
+        }
+      }
+      @keyframes wipe-out-left {
+        from {
+          clip-path: inset(0);
+        }
+        to {
+          clip-path: inset(0 100% 0 0);
+        }
+      }
+      @keyframes wipe-in-up {
+        from {
+          clip-path: inset(100% 0 0 0);
+        }
+        to {
+          clip-path: inset(0);
+        }
+      }
+      @keyframes wipe-out-up {
+        from {
+          clip-path: inset(0);
+        }
+        to {
+          clip-path: inset(100% 0 0 0);
+        }
+      }
+      @keyframes wipe-in-down {
+        from {
+          clip-path: inset(0 0 100% 0);
+        }
+        to {
+          clip-path: inset(0);
+        }
+      }
+      @keyframes wipe-out-down {
+        from {
+          clip-path: inset(0);
+        }
+        to {
+          clip-path: inset(0 0 100% 0);
+        }
+      }
+
+      /* @mt:fallback 无 API 回退：同一套 keyframes 直接加在真实页面上，效果一致 */
+      .page.fx-in,
+      .page.fx-out {
+        animation-duration: var(--mt-duration);
+        animation-timing-function: var(--wipe-ease);
+        animation-fill-mode: both;
+      }
+      html[data-vt='forward'] .page.fx-in {
+        z-index: 2;
+      }
+      html[data-vt='forward'] .page.fx-out {
+        z-index: 1;
+        animation-name: hold-still;
+      }
+      html[data-dir='right'][data-vt='forward'] .page.fx-in {
+        animation-name: wipe-in-right;
+      }
+      html[data-dir='left'][data-vt='forward'] .page.fx-in {
+        animation-name: wipe-in-left;
+      }
+      html[data-dir='up'][data-vt='forward'] .page.fx-in {
+        animation-name: wipe-in-up;
+      }
+      html[data-dir='down'][data-vt='forward'] .page.fx-in {
+        animation-name: wipe-in-down;
+      }
+      html[data-vt='back'] .page.fx-out {
+        z-index: 2;
+      }
+      html[data-vt='back'] .page.fx-in {
+        z-index: 1;
+        animation-name: hold-still;
+      }
+      html[data-dir='right'][data-vt='back'] .page.fx-out {
+        animation-name: wipe-out-right;
+      }
+      html[data-dir='left'][data-vt='back'] .page.fx-out {
+        animation-name: wipe-out-left;
+      }
+      html[data-dir='up'][data-vt='back'] .page.fx-out {
+        animation-name: wipe-out-up;
+      }
+      html[data-dir='down'][data-vt='back'] .page.fx-out {
+        animation-name: wipe-out-down;
+      }
+
+      /* 用户开启「减少动态效果」：一律瞬间切换（JS 同步跳过转场） */
+      @media (prefers-reduced-motion: reduce) {
+        ::view-transition-group(*),
+        ::view-transition-old(*),
+        ::view-transition-new(*) {
+          animation: none !important;
+        }
+        .page.fx-in,
+        .page.fx-out {
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mt-app" id="mtApp">
+      <section class="page page-a" id="pageA" aria-label="第一幕">
+        <div class="poster-copy">
+          <h1 id="titleA" tabindex="-1"></h1>
+          <p>第一幕 · 点右下角换场</p>
+        </div>
+        <button type="button" class="stage-btn next" id="nextBtn">下一幕 ›</button>
+      </section>
+
+      <section class="page page-b" id="pageB" aria-label="第二幕" hidden>
+        <div class="poster-copy">
+          <h1 id="titleB" tabindex="-1"></h1>
+          <p>第二幕 · 返回时幕布原路撤走</p>
+        </div>
+        <button type="button" class="stage-btn prev" id="prevBtn">‹ 上一幕</button>
+      </section>
+    </div>
+
+    <script>
+      const CONFIG = {
+        titleA: '轻，前所未有。', // 第一幕标题
+        titleB: '快，一目了然。', // 第二幕标题
+        direction: 'right', // 擦除方向：right 从右往左 / left 从左往右 / up 自下而上 / down 自上而下
+      };
+
+      (function () {
+        const html = document.documentElement;
+        const app = document.getElementById('mtApp');
+        const pageA = document.getElementById('pageA');
+        const pageB = document.getElementById('pageB');
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+        let navigating = false; // 转场进行中忽略新的导航
+
+        document.getElementById('titleA').textContent = CONFIG.titleA;
+        document.getElementById('titleB').textContent = CONFIG.titleB;
+        html.dataset.dir = CONFIG.direction;
+
+        function swap(from, to) {
+          from.hidden = true;
+          to.hidden = false;
+        }
+        function focusHeading(to) {
+          const heading = to.querySelector('h1');
+          if (heading) heading.focus({ preventScroll: true });
+        }
+
+        // ---- 方向化转场 ----
+        function go(to, direction) {
+          const from = to === pageB ? pageA : pageB;
+          if (navigating || !to.hidden) return;
+
+          if (reduceMotion.matches) {
+            swap(from, to);
+            focusHeading(to);
+            return;
+          }
+          navigating = true;
+          html.dataset.vt = direction;
+
+          from.style.viewTransitionName = 'page';
+          const cleanup = () => {
+            from.style.viewTransitionName = '';
+            to.style.viewTransitionName = '';
+            delete html.dataset.vt;
+            navigating = false;
+            focusHeading(to);
+          };
+
+          if (document.startViewTransition) {
+            const vt = document.startViewTransition(() => {
+              swap(from, to);
+              from.style.viewTransitionName = '';
+              to.style.viewTransitionName = 'page';
+            });
+            vt.finished.finally(cleanup);
+          } else {
+            // @mt:fallback：两页短暂同框，播同一套 keyframes。
+            // 返回时只有旧幕在动，动画结束事件从舞台容器上冒泡捕获。
+            to.hidden = false;
+            from.classList.add('fx-out');
+            to.classList.add('fx-in');
+            const done = () => {
+              app.removeEventListener('animationend', done);
+              from.hidden = true;
+              from.classList.remove('fx-out');
+              to.classList.remove('fx-in');
+              cleanup();
+            };
+            app.addEventListener('animationend', done);
+          }
+        }
+        const goBack = () => go(pageA, 'back');
+
+        // ---- 换场途径：按钮 / Esc / Backspace ----
+        document.getElementById('nextBtn').addEventListener('click', () => go(pageB, 'forward'));
+        document.getElementById('prevBtn').addEventListener('click', goBack);
+        document.addEventListener('keydown', (e) => {
+          if (pageB.hidden) return;
+          if (e.key === 'Escape' || e.key === 'Backspace') {
+            e.preventDefault();
+            goBack();
+          }
+        });
+
+        /* @mt:thumb-start */
+        // 缩略图演示：自动前进→返回往返播放；切后台暂停，reduced-motion 不启动
+        if (!reduceMotion.matches) {
+          setInterval(() => {
+            if (document.hidden || navigating) return;
+            if (pageB.hidden) go(pageB, 'forward');
+            else goBack();
+          }, 2600);
+        }
+        /* @mt:thumb-end */
+      })();
+    </script>
+  </body>
+</html>

@@ -21,6 +21,15 @@ const SHOWCASE_SUBS: SubDef[] = [
   { id: 'stack-scroll', name: '滚动堆叠', desc: '页面滚动时卡片依次叠上' },
 ];
 
+/** 「页面转场」的二级分类：按过渡形态（苹果式页面间过渡） */
+const TRANSITION_SUBS: SubDef[] = [
+  { id: 'shared', name: '共享元素', desc: '点击的元素连续形变到下一页，像同一个物体在两页间移动' },
+  { id: 'push', name: '推屏导航', desc: '新页从一侧推入、旧页让位，返回时严格反向' },
+  { id: 'zoom', name: '缩放淡入', desc: '新页整体缩放淡入登场，旧页轻轻退后' },
+  { id: 'keynote', name: '发布会转场', desc: '擦除、揭示、翻转、溶解等舞台式换场' },
+  { id: 'scroll', name: '滚动接力', desc: '随页面滚动推进的换场与分节接力' },
+];
+
 /** 一级分类（subs 即该分类下的二级分类表，侧边栏只显示有效果的子项） */
 export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
   { id: 'background', name: '背景与氛围', subs: TRIGGER_SUBS },
@@ -28,6 +37,7 @@ export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
   { id: 'text', name: '文字效果', subs: TEXT_SUBS },
   { id: 'card', name: '卡片与悬停', subs: TRIGGER_SUBS },
   { id: 'showcase', name: '多卡/图展示', subs: SHOWCASE_SUBS },
+  { id: 'transition', name: '页面转场', subs: TRANSITION_SUBS },
   { id: 'loading', name: '加载与进场', subs: TRIGGER_SUBS },
   { id: 'canvas', name: '粒子与光标', subs: TRIGGER_SUBS },
 ];

@@ -42,8 +42,8 @@ effects/<slug>/
 
 ### meta.json
 
-- `category`：`background | button | text | card | showcase | loading | canvas`（侧边栏一级）
-- `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表——原有 6 类的子类是触发方式（`idle | hover | click | scroll`），「多卡/图展示」的子类是 `carousel | compare | stack-scroll`
+- `category`：`background | button | text | card | showcase | transition | loading | canvas`（侧边栏一级）
+- `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表——原有 6 类的子类是触发方式（`idle | hover | click | scroll`），「多卡/图展示」的子类是 `carousel | compare | stack-scroll`，「页面转场」的子类是 `shared | push | zoom | keynote | scroll`
 - `params[]`：8 种控件类型 `color | range | toggle | select | text | font | image | images`
   - `target: "css"` → 值注入 `:root` 的 `--mt-<key>`，调参时**热更新**（动画不重置）
   - `target: "config"` → 值注入 JS 顶部 `const CONFIG` 块，调参时**防抖重建**预览
@@ -83,6 +83,10 @@ if (window.__MT_ENV && window.__MT_ENV.thumb) {
 ### 轮播基线（`sub: "carousel"` 的效果强制）
 
 validate 会检查 index.html 含四个基线能力关键字：`aria-roledescription`（轮播语义）、`keydown`（键盘切换）、`prefers-reduced-motion`（不自动播放降级）、`pointerdown`（拖拽/触摸）。纯 CSS 实现（如 scroll-snap 版）可在注释中如实说明原生能力。除此之外的约定基线：无缝循环、悬停/聚焦暂停自动播放、页面切后台暂停。新写轮播请从 `scripts/templates/carousel-core.html` 起步——它带完整的三态类切换骨架（无缝循环）、自动播放、Pointer Events 拖拽、三种分页器与 aria 结构，多数形态只需改「过渡层」CSS。
+
+### 转场基线（`category: "transition"` 的效果强制）
+
+非 `scroll` 子类以 View Transitions API 为主引擎，validate 检查三个关键字：`startViewTransition`（同文档视图过渡）、`prefers-reduced-motion`（瞬间切换降级）、`@mt:fallback`（无 API 时的 CSS 类回退路径标记）。`scroll` 子类是滚动驱动动画，检查 `animation-timeline`、`@supports`（渐进增强，终态必须写成默认样式）与 `prefers-reduced-motion`。除此之外的约定基线：返回严格反向播放、共享元素名只在参与转场时挂载（重名会导致转场被跳过）、转场期间聚焦新页标题。新写转场请从 `scripts/templates/transition-core.html` 起步——它带迷你站双页骨架、方向化 `go()`（`<html data-vt>`）、无 API 回退、键盘/焦点管理与 thumb 自动往返演示，多数形态只需改「过渡层」CSS。
 
 最终 prompt 由引擎拼装为 7 段：任务 → 效果描述 → 参数（值 + help）→ 技术要求 →〔实现提示，仅不附代码时〕→ 完成后请检查 → 如果遇到问题 → 参考实现（可开关）。
 

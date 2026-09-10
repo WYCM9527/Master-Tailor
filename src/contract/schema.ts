@@ -116,7 +116,16 @@ export const effectMetaSchema = z
   .object({
     slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'slug 必须是 kebab-case'),
     name: z.string().min(2),
-    category: z.enum(['background', 'button', 'text', 'card', 'loading', 'canvas', 'showcase']),
+    category: z.enum([
+      'background',
+      'button',
+      'text',
+      'card',
+      'showcase',
+      'transition',
+      'loading',
+      'canvas',
+    ]),
     sub: z.string().min(1),
     tags: z.array(z.string().min(1)).min(1).max(6),
     summary: z.string().min(6).max(60),

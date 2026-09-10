@@ -8,12 +8,13 @@
  */
 
 export type CategoryId =
-  'background' | 'button' | 'text' | 'card' | 'loading' | 'canvas' | 'showcase';
+  'background' | 'button' | 'text' | 'card' | 'showcase' | 'transition' | 'loading' | 'canvas';
 
 /**
  * 二级分类（侧边栏第二级）：每个一级分类在 CATEGORIES 中自声明子类表。
  * 原有 6 类的子类是触发方式（idle / hover / click / scroll）；
- * 「多卡/图展示」的子类是 carousel / compare / stack-scroll。
+ * 「多卡/图展示」的子类是 carousel / compare / stack-scroll；
+ * 「页面转场」的子类是 shared / push / zoom / keynote / scroll。
  */
 export interface SubDef {
   id: string;

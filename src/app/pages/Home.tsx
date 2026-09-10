@@ -129,13 +129,6 @@ export function Home() {
             </Link>
           );
         })}
-        {/* 8 格之后补一格，让第三行也铺满栏线 */}
-        <div className="cell span-4 cat-cell cat-note">
-          <span className="mono">More</span>
-          <p className="cat-subs">
-            效果持续加入。每个效果都可以调参、实时预览、复制 prompt 与参考代码。
-          </p>
-        </div>
       </section>
 
       <HowToSection />

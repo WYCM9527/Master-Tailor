@@ -1,0 +1,113 @@
+{
+  "category": "transition",
+  "sub": "keynote",
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Keynote 发布会切页"
+  },
+  "slug": "curtain-wipe",
+  "name": "幕布擦除转场",
+  "tags": ["转场", "发布会", "擦除", "View Transitions"],
+  "summary": "新画面像幕布一样从一侧擦入盖过旧页，发布会式换场",
+  "params": [
+    {
+      "key": "imageA",
+      "label": "第一幕海报",
+      "type": "image",
+      "target": "css",
+      "default": "/samples/sample-6.webp"
+    },
+    {
+      "key": "imageB",
+      "label": "第二幕海报",
+      "type": "image",
+      "target": "css",
+      "default": "/samples/sample-7.webp"
+    },
+    {
+      "key": "titleA",
+      "label": "第一幕标题",
+      "type": "text",
+      "target": "config",
+      "default": "轻，前所未有。",
+      "maxLength": 20
+    },
+    {
+      "key": "titleB",
+      "label": "第二幕标题",
+      "type": "text",
+      "target": "config",
+      "default": "快，一目了然。",
+      "maxLength": 20
+    },
+    {
+      "key": "direction",
+      "label": "擦除方向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "right",
+          "label": "从右往左"
+        },
+        {
+          "value": "left",
+          "label": "从左往右"
+        },
+        {
+          "value": "up",
+          "label": "自下而上"
+        },
+        {
+          "value": "down",
+          "label": "自上而下"
+        }
+      ],
+      "default": "right"
+    },
+    {
+      "key": "duration",
+      "label": "转场时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.6,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "rise",
+      "name": "自下而上",
+      "values": {
+        "direction": "up",
+        "duration": 0.7
+      }
+    },
+    {
+      "id": "swift",
+      "name": "疾速",
+      "values": {
+        "duration": 0.35
+      }
+    }
+  ]
+}
