@@ -18,7 +18,7 @@
       ],
       "default": "ring"
     },
-    { "key": "color", "label": "主色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "color", "label": "主色", "type": "color", "target": "css", "default": "#ffffff" },
     {
       "key": "size",
       "label": "尺寸",

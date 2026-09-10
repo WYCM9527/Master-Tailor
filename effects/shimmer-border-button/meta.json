@@ -7,7 +7,7 @@
   "summary": "一圈光带沿按钮边框不停流转，像霓虹描边",
   "params": [
     { "key": "label", "label": "按钮文字", "type": "text", "target": "config", "default": "立即体验", "maxLength": 12 },
-    { "key": "colorA", "label": "流光色 A", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "colorA", "label": "流光色 A", "type": "color", "target": "css", "default": "#ffffff" },
     { "key": "colorB", "label": "流光色 B", "type": "color", "target": "css", "default": "#7c4dff" },
     {
       "key": "speed",

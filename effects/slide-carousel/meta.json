@@ -73,7 +73,7 @@
       "default": "bullets"
     },
     { "key": "arrows", "label": "显示左右箭头", "type": "toggle", "target": "config", "default": true },
-    { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#ffffff" },
     {
       "key": "rounded",
       "label": "圆角",

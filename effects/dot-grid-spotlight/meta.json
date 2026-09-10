@@ -7,7 +7,7 @@
   "summary": "均匀点阵背景，鼠标移到哪里哪里亮起一圈聚光",
   "params": [
     { "key": "dotColor", "label": "点的颜色", "type": "color", "target": "css", "default": "#3a3d52" },
-    { "key": "spotColor", "label": "聚光颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "spotColor", "label": "聚光颜色", "type": "color", "target": "css", "default": "#ffffff" },
     {
       "key": "gap",
       "label": "点间距",

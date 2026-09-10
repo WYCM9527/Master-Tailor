@@ -42,7 +42,7 @@
       "displayUnit": " 秒",
       "help": "同组相邻元素依次延迟进场"
     },
-    { "key": "accent", "label": "示例卡强调色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "accent", "label": "示例卡强调色", "type": "color", "target": "css", "default": "#ffffff" },
     {
       "key": "once",
       "label": "只进场一次",

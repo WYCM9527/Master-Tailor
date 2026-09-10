@@ -82,7 +82,7 @@
       "default": 34,
       "displayUnit": "%"
     },
-    { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#ffffff" },
     {
       "key": "rounded",
       "label": "封面圆角",

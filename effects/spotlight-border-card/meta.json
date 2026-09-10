@@ -15,7 +15,7 @@
       "default": "把鼠标移到卡片边缘试试",
       "maxLength": 40
     },
-    { "key": "glowColor", "label": "光的颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "glowColor", "label": "光的颜色", "type": "color", "target": "css", "default": "#ffffff" },
     {
       "key": "glowRadius",
       "label": "光斑半径",

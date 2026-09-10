@@ -6,7 +6,7 @@
   "tags": ["粒子", "星空", "连线"],
   "summary": "漂浮的粒子在靠近时彼此连线，鼠标像引力源",
   "params": [
-    { "key": "color", "label": "粒子颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "color", "label": "粒子颜色", "type": "color", "target": "css", "default": "#ffffff" },
     {
       "key": "count",
       "label": "粒子数量",

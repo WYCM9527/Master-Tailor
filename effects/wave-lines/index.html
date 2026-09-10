@@ -8,7 +8,7 @@
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;     /* 页面底色 */
-    --mt-color: #f9cf00;  /* 线条颜色（canvas 每帧读取，调参实时生效） */
+    --mt-color: #ffffff;  /* 线条颜色（canvas 每帧读取，调参实时生效） */
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; }
@@ -47,7 +47,7 @@
 
   function frame(timeSec) {
     ctx.clearRect(0, 0, width, height);
-    const color = rootStyle.getPropertyValue('--mt-color').trim() || '#f9cf00';
+    const color = rootStyle.getPropertyValue('--mt-color').trim() || '#ffffff';
     const [r, g, b] = hexToRgb(color);
 
     // 每条线：垂直位置均匀分布，相位、频率、透明度各不相同，叠出「流体」层次

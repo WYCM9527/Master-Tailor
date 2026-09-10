@@ -7,8 +7,8 @@
   "summary": "鼠标靠近时按钮被轻轻吸过去，离开后弹回原位",
   "params": [
     { "key": "label", "label": "按钮文字", "type": "text", "target": "config", "default": "开始使用", "maxLength": 12 },
-    { "key": "color", "label": "按钮底色", "type": "color", "target": "css", "default": "#f9cf00" },
-    { "key": "textColor", "label": "文字颜色", "type": "color", "target": "css", "default": "#191400" },
+    { "key": "color", "label": "按钮底色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "textColor", "label": "文字颜色", "type": "color", "target": "css", "default": "#111111" },
     {
       "key": "strength",
       "label": "磁力强度",

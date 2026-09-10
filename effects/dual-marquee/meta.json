@@ -70,7 +70,7 @@
       "label": "悬停高亮色",
       "type": "color",
       "target": "css",
-      "default": "#f9cf00"
+      "default": "#ffffff"
     }
   ],
   "presets": [

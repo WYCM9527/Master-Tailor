@@ -14,7 +14,7 @@
       "default": "裁缝大师 Master-Tailor",
       "maxLength": 30
     },
-    { "key": "colorA", "label": "渐变色 A", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "colorA", "label": "渐变色 A", "type": "color", "target": "css", "default": "#ffffff" },
     { "key": "colorB", "label": "渐变色 B", "type": "color", "target": "css", "default": "#ff4d6d" },
     { "key": "colorC", "label": "渐变色 C", "type": "color", "target": "css", "default": "#7c4dff" },
     {

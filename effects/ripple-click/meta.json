@@ -8,7 +8,7 @@
   "params": [
     { "key": "label", "label": "按钮文字", "type": "text", "target": "config", "default": "点我试试", "maxLength": 12 },
     { "key": "color", "label": "按钮底色", "type": "color", "target": "css", "default": "#26283a" },
-    { "key": "rippleColor", "label": "涟漪颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "rippleColor", "label": "涟漪颜色", "type": "color", "target": "css", "default": "#ffffff" },
     {
       "key": "duration",
       "label": "扩散时长",

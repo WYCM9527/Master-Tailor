@@ -8,7 +8,7 @@
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;     /* 页面底色 */
-    --mt-color: #f9cf00;  /* 流光颜色（canvas 每帧读取，调参实时生效） */
+    --mt-color: #ffffff;  /* 流光颜色（canvas 每帧读取，调参实时生效） */
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; cursor: crosshair; }
@@ -66,7 +66,7 @@
 
   function frame() {
     ctx.clearRect(0, 0, width, height);
-    const color = rootStyle.getPropertyValue('--mt-color').trim() || '#f9cf00';
+    const color = rootStyle.getPropertyValue('--mt-color').trim() || '#ffffff';
     const [r, g, b] = hexToRgb(color);
 
     // 链式追随：第 0 点追鼠标，第 n 点追第 n-1 点
@@ -107,7 +107,7 @@
     // 减少动态效果：不画拖尾，只画一个跟随鼠标的静态光点（mousemove 时重绘一次）
     document.addEventListener('mousemove', () => {
       ctx.clearRect(0, 0, width, height);
-      const color = rootStyle.getPropertyValue('--mt-color').trim() || '#f9cf00';
+      const color = rootStyle.getPropertyValue('--mt-color').trim() || '#ffffff';
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(target.x, target.y, CONFIG.lineWidth * 0.7, 0, Math.PI * 2);

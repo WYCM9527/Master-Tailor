@@ -6,7 +6,7 @@
   "tags": ["渐变", "氛围", "流动"],
   "summary": "缓慢流动的多色极光背景，适合首屏与登录页",
   "params": [
-    { "key": "colorA", "label": "主色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "colorA", "label": "主色", "type": "color", "target": "css", "default": "#ffffff" },
     { "key": "colorB", "label": "辅色", "type": "color", "target": "css", "default": "#7c4dff" },
     { "key": "colorC", "label": "点缀色", "type": "color", "target": "css", "default": "#00e5ff" },
     {

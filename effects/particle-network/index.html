@@ -8,7 +8,7 @@
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;       /* 页面底色 */
-    --mt-color: #f9cf00;    /* 粒子与连线颜色（canvas 每帧读取，调参实时生效） */
+    --mt-color: #ffffff;    /* 粒子与连线颜色（canvas 每帧读取，调参实时生效） */
     --mt-lineAlpha: 0.4;    /* 连线浓度：粒子贴得最近时线的不透明度 */
   }
   html, body { margin: 0; height: 100%; }
@@ -66,7 +66,7 @@
   function frame() {
     ctx.clearRect(0, 0, width, height);
     // 每帧从 CSS 变量读颜色：站内调参时颜色实时变化，无需重建
-    const color = rootStyle.getPropertyValue('--mt-color').trim() || '#f9cf00';
+    const color = rootStyle.getPropertyValue('--mt-color').trim() || '#ffffff';
     const lineAlpha = parseFloat(rootStyle.getPropertyValue('--mt-lineAlpha')) || 0.4;
     const [r, g, b] = hexToRgb(color);
 

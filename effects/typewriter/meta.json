@@ -16,7 +16,7 @@
       "help": "多句用「｜」分隔，会依次打出"
     },
     { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
-    { "key": "accent", "label": "光标颜色", "type": "color", "target": "css", "default": "#f9cf00" },
+    { "key": "accent", "label": "光标颜色", "type": "color", "target": "css", "default": "#ffffff" },
     {
       "key": "speed",
       "label": "打字速度",
