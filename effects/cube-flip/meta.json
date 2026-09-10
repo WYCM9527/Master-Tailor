@@ -1,0 +1,100 @@
+{
+  "category": "transition",
+  "sub": "keynote",
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Keynote 立方体翻页"
+  },
+  "slug": "cube-flip",
+  "name": "立方体翻页转场",
+  "tags": ["转场", "发布会", "3D", "View Transitions"],
+  "summary": "两页像立方体的两个面，整体转动一格完成换场",
+  "params": [
+    {
+      "key": "imageA",
+      "label": "第一面海报",
+      "type": "image",
+      "target": "css",
+      "default": "/samples/sample-7.webp"
+    },
+    {
+      "key": "imageB",
+      "label": "第二面海报",
+      "type": "image",
+      "target": "css",
+      "default": "/samples/sample-2.webp"
+    },
+    {
+      "key": "angle",
+      "label": "折面角度",
+      "type": "range",
+      "target": "css",
+      "min": 40,
+      "max": 90,
+      "step": 2,
+      "default": 72,
+      "unit": "",
+      "displayUnit": "°",
+      "help": "两面折转的角度，90 是标准立方体，小一点更柔和"
+    },
+    {
+      "key": "depth",
+      "label": "纵深感",
+      "type": "range",
+      "target": "css",
+      "min": 600,
+      "max": 2000,
+      "step": 100,
+      "default": 1100,
+      "unit": "",
+      "help": "透视距离，越小翻转的立体感越强"
+    },
+    {
+      "key": "duration",
+      "label": "转场时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.4,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.7,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "solid",
+      "name": "标准立方体",
+      "values": {
+        "angle": 90,
+        "depth": 900,
+        "duration": 0.8
+      }
+    },
+    {
+      "id": "soft",
+      "name": "柔和折面",
+      "values": {
+        "angle": 48,
+        "depth": 1600,
+        "duration": 0.55
+      }
+    }
+  ]
+}

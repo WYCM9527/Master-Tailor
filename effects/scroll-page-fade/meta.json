@@ -1,0 +1,106 @@
+{
+  "category": "transition",
+  "sub": "scroll",
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "apple.com 分节换底"
+  },
+  "slug": "scroll-page-fade",
+  "name": "滚动换底长页",
+  "tags": ["转场", "滚动", "换底色", "长页"],
+  "summary": "往下滚，整页底色和内容一节节淡入换场",
+  "params": [
+    {
+      "key": "slides",
+      "label": "分节图片",
+      "type": "images",
+      "target": "config",
+      "min": 2,
+      "max": 6,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-5.webp",
+          "caption": "从蓝调开始"
+        },
+        {
+          "src": "/samples/sample-3.webp",
+          "caption": "转入暖场"
+        },
+        {
+          "src": "/samples/sample-8.webp",
+          "caption": "落回夜色"
+        }
+      ]
+    },
+    {
+      "key": "pace",
+      "label": "每节滚动行程",
+      "type": "range",
+      "target": "css",
+      "min": 120,
+      "max": 240,
+      "step": 10,
+      "default": 160,
+      "unit": "",
+      "displayUnit": "%",
+      "help": "每一节占容器高度的比例，越大换场越从容"
+    },
+    {
+      "key": "hueStart",
+      "label": "起始色相",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 360,
+      "step": 10,
+      "default": 230,
+      "unit": "",
+      "help": "第一节底色的色相（0 红 120 绿 230 蓝），后续节按均匀步进轮转"
+    },
+    {
+      "key": "rise",
+      "label": "内容上浮距离",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 80,
+      "step": 4,
+      "default": 40,
+      "unit": "px"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "warm",
+      "name": "暖调",
+      "values": {
+        "hueStart": 20,
+        "pace": 200
+      }
+    },
+    {
+      "id": "swift",
+      "name": "快换",
+      "values": {
+        "pace": 120,
+        "rise": 20
+      }
+    }
+  ]
+}

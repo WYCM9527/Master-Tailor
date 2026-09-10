@@ -1,0 +1,101 @@
+{
+  "category": "transition",
+  "sub": "keynote",
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Keynote 溶解 / tvOS 焦点切换"
+  },
+  "slug": "blur-dissolve",
+  "name": "模糊溶解转场",
+  "tags": ["转场", "发布会", "溶解", "View Transitions"],
+  "summary": "旧幕晕成一团光雾，新幕从雾里聚焦成形",
+  "params": [
+    {
+      "key": "imageA",
+      "label": "第一幕海报",
+      "type": "image",
+      "target": "css",
+      "default": "/samples/sample-5.webp"
+    },
+    {
+      "key": "imageB",
+      "label": "第二幕海报",
+      "type": "image",
+      "target": "css",
+      "default": "/samples/sample-1.webp"
+    },
+    {
+      "key": "titleA",
+      "label": "第一幕标题",
+      "type": "text",
+      "target": "config",
+      "default": "先看清。",
+      "maxLength": 20
+    },
+    {
+      "key": "titleB",
+      "label": "第二幕标题",
+      "type": "text",
+      "target": "config",
+      "default": "再聚焦。",
+      "maxLength": 20
+    },
+    {
+      "key": "blurAmount",
+      "label": "模糊强度",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 24,
+      "step": 2,
+      "default": 12,
+      "unit": "px",
+      "help": "溶解两端的最大模糊半径，越大雾感越重"
+    },
+    {
+      "key": "duration",
+      "label": "转场时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.55,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "foggy",
+      "name": "浓雾",
+      "values": {
+        "blurAmount": 22,
+        "duration": 0.9
+      }
+    },
+    {
+      "id": "subtle",
+      "name": "轻晕",
+      "values": {
+        "blurAmount": 6,
+        "duration": 0.35
+      }
+    }
+  ]
+}

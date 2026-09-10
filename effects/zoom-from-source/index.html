@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>从点击处放大</title>
+    <style>
+      :root {
+        --mt-bg: #0a0a0f; /* 页面底色 */
+        --mt-duration: 0.4s; /* 转场时长 */
+        --mt-startScale: 0.15; /* 起始缩放（新页从这个倍率长到整页） */
+        --mt-accent: #ffffff; /* 强调色：标题与返回按钮 */
+        --zoom-ease: cubic-bezier(0.2, 0.85, 0.25, 1); /* 生长曲线：快起慢收 */
+        /* 生长原点由 JS 在点击时写入（快照坐标系 = 视口） */
+        --vt-ox: 50vw;
+        --vt-oy: 50vh;
+        /* 回退路径用的原点（相对页面容器） */
+        --fx-ox: 50%;
+        --fx-oy: 50%;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--mt-bg);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        color: #f2f2f7;
+      }
+
+      .mt-app {
+        position: relative;
+        width: min(880px, 94vw);
+        height: min(560px, 92vh);
+        background: #101016;
+        border-radius: 18px;
+        overflow: clip;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+      }
+      .page {
+        position: absolute;
+        inset: 0;
+        background: #101016;
+      }
+      .page[hidden] {
+        display: none;
+      }
+      h1,
+      h2 {
+        outline: none;
+      }
+
+      /* ---- 图块页 ---- */
+      .page-grid {
+        padding: 24px 28px;
+        overflow: auto;
+      }
+      .page-grid h2 {
+        margin: 0 0 16px;
+        font-size: 21px;
+      }
+      .tile-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .tile {
+        border: none;
+        padding: 0;
+        background: none;
+        cursor: pointer;
+        border-radius: 12px;
+        overflow: clip;
+        display: block;
+      }
+      .tile:focus-visible {
+        outline: 2px solid var(--mt-accent);
+        outline-offset: 2px;
+      }
+      .tile img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        -webkit-user-drag: none;
+      }
+
+      /* ---- 详情页 ---- */
+      .page-detail img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .page-detail .caption {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 60px 28px 22px;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+      }
+      .page-detail h1 {
+        margin: 0;
+        font-size: 26px;
+        color: var(--mt-accent);
+      }
+      .back {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        z-index: 2;
+        border: none;
+        border-radius: 999px;
+        padding: 8px 16px;
+        background: rgba(10, 10, 15, 0.6);
+        color: var(--mt-accent);
+        font: inherit;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .back:focus-visible {
+        outline: 2px solid var(--mt-accent);
+      }
+
+      /* ===== 过渡层：从点击处生长 =====
+         新页快照的生长原点定在被点图块的中心：从起始缩放长到整页；
+         返回时严格反向缩回原处。垫底一侧保持不动。 */
+      ::view-transition-old(page),
+      ::view-transition-new(page) {
+        animation-duration: var(--mt-duration);
+        animation-timing-function: var(--zoom-ease);
+        animation-fill-mode: both;
+      }
+      html[data-vt='forward']::view-transition-new(page) {
+        transform-origin: var(--vt-ox) var(--vt-oy);
+        animation-name: grow-in;
+      }
+      html[data-vt='forward']::view-transition-old(page) {
+        animation-name: hold-still;
+      }
+      html[data-vt='back']::view-transition-old(page) {
+        transform-origin: var(--vt-ox) var(--vt-oy);
+        animation-name: grow-out;
+        z-index: 1;
+      }
+      html[data-vt='back']::view-transition-new(page) {
+        animation-name: hold-still;
+      }
+
+      @keyframes grow-in {
+        from {
+          transform: scale(var(--mt-startScale));
+          opacity: 0;
+        }
+        30% {
+          opacity: 1;
+        }
+        to {
+          transform: none;
+          opacity: 1;
+        }
+      }
+      @keyframes grow-out {
+        from {
+          transform: none;
+          opacity: 1;
+        }
+        70% {
+          opacity: 1;
+        }
+        to {
+          transform: scale(var(--mt-startScale));
+          opacity: 0;
+        }
+      }
+      @keyframes hold-still {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* @mt:fallback 无 API 回退：同一套 keyframes 加在真实页面上，
+         原点换成相对容器的坐标变量，效果一致 */
+      .page.fx-in,
+      .page.fx-out {
+        animation-duration: var(--mt-duration);
+        animation-timing-function: var(--zoom-ease);
+        animation-fill-mode: both;
+      }
+      html[data-vt='forward'] .page.fx-in {
+        transform-origin: var(--fx-ox) var(--fx-oy);
+        animation-name: grow-in;
+        z-index: 2;
+      }
+      html[data-vt='forward'] .page.fx-out {
+        animation-name: hold-still;
+        z-index: 1;
+      }
+      html[data-vt='back'] .page.fx-out {
+        transform-origin: var(--fx-ox) var(--fx-oy);
+        animation-name: grow-out;
+        z-index: 2;
+      }
+      html[data-vt='back'] .page.fx-in {
+        animation-name: hold-still;
+        z-index: 1;
+      }
+
+      /* 用户开启「减少动态效果」：一律瞬间切换（JS 同步跳过转场） */
+      @media (prefers-reduced-motion: reduce) {
+        ::view-transition-group(*),
+        ::view-transition-old(*),
+        ::view-transition-new(*) {
+          animation: none !important;
+        }
+        .page.fx-in,
+        .page.fx-out {
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mt-app" id="mtApp">
+      <section class="page page-grid" id="pageGrid" aria-label="图块页">
+        <h2 tabindex="-1">目的地</h2>
+        <div class="tile-grid" id="tileGrid"></div>
+      </section>
+
+      <section class="page page-detail" id="pageDetail" aria-label="详情页" hidden>
+        <img id="detailImg" alt="" />
+        <div class="caption">
+          <h1 id="detailTitle" tabindex="-1">标题</h1>
+        </div>
+        <button type="button" class="back" id="backBtn">‹ 返回</button>
+      </section>
+    </div>
+
+    <script>
+      const CONFIG = {
+        slides: [{ src: '/samples/sample-1.webp', caption: '示例标题' }], // 图块列表（图 + 标题）
+      };
+
+      (function () {
+        const html = document.documentElement;
+        const app = document.getElementById('mtApp');
+        const pageGrid = document.getElementById('pageGrid');
+        const pageDetail = document.getElementById('pageDetail');
+        const detailImg = document.getElementById('detailImg');
+        const detailTitle = document.getElementById('detailTitle');
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+        let navigating = false; // 转场进行中忽略新的导航
+
+        // ---- 生成图块 ----
+        const grid = document.getElementById('tileGrid');
+        const tiles = CONFIG.slides.map((s, i) => {
+          const tile = document.createElement('button');
+          tile.type = 'button';
+          tile.className = 'tile';
+          const img = document.createElement('img');
+          img.src = s.src;
+          img.alt = s.caption || '第 ' + (i + 1) + ' 张';
+          tile.appendChild(img);
+          tile.addEventListener('click', () => {
+            setOrigin(tile);
+            detailImg.src = s.src;
+            detailImg.alt = img.alt;
+            detailTitle.textContent = s.caption || '第 ' + (i + 1) + ' 张';
+            go(pageDetail, 'forward');
+          });
+          grid.appendChild(tile);
+          return tile;
+        });
+
+        // ---- 生长原点：被点图块的中心（快照坐标系 = 视口；回退坐标系 = 容器） ----
+        function setOrigin(tile) {
+          const r = tile.getBoundingClientRect();
+          const a = app.getBoundingClientRect();
+          const cx = r.left + r.width / 2;
+          const cy = r.top + r.height / 2;
+          html.style.setProperty('--vt-ox', cx + 'px');
+          html.style.setProperty('--vt-oy', cy + 'px');
+          html.style.setProperty('--fx-ox', cx - a.left + 'px');
+          html.style.setProperty('--fx-oy', cy - a.top + 'px');
+        }
+
+        function swap(from, to) {
+          from.hidden = true;
+          to.hidden = false;
+        }
+        function focusHeading(to) {
+          const heading = to.querySelector('h1, h2');
+          if (heading) heading.focus({ preventScroll: true });
+        }
+
+        // ---- 方向化转场 ----
+        function go(to, direction) {
+          const from = to === pageDetail ? pageGrid : pageDetail;
+          if (navigating || !to.hidden) return;
+
+          if (reduceMotion.matches) {
+            swap(from, to);
+            focusHeading(to);
+            return;
+          }
+          navigating = true;
+          html.dataset.vt = direction;
+
+          from.style.viewTransitionName = 'page';
+          const cleanup = () => {
+            from.style.viewTransitionName = '';
+            to.style.viewTransitionName = '';
+            delete html.dataset.vt;
+            navigating = false;
+            focusHeading(to);
+          };
+
+          if (document.startViewTransition) {
+            const vt = document.startViewTransition(() => {
+              swap(from, to);
+              from.style.viewTransitionName = '';
+              to.style.viewTransitionName = 'page';
+            });
+            vt.finished.finally(cleanup);
+          } else {
+            // @mt:fallback：两页短暂同框，播同一套 keyframes；
+            // 返回时只有旧页在动，动画结束事件从容器上冒泡捕获
+            to.hidden = false;
+            from.classList.add('fx-out');
+            to.classList.add('fx-in');
+            const done = () => {
+              app.removeEventListener('animationend', done);
+              from.hidden = true;
+              from.classList.remove('fx-out');
+              to.classList.remove('fx-in');
+              cleanup();
+            };
+            app.addEventListener('animationend', done);
+          }
+        }
+        const goBack = () => go(pageGrid, 'back');
+
+        // ---- 返回途径：按钮 / Esc / Backspace ----
+        document.getElementById('backBtn').addEventListener('click', goBack);
+        document.addEventListener('keydown', (e) => {
+          if (pageDetail.hidden) return;
+          if (e.key === 'Escape' || e.key === 'Backspace') {
+            e.preventDefault();
+            goBack();
+          }
+        });
+
+        /* @mt:thumb-start */
+        // 缩略图演示：轮换不同图块自动点开→返回；切后台暂停，reduced-motion 不启动
+        if (!reduceMotion.matches) {
+          let demoIndex = 0;
+          setInterval(() => {
+            if (document.hidden || navigating) return;
+            if (pageDetail.hidden) {
+              tiles[demoIndex % tiles.length].click();
+              demoIndex++;
+            } else {
+              goBack();
+            }
+          }, 2400);
+        }
+        /* @mt:thumb-end */
+      })();
+    </script>
+  </body>
+</html>

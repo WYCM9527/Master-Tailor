@@ -1,0 +1,106 @@
+{
+  "category": "transition",
+  "sub": "zoom",
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "iOS 18 zoom 转场"
+  },
+  "slug": "zoom-from-source",
+  "name": "从点击处放大",
+  "tags": ["转场", "缩放", "iOS", "View Transitions"],
+  "summary": "新页从被点的那格位置长出来，返回时缩回原处",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图块列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": true,
+      "default": [
+        {
+          "src": "/samples/sample-1.webp",
+          "caption": "夜枭小憩"
+        },
+        {
+          "src": "/samples/sample-3.webp",
+          "caption": "日落海滩"
+        },
+        {
+          "src": "/samples/sample-4.webp",
+          "caption": "山谷晨光"
+        },
+        {
+          "src": "/samples/sample-5.webp",
+          "caption": "蓝天夹竹桃"
+        },
+        {
+          "src": "/samples/sample-7.webp",
+          "caption": "几何屋檐"
+        },
+        {
+          "src": "/samples/sample-8.webp",
+          "caption": "城市夜色"
+        }
+      ]
+    },
+    {
+      "key": "duration",
+      "label": "转场时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.25,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.4,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "startScale",
+      "label": "起始缩放",
+      "type": "range",
+      "target": "css",
+      "min": 0.05,
+      "max": 0.5,
+      "step": 0.05,
+      "default": 0.15,
+      "unit": "",
+      "help": "新页从这个倍率、从点击处长到整页，越小生长感越强"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "burst",
+      "name": "破土而出",
+      "values": {
+        "duration": 0.55,
+        "startScale": 0.05
+      }
+    },
+    {
+      "id": "gentle",
+      "name": "温和",
+      "values": {
+        "duration": 0.35,
+        "startScale": 0.35
+      }
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>滚动换底长页</title>
+    <style>
+      :root {
+        --mt-bg: #0a0a0f; /* 页面底色 */
+        --mt-pace: 160; /* 每节滚动行程（占容器高度百分比） */
+        --mt-rise: 40px; /* 内容上浮距离 */
+        --mt-accent: #ffffff; /* 强调色：标题与编号 */
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--mt-bg);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        color: #f2f2f7;
+      }
+
+      /* ===== 滚动舞台 ===== */
+      .mt-app {
+        position: relative;
+        width: min(880px, 94vw);
+        height: min(560px, 92vh);
+        border-radius: 18px;
+        overflow: clip;
+        background: #101016;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+        container-type: size;
+      }
+      .mt-scroll {
+        height: 100%;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+      }
+      .mt-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .mt-scroll:focus-visible {
+        outline: 2px solid var(--mt-accent);
+        outline-offset: -2px;
+      }
+
+      .intro {
+        height: 52cqh;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        gap: 8px;
+      }
+      .intro h2 {
+        margin: 0;
+        font-size: 24px;
+        color: var(--mt-accent);
+      }
+      .intro p {
+        margin: 0;
+        color: #8a8b98;
+        font-size: 14px;
+      }
+      .outro {
+        height: 40cqh;
+        display: grid;
+        place-content: center;
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 14px;
+      }
+
+      /* ---- 分节：整层（底色 + 内容）钉住，下一节淡入盖住上一节 ---- */
+      .sec {
+        position: relative;
+        height: calc(var(--mt-pace) * 1cqh);
+      }
+      .sec .pin {
+        position: sticky;
+        top: 0;
+        height: 100cqh;
+        overflow: clip;
+        display: grid;
+        place-content: center;
+        justify-items: center;
+        text-align: center;
+        gap: 14px;
+        padding: 0 40px;
+      }
+      .sec .pin .num {
+        font-family: ui-monospace, monospace;
+        font-size: 12.5px;
+        letter-spacing: 0.16em;
+        color: var(--mt-accent);
+        opacity: 0.8;
+      }
+      .sec .pin img {
+        width: min(46%, 340px);
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
+        border-radius: 14px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+      .sec .pin h3 {
+        margin: 0;
+        font-size: clamp(22px, 4vw, 34px);
+        color: var(--mt-accent);
+      }
+      .sec .pin p {
+        margin: 0;
+        max-width: 460px;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 14px;
+      }
+
+      /* ===== 滚动驱动层：整节随进入视口渐显（换底），内容再上浮一层 =====
+         渐进增强：@supports 之外的默认样式就是终态（完全可见），
+         不支持的浏览器（含 Firefox 稳定版）是一条普通的分节长页。 */
+      @supports (animation-timeline: view()) {
+        .sec .pin {
+          animation: sec-in linear both;
+          animation-timeline: view();
+          animation-range: entry 0% entry 70%;
+        }
+        .sec .pin > * {
+          animation: copy-up linear both;
+          animation-timeline: view();
+          animation-range: entry 10% entry 90%;
+        }
+        @keyframes sec-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes copy-up {
+          from {
+            translate: 0 var(--mt-rise);
+          }
+          to {
+            translate: 0 0;
+          }
+        }
+      }
+
+      /* 用户开启「减少动态效果」：不做渐显与上浮，保持常显 */
+      @media (prefers-reduced-motion: reduce) {
+        .sec .pin,
+        .sec .pin > * {
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mt-app">
+      <div class="mt-scroll" id="scroller" tabindex="0" aria-label="滚动换底长页，方向键或滚轮浏览">
+        <header class="intro">
+          <h2>往下滚动</h2>
+          <p>每过一节，整页的底色和内容会一起淡入换场</p>
+        </header>
+        <main id="secHost"></main>
+        <footer class="outro">到底了 · 回滚全程可逆</footer>
+      </div>
+    </div>
+
+    <script>
+      const CONFIG = {
+        slides: [{ src: '/samples/sample-5.webp', caption: '示例标题' }], // 分节图片（图 + 标题）
+        hueStart: 230, // 起始色相（0 红 / 120 绿 / 230 蓝），后续节均匀轮转
+      };
+
+      (function () {
+        const scroller = document.getElementById('scroller');
+        const host = document.getElementById('secHost');
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+        const total = CONFIG.slides.length;
+
+        // ---- 生成分节（每节自己的主题底色，色相均匀轮转） ----
+        CONFIG.slides.forEach((s, i) => {
+          const hue = (CONFIG.hueStart + (i * 360) / Math.max(total, 3)) % 360;
+          const sec = document.createElement('section');
+          sec.className = 'sec';
+          const pin = document.createElement('div');
+          pin.className = 'pin';
+          pin.style.background =
+            'linear-gradient(160deg, hsl(' + hue + ' 40% 16%), hsl(' + hue + ' 52% 8%))';
+          const num = document.createElement('span');
+          num.className = 'num';
+          num.textContent = String(i + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+          const img = document.createElement('img');
+          img.src = s.src;
+          img.alt = s.caption || '第 ' + (i + 1) + ' 节';
+          img.loading = i === 0 ? 'eager' : 'lazy';
+          const h3 = document.createElement('h3');
+          h3.textContent = s.caption || '第 ' + (i + 1) + ' 节';
+          const p = document.createElement('p');
+          p.textContent = '这一节连同底色一起淡入，把上一节盖过去；继续滚动，下一节会用同样的方式接管画面。';
+          pin.append(num, img, h3, p);
+          sec.appendChild(pin);
+          host.appendChild(sec);
+        });
+
+        /* @mt:thumb-start */
+        // 缩略图演示：自动往返滚动整条长页；用户上手（滚轮/拖动/按键）即停，切后台暂停
+        if (!reduceMotion.matches) {
+          let dir = 1;
+          let userTook = false;
+          const stop = () => (userTook = true);
+          for (const ev of ['wheel', 'pointerdown', 'keydown', 'touchstart']) {
+            scroller.addEventListener(ev, stop, { passive: true, once: true });
+          }
+          (function tick() {
+            if (userTook) return;
+            if (!document.hidden) {
+              const maxTop = scroller.scrollHeight - scroller.clientHeight;
+              scroller.scrollTop += dir * Math.max(1, maxTop / 600);
+              if (scroller.scrollTop >= maxTop - 1) dir = -1;
+              if (scroller.scrollTop <= 1) dir = 1;
+            }
+            requestAnimationFrame(tick);
+          })();
+        }
+        /* @mt:thumb-end */
+      })();
+    </script>
+  </body>
+</html>

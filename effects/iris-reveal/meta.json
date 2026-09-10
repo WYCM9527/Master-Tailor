@@ -1,0 +1,89 @@
+{
+  "category": "transition",
+  "sub": "keynote",
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Keynote 圆形揭示"
+  },
+  "slug": "iris-reveal",
+  "name": "圆形揭示转场",
+  "tags": ["转场", "发布会", "揭示", "View Transitions"],
+  "summary": "新画面从一个圆点睁开铺满全屏，返回时收回原点",
+  "params": [
+    {
+      "key": "imageA",
+      "label": "第一幕海报",
+      "type": "image",
+      "target": "css",
+      "default": "/samples/sample-4.webp"
+    },
+    {
+      "key": "imageB",
+      "label": "第二幕海报",
+      "type": "image",
+      "target": "css",
+      "default": "/samples/sample-8.webp"
+    },
+    {
+      "key": "centerMode",
+      "label": "圆心位置",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "click",
+          "label": "跟随点击位置"
+        },
+        {
+          "value": "center",
+          "label": "固定画面中心"
+        }
+      ],
+      "default": "click"
+    },
+    {
+      "key": "duration",
+      "label": "转场时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.35,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.65,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "stage",
+      "name": "舞台中心",
+      "values": {
+        "centerMode": "center",
+        "duration": 0.9
+      }
+    },
+    {
+      "id": "snap",
+      "name": "利落",
+      "values": {
+        "duration": 0.4
+      }
+    }
+  ]
+}
