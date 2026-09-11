@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素点亮卡</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;            /* 页面底色 */
+    --mt-cardBg: #0a0a0f;        /* 卡片底色 */
+    --mt-borderColor: #27272a;   /* 边框颜色 */
+    --mt-textColor: #ffffff;     /* 文字颜色 */
+    --mt-radius: 25px;           /* 圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid; place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  /* 卡片：4:5 竖版，canvas 铺满，文字叠在中央 */
+  .mt-card {
+    position: relative;
+    width: 300px; height: 400px;
+    display: grid; place-items: center;
+    border: 1px solid var(--mt-borderColor);
+    border-radius: var(--mt-radius);
+    background: var(--mt-cardBg);
+    overflow: hidden;
+    isolation: isolate;
+    user-select: none;
+    outline: none;
+    transition: background-color 0.2s cubic-bezier(0.5, 1, 0.89, 1);
+  }
+  .mt-card:focus-visible { box-shadow: 0 0 0 2px rgba(255,255,255,0.4); }
+  .mt-card canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .mt-card h2 { position: relative; margin: 0; color: var(--mt-textColor); font-size: 32px; font-weight: 700; letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+<div class="mt-card" id="mtCard" tabindex="0">
+  <canvas id="mtCanvas" aria-hidden="true"></canvas>
+  <h2 id="mtTitle"></h2>
+</div>
+<script>
+  const CONFIG = {
+    title: "像素",           // 卡片文字
+    variant: "default",     // 配色方案：default / blue / yellow / pink
+    gap: 5,                 // 像素间距（px）
+    speed: 35,              // 闪烁速度
+    autoDemo: true,         // 自动亮灭演示
+  };
+  // 四套配色（源自各方案的像素色表）
+  const VARIANTS = {
+    default: ['#f8fafc', '#f1f5f9', '#cbd5e1'],
+    blue: ['#e0f2fe', '#7dd3fc', '#0ea5e9'],
+    yellow: ['#fef08a', '#fde047', '#eab308'],
+    pink: ['#fecdd3', '#fda4af', '#e11d48'],
+  };
+
+  const card = document.getElementById('mtCard');
+  const canvas = document.getElementById('mtCanvas');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  const colors = VARIANTS[CONFIG.variant] || VARIANTS.default;
+  // 速度 0–100 映射到每帧尺寸增量（×0.001）；减少动态时为 0（不闪烁）
+  const speed = reduceMotion ? 0 : Math.min(100, Math.max(0, CONFIG.speed)) * 0.001;
+  const rand = (a, b) => Math.random() * (b - a) + a;
+
+  /* 一个像素点：出现（等待延迟 → 长大到 maxSize → 闪烁）、消失（缩回 0） */
+  class Pixel {
+    constructor(x, y, color, delay, W, H) {
+      this.x = x; this.y = y; this.color = color; this.delay = delay;
+      this.speed = rand(0.1, 0.9) * speed;
+      this.size = 0; this.sizeStep = Math.random() * 0.4;
+      this.minSize = 0.5; this.maxSizeInteger = 2; this.maxSize = rand(this.minSize, this.maxSizeInteger);
+      this.counter = 0; this.counterStep = Math.random() * 4 + (W + H) * 0.01;
+      this.isIdle = false; this.isReverse = false; this.isShimmer = false;
+    }
+    draw() {
+      const off = this.maxSizeInteger * 0.5 - this.size * 0.5;
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.x + off, this.y + off, this.size, this.size);
+    }
+    appear() {
+      this.isIdle = false;
+      if (this.counter <= this.delay) { this.counter += this.counterStep; return; }   // 离中心越远等得越久
+      if (this.size >= this.maxSize) this.isShimmer = true;
+      if (this.isShimmer) this.shimmer(); else this.size += this.sizeStep;
+      this.draw();
+    }
+    disappear() {
+      this.isShimmer = false; this.counter = 0;
+      if (this.size <= 0) { this.isIdle = true; return; }
+      this.size -= 0.1;
+      this.draw();
+    }
+    shimmer() {
+      if (this.size >= this.maxSize) this.isReverse = true;
+      else if (this.size <= this.minSize) this.isReverse = false;
+      this.size += this.isReverse ? -this.speed : this.speed;
+    }
+  }
+
+  // 按间距铺一张像素网格，每个点的延迟 = 到卡片中心的距离
+  let pixels = [];
+  function init() {
+    const W = canvas.width = card.clientWidth, H = canvas.height = card.clientHeight;
+    pixels = [];
+    for (let x = 0; x < W; x += CONFIG.gap) for (let y = 0; y < H; y += CONFIG.gap) {
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const delay = reduceMotion ? 0 : Math.hypot(x - W / 2, y - H / 2);
+      pixels.push(new Pixel(x, y, color, delay, W, H));
+    }
+  }
+  init();
+  addEventListener('resize', init);
+
+  // 60fps 节流的动画循环：所有点都 idle 后自动停
+  let raf = 0, prev = performance.now(), mode = 'disappear';
+  function loop(now) {
+    raf = requestAnimationFrame(loop);
+    if (document.hidden) return;
+    const interval = 1000 / 60, passed = now - prev;
+    if (passed < interval) return;
+    prev = now - (passed % interval);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let allIdle = true;
+    for (const p of pixels) { p[mode](); if (!p.isIdle) allIdle = false; }
+    if (allIdle) { cancelAnimationFrame(raf); raf = 0; }
+  }
+  function animate(next) {
+    mode = next;
+    if (!raf) { prev = performance.now(); raf = requestAnimationFrame(loop); }
+  }
+  let userTook = false;
+  card.addEventListener('mouseenter', () => { userTook = true; animate('appear'); });
+  card.addEventListener('mouseleave', () => animate('disappear'));
+  card.addEventListener('focus', () => animate('appear'));
+  card.addEventListener('blur', () => animate('disappear'));
+
+  /* @mt:thumb-start */
+  // 自动演示：亮 3 秒、灭 2 秒循环；真实鼠标进入后交还
+  if (CONFIG.autoDemo && !reduceMotion) {
+    let on = true;
+    animate('appear');
+    setInterval(() => { if (document.hidden || userTook) return; on = !on; animate(on ? 'appear' : 'disappear'); }, 2600);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

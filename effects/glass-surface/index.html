@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>液态玻璃面板</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #fff;
+  }
+  /* 底层：一张图 + 几行文字，用来被玻璃折射 */
+  .mt-back { position: fixed; inset: 0; }
+  .mt-back img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .mt-lines { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 0 8vw; pointer-events: none; }
+  .mt-lines span { font-size: clamp(28px, 5vw, 64px); font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; text-shadow: 0 2px 20px rgba(0,0,0,0.4); will-change: transform; }
+  /* 玻璃面板：backdrop-filter 指向下面的 SVG 滤镜；内外多层柔影模拟厚度 */
+  .mt-glass {
+    position: fixed; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; align-items: center; justify-content: center;
+    cursor: grab; user-select: none; touch-action: none;
+    isolation: isolate;
+    transition: opacity 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow:
+      0 0 2px 1px color-mix(in oklch, white, transparent 65%) inset,
+      0 0 10px 4px color-mix(in oklch, white, transparent 85%) inset,
+      0 4px 16px rgba(17, 17, 26, 0.05), 0 8px 24px rgba(17, 17, 26, 0.05), 0 16px 56px rgba(17, 17, 26, 0.05),
+      0 4px 16px rgba(17, 17, 26, 0.05) inset, 0 8px 24px rgba(17, 17, 26, 0.05) inset, 0 16px 56px rgba(17, 17, 26, 0.05) inset;
+  }
+  .mt-glass:active { cursor: grabbing; }
+  /* 浏览器不支持 backdrop-filter: url() 时的普通毛玻璃回退 */
+  .mt-glass.fallback {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px) saturate(1.8) brightness(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.8) brightness(1.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .mt-glass svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; z-index: -1; }
+  .mt-glass .txt { position: relative; z-index: 1; font-size: 22px; font-weight: 600; letter-spacing: 0.1em; text-shadow: 0 1px 8px rgba(0,0,0,0.35); }
+  .mt-hint { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); font-size: 12px; letter-spacing: 0.14em; color: rgba(255,255,255,0.45); pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="mt-back">
+  <img id="mtPhoto" alt="">
+  <div class="mt-lines" id="mtLines"><span>折射</span><span>色散</span><span>透亮</span></div>
+</div>
+<div class="mt-glass" id="mtGlass">
+  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <filter id="mtGlassFilter" color-interpolation-filters="sRGB" x="0%" y="0%" width="100%" height="100%">
+        <!-- 位移图：由 JS 生成的 data-URI SVG（红横向渐变 × 蓝纵向渐变 + 中央模糊灰块） -->
+        <feImage id="mtMap" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="map"/>
+        <!-- 三通道各自位移（scale 略不同 → 色散），再抠出单色、screen 合并、微模糊 -->
+        <feDisplacementMap id="mtR" in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="dR"/>
+        <feColorMatrix in="dR" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+        <feDisplacementMap id="mtG" in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="dG"/>
+        <feColorMatrix in="dG" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
+        <feDisplacementMap id="mtB" in="SourceGraphic" in2="map" xChannelSelector="R" yChannelSelector="G" result="dB"/>
+        <feColorMatrix in="dB" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
+        <feBlend in="r" in2="g" mode="screen" result="rg"/>
+        <feBlend in="rg" in2="b" mode="screen" result="out"/>
+        <feGaussianBlur in="out" stdDeviation="0.7"/>
+      </filter>
+    </defs>
+  </svg>
+  <span class="txt" id="mtLabel"></span>
+</div>
+<div class="mt-hint">拖动玻璃</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-3.webp",  // 底图
+    width: 320,             // 面板宽度（px）
+    height: 200,            // 面板高度（px）
+    borderRadius: 20,       // 圆角（px）
+    borderWidth: 0.07,      // 折射边宽（占短边比例）
+    distortionScale: -180,  // 折射强度
+    chromatic: 1,           // 色散强度
+    blur: 11,               // 中央柔化
+    brightness: 70,         // 玻璃亮度
+    label: "液态玻璃",       // 面板文字
+  };
+  const OPACITY = 0.93, SATURATION = 1, MIX = 'difference';
+
+  const glass = document.getElementById('mtGlass');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtPhoto').src = CONFIG.photo;
+  document.getElementById('mtLabel').textContent = CONFIG.label;
+  glass.style.width = `${CONFIG.width}px`; glass.style.height = `${CONFIG.height}px`;
+  glass.style.borderRadius = `${CONFIG.borderRadius}px`;
+
+  /* 位移图：黑底上，红色从右到左渐强（控制 x 位移）、蓝色从上到下渐强（控制 y 位移），
+     两者 difference 混合后中间盖一块模糊的灰块把中央压平——于是只有边缘折射 */
+  function displacementMap() {
+    const W = CONFIG.width, H = CONFIG.height, r = CONFIG.borderRadius;
+    const edge = Math.min(W, H) * (CONFIG.borderWidth * 0.5);
+    const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gr" x1="100%" y1="0%" x2="0%" y2="0%"><stop offset="0%" stop-color="#0000"/><stop offset="100%" stop-color="red"/></linearGradient>
+        <linearGradient id="gb" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#0000"/><stop offset="100%" stop-color="blue"/></linearGradient>
+      </defs>
+      <rect width="${W}" height="${H}" fill="black"/>
+      <rect width="${W}" height="${H}" rx="${r}" fill="url(#gr)"/>
+      <rect width="${W}" height="${H}" rx="${r}" fill="url(#gb)" style="mix-blend-mode:${MIX}"/>
+      <rect x="${edge}" y="${edge}" width="${W - edge * 2}" height="${H - edge * 2}" rx="${r}" fill="hsl(0 0% ${CONFIG.brightness}% / ${OPACITY})" style="filter:blur(${CONFIG.blur}px)"/>
+    </svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  }
+  document.getElementById('mtMap').setAttribute('href', displacementMap());
+  // 三通道 scale：基准 + 各自偏移（绿 +10、蓝 +20 乘色散强度）
+  document.getElementById('mtR').setAttribute('scale', CONFIG.distortionScale);
+  document.getElementById('mtG').setAttribute('scale', CONFIG.distortionScale + 10 * CONFIG.chromatic);
+  document.getElementById('mtB').setAttribute('scale', CONFIG.distortionScale + 20 * CONFIG.chromatic);
+
+  // 能力检测：backdrop-filter 是否接受 SVG 滤镜引用（Chrome/Edge 可，Safari/Firefox 回退毛玻璃）
+  const probe = document.createElement('div');
+  probe.style.backdropFilter = 'url(#mtGlassFilter)';
+  if (probe.style.backdropFilter !== '') {
+    glass.style.backdropFilter = `url(#mtGlassFilter) saturate(${SATURATION})`;
+    glass.style.background = 'hsl(0 0% 0% / 0)';
+  } else {
+    glass.classList.add('fallback');
+  }
+
+  // 拖动面板
+  let drag = null, userTook = false;
+  const pos = { x: innerWidth / 2, y: innerHeight / 2 };
+  const place = () => { glass.style.left = `${pos.x}px`; glass.style.top = `${pos.y}px`; };
+  glass.addEventListener('pointerdown', (e) => { drag = { dx: e.clientX - pos.x, dy: e.clientY - pos.y }; glass.setPointerCapture(e.pointerId); userTook = true; });
+  glass.addEventListener('pointermove', (e) => { if (!drag) return; pos.x = e.clientX - drag.dx; pos.y = e.clientY - drag.dy; place(); });
+  const end = () => (drag = null);
+  glass.addEventListener('pointerup', end); glass.addEventListener('pointercancel', end);
+  place();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：底下的文字缓慢横向漂移、玻璃轻轻游走，展示折射；用户拖过后玻璃停下
+  if (!reduceMotion) {
+    const lines = [...document.querySelectorAll('#mtLines span')];
+    let t = 0;
+    (function tick() {
+      requestAnimationFrame(tick);
+      if (document.hidden) return;
+      t += 0.008;
+      lines.forEach((el, i) => { el.style.transform = `translateX(${Math.sin(t * (1 + i * 0.3) + i) * 60}px)`; });
+      if (!userTook) { pos.x = innerWidth * (0.5 + 0.18 * Math.sin(t * 0.9)); pos.y = innerHeight * (0.5 + 0.12 * Math.cos(t * 0.7)); place(); }
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

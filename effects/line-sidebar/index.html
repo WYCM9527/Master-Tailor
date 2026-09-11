@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>刻度线侧栏</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;             /* 页面底色 */
+    --mt-accentColor: #a855f7;    /* 强调色 */
+    --mt-textColor: #c4c4c4;      /* 文字颜色 */
+    --mt-markerColor: #6c6c6c;    /* 刻度线颜色 */
+    --mt-markerLength: 60px;      /* 刻度线长度 */
+    --mt-fontSize: 18px;          /* 字号 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid; place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .mt-nav { padding-left: var(--mt-markerLength); }
+  .mt-list { list-style: none; margin: 0; padding: 16px 0; display: flex; flex-direction: column; gap: 20px; }
+  /* 每项：--effect 0–1 由 JS 每帧写入，驱动位移、变色、刻度伸长 */
+  .mt-item {
+    --effect: 0;
+    position: relative;
+    cursor: pointer;
+  }
+  /* 扩大命中区域，鼠标在项之间也算 */
+  .mt-item::before { content: ""; position: absolute; inset: -6px -48px; }
+  /* 主刻度线：左侧一根，颜色从刻度色混到强调色，长度 0.7→1.2 倍 */
+  .mt-item .mark {
+    position: absolute; top: 50%; left: calc(-1 * var(--mt-markerLength));
+    width: var(--mt-markerLength); height: 1px;
+    transform-origin: left;
+    background: color-mix(in srgb, var(--mt-accentColor) calc(var(--effect) * 100%), var(--mt-markerColor));
+    transform: translateY(-50%) scaleX(calc(0.7 + var(--effect) * 0.5));
+  }
+  /* 项间小刻度：半长、半透明，跟着伸长 */
+  .mt-item::after {
+    content: ""; position: absolute;
+    left: calc(-1 * var(--mt-markerLength)); top: calc(100% + 10px);
+    width: calc(var(--mt-markerLength) * 0.5); height: 1px;
+    background: var(--mt-markerColor); opacity: 0.5;
+    transform-origin: left;
+    transform: translateY(-50%) scaleX(calc(0.7 + var(--effect) * 0.6));
+  }
+  .mt-item:last-child::after { content: none; }
+  .mt-item .label {
+    display: inline-flex; align-items: baseline;
+    font-size: var(--mt-fontSize); line-height: 1.2;
+    color: color-mix(in srgb, var(--mt-accentColor) calc(var(--effect) * 100%), var(--mt-textColor));
+    transform: translateX(calc(var(--effect) * var(--shift, 30px)));
+  }
+  .mt-item .idx { font-family: ui-monospace, Menlo, monospace; font-size: 0.85em; margin-right: 0.6rem; opacity: calc(0.55 + var(--effect) * 0.45); }
+</style>
+</head>
+<body>
+<nav class="mt-nav" aria-label="侧栏导航">
+  <ul class="mt-list" id="mtList"></ul>
+</nav>
+<script>
+  const CONFIG = {
+    items: "概览｜组件｜动效｜背景｜案例｜实验场｜模板｜更新日志｜社区｜资源", // 导航项
+    proximityRadius: 100,   // 感应半径（px）
+    maxShift: 30,           // 滑出距离（px）
+    showIndex: true,        // 显示序号
+    autoDemo: true,         // 自动扫过演示
+  };
+
+  const list = document.getElementById('mtList');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const smoothstep = p => p * p * (3 - 2 * p);
+  let userTook = false;   // 真实鼠标进过列表后，自动演示交还控制
+
+  const names = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
+  const items = names.map((name, i) => {
+    const li = document.createElement('li');
+    li.className = 'mt-item';
+    li.style.setProperty('--shift', `${CONFIG.maxShift}px`);
+    li.innerHTML = `<span class="mark" aria-hidden="true"></span><span class="label">${CONFIG.showIndex ? `<span class="idx">${String(i + 1).padStart(2, '0')}</span>` : ''}<span></span></span>`;
+    li.querySelector('.label > span:last-child').textContent = name;
+    li.addEventListener('click', () => { active = i; items.forEach((it, k) => it.setAttribute('aria-current', k === i ? 'true' : 'false')); });
+    list.appendChild(li);
+    return li;
+  });
+
+  // 目标值：鼠标到每项中心的距离过 smoothstep；当前值以 100ms 时间常数指数趋近
+  const targets = new Float32Array(items.length), current = new Float32Array(items.length);
+  let active = -1, last = performance.now();
+  function setPointerY(y) {
+    items.forEach((li, i) => {
+      const center = li.offsetTop + li.offsetHeight / 2;
+      targets[i] = smoothstep(Math.max(0, 1 - Math.abs(y - center) / CONFIG.proximityRadius));
+    });
+  }
+  list.addEventListener('pointermove', (e) => { userTook = true; setPointerY(e.clientY - list.getBoundingClientRect().top); });
+  list.addEventListener('pointerleave', () => targets.fill(0));
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    const k = reduceMotion ? 1 : 1 - Math.exp(-dt / 0.1);
+    items.forEach((li, i) => {
+      const target = Math.max(targets[i], active === i ? 1 : 0);
+      current[i] += (target - current[i]) * k;
+      li.style.setProperty('--effect', current[i].toFixed(4));
+    });
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 自动演示：一个虚拟指针沿列表上下扫；真实鼠标进入后交还
+  if (CONFIG.autoDemo && !reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || userTook) return;
+      t += 0.02;
+      setPointerY(list.clientHeight * (0.5 + 0.48 * Math.sin(t)));
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

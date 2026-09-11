@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>溶解卡片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid; place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #fff;
+  }
+  /* 卡片：整体跟随鼠标漂移与旋转（JS 每帧写 transform） */
+  .mt-card { position: relative; will-change: transform; }
+  .mt-card svg { display: block; width: 100%; height: 100%; will-change: transform; }
+  /* 叠在底部的大字：首行更大 */
+  .mt-text {
+    position: absolute; left: 1em; bottom: 1.2em;
+    font-weight: 900; font-size: 2.5rem; line-height: 1.5em; letter-spacing: -0.5px;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  }
+  .mt-text strong { display: block; font-size: 4rem; line-height: 1.1; }
+</style>
+</head>
+<body>
+<div class="mt-card" id="mtCard">
+  <!-- viewBox 四周留出余量，扭曲时图像边缘不会被裁掉 -->
+  <svg viewBox="-60 -75 720 900" preserveAspectRatio="xMidYMid slice">
+    <filter id="mtDecay">
+      <!-- 湍流噪声 → 位移贴图：scale 越大图像被揉得越散 -->
+      <feTurbulence id="mtTurb" type="turbulence" baseFrequency="0.015" numOctaves="5" seed="4" stitchTiles="stitch" x="0%" y="0%" width="100%" height="100%" result="turb"/>
+      <feDisplacementMap id="mtDisp" in="SourceGraphic" in2="turb" scale="0" xChannelSelector="R" yChannelSelector="B" x="0%" y="0%" width="100%" height="100%"/>
+    </filter>
+    <image id="mtImg" x="0" y="0" width="600" height="750" filter="url(#mtDecay)" preserveAspectRatio="xMidYMid slice"/>
+  </svg>
+  <div class="mt-text"><strong id="mtTitle"></strong><span id="mtSub"></span></div>
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-4.webp",  // 图片
+    title: "溶解",                    // 标题
+    subtitle: "动一动鼠标",            // 副标题
+    baseFrequency: 0.015,             // 湍流粒度
+    numOctaves: 5,                    // 湍流层数
+    maxDisplacement: 400,             // 最大扭曲
+    movementBound: 50,                // 漂移范围（px）
+    cardWidth: 300,                   // 卡片宽度（px）
+  };
+
+  const card = document.getElementById('mtCard');
+  const disp = document.getElementById('mtDisp');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let userTook = false;   // 真实鼠标动过后，自动演示交还控制
+  card.style.width = `${CONFIG.cardWidth}px`;
+  card.style.height = `${Math.round(CONFIG.cardWidth * 4 / 3)}px`;
+  document.getElementById('mtImg').setAttribute('href', CONFIG.photo);
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  document.getElementById('mtSub').textContent = CONFIG.subtitle;
+  const turb = document.getElementById('mtTurb');
+  turb.setAttribute('baseFrequency', CONFIG.baseFrequency);
+  turb.setAttribute('numOctaves', CONFIG.numOctaves);
+
+  const lerp = (a, b, n) => (1 - n) * a + n * b;
+  const map = (v, a, b, c, d) => ((v - a) / (b - a)) * (d - c) + c;
+  const cursor = { x: innerWidth / 2, y: innerHeight / 2 }, cached = { x: cursor.x, y: cursor.y };
+  addEventListener('pointermove', (e) => { cursor.x = e.clientX; cursor.y = e.clientY; userTook = true; });
+
+  const state = { x: 0, y: 0, rz: 0, scale: 0 };
+  function frame() {
+    requestAnimationFrame(frame);
+    if (document.hidden) return;
+    // 位置：鼠标在屏幕上的位置映射到 ±120px，10% 阻尼跟随；超出漂移范围的部分只保留 20%（软边界）
+    let tx = lerp(state.x, map(cursor.x, 0, innerWidth, -120, 120), 0.1);
+    let ty = lerp(state.y, map(cursor.y, 0, innerHeight, -120, 120), 0.1);
+    const rz = lerp(state.rz, map(cursor.x, 0, innerWidth, -10, 10), 0.1);
+    const b = CONFIG.movementBound;
+    if (tx > b) tx = b + (tx - b) * 0.2; if (tx < -b) tx = -b + (tx + b) * 0.2;
+    if (ty > b) ty = b + (ty - b) * 0.2; if (ty < -b) ty = -b + (ty + b) * 0.2;
+    state.x = tx; state.y = ty; state.rz = rz;
+    card.style.transform = reduceMotion ? 'none' : `translate(${tx}px, ${ty}px) rotate(${rz}deg)`;
+
+    // 扭曲量：这一帧鼠标走过的距离（0–200px）映射到 0–最大扭曲，6% 阻尼——快动就散，停下就凝
+    const travelled = Math.hypot(cursor.x - cached.x, cursor.y - cached.y);
+    state.scale = lerp(state.scale, Math.min(CONFIG.maxDisplacement, map(travelled, 0, 200, 0, CONFIG.maxDisplacement)), 0.06);
+    disp.setAttribute('scale', reduceMotion ? 0 : state.scale.toFixed(2));
+    cached.x = cursor.x; cached.y = cursor.y;
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟鼠标快慢交替地游走，展示「动得快就散」；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || userTook) return;
+      t += 0.05;
+      const burst = Math.sin(t * 0.7) > 0.3 ? 1 : 0.15;   // 周期性快速甩动
+      cursor.x = innerWidth * (0.5 + 0.4 * Math.sin(t * 2.3 * burst + t));
+      cursor.y = innerHeight * (0.5 + 0.3 * Math.cos(t * 1.7 * burst));
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

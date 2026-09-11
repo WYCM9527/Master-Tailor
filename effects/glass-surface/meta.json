@@ -1,0 +1,105 @@
+{
+  "slug": "glass-surface",
+  "name": "液态玻璃面板",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["玻璃", "折射", "色散", "SVG 滤镜", "拖拽"],
+  "summary": "一块厚玻璃压在画面上，边缘把底下的内容折弯并带出红绿蓝色散，中间清透；可以拖着它在画面上滑",
+  "params": [
+    { "key": "photo", "label": "底图", "type": "image", "target": "config", "default": "/samples/sample-3.webp" },
+    {
+      "key": "width",
+      "label": "面板宽度",
+      "type": "range",
+      "target": "config",
+      "min": 120,
+      "max": 520,
+      "step": 20,
+      "default": 320,
+      "unit": "px"
+    },
+    {
+      "key": "height",
+      "label": "面板高度",
+      "type": "range",
+      "target": "config",
+      "min": 80,
+      "max": 400,
+      "step": 20,
+      "default": 200,
+      "unit": "px"
+    },
+    {
+      "key": "borderRadius",
+      "label": "圆角",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "default": 20,
+      "unit": "px"
+    },
+    {
+      "key": "borderWidth",
+      "label": "折射边宽",
+      "type": "range",
+      "target": "config",
+      "min": 0.02,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.07,
+      "help": "占短边的比例，越大边缘折弯带越宽"
+    },
+    {
+      "key": "distortionScale",
+      "label": "折射强度",
+      "type": "range",
+      "target": "config",
+      "min": -400,
+      "max": 0,
+      "step": 10,
+      "default": -180
+    },
+    {
+      "key": "chromatic",
+      "label": "色散强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "help": "红绿蓝三色分离的程度，0 无色散"
+    },
+    {
+      "key": "blur",
+      "label": "中央柔化",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 11,
+      "help": "位移图中央灰块的模糊，越大过渡越柔"
+    },
+    {
+      "key": "brightness",
+      "label": "玻璃亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "default": 70
+    },
+    { "key": "label", "label": "面板文字", "type": "text", "target": "config", "default": "液态玻璃", "maxLength": 12 }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "pill", "name": "药丸强折", "values": { "width": 420, "height": 120, "borderRadius": 60, "distortionScale": -300, "chromatic": 2 } },
+    { "id": "clear", "name": "清透无色散", "values": { "chromatic": 0, "distortionScale": -120, "blur": 4, "brightness": 90 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

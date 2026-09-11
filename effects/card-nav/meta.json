@@ -1,0 +1,52 @@
+{
+  "slug": "card-nav",
+  "name": "卡片式导航",
+  "category": "nav",
+  "sub": "click",
+  "tags": ["导航", "卡片", "展开", "汉堡"],
+  "summary": "一条白色圆角导航条，点开汉堡钮它向下长高，三张彩色卡片依次从下方浮进来铺满",
+  "params": [
+    {
+      "key": "cards",
+      "label": "卡片内容",
+      "type": "text",
+      "target": "config",
+      "default": "关于:公司,团队,招聘｜项目:精选案例,服务范围｜联系:邮箱,微信,LinkedIn",
+      "help": "「｜」分卡，「:」后是链接，「,」分隔链接"
+    },
+    {
+      "key": "colors",
+      "label": "卡片底色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 5,
+      "default": ["#0d0716", "#170d27", "#271e37"]
+    },
+    { "key": "cardText", "label": "卡片文字色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "baseColor", "label": "导航底色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "menuColor", "label": "导航文字色", "type": "color", "target": "css", "default": "#000000" },
+    { "key": "logoText", "label": "中间标识", "type": "text", "target": "config", "default": "LOGO", "maxLength": 12 },
+    { "key": "ctaText", "label": "右侧按钮文字", "type": "text", "target": "config", "default": "开始使用", "maxLength": 10 },
+    { "key": "ctaColor", "label": "右侧按钮底色", "type": "color", "target": "css", "default": "#111111" },
+    {
+      "key": "duration",
+      "label": "展开时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.4,
+      "unit": "s"
+    },
+    { "key": "autoDemo", "label": "自动开合演示", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dark", "name": "深色导航", "values": { "baseColor": "#141414", "menuColor": "#ffffff", "ctaColor": "#ffffff", "colors": ["#1f2937", "#374151", "#4b5563"] } },
+    { "id": "vivid", "name": "彩色卡", "values": { "colors": ["#2563eb", "#7c3aed", "#db2777"] } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

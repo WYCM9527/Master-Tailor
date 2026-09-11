@@ -1,0 +1,69 @@
+{
+  "slug": "pixel-card",
+  "name": "像素点亮卡",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["卡片", "像素", "粒子", "悬停"],
+  "summary": "悬停时无数细小像素点从卡片中心向四周逐个亮起、微微闪烁，铺满整张卡；离开后又从大到小缩回熄灭",
+  "params": [
+    { "key": "title", "label": "卡片文字", "type": "text", "target": "config", "default": "像素", "maxLength": 12 },
+    {
+      "key": "variant",
+      "label": "配色方案",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "default", "label": "银白" },
+        { "value": "blue", "label": "天蓝" },
+        { "value": "yellow", "label": "金黄" },
+        { "value": "pink", "label": "粉紫" }
+      ],
+      "default": "default"
+    },
+    {
+      "key": "gap",
+      "label": "像素间距",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 16,
+      "step": 1,
+      "default": 5,
+      "unit": "px",
+      "help": "0 表示跟随配色方案"
+    },
+    {
+      "key": "speed",
+      "label": "闪烁速度",
+      "type": "range",
+      "target": "config",
+      "min": 5,
+      "max": 100,
+      "step": 5,
+      "default": 35
+    },
+    { "key": "cardBg", "label": "卡片底色", "type": "color", "target": "css", "default": "#0a0a0f" },
+    { "key": "borderColor", "label": "边框颜色", "type": "color", "target": "css", "default": "#27272a" },
+    { "key": "textColor", "label": "文字颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 25,
+      "unit": "px"
+    },
+    { "key": "autoDemo", "label": "自动亮灭演示", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "blue", "name": "天蓝稀疏", "values": { "variant": "blue", "gap": 10, "speed": 25 } },
+    { "id": "yellow", "name": "金黄致密", "values": { "variant": "yellow", "gap": 3, "speed": 20 } },
+    { "id": "pink", "name": "粉紫", "values": { "variant": "pink", "gap": 6, "speed": 80 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

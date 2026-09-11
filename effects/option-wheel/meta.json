@@ -1,0 +1,93 @@
+{
+  "slug": "option-wheel",
+  "name": "选项转轮",
+  "category": "nav",
+  "sub": "click",
+  "tags": ["选项", "转轮", "滚轮", "拖拽", "键盘"],
+  "summary": "一列选项像刻在转轮侧面，滚轮、拖拽或方向键拨动，离中线越远越淡越糊，选中项停在中线亮起",
+  "params": [
+    {
+      "key": "items",
+      "label": "选项",
+      "type": "text",
+      "target": "config",
+      "default": "环境音｜浩室｜科技舞曲｜爵士｜Lo-Fi｜合成器浪潮｜迷幻｜放克｜迪斯科｜嘻哈｜冷浪潮｜鼓打贝斯",
+      "help": "用「｜」分隔"
+    },
+    {
+      "key": "defaultSelected",
+      "label": "初始选中序号",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 11,
+      "step": 1,
+      "default": 3
+    },
+    { "key": "textColor", "label": "文字颜色", "type": "color", "target": "css", "default": "#a6a6a6" },
+    { "key": "activeColor", "label": "选中颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "config",
+      "min": 24,
+      "max": 72,
+      "step": 2,
+      "default": 48,
+      "unit": "px"
+    },
+    {
+      "key": "spacing",
+      "label": "行距倍数",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 2.2,
+      "step": 0.1,
+      "default": 1.4
+    },
+    {
+      "key": "tilt",
+      "label": "弯曲角度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 6,
+      "unit": "°",
+      "help": "相邻两项之间的转角，越大轮子越弯"
+    },
+    {
+      "key": "blur",
+      "label": "远处模糊",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 6,
+      "step": 0.5,
+      "default": 2,
+      "unit": "px"
+    },
+    {
+      "key": "fade",
+      "label": "远处淡出",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.25,
+      "help": "每远一项透明度降低的量"
+    },
+    { "key": "loop", "label": "循环", "type": "toggle", "target": "config", "default": false }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "flat", "name": "平直列表", "values": { "tilt": 0, "blur": 0, "fade": 0.35 } },
+    { "id": "curly", "name": "紧卷轮", "values": { "tilt": 14, "spacing": 1.2, "fontSize": 40, "loop": true } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

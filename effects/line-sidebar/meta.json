@@ -1,0 +1,74 @@
+{
+  "slug": "line-sidebar",
+  "name": "刻度线侧栏",
+  "category": "nav",
+  "sub": "hover",
+  "tags": ["侧栏", "导航", "刻度", "鼠标跟随"],
+  "summary": "像尺子一样带刻度线的竖向导航，鼠标靠近哪一项，那一项就滑出、变色，刻度线跟着伸长",
+  "params": [
+    {
+      "key": "items",
+      "label": "导航项",
+      "type": "text",
+      "target": "config",
+      "default": "概览｜组件｜动效｜背景｜案例｜实验场｜模板｜更新日志｜社区｜资源",
+      "help": "用「｜」分隔"
+    },
+    { "key": "accentColor", "label": "强调色", "type": "color", "target": "css", "default": "#a855f7" },
+    { "key": "textColor", "label": "文字颜色", "type": "color", "target": "css", "default": "#c4c4c4" },
+    { "key": "markerColor", "label": "刻度线颜色", "type": "color", "target": "css", "default": "#6c6c6c" },
+    {
+      "key": "proximityRadius",
+      "label": "感应半径",
+      "type": "range",
+      "target": "config",
+      "min": 40,
+      "max": 240,
+      "step": 10,
+      "default": 100,
+      "unit": "px"
+    },
+    {
+      "key": "maxShift",
+      "label": "滑出距离",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 80,
+      "step": 5,
+      "default": 30,
+      "unit": "px"
+    },
+    {
+      "key": "markerLength",
+      "label": "刻度线长度",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 120,
+      "step": 5,
+      "default": 60,
+      "unit": "px"
+    },
+    { "key": "showIndex", "label": "显示序号", "type": "toggle", "target": "config", "default": true },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 14,
+      "max": 28,
+      "step": 1,
+      "default": 18,
+      "unit": "px"
+    },
+    { "key": "autoDemo", "label": "自动扫过演示", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "green", "name": "荧光绿", "values": { "accentColor": "#27ff64", "markerColor": "#3a3a3a", "maxShift": 45 } },
+    { "id": "minimal", "name": "无序号短刻", "values": { "showIndex": false, "markerLength": 30, "fontSize": 16 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

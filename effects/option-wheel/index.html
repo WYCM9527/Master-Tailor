@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>选项转轮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;            /* 页面底色 */
+    --mt-textColor: #a6a6a6;     /* 文字颜色 */
+    --mt-activeColor: #ffffff;   /* 选中颜色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  /* 轮盘：占满视口，选项绝对定位在左侧中线附近，位置由 JS 每帧算 */
+  .mt-wheel {
+    position: fixed; inset: 0;
+    outline: none;
+    cursor: ns-resize;
+    user-select: none;
+    touch-action: none;
+  }
+  .mt-opt {
+    position: absolute; top: 50%; left: var(--inset, 80px);
+    white-space: nowrap; line-height: 1;
+    font-weight: 200;
+    color: color-mix(in srgb, var(--mt-activeColor) calc(var(--p, 0) * 100%), var(--mt-textColor));
+    will-change: transform, opacity, filter;
+    cursor: pointer;
+  }
+  .mt-opt.selected { font-weight: 500; }
+  .mt-hint {
+    position: fixed; right: 32px; bottom: 24px;
+    color: rgba(255,255,255,0.3); font-size: 12px; letter-spacing: 0.14em;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="mt-wheel" id="mtWheel" role="listbox" tabindex="0" aria-label="选项转轮"></div>
+<div class="mt-hint">滚轮 / 拖拽 / ↑↓ 拨动</div>
+<script>
+  const CONFIG = {
+    items: "环境音｜浩室｜科技舞曲｜爵士｜Lo-Fi｜合成器浪潮｜迷幻｜放克｜迪斯科｜嘻哈｜冷浪潮｜鼓打贝斯", // 选项
+    defaultSelected: 3,   // 初始选中序号
+    fontSize: 48,         // 字号（px）
+    spacing: 1.4,         // 行距倍数
+    tilt: 6,              // 弯曲角度（度）
+    blur: 2,              // 远处模糊（px）
+    fade: 0.25,           // 远处淡出
+    loop: false,          // 循环
+  };
+  const MIN_OPACITY = 0.05, SMOOTHING = 200, CURVE = 1;
+
+  const wheel = document.getElementById('mtWheel');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let userTook = false;   // 用户操作过后，自动演示交还控制
+  const names = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
+  const n = names.length;
+  const rowH = CONFIG.fontSize * CONFIG.spacing;
+
+  const opts = names.map((name, i) => {
+    const el = document.createElement('div');
+    el.className = 'mt-opt'; el.textContent = name; el.setAttribute('role', 'option');
+    el.style.fontSize = `${CONFIG.fontSize}px`;
+    el.addEventListener('click', () => { if (!dragMoved) applyTarget(i, true); });
+    wheel.appendChild(el);
+    return el;
+  });
+
+  // pos 是当前「浮点选中位置」，target 是目标；每帧以 200ms 时间常数趋近后重新排布
+  let pos = Math.min(CONFIG.defaultSelected, n - 1), target = pos, selected = Math.round(pos), last = performance.now();
+  const tiltRad = (CONFIG.tilt * Math.PI) / 180;
+  const R = tiltRad > 0.0005 ? rowH / tiltRad : 0;   // 圆弧半径：让相邻两项的弧长正好等于一行高
+
+  function layout() {
+    for (let i = 0; i < n; i++) {
+      let d = i - pos;
+      if (CONFIG.loop && n > 1) { d = ((d % n) + n) % n; if (d > n / 2) d -= n; }
+      const dist = Math.abs(d);
+      let x = 0, y = d * rowH, rot = 0;
+      if (R > 0) {
+        // 沿圆弧摆放：越远越往左收、越斜
+        const ang = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, d * tiltRad));
+        y = R * Math.sin(ang);
+        x = -R * (1 - Math.cos(ang)) * CURVE;
+        rot = (ang * 180) / Math.PI;
+      }
+      const el = opts[i];
+      el.style.transform = `translate(${x.toFixed(2)}px, calc(${y.toFixed(2)}px - 50%)) rotate(${rot.toFixed(3)}deg)`;
+      el.style.opacity = Math.max(MIN_OPACITY, 1 - dist * CONFIG.fade).toFixed(3);
+      el.style.filter = CONFIG.blur > 0 ? `blur(${(dist * CONFIG.blur).toFixed(2)}px)` : 'none';
+      el.style.setProperty('--p', Math.max(0, 1 - Math.min(dist, 1)).toFixed(4));
+    }
+  }
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    const k = reduceMotion ? 1 : 1 - Math.exp(-dt / (SMOOTHING / 1000));
+    pos += (target - pos) * k;
+    if (Math.abs(target - pos) < 0.001) pos = target;
+    layout();
+  }
+  requestAnimationFrame(frame);
+
+  /* 设定目标：非循环时夹在两端；snap 为真时取整；选中项变化时更新样式 */
+  function applyTarget(value, snap) {
+    let v = value;
+    if (!CONFIG.loop) v = Math.max(0, Math.min(n - 1, v));
+    if (snap) v = Math.round(v);
+    target = v;
+    const idx = ((Math.round(v) % n) + n) % n;
+    if (idx !== selected) {
+      selected = idx;
+      opts.forEach((el, i) => { el.classList.toggle('selected', i === idx); el.setAttribute('aria-selected', String(i === idx)); });
+    }
+  }
+  applyTarget(pos, true);
+
+  // 滚轮：每次事件最多走一格（有刻度的鼠标一格一项，触控板连续滚），停手 140ms 后吸附到整数
+  let wheelTimer = 0;
+  wheel.addEventListener('wheel', (e) => {
+    e.preventDefault(); userTook = true;
+    const step = Math.max(-1, Math.min(1, e.deltaY / rowH));
+    applyTarget(target + step, false);
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => applyTarget(target, true), 140);
+  }, { passive: false });
+  // 拖拽：按住上下拖动，松手吸附
+  let drag = null, dragMoved = false;
+  wheel.addEventListener('pointerdown', (e) => { drag = { y: e.clientY, start: target }; dragMoved = false; wheel.setPointerCapture(e.pointerId); userTook = true; });
+  wheel.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dy = e.clientY - drag.y;
+    if (Math.abs(dy) > 3) dragMoved = true;
+    applyTarget(drag.start - dy / rowH, false);
+  });
+  const endDrag = () => { if (!drag) return; drag = null; applyTarget(target, true); setTimeout(() => (dragMoved = false), 0); };
+  wheel.addEventListener('pointerup', endDrag); wheel.addEventListener('pointercancel', endDrag);
+  // 键盘：↑↓ 一格，Home/End 两端
+  wheel.addEventListener('keydown', (e) => {
+    userTook = true;
+    if (e.key === 'ArrowDown') { e.preventDefault(); applyTarget(Math.round(target) + 1, true); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); applyTarget(Math.round(target) - 1, true); }
+    else if (e.key === 'Home') { e.preventDefault(); applyTarget(0, true); }
+    else if (e.key === 'End') { e.preventDefault(); applyTarget(n - 1, true); }
+  });
+
+  /* @mt:thumb-start */
+  // 自动演示：每 1.6s 拨一格，来回；用户一操作就交还
+  if (!reduceMotion) {
+    let dir = 1;
+    setInterval(() => {
+      if (document.hidden || userTook) return;
+      const next = Math.round(target) + dir;
+      if (next >= n - 1 || next <= 0) dir = -dir;
+      applyTarget(Math.max(0, Math.min(n - 1, next)), true);
+    }, 1600);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
