@@ -17,12 +17,15 @@ const BG_KEY = 'bg';
 const NO_CODE_KEY = 'nc';
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
+/** 数组类参数值（图片列表 / 颜色列表）深拷贝，避免面板编辑污染 meta 里的默认值与预设 */
+function cloneValue(v: ParamValue): ParamValue {
+  if (!Array.isArray(v)) return v;
+  return v.map((item) => (typeof item === 'string' ? item : { ...item })) as ParamValue;
+}
+
 export function defaultValues(meta: EffectMeta): Values {
   const values: Values = {};
-  for (const p of meta.params) {
-    // 图片列表是对象数组，必须深拷贝，避免面板编辑污染 meta 里的默认值
-    values[p.key] = p.type === 'images' ? p.default.map((s) => ({ ...s })) : p.default;
-  }
+  for (const p of meta.params) values[p.key] = cloneValue(p.default);
   return values;
 }
 
@@ -35,9 +38,7 @@ export function applyPreset(meta: EffectMeta, presetId: string): Values {
   const preset = meta.presets.find((p) => p.id === presetId);
   const values = defaultValues(meta);
   if (preset) {
-    for (const [k, v] of Object.entries(preset.values)) {
-      values[k] = Array.isArray(v) ? v.map((s) => ({ ...s })) : v;
-    }
+    for (const [k, v] of Object.entries(preset.values)) values[k] = cloneValue(v);
   }
   return values;
 }
@@ -80,6 +81,18 @@ function decodeSlides(raw: string, min: number, max: number): SlideItem[] | unde
   return slides;
 }
 
+/** 颜色列表编码为去掉 # 的 hex 逗号串：`ffffff,7c4dff` */
+function encodeColors(colors: string[]): string {
+  return colors.map((c) => c.slice(1).toLowerCase()).join(',');
+}
+
+function decodeColors(raw: string, min: number, max: number): string[] | undefined {
+  const items = raw.split(',').slice(0, max);
+  if (items.length < min) return undefined;
+  if (!items.every((c) => /^[0-9a-fA-F]{6}$/.test(c))) return undefined;
+  return items.map((c) => `#${c.toLowerCase()}`);
+}
+
 export function encodeState(meta: EffectMeta, state: EffectState): URLSearchParams {
   const sp = new URLSearchParams();
   for (const p of meta.params) {
@@ -90,6 +103,12 @@ export function encodeState(meta: EffectMeta, state: EffectState): URLSearchPara
       // 与默认值等价（把 blob 槽位按回退规则归一后比较）则不写
       const encoded = encodeSlides(slides);
       if (encoded === encodeSlides(p.default)) continue;
+      sp.set(p.key, encoded);
+      continue;
+    }
+    if (p.type === 'colors') {
+      const encoded = encodeColors(v as string[]);
+      if (encoded === encodeColors(p.default)) continue;
       sp.set(p.key, encoded);
       continue;
     }
@@ -126,6 +145,8 @@ function decodeValue(meta: EffectMeta, key: string, raw: string): ParamValue | u
       return raw.startsWith('/samples/') ? raw : undefined;
     case 'images':
       return decodeSlides(raw, p.min, p.max);
+    case 'colors':
+      return decodeColors(raw, p.min, p.max);
   }
 }
 

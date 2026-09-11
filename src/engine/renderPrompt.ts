@@ -80,6 +80,10 @@ export function humanValue(param: Param, value: ParamValue): string {
       });
       return `共 ${slides.length} 张（占位路径，生成后我会换成自己的图片）：${items.join('；')}`;
     }
+    case 'colors': {
+      const colors = value as string[];
+      return `共 ${colors.length} 色，按顺序 ${colors.join('、')}`;
+    }
   }
 }
 

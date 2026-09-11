@@ -101,6 +101,23 @@ const imagesParam = z
     message: 'images 默认张数必须落在 [min, max] 内',
   });
 
+const HEX_COLOR = z.string().regex(/^#[0-9a-fA-F]{6}$/, '颜色必须是 6 位 hex');
+
+/** 颜色列表参数只允许 config：颜色数量驱动 DOM / 循环 */
+const colorsParam = z
+  .object({
+    ...baseParam,
+    type: z.literal('colors'),
+    target: z.literal('config'),
+    min: z.number().int().min(1),
+    max: z.number().int().max(12),
+    default: z.array(HEX_COLOR),
+  })
+  .refine((p) => p.min <= p.max, { message: 'colors 参数 min 必须 ≤ max' })
+  .refine((p) => p.default.length >= p.min && p.default.length <= p.max, {
+    message: 'colors 默认颜色数必须落在 [min, max] 内',
+  });
+
 export const paramSchema = z.discriminatedUnion('type', [
   colorParam,
   rangeParam,
@@ -110,6 +127,7 @@ export const paramSchema = z.discriminatedUnion('type', [
   fontParam,
   imageParam,
   imagesParam,
+  colorsParam,
 ]);
 
 export const effectMetaSchema = z
@@ -137,7 +155,7 @@ export const effectMetaSchema = z
           name: z.string().min(1),
           values: z.record(
             z.string(),
-            z.union([z.string(), z.number(), z.boolean(), z.array(slideItem)]),
+            z.union([z.string(), z.number(), z.boolean(), z.array(slideItem), z.array(HEX_COLOR)]),
           ),
         }),
       )

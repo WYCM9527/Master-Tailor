@@ -198,7 +198,12 @@ for (const slug of dirs) {
           p.options.some((o) => o.value === value)) ||
         (p.type === 'text' && typeof value === 'string') ||
         (p.type === 'font' && typeof value === 'string' && fontIds.has(value)) ||
-        (p.type === 'image' && typeof value === 'string' && value.startsWith('/samples/'));
+        (p.type === 'image' && typeof value === 'string' && value.startsWith('/samples/')) ||
+        (p.type === 'colors' &&
+          Array.isArray(value) &&
+          value.length >= p.min &&
+          value.length <= p.max &&
+          value.every((c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)));
       if (!typeOk) fail(slug, `预设「${preset.name}」的 ${key} = ${JSON.stringify(value)} 不合法`);
     }
   }

@@ -6,9 +6,16 @@
   "tags": ["渐变", "氛围", "流动"],
   "summary": "缓慢流动的多色极光背景，适合首屏与登录页",
   "params": [
-    { "key": "colorA", "label": "主色", "type": "color", "target": "css", "default": "#ffffff" },
-    { "key": "colorB", "label": "辅色", "type": "color", "target": "css", "default": "#7c4dff" },
-    { "key": "colorC", "label": "点缀色", "type": "color", "target": "css", "default": "#00e5ff" },
+    {
+      "key": "colors",
+      "label": "极光颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 2,
+      "max": 8,
+      "default": ["#ffffff", "#7c4dff", "#00e5ff"],
+      "help": "光斑按这个顺序轮流取色，颗数多于颜色数时从头再来"
+    },
     {
       "key": "speed",
       "label": "流动速度",
@@ -39,7 +46,7 @@
       "type": "range",
       "target": "config",
       "min": 2,
-      "max": 6,
+      "max": 8,
       "step": 1,
       "default": 3
     }
@@ -49,12 +56,26 @@
     {
       "id": "cyber",
       "name": "赛博青紫",
-      "values": { "colorA": "#00e5ff", "colorB": "#7c4dff", "colorC": "#ff4dff", "speed": 1.4 }
+      "values": { "colors": ["#00e5ff", "#7c4dff", "#ff4dff"], "speed": 1.4 }
     },
     {
       "id": "sunset",
       "name": "日落暖橙",
-      "values": { "colorA": "#ff9e42", "colorB": "#ff4d6d", "colorC": "#ffd166", "speed": 0.6, "blur": 120, "blobs": 4 }
+      "values": {
+        "colors": ["#ff9e42", "#ff4d6d", "#ffd166", "#ff7a00"],
+        "speed": 0.6,
+        "blur": 120,
+        "blobs": 4
+      }
+    },
+    {
+      "id": "rainbow",
+      "name": "七彩极光",
+      "values": {
+        "colors": ["#ff4d6d", "#ff9e42", "#ffd166", "#4dff88", "#00e5ff", "#7c4dff", "#ff4dff"],
+        "blobs": 7,
+        "blur": 110
+      }
     }
   ],
   "thumb": { "mode": "live" },

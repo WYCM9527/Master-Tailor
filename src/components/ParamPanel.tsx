@@ -2,6 +2,7 @@ import { useId, useRef, useState } from 'react';
 import type {
   BgSetting,
   ColorParam,
+  ColorsParam,
   EffectMeta,
   ImageParam,
   ImagesParam,
@@ -195,7 +196,84 @@ function Control({ param, value, onChange }: ControlProps) {
       return <ImageControl param={param} value={String(value)} onChange={onChange} />;
     case 'images':
       return <ImagesControl param={param} value={value as SlideItem[]} onChange={onChange} />;
+    case 'colors':
+      return <ColorsControl param={param} value={value as string[]} onChange={onChange} />;
   }
+}
+
+/** 颜色列表控件：每行 = 色块选择器 + hex 输入 + 删除，可在 [min, max] 内增减 */
+function ColorsControl({
+  param,
+  value,
+  onChange,
+}: {
+  param: ColorsParam;
+  value: string[];
+  onChange: (v: ParamValue) => void;
+}) {
+  const update = (index: number, color: string) => {
+    onChange(value.map((c, i) => (i === index ? color : c)));
+  };
+  const remove = (index: number) => onChange(value.filter((_, i) => i !== index));
+  // 新颜色从默认调色板轮流取，用完后复用最后一色，避免连续同色
+  const add = () => {
+    const fallback =
+      param.default[value.length % param.default.length] ?? value.at(-1) ?? '#ffffff';
+    onChange([...value, fallback]);
+  };
+
+  return (
+    <div className="control">
+      <div className="control-head">
+        <span className="control-label">{param.label}</span>
+        <span className="control-value">
+          {value.length} / {param.max} 色
+        </span>
+      </div>
+      <div className="slides-list">
+        {value.map((color, i) => (
+          <div className="slide-slot" key={i}>
+            <div className="slide-slot-row color-slot-row">
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => update(i, e.target.value)}
+                aria-label={`第 ${i + 1} 色`}
+              />
+              <input
+                type="text"
+                value={color}
+                maxLength={7}
+                onChange={(e) => {
+                  const v = e.target.value.trim();
+                  if (/^#[0-9a-fA-F]{6}$/.test(v)) update(i, v.toLowerCase());
+                }}
+                aria-label={`第 ${i + 1} 色 hex 值`}
+              />
+              <button
+                type="button"
+                className="btn btn-ghost slide-remove"
+                disabled={value.length <= param.min}
+                title={value.length <= param.min ? `至少 ${param.min} 色` : '删除这一色'}
+                onClick={() => remove(i)}
+              >
+                <IconClose size={12} />
+              </button>
+            </div>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="btn btn-ghost slide-add"
+          disabled={value.length >= param.max}
+          onClick={add}
+        >
+          添加一色
+        </button>
+      </div>
+      {param.help && <span className="control-help">{param.help}</span>}
+    </div>
+  );
 }
 
 function ColorControl({

@@ -8,9 +8,6 @@
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;      /* 页面底色 */
-    --mt-colorA: #ffffff;  /* 主色：第 1 个光斑 */
-    --mt-colorB: #7c4dff;  /* 辅色：第 2 个光斑 */
-    --mt-colorC: #00e5ff;  /* 点缀色：第 3 个及以后的光斑轮流取色 */
     --mt-speed: 1;         /* 流动速度倍率：1 为正常，越大越快 */
     --mt-blur: 90px;       /* 光斑柔和度：高斯模糊半径 */
   }
@@ -54,11 +51,11 @@
 <div class="mt-aurora" id="mtAurora" aria-hidden="true"></div>
 <script>
   const CONFIG = {
-    blobs: 3, // 光斑数量（2-6 个）
+    colors: ['#ffffff', '#7c4dff', '#00e5ff'], // 极光颜色：光斑按此顺序轮流取色，可增删（2-8 色）
+    blobs: 3, // 光斑数量（2-8 个）
   };
 
-  // 光斑颜色按 主色 → 辅色 → 点缀色 轮流取
-  const palette = ['var(--mt-colorA)', 'var(--mt-colorB)', 'var(--mt-colorC)'];
+  const palette = CONFIG.colors;
   const container = document.getElementById('mtAurora');
 
   for (let i = 0; i < CONFIG.blobs; i++) {

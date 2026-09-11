@@ -111,6 +111,19 @@ export interface ImagesParam extends BaseParam {
   default: SlideItem[];
 }
 
+/**
+ * 颜色列表参数（多色渐变 / 光斑等「按颜色轮流取色」的效果）：
+ * - 面板中每行 = 色块选择器 + hex 输入 + 删除，可在 [min, max] 内增减颜色
+ * - 只允许 config：颜色数量驱动 DOM / 循环，注入为单行字符串数组 `colors: ["#…", …], // 注释`
+ */
+export interface ColorsParam extends BaseParam {
+  type: 'colors';
+  target: 'config';
+  min: number;
+  max: number;
+  default: string[];
+}
+
 export type Param =
   | ColorParam
   | RangeParam
@@ -119,9 +132,10 @@ export type Param =
   | TextParam
   | FontParam
   | ImageParam
-  | ImagesParam;
+  | ImagesParam
+  | ColorsParam;
 
-export type ParamValue = string | number | boolean | SlideItem[];
+export type ParamValue = string | number | boolean | SlideItem[] | string[];
 export type Values = Record<string, ParamValue>;
 
 export interface Preset {

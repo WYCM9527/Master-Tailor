@@ -24,7 +24,8 @@ export function toCssValue(param: Param, value: ParamValue, exportMode: boolean)
     }
     case 'text':
     case 'images':
-      // schema 已禁止 text / images 参数注入 CSS，此分支仅作类型完备
+    case 'colors':
+      // schema 已禁止 text / images / colors 参数注入 CSS，此分支仅作类型完备
       return JSON.stringify(String(value));
   }
 }
@@ -43,6 +44,8 @@ export function toConfigValue(param: Param, value: ParamValue, exportMode: boole
     }));
     return JSON.stringify(out);
   }
+  // 颜色列表：单行字符串数组，导出与预览一致
+  if (param.type === 'colors') return JSON.stringify(value as string[]);
   if (param.type === 'range') return String(Number(value));
   if (param.type === 'toggle') return value ? 'true' : 'false';
   return JSON.stringify(value);
