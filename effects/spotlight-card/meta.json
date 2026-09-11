@@ -1,0 +1,61 @@
+{
+  "slug": "spotlight-card",
+  "name": "卡面聚光",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["卡片", "聚光", "柔光", "鼠标跟随"],
+  "summary": "鼠标移进卡片，一团柔光在卡面上跟着走，移出后缓缓熄灭",
+  "params": [
+    { "key": "titles", "label": "卡片标题", "type": "text", "target": "config", "default": "极速｜安全｜开放", "help": "用「｜」分隔，一张卡一个" },
+    {
+      "key": "descs",
+      "label": "卡片描述",
+      "type": "text",
+      "target": "config",
+      "default": "毫秒级响应，随时可用｜端到端加密，数据只属于你｜开放接口，与任何工具协作",
+      "help": "用「｜」分隔，与标题一一对应"
+    },
+    { "key": "spotColor", "label": "聚光颜色", "type": "color", "target": "config", "default": "#ffffff" },
+    {
+      "key": "spotAlpha",
+      "label": "聚光浓度",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.25
+    },
+    {
+      "key": "intensity",
+      "label": "亮起程度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.6,
+      "help": "鼠标进入后柔光层的整体透明度"
+    },
+    { "key": "cardBg", "label": "卡片底色", "type": "color", "target": "css", "default": "#111111" },
+    { "key": "borderColor", "label": "边框颜色", "type": "color", "target": "css", "default": "#222222" },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "default": 24,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "cyan", "name": "青光", "values": { "spotColor": "#00e5ff", "spotAlpha": 0.35, "cardBg": "#0a1218" } },
+    { "id": "warm", "name": "暖光纸卡", "values": { "spotColor": "#ffd28a", "spotAlpha": 0.3, "cardBg": "#1a1410", "borderColor": "#2e261c", "radius": 12 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

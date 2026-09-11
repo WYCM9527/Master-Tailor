@@ -7,89 +7,168 @@
 <style>
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
-    --mt-bg: #0a0a0f;          /* 页面底色 */
-    --mt-dotColor: #3a3d52;    /* 点的颜色（常态下的暗点） */
-    --mt-spotColor: #ffffff;   /* 聚光颜色（鼠标附近点亮的点） */
-    --mt-gap: 26px;            /* 点间距 */
-    --mt-dotSize: 1.5px;       /* 点大小（半径） */
-    --mt-spotRadius: 200px;    /* 聚光半径 */
-    /* 鼠标位置（由 JS 实时更新） */
-    --mt-mx: 50%;
-    --mt-my: 50%;
+    --mt-bg: #0a0a0f;        /* 页面底色 */
   }
-
   html, body { margin: 0; height: 100%; }
-  body { background: var(--mt-bg); overflow: hidden; }
-
-  .mt-dots, .mt-dots-lit {
-    position: fixed;
-    inset: 0;
-    /* 用 radial-gradient 平铺出点阵 */
-    background-image: radial-gradient(circle, var(--mt-dotColor) var(--mt-dotSize), transparent var(--mt-dotSize));
-    background-size: var(--mt-gap) var(--mt-gap);
-  }
-
-  .mt-dots-lit {
-    /* 亮色点阵叠在上层，只在鼠标周围一圈内可见 */
-    background-image: radial-gradient(circle, var(--mt-spotColor) var(--mt-dotSize), transparent var(--mt-dotSize));
-    -webkit-mask-image: radial-gradient(circle var(--mt-spotRadius) at var(--mt-mx) var(--mt-my), #000 0%, transparent 100%);
-    mask-image: radial-gradient(circle var(--mt-spotRadius) at var(--mt-mx) var(--mt-my), #000 0%, transparent 100%);
-  }
+  body { background: var(--mt-bg); overflow: hidden; cursor: crosshair; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：点只变色、不位移（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
 </style>
 </head>
 <body>
-<div class="mt-dots" aria-hidden="true"></div>
-<div class="mt-dots-lit" aria-hidden="true"></div>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
 <script>
   const CONFIG = {
-    ease: 0.18, // 聚光跟随的平滑度（0-1，越小越有拖拽感）
+    dotSize: 5,             // 点的直径（px）
+    gap: 15,                // 点间距（px）
+    baseColor: "#333333",   // 点的底色
+    activeColor: "#27ff64", // 靓亮颜色
+    proximity: 120,         // 感应半径（px）
+    shockRadius: 250,       // 冲击波半径（px）
+    shockStrength: 5,       // 冲击力度
+    resistance: 750,        // 滑行阻力（px/s²）
+    returnDuration: 1.5,    // 弹回时长（s）
   };
+  const SPEED_TRIGGER = 100;  // 鼠标快过这个速度（px/s）才会甩开点
 
-  const root = document.documentElement;
+  const canvas = document.getElementById('mtCanvas');
+  const ctx = canvas.getContext('2d');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(2, devicePixelRatio || 1);
 
-  // 目标位置与当前位置，用 rAF 做平滑跟随
-  let targetX = innerWidth / 2, targetY = innerHeight / 2;
-  let curX = targetX, curY = targetY;
-  let rafId = null;
+  function hexRgb(hex) {
+    const h = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+  }
+  const base = hexRgb(CONFIG.baseColor), active = hexRgb(CONFIG.activeColor);
 
-  function feed(x, y) { targetX = x; targetY = y; }
-  document.addEventListener('mousemove', (e) => feed(e.clientX, e.clientY));
-
-  function loop() {
-    // 减少动态效果时：聚光直接吸附到目标位置，不做缓动动画
-    if (reduceMotion) { curX = targetX; curY = targetY; }
-    else {
-      curX += (targetX - curX) * CONFIG.ease;
-      curY += (targetY - curY) * CONFIG.ease;
+  // 点：cx/cy 原位；ox/oy 位移；phase idle → inertia（带初速滑行减速）→ return（弹性回原位）
+  let W = 0, H = 0, dots = [];
+  function build() {
+    const cell = CONFIG.dotSize + CONFIG.gap;
+    const cols = Math.floor((W + CONFIG.gap) / cell), rows = Math.floor((H + CONFIG.gap) / cell);
+    const startX = (W - (cell * cols - CONFIG.gap)) / 2 + CONFIG.dotSize / 2;
+    const startY = (H - (cell * rows - CONFIG.gap)) / 2 + CONFIG.dotSize / 2;
+    dots = [];
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      dots.push({ cx: startX + x * cell, cy: startY + y * cell, ox: 0, oy: 0, vx: 0, vy: 0, phase: 'idle', t0: 0, fx: 0, fy: 0 });
     }
-    root.style.setProperty('--mt-mx', curX + 'px');
-    root.style.setProperty('--mt-my', curY + 'px');
-    rafId = requestAnimationFrame(loop);
+  }
+  function resize() {
+    W = innerWidth; H = innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    build();
+  }
+  resize(); addEventListener('resize', resize);
+
+  /* 给点一个初速度（px/s），进入滑行阻尼阶段 */
+  function fling(dot, vx, vy) {
+    if (reduceMotion) return;
+    dot.vx = vx; dot.vy = vy; dot.phase = 'inertia';
   }
 
-  // 页面切到后台时暂停 rAF，避免空耗性能
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { cancelAnimationFrame(rafId); rafId = null; }
-    else if (!rafId) rafId = requestAnimationFrame(loop);
-  });
-  rafId = requestAnimationFrame(loop);
+  // 鼠标：算瞬时速度（px/s，上限 5000）；快速划过感应半径内的点 → 甩开
+  const pointer = { x: -9999, y: -9999, lastX: 0, lastY: 0, lastT: 0, vx: 0, vy: 0, speed: 0 };
+  let lastMoveHandled = 0;
+  function onMove(x, y) {
+    const now = performance.now();
+    const dt = pointer.lastT ? now - pointer.lastT : 16;
+    let vx = ((x - pointer.lastX) / dt) * 1000, vy = ((y - pointer.lastY) / dt) * 1000;
+    let speed = Math.hypot(vx, vy);
+    if (speed > 5000) { const k = 5000 / speed; vx *= k; vy *= k; speed = 5000; }
+    pointer.lastT = now; pointer.lastX = x; pointer.lastY = y;
+    pointer.x = x; pointer.y = y; pointer.vx = vx; pointer.vy = vy; pointer.speed = speed;
+
+    if (now - lastMoveHandled < 50) return;            // 50ms 节流：不要每个 move 都甩一遍
+    lastMoveHandled = now;
+    if (speed <= SPEED_TRIGGER) return;
+    for (const d of dots) {
+      if (d.phase !== 'idle') continue;
+      const dist = Math.hypot(d.cx - x, d.cy - y);
+      if (dist < CONFIG.proximity) {
+        // 初速度 = 从鼠标指向点的向量 + 鼠标速度的一小份
+        fling(d, d.cx - x + vx * 0.005, d.cy - y + vy * 0.005);
+      }
+    }
+  }
+  addEventListener('pointermove', (e) => onMove(e.clientX, e.clientY));
+
+  /* 点击冲击波：半径内的点按距离衰减获得向外的初速度 */
+  function shock(x, y) {
+    for (const d of dots) {
+      if (d.phase !== 'idle') continue;
+      const dist = Math.hypot(d.cx - x, d.cy - y);
+      if (dist < CONFIG.shockRadius) {
+        const falloff = Math.max(0, 1 - dist / CONFIG.shockRadius);
+        fling(d, (d.cx - x) * CONFIG.shockStrength * falloff, (d.cy - y) * CONFIG.shockStrength * falloff);
+      }
+    }
+  }
+  addEventListener('click', (e) => shock(e.clientX, e.clientY));
+
+  /* elastic.out(1, 0.75)：过冲后越荡越小地回到 1 */
+  function elasticOut(t) {
+    if (t <= 0) return 0; if (t >= 1) return 1;
+    const p = 0.75, s = p / 4;
+    return Math.pow(2, -10 * t) * Math.sin(((t - s) * (2 * Math.PI)) / p) + 1;
+  }
+
+  const circle = new Path2D();
+  circle.arc(0, 0, CONFIG.dotSize / 2, 0, Math.PI * 2);
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }        // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+
+    ctx.clearRect(0, 0, W, H);
+    const proxSq = CONFIG.proximity * CONFIG.proximity;
+    for (const d of dots) {
+      // —— 位移状态机 ——
+      if (d.phase === 'inertia') {
+        d.ox += d.vx * dt; d.oy += d.vy * dt;
+        const sp = Math.hypot(d.vx, d.vy);
+        const ns = sp - CONFIG.resistance * dt;          // 线性减速滑行
+        if (ns <= 0) { d.phase = 'return'; d.t0 = now; d.fx = d.ox; d.fy = d.oy; }
+        else { d.vx *= ns / sp; d.vy *= ns / sp; }
+      } else if (d.phase === 'return') {
+        const t = (now - d.t0) / (CONFIG.returnDuration * 1000);
+        const k = 1 - elasticOut(Math.min(1, t));        // 从位移处弹回 0
+        d.ox = d.fx * k; d.oy = d.fy * k;
+        if (t >= 1) { d.ox = 0; d.oy = 0; d.phase = 'idle'; }
+      }
+      // —— 颜色：感应半径内从底色插值到亮色 ——
+      const dx = d.cx - pointer.x, dy = d.cy - pointer.y;
+      const dsq = dx * dx + dy * dy;
+      let fill;
+      if (dsq <= proxSq) {
+        const t = 1 - Math.sqrt(dsq) / CONFIG.proximity;
+        fill = `rgb(${Math.round(base[0] + (active[0] - base[0]) * t)}, ${Math.round(base[1] + (active[1] - base[1]) * t)}, ${Math.round(base[2] + (active[2] - base[2]) * t)})`;
+      } else fill = CONFIG.baseColor;
+      ctx.save();
+      ctx.translate(d.cx + d.ox, d.cy + d.oy);
+      ctx.fillStyle = fill;
+      ctx.fill(circle);
+      ctx.restore();
+    }
+  }
+  requestAnimationFrame(frame);
 
   /* @mt:thumb-start */
-  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
-    // 缩略图演示：聚光沿 8 字轨迹自动巡游；收到父页面转发的真实鼠标时优先跟随
-    let lastReal = 0;
-    window.__mtOnPointer = (x, y) => { lastReal = performance.now(); feed(x, y); };
-    (function autoDemo() {
-      if (performance.now() - lastReal > 1200) {
-        const t = performance.now() / 1000;
-        feed(
-          innerWidth / 2 + Math.cos(t * 0.9) * innerWidth * 0.3,
-          innerHeight / 2 + Math.sin(t * 1.4) * innerHeight * 0.28
-        );
-      }
-      requestAnimationFrame(autoDemo);
-    })();
+  // 缩略图演示：虚拟指针快速扫过画面 + 每隔几秒点一下；真实鼠标进入后交还控制
+  if (!reduceMotion) {
+    let tt = 0, auto = true, lastShock = 0;
+    addEventListener('pointerenter', () => { auto = false; });
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      tt += 0.08;
+      onMove(W * (0.5 + 0.4 * Math.sin(tt)), H * (0.5 + 0.35 * Math.sin(tt * 1.6)));
+      if (performance.now() - lastShock > 3500) { lastShock = performance.now(); shock(W * (0.3 + 0.4 * Math.random()), H * (0.3 + 0.4 * Math.random())); }
+    }, 30);
   }
   /* @mt:thumb-end */
 </script>

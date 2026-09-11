@@ -2,85 +2,37 @@
   "slug": "folder-open",
   "name": "文件夹展开",
   "category": "card",
-  "sub": "hover",
-  "tags": ["文件夹", "纸张", "悬停"],
-  "summary": "一个文件夹图标，悬停时封口掀开，里面的几张纸探出头来",
+  "sub": "click",
+  "tags": ["文件夹", "纸张", "点击", "拟物"],
+  "summary": "一个文件夹图标，悬停时封口斜切张开、纸探出头；点一下三张纸各自飞出旋转摊开",
   "params": [
-    {
-      "key": "folder",
-      "label": "文件夹颜色",
-      "type": "color",
-      "target": "css",
-      "default": "#ffffff"
-    },
-    { "key": "paper", "label": "纸张颜色", "type": "color", "target": "css", "default": "#d0d0d0" },
+    { "key": "color", "label": "文件夹颜色", "type": "color", "target": "config", "default": "#27ff64" },
     {
       "key": "size",
-      "label": "文件夹大小",
-      "type": "range",
-      "target": "css",
-      "min": 120,
-      "max": 320,
-      "step": 10,
-      "default": 200,
-      "unit": "px"
-    },
-    {
-      "key": "papers",
-      "label": "纸张数量",
+      "label": "整体缩放",
       "type": "range",
       "target": "config",
       "min": 1,
-      "max": 3,
-      "step": 1,
-      "default": 3
+      "max": 4,
+      "step": 0.5,
+      "default": 2.5,
+      "unit": "×"
     },
     {
-      "key": "lift",
-      "label": "探出高度",
-      "type": "range",
-      "target": "css",
-      "min": 20,
-      "max": 80,
-      "step": 5,
-      "default": 45,
-      "unit": "%",
-      "help": "纸张探出的高度占文件夹高度的比例"
-    },
-    {
-      "key": "duration",
-      "label": "打开时长",
-      "type": "range",
-      "target": "css",
-      "min": 0.2,
-      "max": 1,
-      "step": 0.05,
-      "default": 0.45,
-      "unit": "s",
-      "displayUnit": " 秒"
-    },
-    {
-      "key": "label",
-      "label": "文件夹名",
+      "key": "items",
+      "label": "三张纸的文字",
       "type": "text",
       "target": "config",
-      "default": "项目资料",
-      "maxLength": 12
-    }
+      "default": "简历｜作品集｜合同",
+      "help": "用「｜」分隔，最多三项，留空则是白纸"
+    },
+    { "key": "autoDemo", "label": "自动开合演示", "type": "toggle", "target": "config", "default": true }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "dark",
-      "name": "黑夹白纸",
-      "values": { "folder": "#3a3a3a", "paper": "#ffffff", "lift": 60 }
-    },
-    {
-      "id": "single",
-      "name": "单张大探",
-      "values": { "papers": 1, "lift": 80, "size": 260, "duration": 0.7 }
-    }
+    { "id": "amber", "name": "牛皮纸夹", "values": { "color": "#e0a24a", "items": "发票｜收据｜账单" } },
+    { "id": "blue", "name": "蓝色大夹", "values": { "color": "#4f8cff", "size": 3.5, "items": "｜｜" } }
   ],
-  "thumb": { "mode": "autoplay" },
+  "thumb": { "mode": "live" },
   "source": { "kind": "visual-inspiration" }
 }

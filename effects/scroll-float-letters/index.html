@@ -70,9 +70,9 @@
 <script>
   const CONFIG = {
     text: "随你滚动而浮起", // 标题文案
-    rise: 1,       // 浮起距离（字高倍数）
+    rise: 1.2,     // 浮起距离（字高倍数）
     spread: 0.6,   // 字间错位（0 同步 / 1 完全接力）
-    blur: true,    // 带模糊
+    blur: false,   // 带模糊
     range: 60,     // 滚动行程（视口高度百分比）
   };
 
@@ -90,7 +90,11 @@
     return c;
   });
 
-  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  // back.inOut(2)：起步先往回坠一下、收尾再冲过头一点，字才有「被甩上来」的劲儿
+  const backInOut = t => {
+    const s = 2, f = x => x * x * ((s + 1) * x - s);
+    return t < 0.5 ? f(2 * t) / 2 : 1 - f(2 - 2 * t) / 2;
+  };
   // 进度：标题顶部到达视口底部时为 0，再滚过 range% 视口高度为 1
   function update() {
     if (reduceMotion) return;
@@ -103,10 +107,12 @@
       // 每个字占一段进度窗口，窗口起点按 spread 错开
       const start = (i / Math.max(1, n - 1)) * CONFIG.spread;
       const local = Math.min(1, Math.max(0, (p - start) / (1 - CONFIG.spread + 1e-6)));
-      const k = easeOut(local);
-      c.style.transform = 'translateY(' + ((1 - k) * CONFIG.rise) + 'em)';
-      c.style.opacity = String(k);
-      c.style.filter = CONFIG.blur ? 'blur(' + ((1 - k) * 6) + 'px)' : 'none';
+      const k = backInOut(local);
+      // 标志性字形：起点纵向拉长 2.3 倍、横向压窄到 0.7，随进度回到 1:1；位移与透明度同步
+      const sy = 2.3 - 1.3 * k, sx = 0.7 + 0.3 * k;
+      c.style.transform = 'translateY(' + ((1 - k) * CONFIG.rise) + 'em) scale(' + sx.toFixed(3) + ', ' + sy.toFixed(3) + ')';
+      c.style.opacity = String(Math.min(1, Math.max(0, k)));
+      c.style.filter = CONFIG.blur ? 'blur(' + (Math.max(0, 1 - k) * 6) + 'px)' : 'none';
     });
   }
   page.addEventListener('scroll', update, { passive: true });

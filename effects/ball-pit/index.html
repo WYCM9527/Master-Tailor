@@ -12,91 +12,185 @@
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; }
   canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-
-  /* 用户开启「减少动态效果」时：球静止堆在底部（JS 同步处理） */
-  @media (prefers-reduced-motion: reduce) {
-    canvas { opacity: 0.9; }
-  }
+  /* 用户开启「减少动态效果」时：球静止不动（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
 </style>
 </head>
 <body>
 <canvas id="mtCanvas" aria-hidden="true"></canvas>
 <script>
   const CONFIG = {
-    count: 45,       // 球数
-    size: 56,        // 球平均直径（px）
-    gravity: 900,    // 重力（px/s²），0 为失重
-    bounce: 0.5,     // 弹性
-    repel: 1.2,      // 鼠标推力
-    colors: ["#ffffff", "#a3a3a3", "#3a3a3a"], // 球的颜色，轮流分配
+    count: 100,                                    // 球的数量
+    colors: ["#ffffff", "#000000", "#27ff64"],     // 球色渐变（按顺序在球群里插值）
+    gravity: 0.01,                                 // 重力
+    friction: 0.9975,                              // 摩擦
+    wallBounce: 0.95,                              // 墙面弹性
+    sizeMax: 1,                                    // 最大球径（格）
+    lightIntensity: 200,                           // 灯光强度
+    followCursor: false,                           // 显示光标球
   };
 
   const canvas = document.getElementById('mtCanvas');
   const ctx = canvas.getContext('2d');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const dpr = Math.min(2, devicePixelRatio || 1);
-  let W = 0, H = 0;
-  function resize() { W = innerWidth; H = innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+
+  // 「格」：视口高的 1/18.65（相当于透视相机在 20 单位外看到的视口高），尺寸参数按格给
+  const UNITS_H = 18.65;
+  let W = 0, H = 0, unit = 1, maxX = 0, maxY = 0;
+  function resize() {
+    W = innerWidth; H = innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    unit = H / UNITS_H;
+    maxX = W / 2 / unit; maxY = H / 2 / unit;     // 世界边界（格，以中心为原点）
+  }
   resize(); addEventListener('resize', resize);
 
-  const balls = Array.from({ length: CONFIG.count }, (_, i) => {
-    const r = CONFIG.size * (0.6 + Math.random() * 0.8) / 2;
-    return { x: Math.random() * W, y: Math.random() * H * 0.6, vx: (Math.random() - 0.5) * 200, vy: 0, r, m: r * r, c: CONFIG.colors[i % CONFIG.colors.length] };
+  function hexRgb(hex) {
+    const h = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+  }
+  // 颜色渐变分配：第 i 颗球按 i/count 在色表里线性插值
+  const palette = CONFIG.colors.map(hexRgb);
+  function colorAt(t) {
+    if (palette.length === 1) return palette[0];
+    const seg = t * (palette.length - 1);
+    const i = Math.min(palette.length - 2, Math.floor(seg));
+    const f = seg - i;
+    return palette[i].map((c, k) => Math.round(c + (palette[i + 1][k] - c) * f));
+  }
+
+  // 球：0 号是控制球（鼠标进入时被牵到鼠标处并推开别人；光源永远跟着它）
+  const MIN_SIZE = CONFIG.sizeMax * 0.5, MAX_SIZE = CONFIG.sizeMax;
+  const balls = [];
+  for (let i = 0; i < CONFIG.count; i++) {
+    balls.push({
+      x: (Math.random() - 0.5) * 2 * maxX * 0.8,
+      y: (Math.random() - 0.5) * 2 * maxY * 0.8,
+      vx: (Math.random() - 0.5) * 0.05, vy: (Math.random() - 0.5) * 0.05,
+      r: i === 0 ? MAX_SIZE : MIN_SIZE + Math.random() * (MAX_SIZE - MIN_SIZE),
+      col: colorAt(i / CONFIG.count),
+    });
+  }
+
+  // 鼠标进入 → 控制球启用；离开 → 控制球恢复普通物理
+  let control = false, mx = 0, my = 0;
+  addEventListener('pointermove', (e) => {
+    mx = (e.clientX - W / 2) / unit;
+    my = (e.clientY - H / 2) / unit;
+    control = true;
   });
+  addEventListener('pointerleave', () => { control = false; });
 
-  let mx = -9999, my = -9999, auto = true;
-  addEventListener('pointermove', e => { auto = false; mx = e.clientX; my = e.clientY; });
-  document.documentElement.addEventListener('pointerleave', () => { auto = true; mx = -9999; my = -9999; });
+  const MAX_VEL = 0.15;   // 速度上限（格/帧）
 
-  let last = performance.now();
-  function step(dt) {
-    for (const b of balls) {
-      b.vy += CONFIG.gravity * dt;
-      // 鼠标推开：半径 160 内施加推力
-      const dx = b.x - mx, dy = b.y - my, d = Math.hypot(dx, dy);
-      if (d < 160 && d > 0.01) { const f = (1 - d / 160) * CONFIG.repel * 2600 * dt; b.vx += dx / d * f; b.vy += dy / d * f; }
-      b.x += b.vx * dt; b.y += b.vy * dt;
-      // 墙与地面
-      if (b.x < b.r) { b.x = b.r; b.vx = -b.vx * CONFIG.bounce; }
-      if (b.x > W - b.r) { b.x = W - b.r; b.vx = -b.vx * CONFIG.bounce; }
-      if (b.y > H - b.r) { b.y = H - b.r; b.vy = -b.vy * CONFIG.bounce; b.vx *= 0.98; }
-      if (b.y < b.r) { b.y = b.r; b.vy = -b.vy * CONFIG.bounce; }
-      if (CONFIG.gravity === 0) { b.vx *= 0.999; b.vy *= 0.999; }
+  function physics(dt) {
+    const start = control ? 1 : 0;
+    if (control) {
+      const b = balls[0];
+      b.x += (mx - b.x) * 0.1; b.y += (my - b.y) * 0.1;   // 控制球牵向鼠标
+      b.vx = 0; b.vy = 0;
     }
-    // 球与球：简单弹性分离（按质量分配位移与速度）
-    for (let i = 0; i < balls.length; i++) for (let j = i + 1; j < balls.length; j++) {
-      const a = balls[i], b = balls[j];
-      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = a.r + b.r;
-      if (d < min && d > 0.001) {
-        const nx = dx / d, ny = dy / d, overlap = min - d, tm = a.m + b.m;
-        a.x -= nx * overlap * (b.m / tm); a.y -= ny * overlap * (b.m / tm);
-        b.x += nx * overlap * (a.m / tm); b.y += ny * overlap * (a.m / tm);
-        const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
-        if (rv < 0) {
-          const imp = -(1 + CONFIG.bounce) * rv / (1 / a.m + 1 / b.m);
-          a.vx -= imp / a.m * nx; a.vy -= imp / a.m * ny; b.vx += imp / b.m * nx; b.vy += imp / b.m * ny;
+    // 重力 + 摩擦 + 限速 + 位移（大球更重：重力按半径加权）
+    for (let i = start; i < balls.length; i++) {
+      const b = balls[i];
+      b.vy += dt * CONFIG.gravity * b.r;
+      b.vx *= CONFIG.friction; b.vy *= CONFIG.friction;
+      const sp = Math.hypot(b.vx, b.vy);
+      if (sp > MAX_VEL) { b.vx *= MAX_VEL / sp; b.vy *= MAX_VEL / sp; }
+      b.x += b.vx; b.y += b.vy;
+    }
+    // 球-球碰撞：位置各分一半修正，速度沿修正方向反推
+    for (let i = start; i < balls.length; i++) {
+      const a = balls[i];
+      for (let j = i + 1; j < balls.length; j++) {
+        const b = balls[j];
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.hypot(dx, dy) || 1e-6;
+        const sum = a.r + b.r;
+        if (dist < sum) {
+          const overlap = sum - dist;
+          const nx = dx / dist, ny = dy / dist;
+          const cx = nx * 0.5 * overlap, cy = ny * 0.5 * overlap;
+          a.x -= cx; a.y -= cy; b.x += cx; b.y += cy;
+          const va = Math.max(Math.hypot(a.vx, a.vy), 1), vb = Math.max(Math.hypot(b.vx, b.vy), 1);
+          a.vx -= cx * va; a.vy -= cy * va;
+          b.vx += cx * vb; b.vy += cy * vb;
         }
       }
+      // 控制球是刚体：别的球撞上来全量弹开
+      if (control && i > 0) {
+        const c = balls[0];
+        const dx = c.x - a.x, dy = c.y - a.y;
+        const d = Math.hypot(dx, dy) || 1e-6;
+        const sum = a.r + c.r;
+        if (d < sum) {
+          const k = (sum - d) / d;
+          const cx = dx * k, cy = dy * k;
+          a.x -= cx; a.y -= cy;
+          const va = Math.max(Math.hypot(a.vx, a.vy), 2);
+          a.vx -= cx * va; a.vy -= cy * va;
+        }
+      }
+      // 墙：左右总是反弹；有重力只管地面，无重力上下都反弹
+      if (Math.abs(a.x) + a.r > maxX) { a.x = Math.sign(a.x) * (maxX - a.r); a.vx = -a.vx * CONFIG.wallBounce; }
+      if (CONFIG.gravity === 0 || CONFIG.gravity < 0.001) {
+        if (Math.abs(a.y) + a.r > maxY) { a.y = Math.sign(a.y) * (maxY - a.r); a.vy = -a.vy * CONFIG.wallBounce; }
+      } else if (a.y + a.r > maxY) { a.y = maxY - a.r; a.vy = -a.vy * CONFIG.wallBounce; }
+      else if (a.y - a.r < -maxY) { a.y = -maxY + a.r; a.vy = -a.vy * CONFIG.wallBounce; }
     }
   }
+
+  /* 画一颗有清漆高光的球：环境光底色 + 朝向光源的漫反射 + 白色高光点 + 边缘反光 */
+  function drawBall(b, lx, ly, lightColor) {
+    const px = W / 2 + b.x * unit, py = H / 2 + b.y * unit, R = b.r * unit;
+    const dx = lx - b.x, dy = ly - b.y;
+    const dist = Math.hypot(dx, dy);
+    // 点光源衰减：强度 / (1 + 距离²)，再归一到 0–1
+    const light = Math.min(1, (CONFIG.lightIntensity / 200) * 1.2 / (1 + (dist * dist) / 30));
+    const nx = dist > 0.001 ? dx / dist : 0, ny = dist > 0.001 ? dy / dist : 0;
+    const [r, g, bl] = b.col;
+    // 漫反射：基色 × (环境 0.35 + 直射)
+    const shade = (k) => `rgb(${Math.min(255, r * k) | 0}, ${Math.min(255, g * k) | 0}, ${Math.min(255, bl * k) | 0})`;
+    const grad = ctx.createRadialGradient(px + nx * R * 0.4, py + ny * R * 0.4, R * 0.05, px, py, R);
+    grad.addColorStop(0, shade(0.35 + 0.9 * light));
+    grad.addColorStop(0.6, shade(0.35 + 0.35 * light));
+    grad.addColorStop(1, shade(0.22));
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(px, py, R, 0, Math.PI * 2); ctx.fill();
+    // 清漆高光：小而亮的白点，朝光源方向偏移
+    const hl = ctx.createRadialGradient(px + nx * R * 0.45, py + ny * R * 0.45, 0, px + nx * R * 0.45, py + ny * R * 0.45, R * 0.55);
+    hl.addColorStop(0, `rgba(${lightColor}, ${0.95 * light})`);
+    hl.addColorStop(0.35, `rgba(${lightColor}, ${0.25 * light})`);
+    hl.addColorStop(1, `rgba(${lightColor}, 0)`);
+    ctx.fillStyle = hl;
+    ctx.beginPath(); ctx.arc(px, py, R, 0, Math.PI * 2); ctx.fill();
+    // 边缘反光：一圈细亮环，让黑球在黑底上也有轮廓
+    ctx.strokeStyle = `rgba(255,255,255,${0.12 + 0.18 * light})`;
+    ctx.lineWidth = Math.max(1, R * 0.06);
+    ctx.beginPath(); ctx.arc(px, py, R - ctx.lineWidth / 2, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  const lightColor = palette[0].join(', ');   // 光源色 = 色表第一色
+  let last = performance.now();
   function frame(now) {
-    const dt = Math.min(0.033, (now - last) / 1000); last = now;
-    if (!document.hidden) {
-      if (!reduceMotion) step(dt);
-      ctx.clearRect(0, 0, W, H);
-      for (const b of balls) { ctx.fillStyle = b.c; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); }
-    }
     requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) physics(dt);
+
+    ctx.clearRect(0, 0, W, H);
+    const lx = balls[0].x, ly = balls[0].y;          // 光源跟着 0 号球（即鼠标）
+    // 小球先画（当作远处），大球后画
+    const order = balls.map((b, i) => i).sort((i, j) => balls[i].r - balls[j].r);
+    for (const i of order) {
+      if (i === 0 && !CONFIG.followCursor) continue; // 不显示光标球时 0 号只当灯
+      drawBall(balls[i], lx, ly, lightColor);
+    }
   }
   requestAnimationFrame(frame);
-
-  /* @mt:thumb-start */
-  // 缩略图演示：虚拟指针在池底扫来扫去搅动球；真实鼠标一动就交还
-  if (!reduceMotion) {
-    let t = 0;
-    setInterval(() => { if (document.hidden || !auto) return; t += 0.03; mx = W / 2 + Math.sin(t) * W * 0.4; my = H * 0.75 + Math.sin(t * 2.1) * H * 0.15; }, 30);
-  }
-  /* @mt:thumb-end */
 </script>
 </body>
 </html>

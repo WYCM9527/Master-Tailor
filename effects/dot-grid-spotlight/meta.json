@@ -3,63 +3,93 @@
   "name": "点阵网格聚光",
   "category": "background",
   "sub": "hover",
-  "tags": ["网格", "鼠标跟随", "科技感"],
-  "summary": "均匀点阵背景，鼠标移到哪里哪里亮起一圈聚光",
+  "tags": ["网格", "点阵", "惯性", "鼠标交互"],
+  "summary": "均匀点阵，鼠标靠近的点亮起；快速划过时点被甩开再弹性弹回，点一下炸开一圈冲击波",
   "params": [
-    { "key": "dotColor", "label": "点的颜色", "type": "color", "target": "css", "default": "#3a3d52" },
-    { "key": "spotColor", "label": "聚光颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "dotSize",
+      "label": "点的直径",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 20,
+      "step": 1,
+      "default": 5,
+      "unit": "px"
+    },
     {
       "key": "gap",
       "label": "点间距",
       "type": "range",
-      "target": "css",
-      "min": 16,
-      "max": 48,
-      "step": 2,
-      "default": 26,
+      "target": "config",
+      "min": 5,
+      "max": 50,
+      "step": 1,
+      "default": 15,
       "unit": "px"
     },
+    { "key": "baseColor", "label": "点的底色", "type": "color", "target": "config", "default": "#333333" },
+    { "key": "activeColor", "label": "靓亮颜色", "type": "color", "target": "config", "default": "#27ff64" },
     {
-      "key": "dotSize",
-      "label": "点大小",
+      "key": "proximity",
+      "label": "感应半径",
       "type": "range",
-      "target": "css",
-      "min": 1,
-      "max": 4,
-      "step": 0.5,
-      "default": 1.5,
-      "unit": "px"
-    },
-    {
-      "key": "spotRadius",
-      "label": "聚光半径",
-      "type": "range",
-      "target": "css",
-      "min": 80,
-      "max": 360,
+      "target": "config",
+      "min": 50,
+      "max": 300,
       "step": 10,
-      "default": 200,
+      "default": 120,
       "unit": "px"
+    },
+    {
+      "key": "shockRadius",
+      "label": "冲击波半径",
+      "type": "range",
+      "target": "config",
+      "min": 100,
+      "max": 500,
+      "step": 10,
+      "default": 250,
+      "unit": "px"
+    },
+    {
+      "key": "shockStrength",
+      "label": "冲击力度",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 15,
+      "step": 0.5,
+      "default": 5
+    },
+    {
+      "key": "resistance",
+      "label": "滑行阻力",
+      "type": "range",
+      "target": "config",
+      "min": 100,
+      "max": 2000,
+      "step": 50,
+      "default": 750,
+      "help": "越大被甩开的点停得越快"
+    },
+    {
+      "key": "returnDuration",
+      "label": "弹回时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.5,
+      "unit": "s"
     }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "cyan-dense",
-      "name": "青光密网",
-      "values": { "spotColor": "#00e5ff", "gap": 18, "spotRadius": 260 }
-    },
-    {
-      "id": "sparse-soft",
-      "name": "疏朗柔光",
-      "values": { "gap": 40, "dotSize": 2, "spotColor": "#c084fc", "spotRadius": 320 }
-    }
+    { "id": "big", "name": "大点大爆", "values": { "dotSize": 12, "gap": 28, "shockStrength": 9, "activeColor": "#ffffff" } },
+    { "id": "violet", "name": "紫光细网", "values": { "dotSize": 3, "gap": 12, "activeColor": "#a48bff", "proximity": 180 } }
   ],
   "thumb": { "mode": "autoplay" },
-  "source": {
-    "kind": "visual-inspiration",
-    "name": "Ibelick Background Snippets",
-    "url": "https://bg.ibelick.com",
-    "license": "未使用其代码"
-  }
+  "source": { "kind": "visual-inspiration" }
 }

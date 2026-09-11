@@ -8,56 +8,50 @@
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;        /* 页面底色 */
-    --mt-color: #ffffff;     /* 文字颜色 */
-    --mt-fontSize: 26px;     /* 字号 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 36px;     /* 字号 */
     --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
   }
-
   html, body { margin: 0; height: 100%; }
-  body { background: var(--mt-bg); overflow: hidden; }
-
-  .mt-field {
-    position: fixed;
-    inset: 0;
-    cursor: crosshair;
-    overflow: hidden;
-  }
+  body { background: var(--mt-bg); overflow: hidden; cursor: none; }
+  .mt-field { position: fixed; inset: 0; overflow: hidden; }
   .mt-hint {
-    position: absolute;
-    left: 50%; top: 50%;
+    position: absolute; left: 50%; top: 50%;
     transform: translate(-50%, -50%);
     color: rgba(255, 255, 255, 0.35);
     font: 14px/1 -apple-system, "PingFang SC", sans-serif;
     letter-spacing: 0.14em;
     pointer-events: none;
   }
-  /* 每个撒下的字：出生时放大弹出，随后按消失方式退场 */
+  /* 每个符号：居中锚点 + 方向角在 transform 里；在位轻晃走独立的 translate/rotate 属性，互不打架 */
   .mt-drop {
-    position: absolute;
-    left: 0; top: 0;
+    position: absolute; left: 0; top: 0;
     font-family: var(--mt-font);
     font-size: var(--mt-fontSize);
     font-weight: 700;
     color: var(--mt-color);
     pointer-events: none;
     white-space: nowrap;
-    will-change: transform, opacity;
-    animation: mt-life var(--life) ease-out forwards;
+    transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+    animation: mt-in 0.2s ease-out both;
+    will-change: transform, opacity, translate, rotate, scale;
   }
-  .mt-drop.shrink { --end: translate(-50%, -50%) rotate(var(--rot)) scale(0.2); }
-  .mt-drop.float  { --end: translate(-50%, -160%) rotate(var(--rot)) scale(0.9); }
-  .mt-drop.fade   { --end: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
-  @keyframes mt-life {
-    0%   { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot)) scale(0.4); }
-    15%  { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot)) scale(1.15); }
-    35%  { transform: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
-    100% { opacity: 0; transform: var(--end); }
+  .mt-drop.float { animation: mt-in 0.2s ease-out both, mt-float 2s ease-in-out infinite alternate; }
+  /* 收走：暂停轻晃，缩到 0 并淡出 */
+  .mt-drop.leave {
+    animation-play-state: paused;
+    transition: opacity var(--exit, 0.5s) ease-out, scale var(--exit, 0.5s) ease-out;
+    opacity: 0;
+    scale: 0;
+  }
+  @keyframes mt-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes mt-float {
+    from { translate: 0 0; rotate: 0deg; }
+    to   { translate: var(--rx, 0px) var(--ry, 0px); rotate: var(--rr, 0deg); }
   }
 
-  /* 用户开启「减少动态效果」时：不撒字（JS 同步处理） */
-  @media (prefers-reduced-motion: reduce) {
-    .mt-drop { animation: none; }
-  }
+  /* 用户开启「减少动态效果」时：不撒符号（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) { .mt-drop { animation: none; } }
 </style>
 </head>
 <body>
@@ -66,60 +60,85 @@
 </div>
 <script>
   const CONFIG = {
-    text: "✦",         // 撒下的文字，多个用「｜」分隔轮流撒
-    spacing: 40,       // 撒落间距（px）
-    lifetime: 1200,    // 存活时间（毫秒）
-    maxCount: 30,      // 最多同屏
-    spin: true,        // 随机旋转
-    exit: "shrink",    // 消失方式：shrink 缩小淡出 / float 上浮淡出 / fade 原地淡出
+    text: "⚛️",              // 拖尾符号
+    spacing: 100,           // 间距（px）
+    maxPoints: 5,           // 最多几个
+    followDirection: true,  // 随移动方向旋转
+    randomFloat: true,      // 在位轻晃
+    exitDuration: 0.5,      // 收走时长（s）
+    removalInterval: 30,    // 收走间隔（ms）
   };
 
   const field = document.getElementById('mtField');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const items = CONFIG.text.split('｜').map(s => s.trim()).filter(Boolean);
-  let lastX = null, lastY = null, k = 0;
-  const live = [];
+  const trail = [];            // 在场的符号，最老的在前
+  let lastX = null, lastY = null, lastMoveAt = 0;
 
-  function spawn(x, y) {
-    if (reduceMotion || items.length === 0) return;
-    const el = document.createElement('span');
-    el.className = 'mt-drop ' + CONFIG.exit;
-    el.textContent = items[k++ % items.length];
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
-    el.style.setProperty('--rot', (CONFIG.spin ? (Math.random() * 60 - 30) : 0) + 'deg');
-    el.style.setProperty('--life', CONFIG.lifetime + 'ms');
-    field.appendChild(el);
-    live.push(el);
-    // 超出同屏上限时移除最早的
-    while (live.length > CONFIG.maxCount) live.shift().remove();
-    el.addEventListener('animationend', () => { el.remove(); const i = live.indexOf(el); if (i >= 0) live.splice(i, 1); });
+  /* 收走一个符号：加 leave 类做退场过渡，结束后移除 DOM */
+  function dismiss(el) {
+    el.classList.add('leave');
+    setTimeout(() => el.remove(), CONFIG.exitDuration * 1000 + 30);
   }
 
-  // 沿鼠标轨迹按间距撒字：两次事件之间距离大时补点，保证间距均匀
-  function trail(x, y) {
-    if (lastX === null) { lastX = x; lastY = y; spawn(x, y); return; }
+  /* 在 (x, y) 放一个符号，角度为移动方向；超出上限就先收走最老的 */
+  function spawn(x, y, angle) {
+    if (reduceMotion) return;
+    const el = document.createElement('span');
+    el.className = 'mt-drop' + (CONFIG.randomFloat ? ' float' : '');
+    el.textContent = CONFIG.text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.setProperty('--rot', angle + 'deg');
+    el.style.setProperty('--exit', CONFIG.exitDuration + 's');
+    if (CONFIG.randomFloat) {
+      el.style.setProperty('--rx', (Math.random() * 10 - 5) + 'px');
+      el.style.setProperty('--ry', (Math.random() * 10 - 5) + 'px');
+      el.style.setProperty('--rr', (Math.random() * 10 - 5) + 'deg');
+    }
+    field.appendChild(el);
+    trail.push(el);
+    while (trail.length > CONFIG.maxPoints) dismiss(trail.shift());
+  }
+
+  /* 沿轨迹按间距补点：两次事件之间距离大时插值，间距均匀；方向角限制在 ±90° 内让文字不倒立 */
+  function onMove(x, y) {
+    lastMoveAt = performance.now();
+    if (lastX === null) { lastX = x; lastY = y; spawn(x, y, 0); return; }
     const dx = x - lastX, dy = y - lastY;
     const dist = Math.hypot(dx, dy);
     if (dist < CONFIG.spacing) return;
+    let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    if (angle > 90) angle -= 180; else if (angle < -90) angle += 180;
+    if (!CONFIG.followDirection) angle = 0;
     const steps = Math.floor(dist / CONFIG.spacing);
-    for (let i = 1; i <= steps; i++) spawn(lastX + dx * i / steps, lastY + dy * i / steps);
+    for (let i = 1; i <= steps; i++) {
+      const t = (CONFIG.spacing * i) / dist;
+      spawn(lastX + dx * t, lastY + dy * t, angle);
+    }
     lastX = x; lastY = y;
   }
-  field.addEventListener('pointermove', e => trail(e.clientX, e.clientY));
+  field.addEventListener('pointermove', e => onMove(e.clientX, e.clientY));
   field.addEventListener('pointerleave', () => { lastX = null; lastY = null; });
 
+  // 停手 100ms 后，每隔 removalInterval 从尾巴（最老端）收走一个
+  setInterval(() => {
+    if (performance.now() - lastMoveAt > 100 && trail.length) dismiss(trail.shift());
+  }, CONFIG.removalInterval);
+
   /* @mt:thumb-start */
-  // 缩略图演示：一个虚拟指针画着 8 字形游走；真实鼠标进入后交还控制
+  // 缩略图演示：虚拟指针画一段就停一下，展示「拖出来、再收回去」；真实鼠标进入后交还控制
   if (!reduceMotion) {
-    let t = 0, auto = true;
+    let t = 0, auto = true, pauseUntil = 0;
     field.addEventListener('pointerenter', () => { auto = false; lastX = null; });
     field.addEventListener('pointerleave', () => (auto = true));
     setInterval(() => {
       if (document.hidden || !auto) return;
-      t += 0.04;
+      const now = performance.now();
+      if (now < pauseUntil) return;
+      t += 0.05;
       const w = innerWidth, h = innerHeight;
-      trail(w / 2 + Math.sin(t) * w * 0.36, h / 2 + Math.sin(t * 2) * h * 0.26);
+      onMove(w / 2 + Math.sin(t) * w * 0.36, h / 2 + Math.sin(t * 2) * h * 0.26);
+      if (Math.abs(Math.sin(t)) > 0.995) { pauseUntil = now + 1400; lastX = null; }   // 到端点停一下，看尾巴收走
     }, 30);
   }
   /* @mt:thumb-end */

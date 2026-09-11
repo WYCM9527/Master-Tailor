@@ -3,86 +3,75 @@
   "name": "气泡菜单",
   "category": "nav",
   "sub": "click",
-  "tags": ["菜单", "气泡", "弹出"],
-  "summary": "点一下圆按钮，一圈菜单气泡像肥皂泡一样弹出来排开",
+  "tags": ["菜单", "药丸", "弹出", "全屏导航"],
+  "summary": "点开汉堡钮，一排大号倾斜药丸像气泡一样交错弹满全屏，悬停各自染上一种颜色",
   "params": [
     {
       "key": "items",
       "label": "菜单项",
       "type": "text",
       "target": "config",
-      "default": "首页｜作品｜关于｜联系｜更多",
-      "maxLength": 80,
+      "default": "首页｜关于｜作品｜博客｜联系",
       "help": "用「｜」分隔"
     },
+    { "key": "logoText", "label": "左上角标识", "type": "text", "target": "config", "default": "LOGO" },
+    { "key": "menuBg", "label": "药丸底色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "contentColor", "label": "药丸文字色", "type": "color", "target": "css", "default": "#111111" },
     {
-      "key": "layout",
-      "label": "排开方式",
-      "type": "select",
+      "key": "hoverColors",
+      "label": "悬停颜色",
+      "type": "colors",
       "target": "config",
-      "options": [
-        { "value": "arc", "label": "扇形环绕按钮" },
-        { "value": "row", "label": "横排展开" },
-        { "value": "column", "label": "竖排展开" }
-      ],
-      "default": "arc"
+      "min": 1,
+      "max": 8,
+      "default": ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"],
+      "help": "按顺序分给每个菜单项，悬停时染成这个颜色"
     },
     {
-      "key": "distance",
-      "label": "弹出距离",
-      "type": "range",
-      "target": "config",
-      "min": 80,
-      "max": 240,
-      "step": 10,
-      "default": 140,
-      "unit": "px"
-    },
-    {
-      "key": "stagger",
-      "label": "依次弹出间隔",
+      "key": "rotation",
+      "label": "倾斜角度",
       "type": "range",
       "target": "config",
       "min": 0,
-      "max": 150,
-      "step": 10,
-      "default": 50,
-      "displayUnit": " 毫秒"
+      "max": 15,
+      "step": 1,
+      "default": 8,
+      "unit": "°",
+      "help": "药丸交替向左右倾斜"
     },
     {
       "key": "duration",
       "label": "弹出时长",
       "type": "range",
-      "target": "css",
+      "target": "config",
       "min": 0.2,
-      "max": 1,
+      "max": 1.2,
       "step": 0.05,
       "default": 0.5,
-      "unit": "s",
-      "displayUnit": " 秒"
+      "unit": "s"
     },
     {
-      "key": "bubble",
-      "label": "气泡颜色",
-      "type": "color",
-      "target": "css",
-      "default": "#ffffff"
+      "key": "stagger",
+      "label": "交错间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.02,
+      "default": 0.12,
+      "unit": "s"
     },
-    { "key": "text", "label": "气泡文字色", "type": "color", "target": "css", "default": "#0a0a0f" }
+    { "key": "autoDemo", "label": "自动开合演示", "type": "toggle", "target": "config", "default": true }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
     {
-      "id": "row",
-      "name": "横排快弹",
-      "values": { "layout": "row", "distance": 90, "stagger": 30, "duration": 0.3 }
+      "id": "mono",
+      "name": "黑白反色",
+      "values": { "menuBg": "#111111", "contentColor": "#ffffff", "hoverColors": ["#ffffff"], "rotation": 4 }
     },
-    {
-      "id": "far",
-      "name": "大扇形慢弹",
-      "values": { "distance": 220, "stagger": 100, "duration": 0.8 }
-    }
+    { "id": "snappy", "name": "急促弹出", "values": { "duration": 0.3, "stagger": 0.05, "rotation": 12 } }
   ],
-  "thumb": { "mode": "autoplay" },
+  "thumb": { "mode": "live" },
   "source": { "kind": "visual-inspiration" }
 }

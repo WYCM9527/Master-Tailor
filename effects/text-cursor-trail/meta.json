@@ -3,102 +3,82 @@
   "name": "文字光标拖尾",
   "category": "canvas",
   "sub": "hover",
-  "tags": ["光标", "拖尾", "文字"],
-  "summary": "鼠标走过的地方撒下一串会转的小字，随后逐个淡去",
+  "tags": ["光标", "拖尾", "文字", "符号"],
+  "summary": "鼠标身后拖着一小串沿着移动方向排列的符号，停下来就从尾巴一个个收走",
   "params": [
     {
       "key": "text",
-      "label": "撒下的文字",
+      "label": "拖尾符号",
       "type": "text",
       "target": "config",
-      "default": "✦",
+      "default": "⚛️",
       "maxLength": 12,
-      "help": "可以是一个符号、一个词，多个用「｜」分隔轮流撒"
+      "help": "一个字、一个词或一个 emoji"
     },
     {
       "key": "spacing",
-      "label": "撒落间距",
+      "label": "间距",
+      "type": "range",
+      "target": "config",
+      "min": 40,
+      "max": 200,
+      "step": 10,
+      "default": 100,
+      "unit": "px"
+    },
+    {
+      "key": "maxPoints",
+      "label": "最多几个",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 15,
+      "step": 1,
+      "default": 5
+    },
+    { "key": "followDirection", "label": "随移动方向旋转", "type": "toggle", "target": "config", "default": true },
+    { "key": "randomFloat", "label": "在位轻晃", "type": "toggle", "target": "config", "default": true },
+    {
+      "key": "exitDuration",
+      "label": "收走时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.5,
+      "unit": "s"
+    },
+    {
+      "key": "removalInterval",
+      "label": "收走间隔",
       "type": "range",
       "target": "config",
       "min": 10,
-      "max": 120,
-      "step": 5,
-      "default": 40,
-      "unit": "px",
-      "help": "鼠标每移动多远撒一个"
+      "max": 300,
+      "step": 10,
+      "default": 30,
+      "displayUnit": " 毫秒",
+      "help": "停手后每隔多久从尾巴收走一个"
     },
-    {
-      "key": "lifetime",
-      "label": "存活时间",
-      "type": "range",
-      "target": "config",
-      "min": 300,
-      "max": 3000,
-      "step": 100,
-      "default": 1200,
-      "displayUnit": " 毫秒"
-    },
-    {
-      "key": "maxCount",
-      "label": "最多同屏",
-      "type": "range",
-      "target": "config",
-      "min": 5,
-      "max": 80,
-      "step": 5,
-      "default": 30
-    },
-    { "key": "spin", "label": "随机旋转", "type": "toggle", "target": "config", "default": true },
-    {
-      "key": "exit",
-      "label": "消失方式",
-      "type": "select",
-      "target": "config",
-      "options": [
-        { "value": "shrink", "label": "缩小淡出" },
-        { "value": "float", "label": "上浮淡出" },
-        { "value": "fade", "label": "原地淡出" }
-      ],
-      "default": "shrink"
-    },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
     {
       "key": "fontSize",
       "label": "字号",
       "type": "range",
       "target": "css",
-      "min": 12,
-      "max": 64,
+      "min": 16,
+      "max": 72,
       "step": 2,
-      "default": 26,
+      "default": 36,
       "unit": "px"
     },
     { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "words",
-      "name": "撒词",
-      "values": {
-        "text": "你好｜hello｜こんにちは",
-        "spacing": 70,
-        "lifetime": 1800,
-        "exit": "float",
-        "fontSize": 20
-      }
-    },
-    {
-      "id": "dense",
-      "name": "密集星点",
-      "values": {
-        "text": "✦｜✧｜·",
-        "spacing": 14,
-        "lifetime": 700,
-        "maxCount": 80,
-        "fontSize": 18
-      }
-    }
+    { "id": "word", "name": "词语拖尾", "values": { "text": "HELLO", "spacing": 120, "maxPoints": 6, "fontSize": 28 } },
+    { "id": "stars", "name": "长星串", "values": { "text": "✦", "spacing": 50, "maxPoints": 12, "removalInterval": 15, "randomFloat": false } }
   ],
   "thumb": { "mode": "autoplay" },
   "source": { "kind": "visual-inspiration" }

@@ -3,8 +3,12 @@
   "name": "滚动浮起标题",
   "category": "text",
   "sub": "scroll",
-  "tags": ["滚动", "标题", "浮起"],
-  "summary": "标题随滚动进度一个字一个字从下方浮起，倒滚就沉回去",
+  "tags": [
+    "滚动",
+    "标题",
+    "浮起"
+  ],
+  "summary": "标题随滚动进度一个字一个字从下方甩上来，字形先拉长再回正，倒滚就沉回去",
   "params": [
     {
       "key": "text",
@@ -22,7 +26,7 @@
       "min": 0.3,
       "max": 2,
       "step": 0.1,
-      "default": 1,
+      "default": 1.2,
       "displayUnit": " 字高",
       "help": "每个字从下方多远处浮到位"
     },
@@ -42,7 +46,7 @@
       "label": "带模糊",
       "type": "toggle",
       "target": "config",
-      "default": true,
+      "default": false,
       "help": "浮起途中带一点模糊，到位后清晰"
     },
     {
@@ -57,7 +61,13 @@
       "unit": "%",
       "help": "从标题进入视口底部起，滚过多少比例的视口高度完成浮起"
     },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
     {
       "key": "fontSize",
       "label": "字号",
@@ -69,21 +79,45 @@
       "default": 76,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "system-sans"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "wave",
       "name": "长波浪",
-      "values": { "spread": 1, "rise": 1.6, "range": 90 }
+      "values": {
+        "spread": 1,
+        "rise": 1.6,
+        "range": 90
+      }
     },
     {
       "id": "crisp",
       "name": "齐升无模糊",
-      "values": { "spread": 0.2, "rise": 0.6, "blur": false, "range": 40, "font": "smiley-sans" }
+      "values": {
+        "spread": 0.2,
+        "rise": 0.6,
+        "blur": false,
+        "range": 40,
+        "font": "smiley-sans"
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

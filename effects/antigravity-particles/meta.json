@@ -3,90 +3,108 @@
   "name": "反重力粒子",
   "category": "background",
   "sub": "hover",
-  "tags": ["粒子", "排斥", "光标"],
-  "summary": "满屏细小粒子缓缓上浮，鼠标一到就被推开、绕着走",
+  "tags": ["粒子", "光环", "光标", "胶囊"],
+  "summary": "几百枚细小胶囊被光标吸成一圈起伏的光环，脉动闪烁，离环即隐",
   "params": [
     {
       "key": "count",
       "label": "粒子数量",
       "type": "range",
       "target": "config",
-      "min": 40,
-      "max": 400,
-      "step": 20,
-      "default": 160
+      "min": 100,
+      "max": 600,
+      "step": 50,
+      "default": 300
     },
     {
-      "key": "drift",
-      "label": "上浮速度",
+      "key": "magnetRadius",
+      "label": "吸附范围",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 20,
+      "step": 1,
+      "default": 10,
+      "help": "距光标多近的粒子会被吸到环上（视口高的 1/31 为一格）"
+    },
+    {
+      "key": "ringRadius",
+      "label": "光环半径",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 20,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "key": "waveSpeed",
+      "label": "波动速度",
       "type": "range",
       "target": "config",
       "min": 0,
-      "max": 60,
-      "step": 5,
-      "default": 18,
-      "displayUnit": " px/秒"
+      "max": 2,
+      "step": 0.1,
+      "default": 0.4
     },
     {
-      "key": "radius",
-      "label": "排斥半径",
+      "key": "waveAmplitude",
+      "label": "波动幅度",
       "type": "range",
       "target": "config",
-      "min": 40,
-      "max": 300,
-      "step": 10,
-      "default": 140,
-      "unit": "px"
-    },
-    {
-      "key": "force",
-      "label": "排斥力度",
-      "type": "range",
-      "target": "config",
-      "min": 0.2,
+      "min": 0,
       "max": 3,
       "step": 0.1,
-      "default": 1.2
+      "default": 1
     },
     {
-      "key": "size",
+      "key": "particleSize",
       "label": "粒子大小",
       "type": "range",
       "target": "config",
-      "min": 1,
-      "max": 5,
+      "min": 0.5,
+      "max": 4,
       "step": 0.5,
       "default": 2
     },
     {
-      "key": "color",
-      "label": "粒子颜色",
-      "type": "color",
+      "key": "rotationSpeed",
+      "label": "光环旋转",
+      "type": "range",
       "target": "config",
-      "default": "#ffffff"
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0,
+      "help": "整圈粒子绕光标缓慢转动的速度"
     },
     {
-      "key": "connect",
-      "label": "近距连线",
+      "key": "shape",
+      "label": "粒子形状",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "capsule", "label": "胶囊" },
+        { "value": "sphere", "label": "圆点" },
+        { "value": "box", "label": "方块" }
+      ],
+      "default": "capsule"
+    },
+    { "key": "color", "label": "粒子颜色", "type": "color", "target": "config", "default": "#27ff64" },
+    {
+      "key": "autoAnimate",
+      "label": "闲置时自动游走",
       "type": "toggle",
       "target": "config",
-      "default": false,
-      "help": "相邻粒子之间画细线"
+      "default": true,
+      "help": "两秒没动鼠标，光环自己在画面里画圆"
     }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "dust",
-      "name": "微尘",
-      "values": { "count": 400, "size": 1, "drift": 8, "radius": 90, "force": 0.6 }
-    },
-    {
-      "id": "web",
-      "name": "连线星网",
-      "values": { "count": 90, "size": 2.5, "connect": true, "radius": 200, "force": 2 }
-    }
+    { "id": "spin", "name": "旋转白环", "values": { "color": "#ffffff", "rotationSpeed": 0.3, "waveAmplitude": 1.6 } },
+    { "id": "dots", "name": "细密圆点", "values": { "shape": "sphere", "count": 600, "particleSize": 1, "ringRadius": 8 } }
   ],
-  "thumb": { "mode": "autoplay" },
+  "thumb": { "mode": "live" },
   "source": { "kind": "visual-inspiration" }
 }

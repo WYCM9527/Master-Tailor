@@ -7,10 +7,10 @@
 <style>
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
-    --mt-bg: #0a0a0f;        /* 页面底色 */
-    --mt-gap: 6px;           /* 方块间隙 */
-    --mt-color: #1c1c1c;     /* 方块颜色 */
-    --mt-accent: #ffffff;    /* 抬起时的颜色 */
+    --mt-bg: #0a0a0f;             /* 页面底色 */
+    --mt-faceColor: #0b0b0b;      /* 方块面色 */
+    --mt-borderColor: #ffffff;    /* 描边颜色 */
+    --mt-rippleColor: #ffffff;    /* 涟漪闪色 */
   }
   html, body { margin: 0; height: 100%; }
   body {
@@ -19,98 +19,147 @@
     place-items: center;
     overflow: hidden;
   }
-  /* 网格整体带透视，方块抬起时向观察者靠近 */
-  .mt-grid {
+  /* 正方形舞台：随视口取短边，网格铺满 */
+  .mt-scene {
+    width: min(64vh, 60vw);
+    aspect-ratio: 1;
     display: grid;
-    gap: var(--mt-gap);
-    perspective: 900px;
+    gap: 5%;
+    /* 极大透视距离 ≈ 正交投影：倾斜后能看到侧面，但不会近大远小 */
+    perspective: 99999px;
+    touch-action: none;
+  }
+  .mt-cube {
+    position: relative;
     transform-style: preserve-3d;
-    width: min(92vw, 1100px);
-    aspect-ratio: var(--ratio);
-    cursor: crosshair;
+    /* 进入范围 0.3s 快倾、离开范围 0.6s 慢回：JS 按状态切换 duration */
+    transition: transform var(--dur, 0.3s) cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
   }
-  .mt-cell {
-    /* --k 抬起程度 0–1、--rx/--ry 倾斜角，由 JS 逐帧写入 */
-    background: color-mix(in srgb, var(--mt-accent) calc(var(--k, 0) * 100%), var(--mt-color));
-    transform: translateZ(calc(var(--k, 0) * var(--lift))) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-    will-change: transform, background;
-    border-radius: 2px;
+  /* 六个面：黑面 + 1px 描边，靛出立方体的棱线 */
+  .mt-face {
+    position: absolute;
+    inset: 0;
+    background: var(--mt-faceColor);
+    border: 1px solid var(--mt-borderColor);
+    box-sizing: border-box;
+    transition: background-color var(--flash, 0.15s) cubic-bezier(0.22, 1, 0.36, 1);
   }
+  .mt-face.is-flash { background: var(--mt-rippleColor); }
+  .mt-face:nth-child(1) { transform: translateY(-50%) rotateX(90deg); }                    /* 顶 */
+  .mt-face:nth-child(2) { transform: translateY(50%) rotateX(-90deg); }                    /* 底 */
+  .mt-face:nth-child(3) { transform: translateX(-50%) rotateY(-90deg); }                   /* 左 */
+  .mt-face:nth-child(4) { transform: translateX(50%) rotateY(90deg); }                     /* 右 */
+  .mt-face:nth-child(5) { transform: rotateY(-90deg) translateX(50%) rotateY(90deg); }     /* 前 */
+  .mt-face:nth-child(6) { transform: rotateY(90deg) translateX(-50%) rotateY(-90deg); }    /* 后 */
 
-  /* 用户开启「减少动态效果」时：网格静止平铺 */
+  /* 用户开启「减少动态效果」时：方块不倾斜、不闪（JS 同步处理） */
   @media (prefers-reduced-motion: reduce) {
-    .mt-cell { transform: none !important; }
+    .mt-cube, .mt-face { transition: none; }
   }
 </style>
 </head>
 <body>
-<div class="mt-grid" id="mtGrid" aria-hidden="true"></div>
+<div class="mt-scene" id="mtScene" aria-hidden="true"></div>
 <script>
   const CONFIG = {
-    cols: 12,        // 列数
-    rows: 7,         // 行数
-    radius: 2.5,     // 影响半径（格）
-    lift: 36,        // 抬起高度（px）
-    tilt: 25,        // 倾斜角度（度）
-    autoWave: true,  // 无鼠标时自动泛波
+    gridSize: 10,         // 网格规模（每行每列方块数）
+    maxAngle: 45,         // 最大倾角（度）
+    radius: 3,            // 影响半径（格）
+    rippleOnClick: true,  // 点击涟漪
+    rippleSpeed: 2,       // 涟漪速度
+    autoAnimate: true,    // 无鼠标时自动游走
   };
 
-  const grid = document.getElementById('mtGrid');
+  const scene = document.getElementById('mtScene');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  grid.style.gridTemplateColumns = 'repeat(' + CONFIG.cols + ', 1fr)';
-  grid.style.setProperty('--ratio', CONFIG.cols + ' / ' + CONFIG.rows);
-  grid.style.setProperty('--lift', CONFIG.lift + 'px');
+  const N = CONFIG.gridSize;
+  scene.style.gridTemplateColumns = `repeat(${N}, 1fr)`;
+  scene.style.gridTemplateRows = `repeat(${N}, 1fr)`;
 
-  const cells = [];
-  for (let r = 0; r < CONFIG.rows; r++) for (let c = 0; c < CONFIG.cols; c++) {
-    const el = document.createElement('div');
-    el.className = 'mt-cell';
-    grid.appendChild(el);
-    cells.push({ el, r, c, k: 0 });
+  // 生成 N×N 个六面立方体
+  const cubes = [];
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    const cube = document.createElement('div');
+    cube.className = 'mt-cube';
+    for (let f = 0; f < 6; f++) cube.appendChild(Object.assign(document.createElement('div'), { className: 'mt-face' }));
+    scene.appendChild(cube);
+    cubes.push({ el: cube, r, c, faces: [...cube.children] });
   }
 
-  // 鼠标位置换算成「格坐标」（小数），无鼠标时放到远处
-  let gx = -99, gy = -99, hasPointer = false;
-  grid.addEventListener('pointermove', e => {
-    const b = grid.getBoundingClientRect();
-    gx = (e.clientX - b.left) / b.width * CONFIG.cols - 0.5;
-    gy = (e.clientY - b.top) / b.height * CONFIG.rows - 0.5;
-    hasPointer = true;
-  });
-  grid.addEventListener('pointerleave', () => { hasPointer = false; gx = -99; gy = -99; });
-
-  let t = 0;
-  function frame() {
-    if (!document.hidden && !reduceMotion) {
-      t += 0.016;
-      let cx = gx, cy = gy;
-      // 自动泛波：没有鼠标时一个看不见的点在网格上游走
-      if (!hasPointer && CONFIG.autoWave) {
-        cx = CONFIG.cols / 2 + Math.cos(t * 0.9) * CONFIG.cols * 0.35;
-        cy = CONFIG.rows / 2 + Math.sin(t * 1.3) * CONFIG.rows * 0.35;
-      }
-      for (const cell of cells) {
-        const dx = cell.c - cx, dy = cell.r - cy;
-        const d = Math.hypot(dx, dy);
-        // 目标抬起量：半径内按余弦衰减，形成圆润的波峰
-        const target = d < CONFIG.radius ? 0.5 + 0.5 * Math.cos(d / CONFIG.radius * Math.PI) : 0;
-        cell.k += (target - cell.k) * 0.18;
-        const k = cell.k;
-        // 倾斜：朝波峰中心的方向倒
-        const rx = d > 0.01 ? (dy / d) * k * CONFIG.tilt : 0;
-        const ry = d > 0.01 ? (-dx / d) * k * CONFIG.tilt : 0;
-        cell.el.style.setProperty('--k', k.toFixed(3));
-        cell.el.style.setProperty('--rx', rx.toFixed(1) + 'deg');
-        cell.el.style.setProperty('--ry', ry.toFixed(1) + 'deg');
+  /* 以 (rowCenter, colCenter) 为圆心倾斜：半径内按距离线性给角度，同向 rotateX(-a) rotateY(a) */
+  function tiltAt(rowCenter, colCenter) {
+    if (reduceMotion) return;
+    for (const cube of cubes) {
+      const dist = Math.hypot(cube.r - rowCenter, cube.c - colCenter);
+      if (dist <= CONFIG.radius) {
+        const angle = (1 - dist / CONFIG.radius) * CONFIG.maxAngle;
+        cube.el.style.setProperty('--dur', '0.3s');
+        cube.el.style.transform = `rotateX(${-angle}deg) rotateY(${angle}deg)`;
+      } else {
+        cube.el.style.setProperty('--dur', '0.6s');
+        cube.el.style.transform = 'rotateX(0deg) rotateY(0deg)';
       }
     }
-    requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  function resetAll() {
+    for (const cube of cubes) {
+      cube.el.style.setProperty('--dur', '0.6s');
+      cube.el.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    }
+  }
 
-  /* @mt:thumb-start */
-  // 缩略图演示：依赖上面的自动泛波（autoWave 关闭时缩略图静止平铺）
-  /* @mt:thumb-end */
+  // 真实指针：换算成「格坐标」（可以是小数，圆心落在格间也行）
+  let userActive = false, idleTimer = 0, pending = 0;
+  scene.addEventListener('pointermove', (e) => {
+    userActive = true;
+    clearTimeout(idleTimer);
+    const rect = scene.getBoundingClientRect();
+    const col = (e.clientX - rect.left) / (rect.width / N);
+    const row = (e.clientY - rect.top) / (rect.height / N);
+    cancelAnimationFrame(pending);
+    pending = requestAnimationFrame(() => tiltAt(row, col));
+    idleTimer = setTimeout(() => { userActive = false; }, 3000);   // 3 秒没动交还自动游走
+  });
+  scene.addEventListener('pointerleave', resetAll);
+
+  /* 点击涟漪：按「到点击格的环距离」分组，逐环延迟把六面闪成涟漪色再回落 */
+  if (CONFIG.rippleOnClick) {
+    scene.addEventListener('click', (e) => {
+      if (reduceMotion) return;
+      const rect = scene.getBoundingClientRect();
+      const colHit = Math.floor((e.clientX - rect.left) / (rect.width / N));
+      const rowHit = Math.floor((e.clientY - rect.top) / (rect.height / N));
+      const spreadDelay = 150 / CONFIG.rippleSpeed;   // 相邻环之间的间隔
+      const flashDur = 300 / CONFIG.rippleSpeed;      // 变色时长
+      const hold = 600 / CONFIG.rippleSpeed;          // 停留时长
+      for (const cube of cubes) {
+        const ring = Math.round(Math.hypot(cube.r - rowHit, cube.c - colHit));
+        const delay = ring * spreadDelay;
+        setTimeout(() => {
+          cube.faces.forEach((f) => { f.style.setProperty('--flash', flashDur + 'ms'); f.classList.add('is-flash'); });
+        }, delay);
+        setTimeout(() => {
+          cube.faces.forEach((f) => f.classList.remove('is-flash'));
+        }, delay + flashDur + hold);
+      }
+    });
+  }
+
+  /* 无鼠标时：一个模拟指针在网格里以 2%/帧 朝随机目标游走，到达后换下一个目标 */
+  if (CONFIG.autoAnimate && !reduceMotion) {
+    const pos = { x: Math.random() * N, y: Math.random() * N };
+    let tgt = { x: Math.random() * N, y: Math.random() * N };
+    function loop() {
+      requestAnimationFrame(loop);
+      if (document.hidden || userActive) return;
+      pos.x += (tgt.x - pos.x) * 0.02;
+      pos.y += (tgt.y - pos.y) * 0.02;
+      tiltAt(pos.y, pos.x);
+      if (Math.hypot(pos.x - tgt.x, pos.y - tgt.y) < 0.1) tgt = { x: Math.random() * N, y: Math.random() * N };
+    }
+    requestAnimationFrame(loop);
+  }
 </script>
 </body>
 </html>

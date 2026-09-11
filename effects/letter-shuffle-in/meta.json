@@ -3,8 +3,8 @@
   "name": "字符洗牌进场",
   "category": "text",
   "sub": "idle",
-  "tags": ["进场", "洗牌", "老虎机"],
-  "summary": "每个字位先快速翻动一串乱字，再依次停在正确的字上",
+  "tags": ["进场", "洗牌", "滑入", "裁切"],
+  "summary": "每个字都在自己的小窗里，一条字形带从旁边滑进来、掠过几个乱字后停在正确的字上",
   "params": [
     {
       "key": "text",
@@ -15,26 +15,50 @@
       "maxLength": 40
     },
     {
-      "key": "rounds",
-      "label": "翻动次数",
-      "type": "range",
+      "key": "direction",
+      "label": "滑入方向",
+      "type": "select",
       "target": "config",
-      "min": 3,
-      "max": 20,
-      "step": 1,
-      "default": 8,
-      "help": "每个字位停下之前翻过多少个乱字"
+      "options": [
+        { "value": "right", "label": "从左向右" },
+        { "value": "left", "label": "从右向左" },
+        { "value": "down", "label": "从上向下" },
+        { "value": "up", "label": "从下向上" }
+      ],
+      "default": "right"
     },
     {
-      "key": "speed",
-      "label": "翻动速度",
+      "key": "duration",
+      "label": "滑入时长",
       "type": "range",
       "target": "config",
-      "min": 20,
-      "max": 120,
-      "step": 5,
-      "default": 45,
-      "displayUnit": " 毫秒/次"
+      "min": 0.15,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.35,
+      "unit": "s"
+    },
+    {
+      "key": "shuffleTimes",
+      "label": "掠过乱字数",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 1,
+      "help": "停下之前带子上有几个乱字"
+    },
+    {
+      "key": "mode",
+      "label": "编排方式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "evenodd", "label": "奇偶交错" },
+        { "value": "random", "label": "随机延迟" }
+      ],
+      "default": "evenodd"
     },
     {
       "key": "stagger",
@@ -42,11 +66,10 @@
       "type": "range",
       "target": "config",
       "min": 0,
-      "max": 200,
-      "step": 10,
-      "default": 60,
-      "displayUnit": " 毫秒",
-      "help": "0 则所有字位同时开始、同时停下"
+      "max": 0.15,
+      "step": 0.01,
+      "default": 0.03,
+      "unit": "s"
     },
     {
       "key": "glyphs",
@@ -54,20 +77,13 @@
       "type": "select",
       "target": "config",
       "options": [
+        { "value": "self", "label": "原字本身（纯滑动）" },
         { "value": "latin", "label": "大写字母与数字" },
-        { "value": "symbol", "label": "符号" },
-        { "value": "self", "label": "文案自身的字" }
+        { "value": "symbol", "label": "符号" }
       ],
-      "default": "latin"
+      "default": "self"
     },
     { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
-    {
-      "key": "accent",
-      "label": "翻动中颜色",
-      "type": "color",
-      "target": "css",
-      "default": "#8a8b98"
-    },
     {
       "key": "fontSize",
       "label": "字号",
@@ -83,16 +99,8 @@
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "slot",
-      "name": "老虎机",
-      "values": { "rounds": 16, "speed": 30, "stagger": 120, "glyphs": "self" }
-    },
-    {
-      "id": "burst",
-      "name": "齐停",
-      "values": { "rounds": 12, "speed": 40, "stagger": 0, "glyphs": "symbol", "accent": "#ffffff" }
-    }
+    { "id": "slot", "name": "竖排老虎机", "values": { "direction": "down", "shuffleTimes": 4, "duration": 0.6, "glyphs": "latin" } },
+    { "id": "random", "name": "随机乱入", "values": { "mode": "random", "glyphs": "symbol", "shuffleTimes": 2 } }
   ],
   "thumb": { "mode": "live" },
   "source": { "kind": "visual-inspiration" }

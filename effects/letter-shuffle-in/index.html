@@ -7,45 +7,50 @@
 <style>
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
-    --mt-bg: #0a0a0f;        /* 页面底色 */
-    --mt-color: #f2f3f8;     /* 文字颜色（停定后） */
-    --mt-accent: #8a8b98;    /* 翻动中的字颜色 */
-    --mt-fontSize: 52px;     /* 字号 */
-    --mt-font: "JetBrains Mono", ui-monospace, monospace; /* 字体 */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-color: #f2f3f8;       /* 文字颜色 */
+    --mt-fontSize: 52px;       /* 字号 */
+    --mt-font: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; /* 字体 */
   }
-
   html, body { margin: 0; height: 100%; }
   body {
     background: var(--mt-bg);
-    display: grid;
-    place-items: center;
+    display: grid; place-items: center;
     overflow: hidden;
   }
-
   .mt-shuffle {
-    max-width: 92vw;
-    text-align: center;
+    margin: 0;
+    max-width: 90vw;
     font-family: var(--mt-font);
     font-size: var(--mt-fontSize);
-    font-weight: 700;
-    line-height: 1.3;
+    font-weight: 800;
+    line-height: 1;
     color: var(--mt-color);
-    letter-spacing: 0.04em;
-  }
-  /* 每个字位固定宽度，翻动时字形变化不会让整行抖动 */
-  .mt-shuffle .c {
-    display: inline-block;
-    min-width: 0.62em;
     text-align: center;
-    white-space: pre;
-    transition: color 0.2s ease;
+    text-transform: uppercase;
+    cursor: default;
+    user-select: none;
   }
-  .mt-shuffle .c.rolling { color: var(--mt-accent); }
+  /* 裁切窗：宽 = 字宽（竖向时高 = 字高），溢出隐藏，字形带在里面滑 */
+  .mt-win {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+    text-align: left;
+  }
+  .mt-strip {
+    display: inline-block;
+    white-space: nowrap;
+    will-change: transform;
+    transform-origin: left;
+  }
+  .mt-win.vert .mt-strip { white-space: normal; }
+  .mt-strip > span { display: inline-block; text-align: left; }
+  .mt-win.vert .mt-strip > span { display: block; }
+  .mt-space { display: inline-block; }
 
-  /* 用户开启「减少动态效果」时：直接显示（JS 同步不翻动） */
-  @media (prefers-reduced-motion: reduce) {
-    .mt-shuffle .c { transition: none; }
-  }
+  /* 用户开启「减少动态效果」时：不做滑入，直接显示（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) { .mt-strip { transition: none !important; } }
 </style>
 </head>
 <body>
@@ -53,61 +58,140 @@
 <script>
   const CONFIG = {
     text: "SHUFFLE 洗牌进场", // 文案
-    rounds: 8,     // 翻动次数：每个字位停下前翻过多少个乱字
-    speed: 45,     // 翻动速度（毫秒/次）
-    stagger: 60,   // 相邻错开（毫秒），0 为齐停
-    glyphs: "latin", // 乱字来源：latin 大写字母数字 / symbol 符号 / self 文案自身
+    direction: "right",     // 滑入方向：right / left / down / up
+    duration: 0.35,         // 滑入时长（s）
+    shuffleTimes: 1,        // 掠过乱字数
+    mode: "evenodd",        // 编排方式：evenodd 奇偶交错 / random 随机延迟
+    stagger: 0.03,          // 相邻错开（s）
+    glyphs: "self",         // 乱字来源：self 原字 / latin 字母数字 / symbol 符号
   };
 
-  const POOLS = {
-    latin: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-    symbol: "!@#$%&*+=?/<>{}[]|~^",
-  };
   const host = document.getElementById('mtShuffle');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const chars = Array.from(CONFIG.text);
-  const pool = CONFIG.glyphs === 'self'
-    ? chars.filter(c => c.trim())
-    : Array.from(POOLS[CONFIG.glyphs] || POOLS.latin);
   host.setAttribute('aria-label', CONFIG.text);
+  const chars = Array.from(CONFIG.text);
+  const vertical = CONFIG.direction === 'up' || CONFIG.direction === 'down';
+  const CHARSETS = {
+    latin: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+    symbol: '#%&@$*+=<>?!/\\|~^',
+  };
+  const randGlyph = (orig) => {
+    const set = CHARSETS[CONFIG.glyphs];
+    return set ? set.charAt(Math.floor(Math.random() * set.length)) : orig;
+  };
 
-  // 生成字位
-  const cells = chars.map(ch => {
-    const c = document.createElement('span');
-    c.className = 'c';
-    c.textContent = ch;
-    c.setAttribute('aria-hidden', 'true');
-    host.appendChild(c);
-    return c;
-  });
+  // 第一步：先把每个字按普通 span 放进去，量出每个字的宽高（字体加载后再量更准）
+  let strips = [];
+  function build() {
+    host.innerHTML = '';
+    strips = [];
+    const probes = chars.map((ch) => {
+      const s = document.createElement('span');
+      s.className = ch === ' ' ? 'mt-space' : 'mt-probe';
+      s.style.display = 'inline-block';
+      s.textContent = ch === ' ' ? '\u00a0' : ch;
+      host.appendChild(s);
+      return s;
+    });
+    const sizes = probes.map((s) => s.getBoundingClientRect());
+    host.innerHTML = '';
 
-  let timers = [];
-  function play() {
-    timers.forEach(clearTimeout);
-    timers = [];
-    cells.forEach((cell, i) => {
-      const target = chars[i];
-      if (!target.trim()) return; // 空格不翻
-      const start = i * CONFIG.stagger;
-      for (let r = 0; r < CONFIG.rounds; r++) {
-        timers.push(setTimeout(() => {
-          cell.classList.add('rolling');
-          cell.textContent = pool[Math.floor(Math.random() * pool.length)];
-        }, start + r * CONFIG.speed));
+    // 第二步：把每个字换成「裁切窗 + 字形带」
+    const rolls = Math.max(1, Math.floor(CONFIG.shuffleTimes));
+    chars.forEach((ch, i) => {
+      if (ch === ' ') {
+        const sp = document.createElement('span');
+        sp.className = 'mt-space';
+        sp.style.width = `${sizes[i].width}px`;
+        sp.textContent = '\u00a0';
+        host.appendChild(sp);
+        return;
       }
-      timers.push(setTimeout(() => {
-        cell.classList.remove('rolling');
-        cell.textContent = target;
-      }, start + CONFIG.rounds * CONFIG.speed));
+      const w = sizes[i].width, h = sizes[i].height;
+      const win = document.createElement('span');
+      win.className = 'mt-win' + (vertical ? ' vert' : '');
+      win.style.width = `${w}px`;
+      if (vertical) win.style.height = `${h}px`;
+      const strip = document.createElement('span');
+      strip.className = 'mt-strip';
+      // 带子内容：原字 → rolls 个乱字 → 原字副本；从右/下滑入时原字在最前，从左/上滑入时在最后
+      const cell = (text) => {
+        const c = document.createElement('span');
+        c.style.width = `${w}px`;
+        if (vertical) c.style.height = `${h}px`;
+        c.textContent = text;
+        return c;
+      };
+      const seq = [cell(ch)];
+      for (let k = 0; k < rolls; k++) seq.push(cell(randGlyph(ch)));
+      seq.push(cell(ch));
+      if (CONFIG.direction === 'left' || CONFIG.direction === 'up') seq.reverse();
+      seq.forEach((c) => strip.appendChild(c));
+      win.appendChild(strip);
+      host.appendChild(win);
+
+      const steps = rolls + 1;
+      // 起点 / 终点位移：带子总长 steps+1 格，露出第一格或最后一格
+      let start = 0, end = 0;
+      if (CONFIG.direction === 'right') { start = -steps * w; end = 0; }
+      else if (CONFIG.direction === 'left') { start = 0; end = -steps * w; }
+      else if (CONFIG.direction === 'down') { start = -steps * h; end = 0; }
+      else { start = 0; end = -steps * h; }
+      strip.dataset.start = start; strip.dataset.end = end;
+      strip.style.transition = 'none';
+      strip.style.transform = vertical ? `translateY(${start}px)` : `translateX(${start}px)`;
+      strips.push(strip);
     });
   }
 
-  if (!reduceMotion) {
-    play();
-    // 循环演示：全部停定后停 2s 再洗一遍；后台时跳过
-    const total = chars.length * CONFIG.stagger + CONFIG.rounds * CONFIG.speed + 2000;
-    setInterval(() => { if (!document.hidden) play(); }, total);
+  let playing = false, playToken = 0;
+  function play() {
+    if (playing || reduceMotion) { if (reduceMotion) strips.forEach((s) => { s.style.transform = 'none'; }); return; }
+    playing = true;
+    const token = ++playToken;
+    const n = strips.length;
+    // 延迟编排：奇偶交错 —— 奇数位先按序滑，偶数位在奇数位总时长的 70% 处开始；随机 —— 0~0.4s 随机
+    const delays = new Array(n).fill(0);
+    if (CONFIG.mode === 'evenodd') {
+      const odd = [], even = [];
+      strips.forEach((_, i) => (i % 2 === 1 ? odd : even).push(i));
+      const oddTotal = CONFIG.duration + Math.max(0, odd.length - 1) * CONFIG.stagger;
+      odd.forEach((i, k) => { delays[i] = k * CONFIG.stagger; });
+      const evenStart = odd.length ? oddTotal * 0.7 : 0;
+      even.forEach((i, k) => { delays[i] = evenStart + k * CONFIG.stagger; });
+    } else {
+      strips.forEach((_, i) => { delays[i] = Math.random() * 0.4; });
+    }
+    // 先无过渡钉在起点，下一帧再开过渡滑到终点
+    strips.forEach((s) => { s.style.transition = 'none'; s.style.transform = vertical ? `translateY(${s.dataset.start}px)` : `translateX(${s.dataset.start}px)`; });
+    void host.offsetHeight;
+    requestAnimationFrame(() => {
+      strips.forEach((s, i) => {
+        s.style.transition = `transform ${CONFIG.duration}s cubic-bezier(0.22, 1, 0.36, 1) ${delays[i]}s`;
+        s.style.transform = vertical ? `translateY(${s.dataset.end}px)` : `translateX(${s.dataset.end}px)`;
+      });
+    });
+    const total = (Math.max(...delays) + CONFIG.duration) * 1000 + 60;
+    setTimeout(() => { if (token === playToken) playing = false; }, total);
+    return total;
   }
+
+  build();
+  let total = play() || 0;
+  // 悬停重播（源站同款交互）：带子重新洗一遍乱字再滑入
+  host.addEventListener('mouseenter', () => { if (!playing) { build(); play(); } });
+  // 字体晚到时重新量宽重建，避免窗宽与字宽不符
+  if (document.fonts) document.fonts.ready.then(() => { if (!playing) { build(); play(); } });
+
+  /* @mt:thumb-start */
+  // 自动循环：每次播完停 1.5 秒再重新洗牌滑入
+  if (!reduceMotion) {
+    setInterval(() => {
+      if (document.hidden || playing) return;
+      build(); play();
+    }, Math.max(1600, total + 1500));
+  }
+  /* @mt:thumb-end */
 </script>
 </body>
 </html>

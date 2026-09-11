@@ -2,93 +2,136 @@
   "slug": "dot-field-wave",
   "name": "点场波纹",
   "category": "background",
-  "sub": "idle",
-  "tags": ["点阵", "波纹", "呼吸"],
-  "summary": "满屏小圆点随一道道看不见的波起伏，明暗和大小一起呼吸",
+  "sub": "hover",
+  "tags": [
+    "点阵",
+    "鼓包",
+    "渐变",
+    "鼠标交互"
+  ],
+  "summary": "满屏渐变色细点阵，鼠标划过时点被推开鼓起一个包，身后跟着一团暗晕",
   "params": [
     {
-      "key": "spacing",
+      "key": "dotRadius",
+      "label": "点的直径",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "default": 1.5,
+      "unit": "px"
+    },
+    {
+      "key": "dotSpacing",
       "label": "点间距",
       "type": "range",
       "target": "config",
-      "min": 14,
-      "max": 60,
-      "step": 2,
-      "default": 28,
-      "unit": "px"
-    },
-    {
-      "key": "dotSize",
-      "label": "点最大直径",
-      "type": "range",
-      "target": "config",
-      "min": 2,
-      "max": 14,
+      "min": 5,
+      "max": 30,
       "step": 1,
-      "default": 6,
+      "default": 14,
       "unit": "px"
     },
     {
-      "key": "waveLength",
-      "label": "波长",
+      "key": "cursorRadius",
+      "label": "鼓包范围",
       "type": "range",
       "target": "config",
       "min": 100,
-      "max": 800,
-      "step": 20,
-      "default": 320,
+      "max": 1000,
+      "step": 50,
+      "default": 500,
       "unit": "px"
     },
     {
-      "key": "speed",
-      "label": "波速",
-      "type": "range",
-      "target": "config",
-      "min": 0.2,
-      "max": 3,
-      "step": 0.1,
-      "default": 1
-    },
-    {
-      "key": "mode",
-      "label": "波形",
-      "type": "select",
-      "target": "config",
-      "options": [
-        { "value": "ripple", "label": "中心涟漪" },
-        { "value": "diagonal", "label": "斜向推进" },
-        { "value": "noise", "label": "随机起伏" }
-      ],
-      "default": "ripple"
-    },
-    {
-      "key": "color",
-      "label": "点的颜色",
-      "type": "color",
-      "target": "config",
-      "default": "#ffffff"
-    },
-    {
-      "key": "mouse",
-      "label": "鼠标激起涟漪",
+      "key": "bulgeOnly",
+      "label": "鼓包模式",
       "type": "toggle",
       "target": "config",
-      "default": true
+      "default": true,
+      "help": "开：点被推开成鼓包后归位；关：点被鼠标速度甩开再弹回"
+    },
+    {
+      "key": "bulgeStrength",
+      "label": "鼓包高度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 150,
+      "step": 1,
+      "default": 67
+    },
+    {
+      "key": "glowColor",
+      "label": "暗晕颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#120f17"
+    },
+    {
+      "key": "waveAmplitude",
+      "label": "自动漂浮",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 0,
+      "unit": "px",
+      "help": "0 为静止点阵"
+    },
+    {
+      "key": "sparkle",
+      "label": "随机闪烁",
+      "type": "toggle",
+      "target": "config",
+      "default": false
+    },
+    {
+      "key": "gradientFrom",
+      "label": "渐变起色",
+      "type": "color",
+      "target": "config",
+      "default": "#7cff67"
+    },
+    {
+      "key": "gradientTo",
+      "label": "渐变止色",
+      "type": "color",
+      "target": "config",
+      "default": "#a0ffbc"
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
     {
-      "id": "fine",
-      "name": "细密斜波",
-      "values": { "spacing": 16, "dotSize": 3, "mode": "diagonal", "waveLength": 500, "speed": 0.6 }
+      "id": "default",
+      "name": "默认",
+      "values": {}
     },
     {
-      "id": "bold",
-      "name": "大点乱涌",
-      "values": { "spacing": 48, "dotSize": 14, "mode": "noise", "speed": 1.6 }
+      "id": "drift",
+      "name": "漂浮闪烁",
+      "values": {
+        "waveAmplitude": 6,
+        "sparkle": true
+      }
+    },
+    {
+      "id": "fling",
+      "name": "甩开弹回",
+      "values": {
+        "bulgeOnly": false,
+        "gradientFrom": "#ffffff",
+        "gradientTo": "#9ab0ff",
+        "dotRadius": 2
+      }
     }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

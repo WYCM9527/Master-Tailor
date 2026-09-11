@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡面聚光</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;             /* 页面底色 */
+    --mt-cardBg: #111111;         /* 卡片底色 */
+    --mt-borderColor: #222222;    /* 边框颜色 */
+    --mt-radius: 24px;            /* 圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid; place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #fff;
+  }
+  .mt-row { display: flex; gap: 24px; padding: 24px; flex-wrap: wrap; justify-content: center; }
+  /* 卡片：圆角、细边、深底；柔光层绝对铺满、默认透明 */
+  .mt-card {
+    position: relative;
+    width: 300px; min-height: 220px;
+    padding: 32px;
+    box-sizing: border-box;
+    border-radius: var(--mt-radius);
+    border: 1px solid var(--mt-borderColor);
+    background: var(--mt-cardBg);
+    overflow: hidden;
+  }
+  .mt-spot {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;   /* 进入亮起、离开熄灭都是半秒 */
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), var(--spot), transparent 80%);
+  }
+  .mt-card h3 { margin: 0 0 12px; font-size: 22px; font-weight: 700; letter-spacing: 0.01em; position: relative; }
+  .mt-card p { margin: 0; font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, 0.62); position: relative; }
+  .mt-card .num { position: absolute; right: 24px; top: 20px; font: 600 12px ui-monospace, monospace; color: rgba(255,255,255,0.3); }
+
+  /* 用户开启「减少动态效果」时：柔光直接出现 / 消失 */
+  @media (prefers-reduced-motion: reduce) { .mt-spot { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-row" id="mtRow"></div>
+<script>
+  const CONFIG = {
+    titles: "极速｜安全｜开放",                                        // 卡片标题，用「｜」分隔
+    descs: "毫秒级响应，随时可用｜端到端加密，数据只属于你｜开放接口，与任何工具协作", // 卡片描述
+    spotColor: "#ffffff",  // 聚光颜色
+    spotAlpha: 0.25,       // 聚光浓度
+    intensity: 0.6,        // 亮起程度
+  };
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const row = document.getElementById('mtRow');
+
+  function hexRgba(hex, a) {
+    const h = hex.replace('#', '');
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+  const spot = hexRgba(CONFIG.spotColor, CONFIG.spotAlpha);
+
+  let userTook = false;   // 真实鼠标进过卡片后，自动演示交还控制
+  const titles = CONFIG.titles.split('｜').map(s => s.trim()).filter(Boolean);
+  const descs = CONFIG.descs.split('｜').map(s => s.trim());
+  const cards = titles.map((t, i) => {
+    const card = document.createElement('article');
+    card.className = 'mt-card';
+    card.tabIndex = 0;
+    card.innerHTML = `<div class="mt-spot"></div><span class="num">0${i + 1}</span><h3></h3><p></p>`;
+    card.querySelector('h3').textContent = t;
+    card.querySelector('p').textContent = descs[i] || '';
+    const layer = card.querySelector('.mt-spot');
+    layer.style.setProperty('--spot', spot);
+    // 鼠标在卡内移动：把位置写进渐变圆心；进入亮起、离开熄灭；键盘聚焦也亮
+    card.addEventListener('pointermove', (e) => {
+      const r = card.getBoundingClientRect();
+      layer.style.setProperty('--x', `${e.clientX - r.left}px`);
+      layer.style.setProperty('--y', `${e.clientY - r.top}px`);
+    });
+    card.addEventListener('pointerenter', () => { userTook = true; layer.style.opacity = CONFIG.intensity; });
+    card.addEventListener('pointerleave', () => { layer.style.opacity = 0; });
+    card.addEventListener('focus', () => { layer.style.opacity = CONFIG.intensity; });
+    card.addEventListener('blur', () => { layer.style.opacity = 0; });
+    row.appendChild(card);
+    return { card, layer };
+  });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟鼠标在三张卡上依次划过；真实鼠标进入后交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || userTook) return;
+      t += 0.035;
+      const idx = Math.floor((t / (Math.PI * 2)) % cards.length + cards.length) % cards.length;
+      cards.forEach(({ layer }, i) => {
+        if (i !== idx) { layer.style.opacity = 0; return; }
+        const r = cards[i].card.getBoundingClientRect();
+        layer.style.setProperty('--x', `${r.width * (0.5 + 0.4 * Math.sin(t * 3))}px`);
+        layer.style.setProperty('--y', `${r.height * (0.5 + 0.35 * Math.cos(t * 2.2))}px`);
+        layer.style.opacity = CONFIG.intensity;
+      });
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -8,121 +8,136 @@
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;        /* 页面底色 */
-    --mt-folder: #ffffff;    /* 文件夹颜色 */
-    --mt-paper: #d0d0d0;     /* 纸张颜色 */
-    --mt-size: 200px;        /* 文件夹大小（宽） */
-    --mt-lift: 45%;          /* 纸张探出高度 */
-    --mt-duration: 0.45s;    /* 打开时长 */
   }
   html, body { margin: 0; height: 100%; }
   body {
     background: var(--mt-bg);
-    display: grid;
-    place-items: center;
+    display: grid; place-items: center;
     overflow: hidden;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    color: #f2f3f8;
   }
-  .mt-wrap { display: grid; justify-items: center; gap: 18px; cursor: pointer; }
-  /* 文件夹：后板 + 纸张 + 前封口（前封口在悬停时向前下方掀开） */
+  .mt-wrap { transform: scale(var(--size, 2.5)); }
+  /* 文件夹整体：悬停 / 打开时上浮 8px */
   .mt-folder {
     position: relative;
-    width: var(--mt-size);
-    height: calc(var(--mt-size) * 0.72);
-    perspective: 900px;
+    cursor: pointer;
+    transition: transform 0.2s ease-in;
   }
+  .mt-folder:hover, .mt-folder.is-hover, .mt-folder.is-open { transform: translateY(-8px); }
+  /* 夹体背板：100×80，右上/右下/左下圆角；颜色比封面深 8% */
   .mt-back {
-    position: absolute; inset: 0;
-    background: color-mix(in srgb, var(--mt-folder) 70%, #000);
-    border-radius: 6px 14px 10px 10px;
+    position: relative;
+    width: 100px; height: 80px;
+    background: var(--back);
+    border-radius: 0 10px 10px 10px;
   }
-  .mt-back::before {
-    /* 后板的标签突起 */
-    content: '';
-    position: absolute; left: 0; top: -10%;
-    width: 42%; height: 12%;
-    background: inherit;
-    border-radius: 6px 10px 0 0;
+  /* 左上标签 */
+  .mt-tab {
+    position: absolute; z-index: 0;
+    bottom: 98%; left: 0;
+    width: 30px; height: 10px;
+    background: var(--back);
+    border-radius: 5px 5px 0 0;
   }
+  /* 三张纸：从深到浅叠放，底部对齐、水平居中；未开时略沉在夹子里 */
   .mt-paper {
-    position: absolute;
-    left: 10%; right: 10%; bottom: 8%;
-    height: 90%;
-    background: var(--mt-paper);
-    border-radius: 6px;
-    transform-origin: bottom center;
-    transform: translateY(0) rotate(0deg);
-    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.18);
+    position: absolute; z-index: 20;
+    bottom: 10%; left: 50%;
+    border-radius: 10px;
+    overflow: hidden;
+    transform: translate(-50%, 10%);
+    transition: all 0.3s ease-in-out;
+    display: flex; align-items: flex-start; justify-content: center;
+    padding-top: 6px; box-sizing: border-box;
+    font-size: 6px; font-weight: 600; color: #444; letter-spacing: 0.02em;
   }
-  .mt-paper::after {
-    /* 纸上的几条「文字」线 */
-    content: '';
-    position: absolute; left: 14%; right: 14%; top: 14%;
-    height: 34%;
-    background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.16) 0 3px, transparent 3px 11px);
+  .mt-paper.p1 { width: 70%; height: 80%; background: #e6e6e6; }
+  .mt-paper.p2 { width: 80%; height: 70%; background: #f2f2f2; }
+  .mt-paper.p3 { width: 90%; height: 60%; background: #ffffff; }
+  /* 悬停：纸探出头 */
+  .mt-folder:hover .mt-paper, .mt-folder.is-hover .mt-paper { transform: translate(-50%, 0); }
+  /* 打开：三张纸各自飞出并旋转，后两张长高到 80% */
+  .mt-folder.is-open .mt-paper.p1 { transform: translate(-120%, -70%) rotate(-15deg); }
+  .mt-folder.is-open .mt-paper.p2 { height: 80%; transform: translate(10%, -70%) rotate(15deg); }
+  .mt-folder.is-open .mt-paper.p3 { height: 80%; transform: translate(-50%, -100%) rotate(5deg); }
+  .mt-folder.is-open .mt-paper:hover { scale: 1.1; }
+  /* 封口两片：以底边为轴，悬停 / 打开时各向一侧斜切并压扁，形成张开的口 */
+  .mt-front, .mt-right {
+    position: absolute; inset: 0; z-index: 30;
+    background: var(--color);
+    border-radius: 5px 10px 10px 10px;
+    transform-origin: bottom;
+    transition: all 0.3s ease-in-out;
   }
-  .mt-front {
-    position: absolute; inset: 0;
-    top: 18%;
-    z-index: 10; /* 封口始终盖在纸张之前 */
-    background: var(--mt-folder);
-    border-radius: 6px 6px 10px 10px;
-    transform-origin: bottom center;
-    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  }
-  /* 悬停：前封口向前掀开，纸张按各自幅度探出并微微扇开 */
-  .mt-wrap:hover .mt-front, .mt-wrap.is-open .mt-front { transform: rotateX(-28deg) translateY(4%); }
-  .mt-wrap:hover .mt-paper, .mt-wrap.is-open .mt-paper {
-    transform: translateY(calc(var(--mt-lift) * -1 * var(--k))) rotate(var(--r));
-  }
-  .mt-name { font-size: 14px; letter-spacing: 0.06em; opacity: 0.8; }
+  .mt-folder:hover .mt-front, .mt-folder.is-hover .mt-front, .mt-folder.is-open .mt-front { transform: skew(15deg) scaleY(0.6); }
+  .mt-folder:hover .mt-right, .mt-folder.is-hover .mt-right, .mt-folder.is-open .mt-right { transform: skew(-15deg) scaleY(0.6); }
 
-  /* 用户开启「减少动态效果」时：直接开合，不做过渡 */
+  /* 用户开启「减少动态效果」时：状态直接切换，不做过渡 */
   @media (prefers-reduced-motion: reduce) {
-    .mt-front, .mt-paper { transition: none; }
+    .mt-folder, .mt-paper, .mt-front, .mt-right { transition: none; }
   }
 </style>
 </head>
 <body>
 <div class="mt-wrap" id="mtWrap">
-  <div class="mt-folder" id="mtFolder" role="img" aria-label="文件夹">
-    <div class="mt-back"></div>
-    <div class="mt-front"></div>
+  <div class="mt-folder" id="mtFolder" role="button" tabindex="0" aria-expanded="false" aria-label="文件夹">
+    <div class="mt-back">
+      <span class="mt-tab"></span>
+      <div class="mt-paper p1"></div>
+      <div class="mt-paper p2"></div>
+      <div class="mt-paper p3"></div>
+      <div class="mt-front"></div>
+      <div class="mt-right"></div>
+    </div>
   </div>
-  <div class="mt-name" id="mtName">项目资料</div>
 </div>
 <script>
   const CONFIG = {
-    papers: 3,          // 纸张数量（1–3）
-    label: "项目资料",   // 文件夹名
+    color: "#27ff64",          // 文件夹颜色
+    size: 2.5,                 // 整体缩放
+    items: "简历｜作品集｜合同", // 三张纸的文字，用「｜」分隔
+    autoDemo: true,            // 自动开合演示
   };
 
-  const wrap = document.getElementById('mtWrap');
-  const folder = document.getElementById('mtFolder');
-  const front = folder.querySelector('.mt-front');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.getElementById('mtName').textContent = CONFIG.label;
+  const folder = document.getElementById('mtFolder');
+  document.getElementById('mtWrap').style.setProperty('--size', CONFIG.size);
 
-  // 纸张：越靠后的探得越高、越向两侧扇开
-  const tilts = [[1, '-8deg'], [0.8, '0deg'], [0.6, '8deg']];
-  for (let i = 0; i < CONFIG.papers; i++) {
-    const p = document.createElement('div');
-    p.className = 'mt-paper';
-    const [k, r] = tilts[(i + (3 - CONFIG.papers)) % 3];
-    p.style.setProperty('--k', k);
-    p.style.setProperty('--r', r);
-    p.style.zIndex = String(i + 1);
-    folder.insertBefore(p, front);
+  // 背板色 = 封面色压暗 8%
+  function darken(hex, pct) {
+    const n = parseInt(hex.replace('#', ''), 16);
+    const f = (v) => Math.max(0, Math.min(255, Math.floor(v * (1 - pct))));
+    return `rgb(${f(n >> 16 & 255)}, ${f(n >> 8 & 255)}, ${f(n & 255)})`;
   }
+  folder.style.setProperty('--color', CONFIG.color);
+  folder.style.setProperty('--back', darken(CONFIG.color, 0.08));
+
+  // 纸上的文字（最多三张）
+  const labels = CONFIG.items.split('｜').map(s => s.trim());
+  document.querySelectorAll('.mt-paper').forEach((p, i) => { p.textContent = labels[i] || ''; });
+
+  let open = false, userTook = false;
+  function setOpen(next) {
+    open = next;
+    folder.classList.toggle('is-open', open);
+    folder.classList.remove('is-hover');
+    folder.setAttribute('aria-expanded', String(open));
+  }
+  folder.addEventListener('click', () => { userTook = true; setOpen(!open); });
+  folder.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); userTook = true; setOpen(!open); } });
 
   /* @mt:thumb-start */
-  // 缩略图演示：自动开合循环；真实鼠标进入后停止
-  if (!reduceMotion) {
-    let auto = true;
-    wrap.addEventListener('pointerenter', () => { auto = false; wrap.classList.remove('is-open'); });
-    setInterval(() => { if (!document.hidden && auto) wrap.classList.toggle('is-open'); }, 1500);
+  // 自动演示：悬停探头 → 打开摊开 → 关闭，循环；用户一点就交还控制
+  if (CONFIG.autoDemo && !reduceMotion) {
+    let step = 0;
+    setInterval(() => {
+      if (document.hidden || userTook) return;
+      const phase = step % 6;
+      if (phase === 0) folder.classList.add('is-hover');
+      else if (phase === 1) setOpen(true);
+      else if (phase === 4) setOpen(false);
+      step++;
+    }, 900);
   }
   /* @mt:thumb-end */
 </script>
