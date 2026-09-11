@@ -64,7 +64,6 @@
         border-radius: 14px;
       }
       .headline {
-        position: absolute;
         view-transition-name: title;
         margin: 0;
         font-weight: 700;
@@ -73,33 +72,40 @@
         line-height: 1.25;
       }
       .note {
-        position: absolute;
+        margin: 0;
         color: #9a9ba8;
         font-size: 13.5px;
         max-width: 300px;
         line-height: 1.7;
       }
 
-      /* A 幕：标题大字在左下，图小在右上，徽章左上 */
+      /* A 幕：标题大字在左下（与说明组成一个流式组块，永不互相挤压），
+         图小在右上，徽章左上 */
       .slide-a .badge {
-        top: 26px;
-        left: 28px;
+        top: 28px;
+        left: 40px;
       }
       .slide-a .pic {
-        top: 26px;
-        right: 28px;
+        top: 28px;
+        right: 40px;
         width: 34%;
         aspect-ratio: 4 / 3;
       }
+      .slide-a .copy {
+        position: absolute;
+        left: 40px;
+        right: 40px;
+        bottom: 38px;
+        display: grid;
+        gap: 12px;
+        justify-items: start;
+      }
       .slide-a .headline {
-        left: 28px;
-        bottom: 78px;
         font-size: clamp(28px, 4.6vw, 46px);
-        max-width: 55%;
+        max-width: 90%;
       }
       .slide-a .note {
-        left: 28px;
-        bottom: 30px;
+        max-width: 380px;
       }
 
       /* B 幕：标题小字居上，图大居中偏下，徽章右下 */
@@ -115,6 +121,7 @@
         aspect-ratio: 16 / 9;
       }
       .slide-b .headline {
+        position: absolute;
         top: 30px;
         left: 50%;
         translate: -50% 0;
@@ -122,7 +129,8 @@
         white-space: nowrap;
       }
       .slide-b .note {
-        top: 72px;
+        position: absolute;
+        top: 78px;
         left: 50%;
         translate: -50% 0;
         text-align: center;
@@ -225,8 +233,10 @@
       <section class="page slide-a" id="slideA" aria-label="第一幕">
         <span class="badge">SCENE 01</span>
         <img class="pic" id="picA" alt="" />
-        <h1 class="headline" id="titleA" tabindex="-1"></h1>
-        <p class="note">同一组元素——标题、图片、徽章——将各自飞到下一幕的新位置。</p>
+        <div class="copy">
+          <h1 class="headline" id="titleA" tabindex="-1"></h1>
+          <p class="note">同一组元素——标题、图片、徽章——将各自飞到下一幕的新位置。</p>
+        </div>
         <button type="button" class="stage-btn next" id="nextBtn" aria-label="下一幕">›</button>
       </section>
 
