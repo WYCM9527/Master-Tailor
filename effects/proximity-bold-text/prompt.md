@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-文案逐字拆成 inline-block span。每帧用 getBoundingClientRect 算每个字中心到指针的距离 d，目标强度 t = max(0, 1 − d/半径) 再做 smoothstep，用阻尼跟随（k += (t − k) × 阻尼）得到当前强度 k；把 k 写成 CSS 变量，样式里 transform: scale(1 + (放大 − 1) × k)、font-weight 300 + 600 × k（字体需有多字重）、颜色用 color-mix 在文字色与提亮色间按 k 插值。transform-origin 放在字的基线附近（50% 70%）避免上下跳。
+文案逐字拆成 inline-block span，放在 flex 容器里并 align-items: baseline。每帧先用 getBoundingClientRect 读完所有字的位置、再统一写样式（读写交错会逐字强制回流）；每个字中心到指针的距离 d，目标强度 t = max(0, 1 − d/半径) 再做 smoothstep，用阻尼跟随（k += (t − k) × 阻尼）得到当前强度 k；把 k 写成 CSS 变量，样式里 font-size: 基准字号 × (1 + (放大 − 1) × k)、font-weight 300 + 600 × k（字体需有多字重）、颜色用 color-mix 在文字色与提亮色间按 k 插值。放大一定要用 font-size 而不是 transform: scale——scale 不占布局，放大的字会叠到邻字身上；font-size 会把邻字真实推开。每个字的 line-height 钉死为「基准字号 × 1.4」的固定像素值，字号变化时整行才不会上下跳。
 
 ## 完成后请检查
 

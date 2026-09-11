@@ -26,29 +26,30 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: baseline;       /* 字号不同的字按基线对齐 */
     max-width: 90vw;
     padding: 0.4em;
     font-family: var(--mt-font);
     font-size: var(--mt-fontSize);
-    line-height: 1.4;
     color: var(--mt-color);
     cursor: default;
     user-select: none;
   }
-  /* 每个字的放大 / 字重 / 颜色由 JS 逐帧写入变量；用 color-mix 在两色间插值 */
+  /* 每个字的放大 / 字重 / 颜色由 JS 逐帧写入变量；用 color-mix 在两色间插值。
+     放大用 font-size 而不是 transform: scale——前者占布局、邻字会被真实推开，
+     后者不占布局，放大的字会叠到邻字身上 */
   .mt-press .c {
     display: inline-block;
     white-space: pre;
-    transform: scale(var(--s, 1));
+    font-size: calc(var(--mt-fontSize) * var(--s, 1));
+    line-height: calc(var(--mt-fontSize) * 1.4);   /* 行高钉死在基准字号上，字号变化时整行不上下跳 */
     font-weight: var(--w, 300);
     color: color-mix(in srgb, var(--mt-accent) calc(var(--k, 0) * 100%), var(--mt-color));
-    transform-origin: 50% 70%;
-    will-change: transform;
   }
 
   /* 用户开启「减少动态效果」时：不随鼠标变化（JS 同步处理） */
   @media (prefers-reduced-motion: reduce) {
-    .mt-press .c { transform: none !important; font-weight: 500 !important; }
+    .mt-press .c { font-size: var(--mt-fontSize) !important; font-weight: 500 !important; }
   }
 </style>
 </head>
@@ -84,8 +85,10 @@
 
   function frame() {
     if (!document.hidden && !reduceMotion) {
-      for (const cell of cells) {
-        const r = cell.el.getBoundingClientRect();
+      // 先读完所有位置再统一写样式：字号变化会触发重排，读写交错会逐字强制同步布局
+      const rects = cells.map(cell => cell.el.getBoundingClientRect());
+      cells.forEach((cell, i) => {
+        const r = rects[i];
         const d = Math.hypot(r.left + r.width / 2 - px, r.top + r.height / 2 - py);
         // 目标强度：距离 0 → 1，半径处 → 0，平滑衰减
         const target = Math.max(0, 1 - d / CONFIG.radius);
@@ -95,7 +98,7 @@
         cell.el.style.setProperty('--s', (1 + (CONFIG.grow - 1) * k).toFixed(3));
         cell.el.style.setProperty('--w', String(Math.round(CONFIG.weight ? 300 + 600 * k : 500)));
         cell.el.style.setProperty('--k', (CONFIG.lightUp ? k : 0).toFixed(3));
-      }
+      });
     }
     requestAnimationFrame(frame);
   }
