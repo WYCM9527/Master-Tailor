@@ -66,10 +66,11 @@ export function Home() {
         className="cell span-6 step step-cta"
         onClick={() => (lastEffectsEntry = 'cta')}
       >
-        <span className="mono">Index · 全部效果入口</span>
-        <b style={headingName('cta')}>
-          浏览全部 {EFFECTS.length} 个效果 <IconArrowRight className="arrow" size={18} />
-        </b>
+        <span className="cta-copy">
+          <span className="mono">Index · 全部效果入口</span>
+          <b style={headingName('cta')}>浏览全部 {EFFECTS.length} 个效果</b>
+        </span>
+        <IconArrowRight className="arrow cta-arrow" size={72} />
       </Link>
     </section>
   );

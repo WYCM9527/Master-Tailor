@@ -264,29 +264,44 @@
   font-size: 20px;
   line-height: 1.3;
 }
+/* 全部效果入口：默认白块黑字（悬停反转），左侧文字列，右侧一枚大号箭头 */
 .step-cta {
+  flex-direction: row;
   justify-content: space-between;
-  align-items: stretch;
+  align-items: center;
+  gap: var(--pad);
   text-align: left;
-  color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
   transition:
     background var(--ease),
     color var(--ease);
+}
+.step-cta .cta-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-self: stretch;
+  min-width: 0;
+}
+.step-cta .mono {
+  color: inherit;
+  opacity: 0.6;
 }
 .step-cta b {
   font-size: clamp(26px, 3vw, 46px);
   letter-spacing: -0.01em;
   line-height: 1.1;
 }
-.step-cta:hover {
-  background: var(--fg);
-  color: var(--bg);
+.step-cta .cta-arrow {
+  flex: none;
 }
-.step-cta:hover .mono {
-  color: var(--bg);
+.step-cta:hover {
+  background: var(--bg);
+  color: var(--fg);
 }
 .step-cta:hover .arrow {
-  transform: translateX(4px);
+  transform: translateX(10px);
 }
 
 /* ============================================================
