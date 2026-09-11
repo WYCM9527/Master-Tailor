@@ -1,0 +1,81 @@
+{
+  "slug": "iridescent-flow",
+  "name": "虹彩流光",
+  "category": "background",
+  "sub": "idle",
+  "tags": [
+    "虹彩",
+    "流光",
+    "WebGL",
+    "着色器",
+    "氛围"
+  ],
+  "summary": "大块虹彩色斑像油膜一样缓缓翻涌，颜色互相渗染",
+  "params": [
+    {
+      "key": "tint",
+      "label": "色调",
+      "type": "color",
+      "target": "config",
+      "default": "#4d3380"
+    },
+    {
+      "key": "speed",
+      "label": "翻涌速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "amplitude",
+      "label": "鼠标偏移量",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.5,
+      "step": 0.05,
+      "default": 0.1,
+      "help": "鼠标移动时画面轻轻跟着偏"
+    },
+    {
+      "key": "mouseReact",
+      "label": "跟随鼠标",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "teal",
+      "name": "青蓝",
+      "values": {
+        "tint": "#2a6673",
+        "speed": 0.6
+      }
+    },
+    {
+      "id": "ember",
+      "name": "余烬",
+      "values": {
+        "tint": "#803333",
+        "speed": 1.6,
+        "amplitude": 0.2
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "slug": "silk-flow",
+  "name": "丝绸流动",
+  "category": "background",
+  "sub": "idle",
+  "tags": [
+    "丝绸",
+    "流动",
+    "WebGL",
+    "着色器",
+    "氛围"
+  ],
+  "summary": "一整幅缎面丝绸在缓缓流动，暗纹起伏带细腻颗粒",
+  "params": [
+    {
+      "key": "color",
+      "label": "丝绸颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#7b7481"
+    },
+    {
+      "key": "speed",
+      "label": "流速",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 10,
+      "step": 0.5,
+      "default": 5,
+      "help": "纹理流动的速度"
+    },
+    {
+      "key": "scale",
+      "label": "纹理密度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "help": "越大褶皱越密"
+    },
+    {
+      "key": "rotation",
+      "label": "纹理角度",
+      "type": "range",
+      "target": "config",
+      "min": -90,
+      "max": 90,
+      "step": 5,
+      "default": 0,
+      "unit": "°"
+    },
+    {
+      "key": "grain",
+      "label": "颗粒强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.5,
+      "help": "叠在缎面上的细噪点"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "champagne",
+      "name": "香槟金",
+      "values": {
+        "color": "#8a7a5c",
+        "speed": 3,
+        "rotation": 30
+      }
+    },
+    {
+      "id": "deep-sea",
+      "name": "深海蓝",
+      "values": {
+        "color": "#3c5068",
+        "scale": 1.6,
+        "grain": 2
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
+}

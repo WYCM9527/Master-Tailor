@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>等离子流</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（等离子流出现在纯黑场上最亮） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态光流 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    colorMode: "custom",  // 配色：custom 单色染色 / rainbow 原生虹彩
+    color: "#9ef2be",     // 染色颜色
+    speed: 1,             // 流速
+    direction: "forward", // 流向：forward 正向 / reverse 反向 / pingpong 往复
+    scale: 1,             // 画面缩放
+    mouseReact: true,     // 鼠标牵引
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl2');   // 光流体积感依赖 GLSL ES 3.0 的 tanh
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `#version 300 es
+    precision highp float;
+    in vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：视线方向做 60 步「体积行进」，每步在扭曲后的圆柱壳附近取样发光，
+  // 层层累加再 tanh 压缩，得到缠绕上升的等离子光流
+  const FS = `#version 300 es
+    precision highp float;
+    uniform vec2  uRes;        // 渲染分辨率
+    uniform float uTime;       // 时间（秒）
+    uniform vec3  uTint;       // 染色颜色
+    uniform float uUseTint;    // 1 = 单色染色，0 = 原生虹彩
+    uniform float uSpeed;      // 流速
+    uniform float uDir;        // 流向（1 / -1 / 往复时为 sin 值）
+    uniform float uScale;      // 画面缩放
+    uniform vec2  uMouse;      // 鼠标（像素坐标）
+    uniform float uMouseOn;    // 鼠标牵引开关
+    out vec4 fragColor;
+
+    void main() {
+      vec2 C = gl_FragCoord.xy;
+      vec2 center = uRes * 0.5;
+      C = (C - center) / uScale + center;                     // 以画面中心缩放
+      vec2 mOff = (uMouse - center) * 0.0002;                  // 鼠标把光流轻轻拽偏
+      C += mOff * length(C - center) * step(0.5, uMouseOn);
+
+      float T = uTime * uSpeed * uDir;                         // 带方向的时间相位
+      float i = 0.0, d = 0.0, z = 0.0;
+      vec3 O = vec3(0.0), p, S;
+      vec4 o = vec4(0.0);
+
+      /* 体积行进：每一步 —— 投射视线 → 扭曲空间 → 距圆柱壳的距离当步长 → 按距离染发光 */
+      for (vec2 r = uRes, Q; ++i < 60.0; O += o.w / d * o.xyz) {
+        p = z * normalize(vec3(C - 0.5 * r, r.y));             // 视线上的采样点
+        p.z -= 4.0;                                            // 相机后撤
+        S = p;                                                 // 记住未扭曲的点（配色用）
+        d = p.y - T;                                           // 沿 y 的流动相位
+        p.x += 0.4 * (1.0 + p.y) * sin(d + p.x * 0.1) * cos(0.34 * d + p.x * 0.05); // 横向摆动
+        Q = p.xz * mat2(cos(p.y + vec4(0.0, 11.0, 33.0, 0.0) - T));                 // 绕 y 扭转
+        z += d = (abs(sqrt(length(Q * Q)) - 0.25 * (5.0 + S.y)) / 3.0 + 8e-4);       // 到光柱壳的距离
+        o = 1.0 + sin(S.y + p.z * 0.5 + S.z - length(S - p) + vec4(2.0, 1.0, 0.0, 8.0)); // 每步的彩色发光
+      }
+      vec3 rgb = tanh(O / 1e4);                                // 压缩高亮，保出柔和光晕
+
+      /* NaN 防护：个别角度的 normalize/除法可能出坏值，置黑即可 */
+      rgb = vec3(
+        (isnan(rgb.r) || isinf(rgb.r)) ? 0.0 : rgb.r,
+        (isnan(rgb.g) || isinf(rgb.g)) ? 0.0 : rgb.g,
+        (isnan(rgb.b) || isinf(rgb.b)) ? 0.0 : rgb.b
+      );
+      float lum = (rgb.r + rgb.g + rgb.b) / 3.0;               // 亮度 → 单色染色
+      vec3 col = mix(rgb, lum * uTint * 1.6, uUseTint);
+      fragColor = vec4(col, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  function hexRgb(hex) {
+    const h = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  }
+
+  // 60 步体积行进偏重：渲染分辨率打 0.55 折 + dpr 上限 1.5，再由 CSS 拉伸回全屏
+  const RENDER_SCALE = 0.55;
+  const dpr = Math.min(1.5, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = Math.max(1, Math.floor(innerWidth * dpr * RENDER_SCALE));
+    canvas.height = Math.max(1, Math.floor(innerHeight * dpr * RENDER_SCALE));
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+
+  gl.uniform3fv(U('uTint'), hexRgb(CONFIG.color));
+  gl.uniform1f(U('uUseTint'), CONFIG.colorMode === 'custom' ? 1 : 0);
+  gl.uniform1f(U('uSpeed'), CONFIG.speed * 0.4);   // 0.4 基准：默认速度不晃眼
+  gl.uniform1f(U('uScale'), CONFIG.scale);
+  gl.uniform1f(U('uMouseOn'), CONFIG.mouseReact ? 1 : 0);
+  const uTime = U('uTime'), uDir = U('uDir'), uMouse = U('uMouse');
+  resize(); addEventListener('resize', resize);
+
+  // 鼠标牵引：像素坐标（跟渲染分辨率同一比例）
+  let mx = 0, my = 0;
+  if (CONFIG.mouseReact) {
+    addEventListener('pointermove', (e) => {
+      mx = e.clientX * dpr * RENDER_SCALE;
+      my = (innerHeight - e.clientY) * dpr * RENDER_SCALE;
+    });
+  }
+
+  const baseDir = CONFIG.direction === 'reverse' ? -1 : 1;
+  let time = reduceMotion ? 6 : 0;   // 减少动态：定格在一帧成型的光流上
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    // 往复模式：方向随时间在 -1 ~ 1 间摆动
+    const dir = CONFIG.direction === 'pingpong' ? Math.sin(time * 0.5) : baseDir;
+    gl.uniform1f(uTime, time);
+    gl.uniform1f(uDir, dir);
+    gl.uniform2f(uMouse, mx, my);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

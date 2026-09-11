@@ -1,0 +1,101 @@
+{
+  "slug": "liquid-metal",
+  "name": "液态金属",
+  "category": "background",
+  "sub": "hover",
+  "tags": [
+    "液态",
+    "金属",
+    "WebGL",
+    "着色器",
+    "鼠标交互"
+  ],
+  "summary": "整幅镜面液态金属缓缓涌动，鼠标划过泛起涟漪与扭曲",
+  "params": [
+    {
+      "key": "baseColor",
+      "label": "金属底色",
+      "type": "color",
+      "target": "config",
+      "default": "#1a1a1a"
+    },
+    {
+      "key": "speed",
+      "label": "涌动速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.2
+    },
+    {
+      "key": "amplitude",
+      "label": "波纹幅度",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5
+    },
+    {
+      "key": "freqX",
+      "label": "横向频率",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "default": 3
+    },
+    {
+      "key": "freqY",
+      "label": "纵向频率",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "default": 2
+    },
+    {
+      "key": "interactive",
+      "label": "鼠标涟漪",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "mercury",
+      "name": "水银",
+      "values": {
+        "baseColor": "#262626",
+        "speed": 0.35,
+        "amplitude": 0.7
+      }
+    },
+    {
+      "id": "bronze",
+      "name": "青铜",
+      "values": {
+        "baseColor": "#2b2015",
+        "freqX": 5,
+        "freqY": 4
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
+}

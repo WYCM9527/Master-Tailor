@@ -1,0 +1,118 @@
+{
+  "slug": "plasma-flow",
+  "name": "等离子流",
+  "category": "background",
+  "sub": "idle",
+  "tags": [
+    "等离子",
+    "光束",
+    "WebGL",
+    "着色器",
+    "氛围"
+  ],
+  "summary": "一束等离子体般的光流在暗场里翻卷升腾，层层光丝缠绕",
+  "params": [
+    {
+      "key": "colorMode",
+      "label": "配色",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "custom",
+          "label": "单色染色"
+        },
+        {
+          "value": "rainbow",
+          "label": "原生虹彩"
+        }
+      ],
+      "default": "custom"
+    },
+    {
+      "key": "color",
+      "label": "染色颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#9ef2be"
+    },
+    {
+      "key": "speed",
+      "label": "流速",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "direction",
+      "label": "流向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "forward",
+          "label": "正向"
+        },
+        {
+          "value": "reverse",
+          "label": "反向"
+        },
+        {
+          "value": "pingpong",
+          "label": "往复"
+        }
+      ],
+      "default": "forward"
+    },
+    {
+      "key": "scale",
+      "label": "画面缩放",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "mouseReact",
+      "label": "鼠标牵引",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "rainbow",
+      "name": "原生虹彩",
+      "values": {
+        "colorMode": "rainbow",
+        "speed": 0.7
+      }
+    },
+    {
+      "id": "violet",
+      "name": "紫电",
+      "values": {
+        "color": "#c29ef2",
+        "speed": 1.6,
+        "direction": "pingpong"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
+}

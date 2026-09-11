@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>液态金属</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（canvas 覆盖前的兜底色） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态镜面 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    baseColor: "#1a1a1a",  // 金属底色
+    speed: 0.2,            // 涌动速度
+    amplitude: 0.5,        // 波纹幅度
+    freqX: 3,              // 横向频率
+    freqY: 2,              // 纵向频率
+    interactive: true,     // 鼠标涟漪
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: true });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：9 轮递减幅度的余弦互相扰动 uv（xy 轴交替），把平面揉成流动的镜面；
+  // 最后用 1/|sin| 型高光公式染色——除法在波峰处爆出金属高光带
+  const FS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform float uTime;    // 时间（秒 × 速度）
+    uniform vec3  uRes;     // 分辨率（z = 宽高比）
+    uniform vec3  uBase;    // 金属底色
+    uniform float uAmp;     // 波纹幅度
+    uniform float uFx;      // 横向频率
+    uniform float uFy;      // 纵向频率
+    uniform vec2  uMouse;   // 鼠标（0–1，y 向上）
+
+    /* 单次采样：域扭曲 + 鼠标涟漪 + 高光染色 */
+    vec4 sample1(vec2 uvCoord) {
+      vec2 fragCoord = uvCoord * uRes.xy;
+      vec2 uv = (2.0 * fragCoord - uRes.xy) / min(uRes.x, uRes.y);  // 短边归一居中坐标
+
+      /* 域扭曲：i 越大幅度越小（uAmp/i），x、y 互相进入对方的余弦相位 */
+      for (float i = 1.0; i < 10.0; i++) {
+        uv.x += uAmp / i * cos(i * uFx * uv.y + uTime + uMouse.x * 3.14159);
+        uv.y += uAmp / i * cos(i * uFy * uv.x + uTime + uMouse.y * 3.14159);
+      }
+
+      /* 鼠标涟漪：以指数衰减为包络的同心正弦波，把 uv 沿径向推开 */
+      vec2 diff = uvCoord - uMouse;
+      float dist = length(diff);
+      float falloff = exp(-dist * 20.0);
+      float ripple = sin(10.0 * dist - uTime * 2.0) * 0.03;
+      uv += (diff / (dist + 0.0001)) * ripple * falloff;
+
+      /* 金属高光：底色除以 |sin(t - x - y)|，接近零处爆出高光带 */
+      vec3 color = uBase / abs(sin(uTime - uv.y - uv.x));
+      return vec4(color, 1.0);
+    }
+
+    void main() {
+      /* 3×3 超采样抗锯齿：高光带极细，不采样会闪烁锯齿 */
+      vec4 col = vec4(0.0);
+      for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+          vec2 offset = vec2(float(i), float(j)) / min(uRes.x, uRes.y);
+          col += sample1(vUv + offset);
+        }
+      }
+      gl_FragColor = col / 9.0;
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  function hexRgb(hex) {
+    const h = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  }
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform3f(U('uRes'), canvas.width, canvas.height, canvas.width / canvas.height);
+  }
+
+  gl.uniform3fv(U('uBase'), hexRgb(CONFIG.baseColor));
+  gl.uniform1f(U('uAmp'), CONFIG.amplitude);
+  gl.uniform1f(U('uFx'), CONFIG.freqX);
+  gl.uniform1f(U('uFy'), CONFIG.freqY);
+  const uTime = U('uTime'), uMouse = U('uMouse');
+  resize(); addEventListener('resize', resize);
+
+  // 鼠标位置（0–1，y 翻转），不开交互时钉在中心
+  let mx = 0, my = 0;
+  if (CONFIG.interactive) {
+    addEventListener('pointermove', (e) => {
+      mx = e.clientX / innerWidth;
+      my = 1 - e.clientY / innerHeight;
+    });
+  }
+
+  let time = reduceMotion ? 5 : 0;   // 减少动态：定格在一帧起伏的镜面上
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt * CONFIG.speed;
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mx, my);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>
