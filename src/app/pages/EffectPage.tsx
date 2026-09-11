@@ -161,33 +161,36 @@ function EffectPage({ effect }: { effect: Effect }) {
       {/* 详情页不渲染站点 Header：左列第一行（目录 | 返回 | 标题 | 标签）就是页头，右列整高都是参数面板 */}
       <div className="g12 first d-body">
         <div className="span-9 sub d-left">
-          {/* 展开后抽屉盖住此格，开关图标沿转场从这里飞到抽屉头部右侧 */}
-          <button
-            type="button"
-            className="cell span-1 d-nav"
-            aria-expanded={navOpen}
-            aria-label="展开效果目录"
-            title="展开效果目录"
-            onClick={() => toggleNav(true)}
-          >
-            <IconMenu
-              size={20}
-              style={{ viewTransitionName: navOpen ? undefined : 'nav-toggle' }}
-            />
-          </button>
-          {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
-          <Link
-            to={`/effects?cat=${meta.category}&sub=${meta.sub}`}
-            viewTransition
-            className="cell span-1 d-back"
-            title={`返回 ${categoryName(meta.category)} · ${subName}`}
-          >
-            <IconArrowLeft className="arrow arrow-back" />
-            返回
-          </Link>
-          <div className="cell span-4 d-title">
-            {/* 转场承接：与效果卡标题共享 title 名 */}
-            <h1 style={{ viewTransitionName: 'title' }}>{meta.name}</h1>
+          {/* 页头前三格并为一格：目录开关是 55px 正方钮，返回按文字宽，标题吃掉剩余宽度 */}
+          <div className="cell span-6 tight d-lead">
+            {/* 展开后抽屉盖住此钮，开关图标沿转场从这里飞到抽屉头部右侧的同尺寸方钮 */}
+            <button
+              type="button"
+              className="d-nav"
+              aria-expanded={navOpen}
+              aria-label="展开效果目录"
+              title="展开效果目录"
+              onClick={() => toggleNav(true)}
+            >
+              <IconMenu
+                size={20}
+                style={{ viewTransitionName: navOpen ? undefined : 'nav-toggle' }}
+              />
+            </button>
+            {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
+            <Link
+              to={`/effects?cat=${meta.category}&sub=${meta.sub}`}
+              viewTransition
+              className="d-back"
+              title={`返回 ${categoryName(meta.category)} · ${subName}`}
+            >
+              <IconArrowLeft className="arrow arrow-back" />
+              返回
+            </Link>
+            <div className="d-title">
+              {/* 转场承接：与效果卡标题共享 title 名 */}
+              <h1 style={{ viewTransitionName: 'title' }}>{meta.name}</h1>
+            </div>
           </div>
           <div className="cell span-3 d-meta">
             <div className="tag-row">

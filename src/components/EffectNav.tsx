@@ -40,7 +40,7 @@ export function EffectNav({ current, open, onClose, onNavigate }: Props) {
           <div className="blk-actions">
             <button
               type="button"
-              className="btn btn-ghost nav-close"
+              className="btn nav-close"
               aria-label="收起效果目录"
               title="收起效果目录"
               onClick={onClose}

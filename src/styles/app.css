@@ -589,12 +589,24 @@
 .d-meta {
   min-height: 55px;
 }
-/* 目录开关格：与返回格同款 */
+/* 页头前三格并为一格（目录开关 | 返回 | 标题）：1px gap 画线，各段自己铺黑底 */
+.cell.d-lead {
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  background: var(--line);
+}
+.d-lead > * {
+  background: var(--bg);
+}
+/* 目录开关：55px 正方钮，与抽屉头部的收起 × 同尺寸（两者共享 nav-toggle 转场名） */
 .d-nav {
+  flex: 0 0 55px;
+  width: 55px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--pad-s);
+  padding: 0;
   font-size: var(--fs-small);
   font-weight: 700;
   transition:
@@ -605,12 +617,14 @@
   background: var(--fg);
   color: var(--bg);
 }
+/* 返回：只按文字宽 */
 .d-back {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0 var(--pad-s);
+  padding: 0 var(--pad);
   font-size: var(--fs-small);
   white-space: nowrap;
   transition:
@@ -624,7 +638,10 @@
 .d-back:hover .arrow {
   transform: translateX(-4px);
 }
+/* 标题吃掉并格里剩余的宽度；min-width: 0 让长标题能省略 */
 .d-title {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -878,10 +895,10 @@
   background: var(--bg);
   border-right: 1px solid var(--line-strong);
 }
-/* 头部右侧的收起 ×：透明底图标钮，与头部等高 */
-.nav-close {
-  border-left: 1px solid var(--line);
-  padding: 0 18px;
+/* 头部右侧的收起 ×：白底正方钮（默认即白底、悬停反转），与页头的目录开关同为 55px */
+.blk-actions > .nav-close {
+  width: 55px;
+  padding: 0;
 }
 .nav-head {
   flex: 0 0 auto;
@@ -1327,14 +1344,8 @@ input[type='color']::-webkit-color-swatch {
   .hdr-fill {
     grid-column: span 9;
   }
-  .d-nav {
-    grid-column: span 2;
-  }
-  .d-back {
-    grid-column: span 2;
-  }
-  .d-title {
-    grid-column: span 4;
+  .d-lead {
+    grid-column: span 8;
   }
   .d-meta {
     grid-column: span 4;
@@ -1392,14 +1403,8 @@ input[type='color']::-webkit-color-swatch {
   .main > .filler {
     display: none;
   }
-  .d-nav {
-    grid-column: span 3;
-  }
-  .d-back {
-    grid-column: span 3;
-  }
-  .d-title {
-    grid-column: span 6;
+  .d-lead {
+    grid-column: span 12;
   }
   .d-meta {
     grid-column: span 12;
