@@ -34,6 +34,7 @@ const TRANSITION_SUBS: SubDef[] = [
 export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
   { id: 'background', name: '背景效果', subs: TRIGGER_SUBS },
   { id: 'button', name: '按钮与交互', subs: TRIGGER_SUBS },
+  { id: 'nav', name: '导航菜单', subs: TRIGGER_SUBS },
   { id: 'text', name: '文字效果', subs: TEXT_SUBS },
   { id: 'card', name: '卡片与悬停', subs: TRIGGER_SUBS },
   { id: 'showcase', name: '多卡/图展示', subs: SHOWCASE_SUBS },

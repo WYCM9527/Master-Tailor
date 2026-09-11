@@ -1,0 +1,94 @@
+{
+  "slug": "reflective-card",
+  "name": "全息反光卡",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["全息", "反光", "倾斜"],
+  "summary": "卡片随鼠标倾斜，表面一层彩虹全息与高光跟着流转",
+  "params": [
+    {
+      "key": "photo",
+      "label": "卡面图片",
+      "type": "image",
+      "target": "config",
+      "default": "/samples/sample-6.webp"
+    },
+    {
+      "key": "tilt",
+      "label": "倾斜幅度",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 25,
+      "step": 1,
+      "default": 12,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "holo",
+      "label": "全息强度",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.55,
+      "help": "彩虹色层的浓度，0 只保留白色高光"
+    },
+    {
+      "key": "gloss",
+      "label": "高光强度",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.5
+    },
+    {
+      "key": "lag",
+      "label": "跟随迟滞",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.2
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 18,
+      "unit": "px"
+    },
+    {
+      "key": "title",
+      "label": "卡片标题",
+      "type": "text",
+      "target": "config",
+      "default": "HOLO · 001",
+      "maxLength": 20
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "rainbow",
+      "name": "重全息",
+      "values": { "holo": 1, "gloss": 0.3, "tilt": 18 }
+    },
+    {
+      "id": "metal",
+      "name": "金属白光",
+      "values": { "holo": 0, "gloss": 0.9, "tilt": 8, "rounded": 6 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

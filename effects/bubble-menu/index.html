@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>气泡菜单</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-duration: 0.5s;     /* 弹出时长 */
+    --mt-bubble: #ffffff;    /* 气泡颜色 */
+    --mt-text: #0a0a0f;      /* 气泡文字色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .mt-menu { position: relative; width: 64px; height: 64px; }
+  .mt-toggle {
+    position: relative; z-index: 2;
+    width: 64px; height: 64px;
+    border: none; border-radius: 50%;
+    background: var(--mt-bubble); color: var(--mt-text);
+    font-size: 26px; line-height: 1;
+    cursor: pointer;
+    transition: transform var(--mt-duration) cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .mt-menu.open .mt-toggle { transform: rotate(45deg); }
+  /* 气泡：从按钮中心弹到各自的位置，带弹簧过冲；关闭时缩回中心 */
+  .mt-bubble {
+    position: absolute;
+    left: 50%; top: 50%;
+    padding: 10px 18px;
+    border: none; border-radius: 999px;
+    background: var(--mt-bubble); color: var(--mt-text);
+    font: inherit; font-size: 14px; font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0;
+    transition: transform var(--mt-duration) cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+    transition-delay: var(--d, 0s);
+  }
+  .mt-menu.open .mt-bubble {
+    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1);
+    opacity: 1;
+  }
+  .mt-bubble:hover { filter: brightness(0.9); }
+
+  /* 用户开启「减少动态效果」时：气泡直接出现 / 消失 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-bubble, .mt-toggle { transition: none; }
+  }
+</style>
+</head>
+<body>
+<nav class="mt-menu" id="mtMenu" aria-label="气泡菜单">
+  <button type="button" class="mt-toggle" id="mtToggle" aria-expanded="false" aria-label="打开菜单">+</button>
+</nav>
+<script>
+  const CONFIG = {
+    items: "首页｜作品｜关于｜联系｜更多", // 菜单项，用「｜」分隔
+    layout: "arc",    // 排开方式：arc 扇形环绕 / row 横排 / column 竖排
+    distance: 140,    // 弹出距离（px）
+    stagger: 50,      // 依次弹出间隔（毫秒）
+  };
+
+  const menu = document.getElementById('mtMenu');
+  const toggle = document.getElementById('mtToggle');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const names = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
+  const n = names.length;
+
+  // 每个气泡的目标位置：扇形均匀分布在按钮上方的半圆上；横排 / 竖排等距展开
+  names.forEach((name, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mt-bubble';
+    b.textContent = name;
+    let x = 0, y = 0;
+    if (CONFIG.layout === 'arc') {
+      const a = Math.PI + (Math.PI / (n + 1)) * (i + 1); // 从左到右扫过上半圆
+      x = Math.cos(a) * CONFIG.distance; y = Math.sin(a) * CONFIG.distance;
+    } else if (CONFIG.layout === 'row') {
+      x = (i - (n - 1) / 2) * (CONFIG.distance * 0.75); y = -CONFIG.distance * 0.7;
+    } else {
+      x = 0; y = -(i + 1) * (CONFIG.distance * 0.42);
+    }
+    b.style.setProperty('--x', x.toFixed(1) + 'px');
+    b.style.setProperty('--y', y.toFixed(1) + 'px');
+    b.style.setProperty('--d', (i * CONFIG.stagger) + 'ms');
+    b.tabIndex = -1;
+    menu.appendChild(b);
+  });
+  const bubbles = [...menu.querySelectorAll('.mt-bubble')];
+
+  let open = false;
+  function setOpen(v) {
+    open = v;
+    menu.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
+    // 关闭时倒序缩回
+    bubbles.forEach((b, i) => { b.style.setProperty('--d', (open ? i : n - 1 - i) * CONFIG.stagger + 'ms'); b.tabIndex = open ? 0 : -1; });
+  }
+  toggle.addEventListener('click', () => setOpen(!open));
+  addEventListener('keydown', e => { if (e.key === 'Escape' && open) setOpen(false); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动开合循环；真实点击后停止
+  if (!reduceMotion) {
+    let auto = true;
+    toggle.addEventListener('pointerdown', () => (auto = false));
+    setTimeout(() => { if (auto) setOpen(true); }, 500);
+    setInterval(() => { if (!document.hidden && auto) setOpen(!open); }, 2200);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

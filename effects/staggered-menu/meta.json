@@ -1,0 +1,100 @@
+{
+  "slug": "staggered-menu",
+  "name": "错落展开菜单",
+  "category": "nav",
+  "sub": "click",
+  "tags": ["菜单", "全屏", "错落"],
+  "summary": "点开菜单，几层色板从侧边错落滑入，菜单项一条条落下来",
+  "params": [
+    {
+      "key": "items",
+      "label": "菜单项",
+      "type": "text",
+      "target": "config",
+      "default": "首页｜作品｜工作室｜日志｜联系",
+      "maxLength": 80,
+      "help": "用「｜」分隔"
+    },
+    {
+      "key": "side",
+      "label": "从哪侧滑入",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "right", "label": "右侧" },
+        { "value": "left", "label": "左侧" }
+      ],
+      "default": "right"
+    },
+    {
+      "key": "layers",
+      "label": "色板层数",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 3,
+      "help": "叠在菜单底下、依次滑入的色板数量"
+    },
+    {
+      "key": "stagger",
+      "label": "错落间隔",
+      "type": "range",
+      "target": "config",
+      "min": 30,
+      "max": 200,
+      "step": 10,
+      "default": 80,
+      "displayUnit": " 毫秒"
+    },
+    {
+      "key": "duration",
+      "label": "滑入时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.6,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "panel",
+      "label": "菜单面板色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "text",
+      "label": "菜单文字色",
+      "type": "color",
+      "target": "css",
+      "default": "#0a0a0f"
+    },
+    { "key": "numbers", "label": "显示序号", "type": "toggle", "target": "css", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "left",
+      "name": "左侧四层",
+      "values": { "side": "left", "layers": 4, "stagger": 120 }
+    },
+    {
+      "id": "dark",
+      "name": "深色面板",
+      "values": {
+        "panel": "#1c1c1c",
+        "text": "#ffffff",
+        "layers": 2,
+        "duration": 0.45,
+        "numbers": false
+      }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

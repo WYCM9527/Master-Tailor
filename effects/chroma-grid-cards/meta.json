@@ -1,0 +1,93 @@
+{
+  "slug": "chroma-grid-cards",
+  "name": "彩光网格卡片",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["网格", "聚光", "去色"],
+  "summary": "一墙黑白卡片，鼠标周围一圈才透出原本的颜色",
+  "params": [
+    {
+      "key": "slides",
+      "label": "卡片图片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "夜枭小憩" },
+        { "src": "/samples/sample-2.webp", "caption": "海边老爷车" },
+        { "src": "/samples/sample-3.webp", "caption": "日落海滩" },
+        { "src": "/samples/sample-5.webp", "caption": "蓝天夹竹桃" },
+        { "src": "/samples/sample-7.webp", "caption": "几何屋檐" },
+        { "src": "/samples/sample-8.webp", "caption": "城市夜色" }
+      ]
+    },
+    {
+      "key": "radius",
+      "label": "聚光半径",
+      "type": "range",
+      "target": "css",
+      "min": 100,
+      "max": 500,
+      "step": 20,
+      "default": 260,
+      "unit": "px"
+    },
+    {
+      "key": "softness",
+      "label": "边缘柔度",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 100,
+      "step": 10,
+      "default": 60,
+      "unit": "%",
+      "help": "0 为硬边圆，100 为极柔的渐变"
+    },
+    {
+      "key": "lag",
+      "label": "跟随迟滞",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.25
+    },
+    {
+      "key": "borderGlow",
+      "label": "边框跟随亮起",
+      "type": "toggle",
+      "target": "css",
+      "default": true
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "torch",
+      "name": "小手电",
+      "values": { "radius": 140, "softness": 20, "lag": 0.5 }
+    },
+    {
+      "id": "wide",
+      "name": "大范围柔光",
+      "values": { "radius": 460, "softness": 100, "lag": 0.12, "borderGlow": false }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

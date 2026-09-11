@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>错落展开菜单</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-duration: 0.6s;     /* 滑入时长 */
+    --mt-panel: #ffffff;     /* 菜单面板色 */
+    --mt-text: #0a0a0f;      /* 菜单文字色 */
+    --mt-numbers: 1;         /* 显示序号：1 显示 / 0 隐藏 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #f2f3f8;
+  }
+  .mt-topbar {
+    position: fixed; left: 0; right: 0; top: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 28px;
+    z-index: 3;
+  }
+  .mt-brand { font-weight: 800; letter-spacing: 0.08em; mix-blend-mode: difference; }
+  .mt-toggle {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    padding: 8px 18px;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    mix-blend-mode: difference;
+  }
+  /* 色板层与菜单面板：都从侧边滑入，每层延迟不同 */
+  .mt-layer, .mt-panel {
+    position: fixed;
+    top: 0; bottom: 0;
+    width: min(420px, 86vw);
+    transform: translateX(var(--off));
+    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: var(--d, 0s);
+  }
+  .mt-open .mt-layer, .mt-open .mt-panel { transform: translateX(0); }
+  .mt-panel {
+    background: var(--mt-panel);
+    color: var(--mt-text);
+    padding: 100px 40px 40px;
+    display: flex; flex-direction: column; gap: 6px;
+    z-index: 2;
+  }
+  .mt-item {
+    display: flex; align-items: baseline; gap: 14px;
+    text-decoration: none;
+    color: inherit;
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: var(--d, 0s);
+  }
+  .mt-open .mt-item { opacity: 1; transform: none; }
+  .mt-item .num {
+    font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
+    opacity: calc(var(--mt-numbers) * 0.55);
+  }
+  .mt-item:hover { opacity: 0.6; }
+
+  /* 用户开启「减少动态效果」时：直接开合，不做滑入与错落 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-layer, .mt-panel, .mt-item { transition: none; }
+  }
+</style>
+</head>
+<body>
+<header class="mt-topbar">
+  <span class="mt-brand">STUDIO</span>
+  <button type="button" class="mt-toggle" id="mtToggle" aria-expanded="false" aria-controls="mtPanel">菜单</button>
+</header>
+<div id="mtLayers"></div>
+<nav class="mt-panel" id="mtPanel" aria-label="全屏菜单"></nav>
+<script>
+  const CONFIG = {
+    items: "首页｜作品｜工作室｜日志｜联系", // 菜单项，用「｜」分隔
+    side: "right",   // 从哪侧滑入：right 右侧 / left 左侧
+    layers: 3,       // 色板层数
+    stagger: 80,     // 错落间隔（毫秒）
+  };
+
+  const toggle = document.getElementById('mtToggle');
+  const panel = document.getElementById('mtPanel');
+  const layersHost = document.getElementById('mtLayers');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const names = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
+  const off = CONFIG.side === 'right' ? '105%' : '-105%';
+
+  // 色板层：越靠底的越先滑入、颜色越暗，面板最后到，形成层层错落
+  const greys = ['#3a3a3a', '#6b6b6b', '#a3a3a3', '#d0d0d0'];
+  for (let i = 0; i < CONFIG.layers; i++) {
+    const l = document.createElement('div');
+    l.className = 'mt-layer';
+    l.style.background = greys[i % greys.length];
+    l.style.setProperty('--off', off);
+    l.style[CONFIG.side] = '0';
+    l.style.setProperty('--d', (i * CONFIG.stagger) + 'ms');
+    l.style.zIndex = String(1);
+    layersHost.appendChild(l);
+  }
+  panel.style.setProperty('--off', off);
+  panel.style[CONFIG.side] = '0';
+  panel.style.setProperty('--d', (CONFIG.layers * CONFIG.stagger) + 'ms');
+
+  names.forEach((name, i) => {
+    const a = document.createElement('a');
+    a.className = 'mt-item';
+    a.href = '#';
+    a.addEventListener('click', e => e.preventDefault());
+    a.innerHTML = '<span class="num"></span><span class="label"></span>';
+    a.firstChild.textContent = String(i + 1).padStart(2, '0');
+    a.lastChild.textContent = name;
+    // 菜单项在面板到位后再依次落下
+    a.style.setProperty('--d', (CONFIG.layers * CONFIG.stagger + 150 + i * CONFIG.stagger) + 'ms');
+    panel.appendChild(a);
+  });
+
+  let open = false;
+  function setOpen(v) {
+    open = v;
+    document.body.classList.toggle('mt-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.textContent = open ? '关闭' : '菜单';
+    // 关闭时反向：菜单项先走、面板再走、色板最后
+    const all = [...document.querySelectorAll('.mt-layer'), panel];
+    all.forEach((el, i) => el.style.setProperty('--d', (open ? i : all.length - 1 - i) * CONFIG.stagger + 'ms'));
+    panel.querySelectorAll('.mt-item').forEach((a, i) => {
+      a.style.setProperty('--d', open ? (CONFIG.layers * CONFIG.stagger + 150 + i * CONFIG.stagger) + 'ms' : (i * 30) + 'ms');
+    });
+  }
+  toggle.addEventListener('click', () => setOpen(!open));
+  addEventListener('keydown', e => { if (e.key === 'Escape' && open) setOpen(false); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动开合循环；真实点击后停止
+  if (!reduceMotion) {
+    let auto = true;
+    toggle.addEventListener('pointerdown', () => (auto = false));
+    setTimeout(() => { if (auto) setOpen(true); }, 600);
+    setInterval(() => { if (!document.hidden && auto) setOpen(!open); }, 2800);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

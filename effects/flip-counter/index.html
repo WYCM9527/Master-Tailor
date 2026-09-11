@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>翻牌计数器</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-duration: 0.5s;     /* 翻动时长 */
+    --mt-color: #ffffff;     /* 数字颜色 */
+    --mt-cell: #1c1c1c;      /* 格子底色 */
+    --mt-fontSize: 72px;     /* 字号 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+  .mt-counter { display: flex; gap: 6px; }
+  /* 每一位是一个只露一格高的窗口，里面竖着 0–9 十个数字，用 translateY 滚到目标位 */
+  .mt-digit {
+    position: relative;
+    width: calc(var(--mt-fontSize) * 0.72);
+    height: calc(var(--mt-fontSize) * 1.25);
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--mt-cell);
+    color: var(--mt-color);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    line-height: calc(var(--mt-fontSize) * 1.25);
+    text-align: center;
+  }
+  .mt-digit .reel {
+    display: flex; flex-direction: column;
+    transform: translateY(calc(var(--n, 0) * -1 * var(--mt-fontSize) * 1.25));
+    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .mt-digit .reel span { display: block; height: calc(var(--mt-fontSize) * 1.25); }
+  /* 中间的折痕线，像翻牌牌 */
+  .mt-digit::after {
+    content: '';
+    position: absolute; left: 0; right: 0; top: 50%;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  /* 用户开启「减少动态效果」时：数字直接切换 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-digit .reel { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-counter" id="mtCounter" role="img" aria-live="polite"></div>
+<script>
+  const CONFIG = {
+    start: 1024,      // 起始数
+    stepValue: 37,    // 每次增加
+    interval: 1.5,    // 增加间隔（秒）
+    digits: 5,        // 位数
+  };
+
+  const host = document.getElementById('mtCounter');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const max = Math.pow(10, CONFIG.digits);
+  let value = CONFIG.start % max;
+
+  // 生成每一位的滚轮
+  const reels = [];
+  for (let i = 0; i < CONFIG.digits; i++) {
+    const d = document.createElement('div');
+    d.className = 'mt-digit';
+    const reel = document.createElement('div');
+    reel.className = 'reel';
+    for (let n = 0; n <= 9; n++) { const s = document.createElement('span'); s.textContent = String(n); reel.appendChild(s); }
+    d.appendChild(reel);
+    host.appendChild(d);
+    reels.push(reel);
+  }
+  function render() {
+    const str = String(value).padStart(CONFIG.digits, '0');
+    host.setAttribute('aria-label', str);
+    // 只改变化的位；低位先翻，高位跟着翻，带一点错开
+    Array.from(str).forEach((ch, i) => {
+      const reel = reels[i];
+      if (reel.dataset.n !== ch) {
+        reel.dataset.n = ch;
+        reel.style.transitionDelay = ((CONFIG.digits - 1 - i) * 40) + 'ms';
+        reel.style.setProperty('--n', ch);
+      }
+    });
+  }
+  render();
+  // 按间隔递增，越界回到 0；后台不推进
+  setInterval(() => {
+    if (document.hidden) return;
+    value = (value + CONFIG.stepValue) % max;
+    render();
+  }, CONFIG.interval * 1000);
+  void reduceMotion;
+</script>
+</body>
+</html>

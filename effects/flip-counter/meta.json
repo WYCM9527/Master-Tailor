@@ -1,0 +1,92 @@
+{
+  "slug": "flip-counter",
+  "name": "翻牌计数器",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["数字", "翻牌", "里程表"],
+  "summary": "每一位数字像机场翻牌牌一样上下滚动到新值",
+  "params": [
+    {
+      "key": "start",
+      "label": "起始数",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 99999,
+      "step": 1,
+      "default": 1024
+    },
+    {
+      "key": "stepValue",
+      "label": "每次增加",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 999,
+      "step": 1,
+      "default": 37
+    },
+    {
+      "key": "interval",
+      "label": "增加间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "default": 1.5,
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "digits",
+      "label": "位数",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "default": 5,
+      "help": "不足的位用 0 补齐"
+    },
+    {
+      "key": "duration",
+      "label": "翻动时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.1,
+      "default": 0.5,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    { "key": "color", "label": "数字颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "cell", "label": "格子底色", "type": "color", "target": "css", "default": "#1c1c1c" },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 32,
+      "max": 120,
+      "step": 4,
+      "default": 72,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "fast",
+      "name": "疾速跳表",
+      "values": { "stepValue": 999, "interval": 0.5, "duration": 0.3, "digits": 7 }
+    },
+    {
+      "id": "clock",
+      "name": "慢翻",
+      "values": { "stepValue": 1, "interval": 2, "duration": 1, "digits": 4, "start": 9996 }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>放大镜停靠栏</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #ffffff;    /* 图标颜色 */
+    --mt-rounded: 14px;      /* 图标圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: end center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  /* 停靠栏：底部一条半透明托盘，图标底部对齐，放大时向上长 */
+  .mt-dock {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 10px 14px;
+    margin-bottom: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: calc(var(--mt-rounded) + 10px);
+    background: rgba(255, 255, 255, 0.06);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .mt-item {
+    position: relative;
+    width: var(--s);
+    height: var(--s);
+    border: none;
+    border-radius: var(--mt-rounded);
+    background: color-mix(in srgb, var(--mt-accent) 14%, transparent);
+    color: var(--mt-accent);
+    font-size: calc(var(--s) * 0.42);
+    font-weight: 700;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    will-change: width, height;
+    transition: background 0.15s ease;
+  }
+  .mt-item:hover { background: color-mix(in srgb, var(--mt-accent) 28%, transparent); }
+  /* 名称气泡：悬停时在图标上方浮现 */
+  .mt-item .tip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #0a0a0f;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  .mt-item:hover .tip { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .mt-dock.no-tip .tip { display: none; }
+
+  /* 用户开启「减少动态效果」时：不放大（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-item { transition: none; }
+  }
+</style>
+</head>
+<body>
+<nav class="mt-dock" id="mtDock" aria-label="停靠栏"></nav>
+<script>
+  const CONFIG = {
+    items: "首页｜搜索｜收藏｜消息｜设置｜更多", // 图标文字，用「｜」分隔
+    base: 52,       // 图标基础大小（px）
+    magnify: 1.7,   // 放大倍数
+    radius: 140,    // 影响范围（px）
+    lag: 0.3,       // 回弹迟滞（1 瞬间到位）
+    labels: true,   // 悬停显示名称
+  };
+
+  const dock = document.getElementById('mtDock');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!CONFIG.labels) dock.classList.add('no-tip');
+  const names = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
+  const items = names.map(name => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mt-item';
+    b.setAttribute('aria-label', name);
+    b.innerHTML = '<span aria-hidden="true"></span><span class="tip"></span>';
+    b.firstChild.textContent = Array.from(name)[0];
+    b.lastChild.textContent = name;
+    b.style.setProperty('--s', CONFIG.base + 'px');
+    dock.appendChild(b);
+    return { el: b, s: CONFIG.base };
+  });
+
+  // 鼠标横坐标决定每个图标的目标尺寸：距离越近越大，余弦衰减
+  let mx = -9999, auto = true;
+  dock.addEventListener('pointermove', e => { auto = false; mx = e.clientX; });
+  dock.addEventListener('pointerleave', () => { mx = -9999; });
+  document.documentElement.addEventListener('pointerleave', () => (auto = true));
+
+  function frame() {
+    if (!document.hidden) {
+      for (const it of items) {
+        const r = it.el.getBoundingClientRect();
+        const d = Math.abs(r.left + r.width / 2 - mx);
+        const k = d < CONFIG.radius ? 0.5 + 0.5 * Math.cos(d / CONFIG.radius * Math.PI) : 0;
+        const target = CONFIG.base * (1 + (CONFIG.magnify - 1) * k);
+        it.s += (target - it.s) * (reduceMotion ? 1 : CONFIG.lag);
+        it.el.style.setProperty('--s', it.s.toFixed(2) + 'px');
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  if (!reduceMotion) requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针在栏上来回扫；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.03;
+      const r = dock.getBoundingClientRect();
+      mx = r.left + r.width * (0.5 + 0.48 * Math.sin(t));
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

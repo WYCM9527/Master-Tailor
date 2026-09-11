@@ -42,7 +42,7 @@ effects/<slug>/
 
 ### meta.json
 
-- `category`：`background | button | text | card | showcase | transition | loading | canvas`（侧边栏一级）
+- `category`：`background | button | nav | text | card | showcase | transition | loading | canvas`（侧边栏一级）
 - `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表——原有 6 类的子类是触发方式（`idle | hover | click | scroll`），「多卡/图展示」的子类是 `carousel | compare | stack-scroll`，「页面转场」的子类是 `shared | push | zoom | keynote | scroll`
 - `params[]`：9 种控件类型 `color | range | toggle | select | text | font | image | images | colors`（`colors` 为可增删的颜色列表，只允许 `config`，CONFIG 中写成单行数组 `colors: ["#…", …], // 注释`）
   - `target: "css"` → 值注入 `:root` 的 `--mt-<key>`，调参时**热更新**（动画不重置）

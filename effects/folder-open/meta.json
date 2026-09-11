@@ -1,0 +1,86 @@
+{
+  "slug": "folder-open",
+  "name": "文件夹展开",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["文件夹", "纸张", "悬停"],
+  "summary": "一个文件夹图标，悬停时封口掀开，里面的几张纸探出头来",
+  "params": [
+    {
+      "key": "folder",
+      "label": "文件夹颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    { "key": "paper", "label": "纸张颜色", "type": "color", "target": "css", "default": "#d0d0d0" },
+    {
+      "key": "size",
+      "label": "文件夹大小",
+      "type": "range",
+      "target": "css",
+      "min": 120,
+      "max": 320,
+      "step": 10,
+      "default": 200,
+      "unit": "px"
+    },
+    {
+      "key": "papers",
+      "label": "纸张数量",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "lift",
+      "label": "探出高度",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 80,
+      "step": 5,
+      "default": 45,
+      "unit": "%",
+      "help": "纸张探出的高度占文件夹高度的比例"
+    },
+    {
+      "key": "duration",
+      "label": "打开时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.45,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "label",
+      "label": "文件夹名",
+      "type": "text",
+      "target": "config",
+      "default": "项目资料",
+      "maxLength": 12
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "dark",
+      "name": "黑夹白纸",
+      "values": { "folder": "#3a3a3a", "paper": "#ffffff", "lift": 60 }
+    },
+    {
+      "id": "single",
+      "name": "单张大探",
+      "values": { "papers": 1, "lift": 80, "size": 260, "duration": 0.7 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

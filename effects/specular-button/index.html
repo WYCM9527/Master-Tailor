@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>镜面高光按钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-base: #1c1c1c;      /* 按钮底色 */
+    --mt-text: #ffffff;      /* 文字颜色 */
+    --mt-light: #ffffff;     /* 高光颜色 */
+    --mt-size: 140px;        /* 高光大小 */
+    --mt-intensity: 0.5;     /* 高光强度 */
+    --mt-edge: 1;            /* 边缘描光：1 开 / 0 关 */
+    --mt-rounded: 12px;      /* 圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .mt-btn {
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--mt-rounded);
+    padding: 18px 44px;
+    background: var(--mt-base);
+    color: var(--mt-text);
+    font: inherit;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    overflow: hidden;
+    isolation: isolate;
+    transition: transform 0.15s ease;
+  }
+  .mt-btn:active { transform: scale(0.97); }
+  /* 高光：跟随鼠标的柔光团，混合到底色上 */
+  .mt-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(var(--mt-size) at var(--x, 50%) var(--y, 50%),
+      color-mix(in srgb, var(--mt-light) calc(var(--mt-intensity) * 100%), transparent), transparent 70%);
+    opacity: var(--on, 0);
+    transition: opacity 0.25s ease;
+    z-index: -1;
+  }
+  /* 边缘描光：同心的渐变只留 1px 环 */
+  .mt-btn::after {
+    content: '';
+    position: absolute; inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(calc(var(--mt-size) * 0.9) at var(--x, 50%) var(--y, 50%), var(--mt-light), transparent 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    opacity: calc(var(--on, 0) * var(--mt-edge));
+    transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .mt-btn span { position: relative; }
+
+  /* 用户开启「减少动态效果」时：高光固定在中心 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-btn::before, .mt-btn::after { transition: none; }
+  }
+</style>
+</head>
+<body>
+<button type="button" class="mt-btn" id="mtBtn"><span id="mtLabel">立即开始</span></button>
+<script>
+  const CONFIG = {
+    label: "立即开始", // 按钮文字
+  };
+  const btn = document.getElementById('mtBtn');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtLabel').textContent = CONFIG.label;
+
+  // 高光跟随：把鼠标在按钮内的位置写成百分比变量
+  let auto = true;
+  function setLight(clientX, clientY) {
+    const r = btn.getBoundingClientRect();
+    btn.style.setProperty('--x', ((clientX - r.left) / r.width * 100) + '%');
+    btn.style.setProperty('--y', ((clientY - r.top) / r.height * 100) + '%');
+    btn.style.setProperty('--on', '1');
+  }
+  btn.addEventListener('pointermove', e => { auto = false; if (!reduceMotion) setLight(e.clientX, e.clientY); else btn.style.setProperty('--on', '1'); });
+  btn.addEventListener('pointerleave', () => btn.style.setProperty('--on', '0'));
+  document.documentElement.addEventListener('pointerleave', () => (auto = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针在按钮上来回滑；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.04;
+      const r = btn.getBoundingClientRect();
+      setLight(r.left + r.width * (0.5 + 0.45 * Math.sin(t)), r.top + r.height * (0.5 + 0.4 * Math.cos(t * 1.7)));
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

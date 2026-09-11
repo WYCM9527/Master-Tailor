@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魔法便当格</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-glowRadius: 220px;  /* 边框光半径 */
+    --mt-accent: #ffffff;    /* 光与星点颜色 */
+    --mt-rounded: 16px;      /* 格子圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #f2f3f8;
+  }
+  /* 便当布局：4 列，若干格跨行跨列 */
+  .mt-bento {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 120px;
+    gap: 12px;
+    width: min(880px, 94vw);
+    perspective: 1200px;
+  }
+  .mt-cell {
+    position: relative;
+    border-radius: var(--mt-rounded);
+    background: #121219;
+    padding: 18px;
+    overflow: hidden;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translate(var(--tx, 0px), var(--ty, 0px));
+    transition: transform 0.25s ease;
+    transform-style: preserve-3d;
+  }
+  .mt-cell.wide { grid-column: span 2; }
+  .mt-cell.tall { grid-row: span 2; }
+  .mt-cell h3 { margin: 0 0 6px; font-size: 15px; }
+  .mt-cell p { margin: 0; font-size: 12.5px; color: rgba(255, 255, 255, 0.55); line-height: 1.5; }
+  /* 边框光：径向渐变描边跟随鼠标，1px 宽 */
+  .mt-cell::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(var(--mt-glowRadius) at var(--gx, -999px) var(--gy, -999px), var(--mt-accent), transparent 70%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  /* 内部聚光：淡淡的光晕 */
+  .mt-cell::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(var(--mt-glowRadius) at var(--gx, -999px) var(--gy, -999px), color-mix(in srgb, var(--mt-accent) 12%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+  /* 星点：悬停格内随机漂浮的小光点 */
+  .mt-star {
+    position: absolute;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--mt-accent);
+    box-shadow: 0 0 6px var(--mt-accent);
+    animation: mt-star 2.4s ease-in-out infinite;
+    animation-delay: var(--d);
+    pointer-events: none;
+  }
+  @keyframes mt-star {
+    0%, 100% { opacity: 0; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-14px); }
+  }
+
+  /* 用户开启「减少动态效果」时：不倾斜、无星点 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-cell { transform: none !important; transition: none; }
+    .mt-star { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-bento" id="mtBento">
+  <div class="mt-cell wide"><h3>数据总览</h3><p>鼠标移到任何一格，边框亮起、格内冒星点。</p></div>
+  <div class="mt-cell"><h3>提醒</h3><p>格子会微微朝鼠标倾斜。</p></div>
+  <div class="mt-cell tall"><h3>趋势</h3><p>高格子。</p></div>
+  <div class="mt-cell"><h3>成员</h3><p>八位在线。</p></div>
+  <div class="mt-cell"><h3>进度</h3><p>72%。</p></div>
+  <div class="mt-cell wide"><h3>本周日程</h3><p>三场评审，一场发布。</p></div>
+  <div class="mt-cell"><h3>设置</h3><p>偏好与主题。</p></div>
+</div>
+<script>
+  const CONFIG = {
+    tilt: 5,         // 倾斜幅度（度）
+    particles: 10,   // 星点数量
+    magnet: true,    // 格子微微吸向鼠标
+  };
+
+  const bento = document.getElementById('mtBento');
+  const cells = [...bento.querySelectorAll('.mt-cell')];
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 边框光心：所有格子共享鼠标坐标（换算到各自内部）
+  let mx = -9999, my = -9999, auto = true, hovered = null;
+  function apply() {
+    for (const c of cells) {
+      const r = c.getBoundingClientRect();
+      const lx = mx - r.left, ly = my - r.top;
+      c.style.setProperty('--gx', lx + 'px'); c.style.setProperty('--gy', ly + 'px');
+      const inside = lx >= 0 && ly >= 0 && lx <= r.width && ly <= r.height;
+      if (inside && !reduceMotion) {
+        // 倾斜朝向鼠标；磁吸：向鼠标方向挪几像素
+        const nx = lx / r.width - 0.5, ny = ly / r.height - 0.5;
+        c.style.setProperty('--ry', (nx * CONFIG.tilt * 2) + 'deg');
+        c.style.setProperty('--rx', (-ny * CONFIG.tilt * 2) + 'deg');
+        c.style.setProperty('--tx', (CONFIG.magnet ? nx * 6 : 0) + 'px');
+        c.style.setProperty('--ty', (CONFIG.magnet ? ny * 6 : 0) + 'px');
+        if (hovered !== c) { hovered && clearStars(hovered); hovered = c; spawnStars(c); }
+      } else {
+        c.style.setProperty('--rx', '0deg'); c.style.setProperty('--ry', '0deg');
+        c.style.setProperty('--tx', '0px'); c.style.setProperty('--ty', '0px');
+        if (hovered === c) { clearStars(c); hovered = null; }
+      }
+    }
+  }
+  function spawnStars(c) {
+    for (let i = 0; i < CONFIG.particles; i++) {
+      const s = document.createElement('i');
+      s.className = 'mt-star';
+      s.style.left = (8 + Math.random() * 84) + '%';
+      s.style.top = (10 + Math.random() * 80) + '%';
+      s.style.setProperty('--d', (Math.random() * 2.4) + 's');
+      c.appendChild(s);
+    }
+  }
+  function clearStars(c) { c.querySelectorAll('.mt-star').forEach(s => s.remove()); }
+
+  bento.addEventListener('pointermove', e => { auto = false; mx = e.clientX; my = e.clientY; apply(); });
+  bento.addEventListener('pointerleave', () => { mx = -9999; my = -9999; apply(); });
+  document.documentElement.addEventListener('pointerleave', () => (auto = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针依次停在各格中心；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let i = 0;
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      const r = cells[i % cells.length].getBoundingClientRect();
+      mx = r.left + r.width * 0.65; my = r.top + r.height * 0.4;
+      apply(); i++;
+    }, 1300);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -137,6 +137,7 @@ export const effectMetaSchema = z
     category: z.enum([
       'background',
       'button',
+      'nav',
       'text',
       'card',
       'showcase',

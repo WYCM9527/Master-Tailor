@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流动菜单</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-speed: 12s;         /* 跑马灯一圈用时 */
+    --mt-duration: 0.5s;     /* 涌入时长 */
+    --mt-band: #ffffff;      /* 跑马灯底色 */
+    --mt-text: #f2f3f8;      /* 菜单文字颜色 */
+    --mt-fontSize: 44px;     /* 菜单字号 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .mt-menu {
+    width: min(900px, 94vw);
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+  }
+  .mt-row {
+    position: relative;
+    height: calc(var(--mt-fontSize) * 2.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .mt-row .name {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    color: var(--mt-text);
+    letter-spacing: 0.02em;
+    transition: color var(--mt-duration) ease;
+  }
+  /* 跑马灯带：默认整体移出行外（上方或下方由 JS 按进入方向决定），悬停时滑回 0 */
+  .mt-row .band {
+    position: absolute; inset: 0;
+    background: var(--mt-band);
+    color: var(--mt-bg);
+    display: flex; align-items: center;
+    transform: translateY(var(--from, 101%));
+    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+  }
+  .mt-row:hover .band, .mt-row.is-hover .band { transform: translateY(0); }
+  .mt-row:hover .name, .mt-row.is-hover .name { color: transparent; }
+  .mt-track {
+    display: flex; align-items: center; gap: 28px;
+    white-space: nowrap;
+    padding-left: 28px;
+    animation: mt-flow var(--mt-speed) linear infinite;
+    will-change: transform;
+  }
+  .mt-track span { font-size: calc(var(--mt-fontSize) * 0.8); font-weight: 700; text-transform: uppercase; }
+  .mt-track img {
+    height: calc(var(--mt-fontSize) * 1.3);
+    width: calc(var(--mt-fontSize) * 2.6);
+    object-fit: cover;
+    border-radius: 999px;
+  }
+  @keyframes mt-flow { to { transform: translateX(-50%); } }
+
+  /* 用户开启「减少动态效果」时：跑马灯静止，涌入不做过渡 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-track { animation: none; }
+    .mt-row .band, .mt-row .name { transition: none; }
+  }
+</style>
+</head>
+<body>
+<nav class="mt-menu" id="mtMenu" aria-label="主菜单"></nav>
+<script>
+  const CONFIG = {
+    items: "作品集｜关于我们｜服务内容｜联系方式", // 菜单项，用「｜」分隔
+    slides: [{ src: '/samples/sample-1.webp', caption: '' }], // 跑马灯配图
+  };
+
+  const menu = document.getElementById('mtMenu');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const names = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
+  const srcs = CONFIG.slides.map(s => s.src);
+
+  const rows = names.map((name, i) => {
+    const row = document.createElement('a');
+    row.className = 'mt-row';
+    row.href = '#';
+    row.addEventListener('click', e => e.preventDefault());
+    const label = document.createElement('div');
+    label.className = 'name';
+    label.textContent = name;
+    const band = document.createElement('div');
+    band.className = 'band';
+    band.setAttribute('aria-hidden', 'true');
+    const track = document.createElement('div');
+    track.className = 'mt-track';
+    // 文案与图交替，重复两遍，平移 50% 即无缝
+    for (let rep = 0; rep < 2; rep++) for (let k = 0; k < 4; k++) {
+      const t = document.createElement('span'); t.textContent = name;
+      const img = document.createElement('img'); img.src = srcs[(i + k) % srcs.length]; img.alt = '';
+      track.append(t, img);
+    }
+    band.appendChild(track);
+    row.append(label, band);
+    // 鼠标从上方还是下方进入：带子从同一侧涌入、从离开侧退出
+    row.addEventListener('pointerenter', e => {
+      const r = row.getBoundingClientRect();
+      row.style.setProperty('--from', e.clientY < r.top + r.height / 2 ? '-101%' : '101%');
+    });
+    row.addEventListener('pointerleave', e => {
+      const r = row.getBoundingClientRect();
+      row.style.setProperty('--from', e.clientY < r.top + r.height / 2 ? '-101%' : '101%');
+    });
+    menu.appendChild(row);
+    return row;
+  });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：依次模拟悬停每一行（交替从上/下涌入）；真实鼠标进入后停止
+  if (!reduceMotion) {
+    let i = 0, auto = true;
+    menu.addEventListener('pointerenter', () => { auto = false; rows.forEach(r => r.classList.remove('is-hover')); });
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      rows.forEach(r => r.classList.remove('is-hover'));
+      const row = rows[i % rows.length];
+      row.style.setProperty('--from', i % 2 ? '-101%' : '101%');
+      row.classList.add('is-hover');
+      i++;
+    }, 1600);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

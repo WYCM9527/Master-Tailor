@@ -1,0 +1,96 @@
+{
+  "slug": "elastic-slider",
+  "name": "弹性滑块",
+  "category": "button",
+  "sub": "click",
+  "tags": ["滑块", "弹性", "音量"],
+  "summary": "拖到头再拽，滑轨像橡皮筋一样被拉长，松手弹回",
+  "params": [
+    {
+      "key": "value",
+      "label": "初始值",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 60,
+      "unit": "%"
+    },
+    {
+      "key": "stretch",
+      "label": "最大拉伸",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "default": 30,
+      "unit": "px",
+      "help": "拖过头时滑轨最多被拉长多少"
+    },
+    {
+      "key": "bounce",
+      "label": "回弹手感",
+      "type": "select",
+      "target": "css",
+      "options": [
+        { "value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "label": "弹簧过冲" },
+        { "value": "cubic-bezier(0.2, 0.8, 0.2, 1)", "label": "柔和归位" }
+      ],
+      "default": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+    },
+    {
+      "key": "thickness",
+      "label": "滑轨粗细",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 20,
+      "step": 2,
+      "default": 8,
+      "unit": "px"
+    },
+    {
+      "key": "hoverThicken",
+      "label": "悬停时变粗",
+      "type": "toggle",
+      "target": "css",
+      "default": true
+    },
+    {
+      "key": "fill",
+      "label": "已填充颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    { "key": "track", "label": "轨道颜色", "type": "color", "target": "css", "default": "#3a3a3a" },
+    {
+      "key": "showValue",
+      "label": "显示数值",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "thick",
+      "name": "粗轨大拉伸",
+      "values": { "thickness": 16, "stretch": 60, "value": 30 }
+    },
+    {
+      "id": "soft",
+      "name": "柔和无数值",
+      "values": {
+        "bounce": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "showValue": false,
+        "hoverThicken": false
+      }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

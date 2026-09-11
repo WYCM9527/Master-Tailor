@@ -1,0 +1,84 @@
+{
+  "slug": "magic-bento",
+  "name": "魔法便当格",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["便当格", "聚光", "粒子"],
+  "summary": "一组大小不一的便当格，鼠标所在格边框亮起、内部冒出星点、轻微倾斜",
+  "params": [
+    {
+      "key": "tilt",
+      "label": "倾斜幅度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 12,
+      "step": 1,
+      "default": 5,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "particles",
+      "label": "星点数量",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "default": 10,
+      "help": "悬停格内漂浮的小光点个数"
+    },
+    {
+      "key": "glowRadius",
+      "label": "边框光半径",
+      "type": "range",
+      "target": "css",
+      "min": 100,
+      "max": 400,
+      "step": 20,
+      "default": 220,
+      "unit": "px"
+    },
+    {
+      "key": "accent",
+      "label": "光与星点颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "magnet",
+      "label": "格子微微吸向鼠标",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    {
+      "key": "rounded",
+      "label": "格子圆角",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 28,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "calm",
+      "name": "静态微光",
+      "values": { "tilt": 0, "particles": 0, "magnet": false, "glowRadius": 300 }
+    },
+    {
+      "id": "lively",
+      "name": "活泼",
+      "values": { "tilt": 10, "particles": 20, "glowRadius": 160 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>粘液导航</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #ffffff;    /* 高亮色 */
+    --mt-text: #a3a3a3;      /* 文字颜色 */
+    --mt-duration: 0.5s;     /* 滑动时长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .mt-nav {
+    position: relative;
+    display: flex;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+  }
+  /* 粘液层：高亮块 + 液珠都在这一层，整层挂黏合滤镜 */
+  .mt-goo {
+    position: absolute;
+    inset: 0;
+    filter: url(#mtGoo);
+    pointer-events: none;
+  }
+  .mt-blob {
+    position: absolute;
+    top: 6px;
+    height: calc(100% - 12px);
+    border-radius: 999px;
+    background: var(--mt-accent);
+    transition: left var(--mt-duration) cubic-bezier(0.6, 0, 0.2, 1.2), width var(--mt-duration) cubic-bezier(0.6, 0, 0.2, 1.2);
+  }
+  .mt-drop {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--mt-accent);
+    animation: mt-drop var(--mt-duration) ease-out forwards;
+  }
+  @keyframes mt-drop {
+    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+  .mt-item {
+    position: relative;
+    border: none;
+    border-radius: 999px;
+    padding: 9px 20px;
+    background: transparent;
+    color: var(--mt-text);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color var(--mt-duration) ease;
+  }
+  .mt-item.active { color: var(--mt-bg); }
+
+  /* 用户开启「减少动态效果」时：高亮块直接跳到位、不甩液珠 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-blob { transition: none; }
+    .mt-drop { display: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="mtGoo">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/>
+    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10" result="goo"/>
+    <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+  </filter>
+</svg>
+<nav class="mt-nav" id="mtNav" aria-label="主导航">
+  <div class="mt-goo" id="mtGooLayer"><div class="mt-blob" id="mtBlob"></div></div>
+</nav>
+<script>
+  const CONFIG = {
+    items: "首页｜项目｜团队｜博客｜招聘", // 菜单项，用「｜」分隔
+    drops: 8,    // 液珠数量
+    goo: 10,     // 黏合强度（模糊半径）
+  };
+
+  const nav = document.getElementById('mtNav');
+  const gooLayer = document.getElementById('mtGooLayer');
+  const blob = document.getElementById('mtBlob');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelector('#mtGoo feGaussianBlur').setAttribute('stdDeviation', CONFIG.goo);
+  const names = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
+
+  const items = names.map((name, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mt-item';
+    b.textContent = name;
+    b.addEventListener('click', () => select(i));
+    nav.appendChild(b);
+    return b;
+  });
+
+  let current = -1;
+  function select(i) {
+    if (i === current) return;
+    const from = current >= 0 ? items[current] : null;
+    current = i;
+    items.forEach((el, k) => { el.classList.toggle('active', k === i); el.toggleAttribute('aria-current', k === i); });
+    const r = items[i].getBoundingClientRect(), n = nav.getBoundingClientRect();
+    blob.style.left = (r.left - n.left) + 'px';
+    blob.style.width = r.width + 'px';
+    // 甩液珠：从起点与终点之间的路径上向四周溅出，随后缩小消失
+    if (from && !reduceMotion) {
+      const f = from.getBoundingClientRect();
+      for (let k = 0; k < CONFIG.drops; k++) {
+        const d = document.createElement('div');
+        d.className = 'mt-drop';
+        const t = Math.random();
+        const x = (f.left - n.left + f.width / 2) * (1 - t) + (r.left - n.left + r.width / 2) * t;
+        d.style.left = (x - 5) + 'px'; d.style.top = (n.height / 2 - 5) + 'px';
+        d.style.setProperty('--dx', ((Math.random() - 0.5) * 80) + 'px');
+        d.style.setProperty('--dy', ((Math.random() - 0.5) * 70) + 'px');
+        gooLayer.appendChild(d);
+        d.addEventListener('animationend', () => d.remove());
+      }
+    }
+  }
+  select(0);
+  addEventListener('resize', () => { const i = current; current = -1; select(i); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动轮流选中；真实点击后停止
+  if (!reduceMotion) {
+    let auto = true, k = 1;
+    nav.addEventListener('pointerdown', () => (auto = false));
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      select(k % items.length); k++;
+    }, 1400);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

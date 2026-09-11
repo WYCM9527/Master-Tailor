@@ -1,0 +1,98 @@
+{
+  "slug": "flowing-menu",
+  "name": "流动菜单",
+  "category": "nav",
+  "sub": "hover",
+  "tags": ["菜单", "跑马灯", "悬停"],
+  "summary": "悬停到菜单行，一条带图的跑马灯从鼠标进入的方向涌进来",
+  "params": [
+    {
+      "key": "items",
+      "label": "菜单项",
+      "type": "text",
+      "target": "config",
+      "default": "作品集｜关于我们｜服务内容｜联系方式",
+      "maxLength": 80,
+      "help": "用「｜」分隔"
+    },
+    {
+      "key": "slides",
+      "label": "跑马灯配图",
+      "type": "images",
+      "target": "config",
+      "min": 1,
+      "max": 4,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "speed",
+      "label": "跑马灯速度",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 30,
+      "step": 1,
+      "default": 12,
+      "unit": "s",
+      "displayUnit": " 秒/圈"
+    },
+    {
+      "key": "duration",
+      "label": "涌入时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "band",
+      "label": "跑马灯底色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "text",
+      "label": "菜单文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "fontSize",
+      "label": "菜单字号",
+      "type": "range",
+      "target": "css",
+      "min": 24,
+      "max": 72,
+      "step": 2,
+      "default": 44,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "fast",
+      "name": "快跑马灯",
+      "values": { "speed": 5, "duration": 0.3 }
+    },
+    {
+      "id": "grey",
+      "name": "灰带大字",
+      "values": { "band": "#3a3a3a", "fontSize": 64, "speed": 18 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

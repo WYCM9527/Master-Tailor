@@ -1,0 +1,69 @@
+{
+  "slug": "gooey-nav",
+  "name": "粘液导航",
+  "category": "nav",
+  "sub": "click",
+  "tags": ["导航", "粘液", "选中"],
+  "summary": "选中的高亮块像一滴粘液滑到新选项上，路上甩出几颗小液珠",
+  "params": [
+    {
+      "key": "items",
+      "label": "菜单项",
+      "type": "text",
+      "target": "config",
+      "default": "首页｜项目｜团队｜博客｜招聘",
+      "maxLength": 80,
+      "help": "用「｜」分隔"
+    },
+    { "key": "accent", "label": "高亮色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "text", "label": "文字颜色", "type": "color", "target": "css", "default": "#a3a3a3" },
+    {
+      "key": "duration",
+      "label": "滑动时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "drops",
+      "label": "液珠数量",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 16,
+      "step": 1,
+      "default": 8,
+      "help": "切换时甩出的小液珠个数"
+    },
+    {
+      "key": "goo",
+      "label": "黏合强度",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 20,
+      "step": 2,
+      "default": 10
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "splashy",
+      "name": "飞溅",
+      "values": { "drops": 16, "goo": 16, "duration": 0.7 }
+    },
+    {
+      "id": "clean",
+      "name": "干净滑动",
+      "values": { "drops": 0, "goo": 4, "duration": 0.3 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}
