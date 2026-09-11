@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>光柱背景</title>
+<title>射灯</title>
 <style>
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;        /* 页面底色 */
-    --mt-spread: 14deg;      /* 光柱张角 */
-    --mt-period: 9s;         /* 摇摆周期 */
-    --mt-blur: 20px;         /* 边缘柔化 */
+    --mt-spread: 24deg;      /* 光柱张角 */
+    --mt-period: 8s;         /* 摇摆周期 */
+    --mt-blur: 50px;         /* 边缘柔化 */
     --mt-intensity: 0.75;    /* 亮度 */
-    --mt-reach: 70%;         /* 照射深度：光在画面多深处衰减到看不见 */
+    --mt-reach: 75%;         /* 照射深度：光在画面多深处衰减到看不见 */
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; }
@@ -71,7 +71,7 @@
 <div class="mt-stage" id="mtStage" aria-hidden="true"></div>
 <script>
   const CONFIG = {
-    count: 4,   // 光柱数量
+    count: 3,   // 光柱数量
     sway: 6,    // 摇摆幅度（度）
     colors: ["#ffffff", "#4db8ff", "#c04dff"], // 射灯颜色：按顺序轮流分配给每道光，颗数多于颜色数时从头再来
   };
