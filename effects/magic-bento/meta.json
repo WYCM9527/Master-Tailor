@@ -3,8 +3,12 @@
   "name": "魔法便当格",
   "category": "card",
   "sub": "hover",
-  "tags": ["便当格", "聚光", "粒子"],
-  "summary": "一组大小不一的便当格，鼠标所在格边框亮起、内部冒出星点、轻微倾斜",
+  "tags": [
+    "便当格",
+    "聚光",
+    "粒子"
+  ],
+  "summary": "格子随鼠标微倾微吸，6px 边框光带跟着鼠标游走，悬停冒星点，点击荡开一圈光波",
   "params": [
     {
       "key": "tilt",
@@ -67,18 +71,35 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "calm",
       "name": "静态微光",
-      "values": { "tilt": 0, "particles": 0, "magnet": false, "glowRadius": 300 }
+      "values": {
+        "tilt": 0,
+        "particles": 0,
+        "magnet": false,
+        "glowRadius": 300
+      }
     },
     {
       "id": "lively",
       "name": "活泼",
-      "values": { "tilt": 10, "particles": 20, "glowRadius": 160 }
+      "values": {
+        "tilt": 10,
+        "particles": 20,
+        "glowRadius": 160
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

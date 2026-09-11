@@ -49,6 +49,10 @@
     color: color-mix(in srgb, var(--mt-bg) calc(var(--mt-pill) * 100%), var(--mt-accent));
     min-width: 2em;
     justify-content: center;
+    /* 底块宽度随当前词平滑变化（JS 量好目标宽度写进来），带一点弹簧过冲 */
+    width: var(--w, auto);
+    box-sizing: content-box;
+    transition: width var(--mt-duration) cubic-bezier(0.34, 1.4, 0.64, 1);
   }
   .mt-rot .c {
     display: inline-block;
@@ -64,8 +68,9 @@
     animation: mt-out var(--mt-duration) cubic-bezier(0.6, 0, 0.8, 0.4) both;
     animation-delay: var(--d, 0s);
   }
-  @keyframes mt-in  { from { transform: translateY(110%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-  @keyframes mt-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-110%); opacity: 0; } }
+  /* 进场带弹簧过冲（刚度 300 / 阻尼 25 的手感）：冲过基线一点再回落 */
+  @keyframes mt-in  { 0% { transform: translateY(100%); opacity: 0; } 60% { transform: translateY(-6%); opacity: 1; } 80% { transform: translateY(2%); } 100% { transform: translateY(0); opacity: 1; } }
+  @keyframes mt-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-120%); opacity: 0; } }
 
   /* 用户开启「减少动态效果」时：直接切换、不翻转 */
   @media (prefers-reduced-motion: reduce) {
@@ -92,15 +97,15 @@
   const durationMs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-duration')) * 1000 || 450;
   prefixEl.textContent = CONFIG.prefix;
 
-  // 关键词窗口按最长的词定宽，换词时前缀不跳动
+  // 底块宽度随词变化：量出每个词的宽度，换词时把目标宽度写进 --w，靠 transition 平滑缩放
   const probe = document.createElement('span');
   probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;';
   probe.className = 'c';
   wordEl.appendChild(probe);
-  let widest = 0;
-  for (const w of words) { probe.textContent = w; widest = Math.max(widest, probe.offsetWidth); }
+  const widths = words.map((w) => { probe.textContent = w; return probe.offsetWidth; });
   probe.remove();
-  wordEl.style.minWidth = 'calc(' + widest + 'px + 0.6em)';
+  wordEl.style.minWidth = '0';
+  const fitTo = (i) => wordEl.style.setProperty('--w', widths[i] + 'px');
 
   let index = 0;
   function show(word, animate) {
@@ -116,21 +121,23 @@
   function next() {
     if (document.hidden) return; // 后台不推进
     const cells = wordEl.querySelectorAll('.c');
-    // 先让当前词逐字翻出，再换下一个词翻入
+    // 先让当前词逐字翻出，再换下一个词翻入；底块宽度在翻出开始时就朝新词宽度过渡
     cells.forEach((c, i) => { c.classList.remove('in'); c.classList.add('out'); c.style.setProperty('--d', (i * CONFIG.stagger) + 'ms'); });
     const outTime = durationMs + cells.length * CONFIG.stagger;
+    const nextIndex = (index + 1) % words.length;
+    fitTo(nextIndex);
     setTimeout(() => {
-      index = (index + 1) % words.length;
+      index = nextIndex;
       show(words[index], true);
     }, outTime);
   }
 
-  show(words[0] || '', false);
+  show(words[0] || '', false); fitTo(0);
   if (!reduceMotion && words.length > 1) {
     setInterval(next, CONFIG.interval * 1000);
   } else if (words.length > 1) {
     // reduced-motion：不翻转，直接按节拍换词
-    setInterval(() => { if (!document.hidden) { index = (index + 1) % words.length; show(words[index], false); } }, CONFIG.interval * 1000);
+    setInterval(() => { if (!document.hidden) { index = (index + 1) % words.length; show(words[index], false); fitTo(index); } }, CONFIG.interval * 1000);
   }
 </script>
 </body>

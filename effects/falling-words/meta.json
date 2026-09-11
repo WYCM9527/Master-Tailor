@@ -3,8 +3,12 @@
   "name": "文字坠落堆叠",
   "category": "text",
   "sub": "click",
-  "tags": ["物理", "坠落", "互动"],
-  "summary": "点一下，整段话的词一个个掉下来，在底部翻滚堆成一堆",
+  "tags": [
+    "物理",
+    "坠落",
+    "互动"
+  ],
+  "summary": "点一下，整段文字的词一个个掉下来互相碰撞、歪歪斜斜堆在底部；落定后还能拎起来甩",
   "params": [
     {
       "key": "text",
@@ -21,9 +25,18 @@
       "type": "select",
       "target": "config",
       "options": [
-        { "value": "click", "label": "点击" },
-        { "value": "hover", "label": "鼠标移入" },
-        { "value": "auto", "label": "自动（进入即掉）" }
+        {
+          "value": "click",
+          "label": "点击"
+        },
+        {
+          "value": "hover",
+          "label": "鼠标移入"
+        },
+        {
+          "value": "auto",
+          "label": "自动（进入即掉）"
+        }
       ],
       "default": "click"
     },
@@ -61,8 +74,20 @@
       "displayUnit": " 毫秒",
       "help": "相邻词开始掉落的时间差"
     },
-    { "key": "spin", "label": "翻滚", "type": "toggle", "target": "config", "default": true },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "spin",
+      "label": "翻滚",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
     {
       "key": "accent",
       "label": "强调词颜色",
@@ -82,14 +107,28 @@
       "default": 28,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "system-sans"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "moon",
       "name": "月球重力",
-      "values": { "gravity": 500, "bounce": 0.6, "stagger": 120 }
+      "values": {
+        "gravity": 500,
+        "bounce": 0.6,
+        "stagger": 120
+      }
     },
     {
       "id": "brick",
@@ -103,6 +142,10 @@
       }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

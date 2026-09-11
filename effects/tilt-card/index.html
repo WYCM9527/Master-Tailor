@@ -33,11 +33,21 @@
     border-radius: var(--mt-rounded);
     overflow: hidden;
     transform-style: preserve-3d;
-    /* 鼠标离开后回正的过渡；跟随时由 JS 直接改 transform */
-    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    /* 倾角与缩放由 JS 弹簧每帧写入（刚度 100 / 阻尼 30 的迟滞感） */
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--s, 1));
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
     will-change: transform;
   }
+  /* 跟随鼠标的小标签：白底小字，随鼠标纵向速度微微歪一下 */
+  .mt-tip {
+    position: fixed; left: 0; top: 0; z-index: 3;
+    padding: 4px 10px; border-radius: 4px;
+    background: #fff; color: #2d2d2d; font-size: 11px; white-space: nowrap;
+    opacity: 0; pointer-events: none;
+    transform: translate(var(--tx, 0px), var(--ty, 0px)) rotate(var(--tr, 0deg));
+    transition: opacity 0.25s ease;
+  }
+  .mt-tip.on { opacity: 1; }
   .mt-tilt img {
     position: absolute;
     inset: 0;
@@ -78,6 +88,7 @@
 </style>
 </head>
 <body>
+<div class="mt-tip" id="mtTip" aria-hidden="true"></div>
 <div class="mt-tilt" id="mtCard">
   <img id="mtPhoto" src="/samples/sample-1.webp" alt="卡片图片">
   <div class="glare" aria-hidden="true"></div>
@@ -88,6 +99,8 @@
     photo: "/samples/sample-1.webp", // 卡片图片（替换为你自己的图片路径）
     title: "林间夜枭",              // 卡片标题
     maxTilt: 14,                    // 最大倾角：鼠标移到卡片边缘时的旋转角度（deg）
+    hoverScale: 1.1,                // 悬停放大倍数
+    tooltip: true,                  // 显示跟随鼠标的小标签
   };
 
   const card = document.getElementById('mtCard');
@@ -96,24 +109,53 @@
   document.getElementById('mtTitle').textContent = CONFIG.title;
 
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const tip = document.getElementById('mtTip');
+  tip.textContent = CONFIG.title;
+  if (!CONFIG.tooltip) tip.style.display = 'none';
 
-  // 根据指针位置计算倾角：卡片中心为 0，边缘为 ±maxTilt
+  // 目标值：倾角 / 缩放 / 标签位置与歪斜；当前值用弹簧逼近（刚度 100、阻尼 30）
+  const target = { rx: 0, ry: 0, s: 1 }, cur = { rx: 0, ry: 0, s: 1 }, vel = { rx: 0, ry: 0, s: 0 };
+  let tipRot = 0, lastOffY = 0, tipX = 0, tipY = 0;
+
+  // 根据指针位置计算倾角：卡片中心为 0，边缘为 ±maxTilt；标签跟着鼠标、按纵向速度歪一下
   function feed(clientX, clientY) {
     if (reduceMotion) return; // 减少动态效果：不倾斜
     const rect = card.getBoundingClientRect();
     const px = (clientX - rect.left) / rect.width;   // 0 ~ 1
     const py = (clientY - rect.top) / rect.height;   // 0 ~ 1
-    const rx = (0.5 - py) * CONFIG.maxTilt * 2;      // 上下 → 绕 X 轴
-    const ry = (px - 0.5) * CONFIG.maxTilt * 2;      // 左右 → 绕 Y 轴
-    card.style.transform = 'rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+    target.rx = (0.5 - py) * CONFIG.maxTilt * 2;     // 上下 → 绕 X 轴
+    target.ry = (px - 0.5) * CONFIG.maxTilt * 2;     // 左右 → 绕 Y 轴
+    target.s = CONFIG.hoverScale;
     root.style.setProperty('--mt-gx', (px * 100).toFixed(1) + '%');
     root.style.setProperty('--mt-gy', (py * 100).toFixed(1) + '%');
+    const offY = clientY - rect.top - rect.height / 2;
+    tipRot = -(offY - lastOffY) * 0.6; lastOffY = offY;
+    tipX = clientX + 14; tipY = clientY + 14;
+    tip.classList.add('on');
   }
   function resetTilt() {
-    card.style.transform = '';
+    target.rx = 0; target.ry = 0; target.s = 1; tipRot = 0;
     root.style.setProperty('--mt-gx', '50%');
     root.style.setProperty('--mt-gy', '50%');
+    tip.classList.remove('on');
   }
+  let last = performance.now();
+  (function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (document.hidden) return;
+    for (const k of ['rx', 'ry', 's']) {
+      const a = -100 * (cur[k] - target[k]) - 30 * vel[k];   // 半隐式欧拉弹簧
+      vel[k] += a * dt; cur[k] += vel[k] * dt;
+    }
+    card.style.setProperty('--rx', cur.rx.toFixed(2) + 'deg');
+    card.style.setProperty('--ry', cur.ry.toFixed(2) + 'deg');
+    card.style.setProperty('--s', cur.s.toFixed(3));
+    tip.style.setProperty('--tx', tipX + 'px'); tip.style.setProperty('--ty', tipY + 'px');
+    tip.style.setProperty('--tr', tipRot.toFixed(2) + 'deg');
+    tipRot *= 0.85;   // 歪斜自行回正
+  })(last);
 
   document.addEventListener('mousemove', (e) => {
     const rect = card.getBoundingClientRect();

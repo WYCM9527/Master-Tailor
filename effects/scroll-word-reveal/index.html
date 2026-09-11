@@ -7,6 +7,7 @@
 <style>
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-tilt: 3deg;         /* 起始倾斜角 */
     --mt-bg: #0a0a0f;        /* 页面底色 */
     --mt-dim: 0.15;          /* 未读词的透明度 */
     --mt-color: #f2f3f8;     /* 文字颜色 */
@@ -32,15 +33,8 @@
     font-size: 14px;
     letter-spacing: 0.12em;
   }
-  /* 段落钉在视口中部，滚动时词逐个显形；外层高度决定要滚多久 */
-  .mt-track { height: 260vh; position: relative; }
-  .mt-sticky {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    display: grid;
-    place-items: center;
-  }
+  /* 段落随页面正常流动；前后各留一屏空白，让它有完整的「滚入 → 显形 → 滚出」过程 */
+  .mt-track { min-height: 100vh; display: grid; place-items: center; padding: 20vh 0; }
   .mt-para {
     max-width: min(760px, 86vw);
     font-family: var(--mt-font);
@@ -48,6 +42,10 @@
     font-weight: 600;
     line-height: 1.7;
     color: var(--mt-color);
+    /* 整段从 3° 倾斜随滚动摆正（以左侧中点为轴） */
+    transform-origin: 0% 50%;
+    transform: rotate(calc((1 - var(--p, 0)) * var(--mt-tilt, 3deg)));
+    will-change: transform;
   }
   .mt-para .w {
     display: inline-block;
@@ -62,6 +60,7 @@
   /* 用户开启「减少动态效果」时：全文常显 */
   @media (prefers-reduced-motion: reduce) {
     .mt-para .w { opacity: 1 !important; filter: none !important; transform: none !important; }
+    .mt-para { transform: none !important; }
   }
 </style>
 </head>
@@ -69,7 +68,7 @@
 <div class="mt-page" id="mtPage">
   <div class="mt-intro">往下滚动，逐词阅读</div>
   <div class="mt-track" id="mtTrack">
-    <div class="mt-sticky"><p class="mt-para" id="mtPara"></p></div>
+    <p class="mt-para" id="mtPara"></p>
   </div>
   <div class="mt-outro">全文已显形</div>
 </div>
@@ -98,12 +97,14 @@
     return s;
   });
 
-  // 进度 = 段落所在长轨道被滚过的比例（sticky 期间），映射到「已显形的词数」
+  // 两条进度都以段落自身相对视口的位置计算（段落随页面流动，不钉住）：
+  // 倾斜摆正：段顶到达视口底 → 段底到达视口底；逐词显形：段顶到达视口 80% 处 → 段底到达视口底
   function update() {
     if (reduceMotion) return;
-    const r = track.getBoundingClientRect();
-    const usable = r.height - page.clientHeight;
-    const p = Math.min(1, Math.max(0, -r.top / Math.max(1, usable)));
+    const r = para.getBoundingClientRect(), H = page.clientHeight;
+    const pr = Math.min(1, Math.max(0, (H - r.top) / Math.max(1, r.height)));
+    para.style.setProperty('--p', pr.toFixed(3));
+    const p = Math.min(1, Math.max(0, (H * 0.8 - r.top) / Math.max(1, r.height - H * 0.2)));
     const head = p * (cells.length + CONFIG.softness); // 显形前沿（以词为单位）
     cells.forEach((c, i) => {
       const k = Math.min(1, Math.max(0, (head - i) / CONFIG.softness));

@@ -44,13 +44,13 @@
   .mt-cell.tall { grid-row: span 2; }
   .mt-cell h3 { margin: 0 0 6px; font-size: 15px; }
   .mt-cell p { margin: 0; font-size: 12.5px; color: rgba(255, 255, 255, 0.55); line-height: 1.5; }
-  /* 边框光：径向渐变描边跟随鼠标，1px 宽 */
+  /* 边框光：6px 宽的光带贴着格子内缘，中心 80%、30% 处 40% 的径向渐变跟随鼠标 */
   .mt-cell::before {
     content: '';
     position: absolute; inset: 0;
     border-radius: inherit;
-    padding: 1px;
-    background: radial-gradient(var(--mt-glowRadius) at var(--gx, -999px) var(--gy, -999px), var(--mt-accent), transparent 70%);
+    padding: 6px;
+    background: radial-gradient(var(--mt-glowRadius) circle at var(--gx, -999px) var(--gy, -999px), color-mix(in srgb, var(--mt-accent) 80%, transparent) 0%, color-mix(in srgb, var(--mt-accent) 40%, transparent) 30%, transparent 60%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -65,6 +65,13 @@
     pointer-events: none;
   }
   /* 星点：悬停格内随机漂浮的小光点 */
+  /* 点击波纹：从点击点扩到盖满整格的圆，0.8s 放大并淡出 */
+  .mt-ripple {
+    position: absolute; border-radius: 50%; pointer-events: none; z-index: 3;
+    background: radial-gradient(circle, color-mix(in srgb, var(--mt-accent) 40%, transparent) 0%, color-mix(in srgb, var(--mt-accent) 20%, transparent) 30%, transparent 70%);
+    animation: mt-ripple 0.8s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  }
+  @keyframes mt-ripple { from { transform: scale(0); opacity: 1; } to { transform: scale(1); opacity: 0; } }
   .mt-star {
     position: absolute;
     width: 3px; height: 3px;
@@ -83,7 +90,14 @@
   /* 用户开启「减少动态效果」时：不倾斜、无星点 */
   @media (prefers-reduced-motion: reduce) {
     .mt-cell { transform: none !important; transition: none; }
-    .mt-star { display: none; }
+    /* 点击波纹：从点击点扩到盖满整格的圆，0.8s 放大并淡出 */
+  .mt-ripple {
+    position: absolute; border-radius: 50%; pointer-events: none; z-index: 3;
+    background: radial-gradient(circle, color-mix(in srgb, var(--mt-accent) 40%, transparent) 0%, color-mix(in srgb, var(--mt-accent) 20%, transparent) 30%, transparent 70%);
+    animation: mt-ripple 0.8s cubic-bezier(0.33, 1, 0.68, 1) forwards;
+  }
+  @keyframes mt-ripple { from { transform: scale(0); opacity: 1; } to { transform: scale(1); opacity: 0; } }
+  .mt-star { display: none; }
   }
 </style>
 </head>
@@ -141,7 +155,21 @@
       c.appendChild(s);
     }
   }
-  function clearStars(c) { c.querySelectorAll('.mt-star').forEach(s => s.remove()); }
+  function clearStars(c) {
+    // 星点缩小淡出后再移除，不要瞬间消失
+    c.querySelectorAll('.mt-star').forEach(s => { s.style.animation = 'none'; s.style.transition = 'opacity 0.3s, transform 0.3s'; s.style.opacity = '0'; s.style.transform = 'scale(0)'; setTimeout(() => s.remove(), 320); });
+  }
+  // 点击波纹：以点击点为圆心、半径为到最远角的距离
+  bento.addEventListener('click', (e) => {
+    const c = e.target.closest('.mt-cell'); if (!c || reduceMotion) return;
+    const r = c.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    const maxD = Math.max(Math.hypot(x, y), Math.hypot(x - r.width, y), Math.hypot(x, y - r.height), Math.hypot(x - r.width, y - r.height));
+    const rp = document.createElement('div');
+    rp.className = 'mt-ripple';
+    rp.style.cssText += `width:${maxD * 2}px;height:${maxD * 2}px;left:${x - maxD}px;top:${y - maxD}px;`;
+    c.appendChild(rp);
+    rp.addEventListener('animationend', () => rp.remove());
+  });
 
   bento.addEventListener('pointermove', e => { auto = false; mx = e.clientX; my = e.clientY; apply(); });
   bento.addEventListener('pointerleave', () => { mx = -9999; my = -9999; apply(); });

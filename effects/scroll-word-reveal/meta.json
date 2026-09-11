@@ -3,8 +3,12 @@
   "name": "滚动逐词显形",
   "category": "text",
   "sub": "scroll",
-  "tags": ["滚动", "段落", "逐词"],
-  "summary": "一段话随滚动一个词一个词从灰雾里显形，像阅读进度条",
+  "tags": [
+    "滚动",
+    "段落",
+    "逐词"
+  ],
+  "summary": "段落滚进视口时微微倾斜并随滚动摆正，词语随滚动逐个由虚转清、由灰转亮地显形",
   "params": [
     {
       "key": "text",
@@ -25,7 +29,25 @@
       "step": 0.05,
       "default": 0.15
     },
-    { "key": "blur", "label": "未读模糊", "type": "toggle", "target": "config", "default": true },
+    {
+      "key": "blur",
+      "label": "未读模糊",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    {
+      "key": "tilt",
+      "label": "起始倾斜",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 8,
+      "step": 0.5,
+      "default": 3,
+      "unit": "deg",
+      "help": "整段从这个角度随滚动摆正"
+    },
     {
       "key": "lift",
       "label": "显形时上浮",
@@ -45,7 +67,13 @@
       "default": 3,
       "help": "同时处于半显形状态的词数，越大越柔"
     },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
     {
       "key": "fontSize",
       "label": "字号",
@@ -57,21 +85,45 @@
       "default": 34,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "system-sans"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "sharp",
       "name": "硬切换",
-      "values": { "blur": false, "lift": false, "softness": 1, "dim": 0.1 }
+      "values": {
+        "blur": false,
+        "lift": false,
+        "softness": 1,
+        "dim": 0.1
+      }
     },
     {
       "id": "book",
       "name": "书卷",
-      "values": { "font": "lxgw-wenkai", "fontSize": 40, "softness": 5, "dim": 0.25 }
+      "values": {
+        "font": "lxgw-wenkai",
+        "fontSize": 40,
+        "softness": 5,
+        "dim": 0.25
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

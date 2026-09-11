@@ -74,28 +74,42 @@
   }
   .mt-pill:hover::before,
   .mt-pill.is-hover::before { transform: translate(-50%, 0) scale(1.1); }
+  /* 文字堆：两份同样的字上下叠着，悬停时原字向上滚出、反色字从下方滚入 */
+  .mt-pill .stack { position: relative; display: inline-block; line-height: 1; overflow: hidden; }
   .mt-pill .label {
     position: relative;
-    display: block;
-    transition: color var(--mt-duration) ease, transform var(--mt-duration) ease;
+    display: inline-block;
+    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  .mt-pill:hover .label,
-  .mt-pill.is-hover .label { color: var(--mt-textHover); transform: translateY(-1px); }
-  /* 当前项：小圆点标记 */
+  .mt-pill .label.alt {
+    position: absolute; left: 0; top: 0;
+    color: var(--mt-textHover);
+    transform: translateY(calc(100% + 8px));
+    opacity: 0;
+    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1), opacity var(--mt-duration) ease;
+  }
+  .mt-pill:hover .label.main,
+  .mt-pill.is-hover .label.main { transform: translateY(calc(-100% - 8px)); }
+  .mt-pill:hover .label.alt,
+  .mt-pill.is-hover .label.alt { transform: translateY(0); opacity: 1; }
+  /* 当前项：胶囊下方外侧一个 12px 的圆点 */
   .mt-pill.active::after {
     content: '';
     position: absolute;
-    left: 50%; bottom: 4px;
-    width: 4px; height: 4px;
-    margin-left: -2px;
+    left: 50%; bottom: -6px;
+    width: 12px; height: 12px;
+    transform: translateX(-50%);
     border-radius: 50%;
-    background: currentColor;
-    opacity: 0.6;
+    background: var(--mt-fill);
   }
+  /* 首屏展开：胶囊从 0 宽展开、徽标从 0 放大 */
+  .mt-nav.intro .mt-pill { width: 0; overflow: hidden; padding-left: 0; padding-right: 0; }
+  .mt-nav.intro .mt-logo { transform: scale(0); }
+  .mt-pill { transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1), padding 0.6s cubic-bezier(0.22, 1, 0.36, 1); white-space: nowrap; }
 
   /* 用户开启「减少动态效果」时：直接变色，不涨起 */
   @media (prefers-reduced-motion: reduce) {
-    .mt-pill::before, .mt-pill .label, .mt-logo { transition: none; }
+    .mt-pill, .mt-pill::before, .mt-pill .label, .mt-logo { transition: none; }
   }
 </style>
 </head>
@@ -120,8 +134,8 @@
     b.type = 'button';
     b.className = 'mt-pill' + (i === CONFIG.activeIndex - 1 ? ' active' : '');
     if (i === CONFIG.activeIndex - 1) b.setAttribute('aria-current', 'page');
-    b.innerHTML = '<span class="label"></span>';
-    b.firstChild.textContent = name;
+    b.innerHTML = '<span class="stack"><span class="label main"></span><span class="label alt" aria-hidden="true"></span></span>';
+    b.querySelectorAll('.label').forEach(l => (l.textContent = name));
     b.addEventListener('click', () => {
       pills.forEach(p => { p.classList.remove('active'); p.removeAttribute('aria-current'); });
       b.classList.add('active'); b.setAttribute('aria-current', 'page');
@@ -129,6 +143,18 @@
     list.appendChild(b);
     return b;
   });
+
+  // 首屏展开：先以 0 宽渲染，下一帧再撑开到自然宽度（width 需为具体值才能过渡）
+  const nav = document.getElementById('mtNav');
+  if (!reduceMotion) {
+    const widths = pills.map(p => p.offsetWidth);
+    nav.classList.add('intro');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      nav.classList.remove('intro');
+      pills.forEach((p, i) => (p.style.width = widths[i] + 'px'));
+      setTimeout(() => pills.forEach(p => (p.style.width = '')), 700);
+    }));
+  }
 
   /* @mt:thumb-start */
   // 缩略图演示：依次模拟悬停每一颗胶囊；真实鼠标进入后停止

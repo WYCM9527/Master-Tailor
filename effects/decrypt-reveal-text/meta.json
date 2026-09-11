@@ -3,7 +3,11 @@
   "name": "解密显形文字",
   "category": "text",
   "sub": "idle",
-  "tags": ["解密", "乱码", "黑客"],
+  "tags": [
+    "解密",
+    "乱码",
+    "黑客"
+  ],
   "summary": "一串乱码逐位「解出」真实文字，像密文被破译",
   "params": [
     {
@@ -20,11 +24,45 @@
       "type": "select",
       "target": "config",
       "options": [
-        { "value": "ltr", "label": "从左到右" },
-        { "value": "center", "label": "从中间向两边" },
-        { "value": "random", "label": "随机位置" }
+        {
+          "value": "ltr",
+          "label": "从左到右"
+        },
+        {
+          "value": "center",
+          "label": "从中间向两边"
+        },
+        {
+          "value": "random",
+          "label": "随机位置"
+        },
+        {
+          "value": "all",
+          "label": "全串乱码后整体翻出"
+        }
       ],
       "default": "ltr"
+    },
+    {
+      "key": "trigger",
+      "label": "触发方式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "loop",
+          "label": "自动循环"
+        },
+        {
+          "value": "hover",
+          "label": "鼠标悬停"
+        },
+        {
+          "value": "click",
+          "label": "点击"
+        }
+      ],
+      "default": "loop"
     },
     {
       "key": "speed",
@@ -55,13 +93,28 @@
       "type": "select",
       "target": "config",
       "options": [
-        { "value": "mixed", "label": "字母数字符号" },
-        { "value": "binary", "label": "0 和 1" },
-        { "value": "kana", "label": "假名与方块" }
+        {
+          "value": "mixed",
+          "label": "字母数字符号"
+        },
+        {
+          "value": "binary",
+          "label": "0 和 1"
+        },
+        {
+          "value": "kana",
+          "label": "假名与方块"
+        }
       ],
       "default": "mixed"
     },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
     {
       "key": "cipher",
       "label": "乱码颜色",
@@ -80,10 +133,20 @@
       "default": 36,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "jetbrains-mono" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "jetbrains-mono"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "matrix",
       "name": "黑客绿",
@@ -98,9 +161,27 @@
     {
       "id": "binary",
       "name": "二进制",
-      "values": { "glyphs": "binary", "order": "center", "speed": 60, "flicker": 30 }
+      "values": {
+        "glyphs": "binary",
+        "order": "center",
+        "speed": 60,
+        "flicker": 30
+      }
+    },
+    {
+      "id": "hover-all",
+      "name": "悬停整串翻出",
+      "values": {
+        "trigger": "hover",
+        "order": "all",
+        "glyphs": "binary"
+      }
     }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

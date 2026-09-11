@@ -51,7 +51,8 @@
 <script>
   const CONFIG = {
     text: "ACCESS GRANTED · 欢迎回来", // 文案
-    order: "ltr",    // 解出顺序：ltr 从左到右 / center 从中间向两边 / random 随机
+    order: "ltr",    // 解出顺序：ltr 从左到右 / center 从中间向两边 / random 随机 / all 全串乱码后整体翻出
+    trigger: "loop", // 触发方式：loop 自动循环 / hover 悬停 / click 点击
     speed: 45,       // 解出速度（毫秒/位）
     flicker: 50,     // 乱码刷新间隔（毫秒）
     glyphs: "mixed", // 乱码字符：mixed 字母数字符号 / binary 0 和 1 / kana 假名方块
@@ -104,6 +105,15 @@
         if (!solved.has(i) && chars[i].trim()) c.textContent = pool[Math.floor(Math.random() * pool.length)];
       });
     }, CONFIG.flicker);
+    if (CONFIG.order === 'all') {
+      // 全串乱码模式：整体闪 10 轮后一起翻出真字
+      let rounds = 0;
+      revealTimer = setInterval(() => {
+        if (document.hidden) return;
+        if (++rounds >= 10) { clearInterval(flickerTimer); clearInterval(revealTimer); cells.forEach((c, i) => { c.textContent = chars[i]; c.classList.remove('cipher'); }); }
+      }, CONFIG.speed);
+      return;
+    }
     // 按顺序逐位解出
     let k = 0;
     revealTimer = setInterval(() => {
@@ -116,12 +126,29 @@
     }, CONFIG.speed);
   }
 
-  if (!reduceMotion) {
+  if (reduceMotion) {
+    // 减少动态：直接显示真字
+  } else if (CONFIG.trigger === 'hover') {
+    host.addEventListener('pointerenter', play);
+  } else if (CONFIG.trigger === 'click') {
+    host.style.cursor = 'pointer';
+    host.addEventListener('click', play);
+  } else {
     play();
-    // 循环演示：全部解出后停 2.4s 再来一遍
+    // 自动循环：全部解出后停 2.4s 再来一遍
     const total = chars.length * CONFIG.speed + 2400;
     setInterval(() => { if (!document.hidden) play(); }, total);
   }
+
+  /* @mt:thumb-start */
+  // 悬停 / 点击模式下的缩略图演示：定时自动播一遍，真实交互后停止
+  if (!reduceMotion && CONFIG.trigger !== 'loop') {
+    let userTook = false;
+    host.addEventListener('pointerenter', () => (userTook = true), { once: true });
+    play();
+    setInterval(() => { if (!document.hidden && !userTook) play(); }, chars.length * CONFIG.speed + 3000);
+  }
+  /* @mt:thumb-end */
 </script>
 </body>
 </html>

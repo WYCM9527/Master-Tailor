@@ -3,8 +3,12 @@
   "name": "错落展开菜单",
   "category": "nav",
   "sub": "click",
-  "tags": ["菜单", "全屏", "错落"],
-  "summary": "点开菜单，几层色板从侧边错落滑入，菜单项一条条落下来",
+  "tags": [
+    "菜单",
+    "全屏",
+    "错落"
+  ],
+  "summary": "点开菜单，几层色板错落滑入，菜单项从遮罩里带倾斜升起回正；按钮文字上滚换字、加号转叉",
   "params": [
     {
       "key": "items",
@@ -21,8 +25,14 @@
       "type": "select",
       "target": "config",
       "options": [
-        { "value": "right", "label": "右侧" },
-        { "value": "left", "label": "左侧" }
+        {
+          "value": "right",
+          "label": "右侧"
+        },
+        {
+          "value": "left",
+          "label": "左侧"
+        }
       ],
       "default": "right"
     },
@@ -74,14 +84,28 @@
       "target": "css",
       "default": "#0a0a0f"
     },
-    { "key": "numbers", "label": "显示序号", "type": "toggle", "target": "css", "default": true }
+    {
+      "key": "numbers",
+      "label": "显示序号",
+      "type": "toggle",
+      "target": "css",
+      "default": true
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "left",
       "name": "左侧四层",
-      "values": { "side": "left", "layers": 4, "stagger": 120 }
+      "values": {
+        "side": "left",
+        "layers": 4,
+        "stagger": 120
+      }
     },
     {
       "id": "dark",
@@ -95,6 +119,10 @@
       }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

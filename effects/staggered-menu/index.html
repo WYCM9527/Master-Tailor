@@ -25,9 +25,14 @@
     display: flex; justify-content: space-between; align-items: center;
     padding: 20px 28px;
     z-index: 3;
+    /* 反色混合放在顶栏本身：fixed 元素自成层叠上下文，放在子元素上只会与透明的顶栏底混合、叠在白面板上就看不见 */
+    mix-blend-mode: difference;
+    pointer-events: none;
   }
-  .mt-brand { font-weight: 800; letter-spacing: 0.08em; mix-blend-mode: difference; }
+  .mt-topbar > * { pointer-events: auto; }
+  .mt-brand { font-weight: 800; letter-spacing: 0.08em; }
   .mt-toggle {
+    display: inline-flex; align-items: center; gap: 0.4em;
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 999px;
     padding: 8px 18px;
@@ -36,8 +41,17 @@
     font: inherit;
     font-size: 14px;
     cursor: pointer;
-    mix-blend-mode: difference;
   }
+  /* 开关文字：两行「菜单 / 关闭」在 1em 高的窗口里上下滚动切换 */
+  .mt-toggle .words { display: inline-block; height: 1em; line-height: 1; overflow: hidden; }
+  .mt-toggle .words span { display: block; height: 1em; line-height: 1; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mt-open .mt-toggle .words span { transform: translateY(-100%); }
+  /* 加号 → 叉：两条 2px 短线，开时各转 45° / −45° */
+  .mt-toggle .plus { position: relative; width: 14px; height: 14px; }
+  .mt-toggle .plus i { position: absolute; left: 0; top: 50%; width: 100%; height: 2px; margin-top: -1px; background: currentColor; border-radius: 2px; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mt-toggle .plus i:nth-child(2) { transform: rotate(90deg); }
+  .mt-open .mt-toggle .plus i:nth-child(1) { transform: rotate(45deg); }
+  .mt-open .mt-toggle .plus i:nth-child(2) { transform: rotate(-45deg); }
   /* 色板层与菜单面板：都从侧边滑入，每层延迟不同 */
   .mt-layer, .mt-panel {
     position: fixed;
@@ -55,19 +69,23 @@
     display: flex; flex-direction: column; gap: 6px;
     z-index: 2;
   }
+  /* 条目：外层是 overflow hidden 的遮罩，内层文字从下方 140% 处、带 10° 倾斜升上来回正 */
   .mt-item {
-    display: flex; align-items: baseline; gap: 14px;
+    display: block; overflow: hidden; line-height: 1.1;
     text-decoration: none;
     color: inherit;
     font-size: clamp(28px, 4vw, 44px);
     font-weight: 800;
     letter-spacing: -0.01em;
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .mt-item .inner {
+    display: flex; align-items: baseline; gap: 14px;
+    transform: translateY(140%) rotate(10deg);
+    transform-origin: 50% 100%;
+    transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
     transition-delay: var(--d, 0s);
   }
-  .mt-open .mt-item { opacity: 1; transform: none; }
+  .mt-open .mt-item .inner { transform: translateY(0) rotate(0deg); }
   .mt-item .num {
     font-size: 13px; font-weight: 600; letter-spacing: 0.1em;
     opacity: calc(var(--mt-numbers) * 0.55);
@@ -76,14 +94,14 @@
 
   /* 用户开启「减少动态效果」时：直接开合，不做滑入与错落 */
   @media (prefers-reduced-motion: reduce) {
-    .mt-layer, .mt-panel, .mt-item { transition: none; }
+    .mt-layer, .mt-panel, .mt-item .inner, .mt-toggle .words span, .mt-toggle .plus i { transition: none; }
   }
 </style>
 </head>
 <body>
 <header class="mt-topbar">
   <span class="mt-brand">STUDIO</span>
-  <button type="button" class="mt-toggle" id="mtToggle" aria-expanded="false" aria-controls="mtPanel">菜单</button>
+  <button type="button" class="mt-toggle" id="mtToggle" aria-expanded="false" aria-controls="mtPanel"><span class="words" aria-hidden="true"><span>菜单</span><span>关闭</span></span><span class="plus" aria-hidden="true"><i></i><i></i></span></button>
 </header>
 <div id="mtLayers"></div>
 <nav class="mt-panel" id="mtPanel" aria-label="全屏菜单"></nav>
@@ -123,10 +141,10 @@
     a.className = 'mt-item';
     a.href = '#';
     a.addEventListener('click', e => e.preventDefault());
-    a.innerHTML = '<span class="num"></span><span class="label"></span>';
-    a.firstChild.textContent = String(i + 1).padStart(2, '0');
-    a.lastChild.textContent = name;
-    // 菜单项在面板到位后再依次落下
+    a.innerHTML = '<span class="inner"><span class="num"></span><span class="label"></span></span>';
+    a.querySelector('.num').textContent = String(i + 1).padStart(2, '0');
+    a.querySelector('.label').textContent = name;
+    // 菜单项在面板到位后再依次升起
     a.style.setProperty('--d', (CONFIG.layers * CONFIG.stagger + 150 + i * CONFIG.stagger) + 'ms');
     panel.appendChild(a);
   });
@@ -136,8 +154,8 @@
     open = v;
     document.body.classList.toggle('mt-open', open);
     toggle.setAttribute('aria-expanded', String(open));
-    toggle.textContent = open ? '关闭' : '菜单';
-    // 关闭时反向：菜单项先走、面板再走、色板最后
+    toggle.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
+    // 关闭时反向：菜单项先沉回遮罩、面板再走、色板最后
     const all = [...document.querySelectorAll('.mt-layer'), panel];
     all.forEach((el, i) => el.style.setProperty('--d', (open ? i : all.length - 1 - i) * CONFIG.stagger + 'ms'));
     panel.querySelectorAll('.mt-item').forEach((a, i) => {

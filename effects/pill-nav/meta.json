@@ -3,8 +3,12 @@
   "name": "胶囊导航",
   "category": "nav",
   "sub": "hover",
-  "tags": ["导航", "胶囊", "填充"],
-  "summary": "一排胶囊按钮，悬停时一团圆形底色从下方涨满整颗胶囊",
+  "tags": [
+    "导航",
+    "胶囊",
+    "填充"
+  ],
+  "summary": "一排胶囊按钮：悬停时圆形填色从底部涨起、文字向上滚出换成反色字，选中项下方带圆点，首屏从零宽展开",
   "params": [
     {
       "key": "items",
@@ -25,7 +29,13 @@
       "step": 1,
       "default": 1
     },
-    { "key": "pill", "label": "胶囊底色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "pill",
+      "label": "胶囊底色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
     {
       "key": "fill",
       "label": "涨起的颜色",
@@ -33,7 +43,13 @@
       "target": "css",
       "default": "#0a0a0f"
     },
-    { "key": "text", "label": "文字颜色", "type": "color", "target": "css", "default": "#0a0a0f" },
+    {
+      "key": "text",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#0a0a0f"
+    },
     {
       "key": "textHover",
       "label": "悬停文字颜色",
@@ -63,18 +79,35 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "inverse",
       "name": "黑胶囊白涨",
-      "values": { "pill": "#1c1c1c", "fill": "#ffffff", "text": "#ffffff", "textHover": "#0a0a0f" }
+      "values": {
+        "pill": "#1c1c1c",
+        "fill": "#ffffff",
+        "text": "#ffffff",
+        "textHover": "#0a0a0f"
+      }
     },
     {
       "id": "slow",
       "name": "慢涨无徽标",
-      "values": { "duration": 0.7, "logo": false, "activeIndex": 3 }
+      "values": {
+        "duration": 0.7,
+        "logo": false,
+        "activeIndex": 3
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }
