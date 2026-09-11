@@ -1,0 +1,84 @@
+{
+  "slug": "paint-swirl",
+  "name": "颜料漩涡",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["漩涡", "颜料", "像素化", "WebGL"],
+  "summary": "两种颜料在深色底上被搅成一团缓缓旋转的漩涡，边缘带一点像素化的颗粒感，像纸牌游戏的桌面背景",
+  "params": [
+    { "key": "color1", "label": "颜料一", "type": "color", "target": "config", "default": "#de443b" },
+    { "key": "color2", "label": "颜料二", "type": "color", "target": "config", "default": "#006bb4" },
+    { "key": "color3", "label": "底色", "type": "color", "target": "config", "default": "#162325" },
+    {
+      "key": "spinRotation",
+      "label": "整体扭转",
+      "type": "range",
+      "target": "config",
+      "min": -5,
+      "max": 5,
+      "step": 0.5,
+      "default": -2,
+      "help": "漩涡整体的扭转角度，正负反向"
+    },
+    {
+      "key": "spinSpeed",
+      "label": "搅动速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 20,
+      "step": 0.5,
+      "default": 7
+    },
+    {
+      "key": "contrast",
+      "label": "对比度",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "step": 0.5,
+      "default": 3.5
+    },
+    {
+      "key": "lighting",
+      "label": "高光",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.4
+    },
+    {
+      "key": "spinAmount",
+      "label": "扭转随距离",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.25,
+      "help": "越大离中心越远扭得越多"
+    },
+    {
+      "key": "pixelFilter",
+      "label": "像素粒度",
+      "type": "range",
+      "target": "config",
+      "min": 100,
+      "max": 2000,
+      "step": 5,
+      "default": 745,
+      "help": "越小像素块越大"
+    },
+    { "key": "isRotate", "label": "整体自转", "type": "toggle", "target": "config", "default": false }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "mint", "name": "薄荷金", "values": { "color1": "#f2c14e", "color2": "#2ec4b6", "color3": "#0b1d1a", "spinRotation": 1.5 } },
+    { "id": "pixel", "name": "粗像素", "values": { "pixelFilter": 180, "contrast": 5, "spinSpeed": 4 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

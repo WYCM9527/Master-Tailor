@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>漂浮粒子云</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（粒子以外透出它） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，粒子静止 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    particleCount: 200,       // 粒子数量
+    particleSpread: 10,       // 云团大小
+    speed: 0.1,               // 速度
+    colors: ["#ffffff", "#ffffff", "#ffffff"], // 粒子颜色
+    particleBaseSize: 100,    // 粒子基础大小
+    sizeRandomness: 1,        // 大小随机
+    cameraDistance: 20,       // 镜头距离
+    alphaParticles: false,    // 柔边粒子
+    disableRotation: false,   // 关闭自转
+    hoverFactor: 1,           // 鼠标跟随幅度
+  };
+  const FOV = 15;             // 相机视角（度）
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 顶点：每颗粒子按自己的随机数做三轴正弦漂浮，再经模型 / 视图 / 投影矩阵；点大小随距离衰减
+  const VS = `
+    attribute vec3 aPos;
+    attribute vec4 aRand;
+    attribute vec3 aColor;
+    uniform mat4 uModel, uView, uProj;
+    uniform float uTime, uSpread, uBaseSize, uSizeRand;
+    varying vec4 vRand;
+    varying vec3 vColor;
+    void main() {
+      vRand = aRand; vColor = aColor;
+      vec3 pos = aPos * uSpread;
+      pos.z *= 10.0;                                  // 纵深拉长，形成前后层次
+      vec4 mPos = uModel * vec4(pos, 1.0);
+      float t = uTime;
+      mPos.x += sin(t * aRand.z + 6.28 * aRand.w) * mix(0.1, 1.5, aRand.x);
+      mPos.y += sin(t * aRand.y + 6.28 * aRand.x) * mix(0.1, 1.5, aRand.w);
+      mPos.z += sin(t * aRand.w + 6.28 * aRand.y) * mix(0.1, 1.5, aRand.z);
+      vec4 mvPos = uView * mPos;
+      gl_PointSize = uSizeRand == 0.0 ? uBaseSize : (uBaseSize * (1.0 + uSizeRand * (aRand.x - 0.5))) / length(mvPos.xyz);
+      gl_Position = uProj * mvPos;
+    }
+  `;
+  // 片元：圆形点（硬边或柔边），颜色随时间轻微闪变
+  const FS = `
+    precision highp float;
+    uniform float uTime, uAlpha;
+    varying vec4 vRand;
+    varying vec3 vColor;
+    void main() {
+      vec2 uv = gl_PointCoord.xy;
+      float d = length(uv - 0.5);
+      vec3 col = vColor + 0.2 * sin(uv.yxx + uTime + vRand.y * 6.28);
+      if (uAlpha < 0.5) { if (d > 0.5) discard; gl_FragColor = vec4(col, 1.0); }
+      else { gl_FragColor = vec4(col, smoothstep(0.5, 0.4, d) * 0.8); }
+    }
+  `;
+
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  // 粒子数据：球内均匀分布（拒绝采样 + 立方根半径）、4 个随机数、随机取色
+  const n = CONFIG.particleCount;
+  const positions = new Float32Array(n * 3), randoms = new Float32Array(n * 4), colors = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    let x, y, z, len;
+    do { x = Math.random() * 2 - 1; y = Math.random() * 2 - 1; z = Math.random() * 2 - 1; len = x * x + y * y + z * z; } while (len > 1 || len === 0);
+    const r = Math.cbrt(Math.random());
+    positions.set([x * r, y * r, z * r], i * 3);
+    randoms.set([Math.random(), Math.random(), Math.random(), Math.random()], i * 4);
+    colors.set(hexRgb(CONFIG.colors[Math.floor(Math.random() * CONFIG.colors.length)]), i * 3);
+  }
+  function attrib(name, data, size) {
+    const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+  }
+  attrib('aPos', positions, 3); attrib('aRand', randoms, 4); attrib('aColor', colors, 3);
+
+  // 小型矩阵工具：透视投影、平移视图、欧拉旋转模型
+  function perspective(fovDeg, aspect, near, far) {
+    const f = 1 / Math.tan((fovDeg * Math.PI) / 360), nf = 1 / (near - far);
+    return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]);
+  }
+  function modelMatrix(rx, ry, rz, tx, ty) {
+    const cx = Math.cos(rx), sx = Math.sin(rx), cy = Math.cos(ry), sy = Math.sin(ry), cz = Math.cos(rz), sz = Math.sin(rz);
+    // R = Rz · Ry · Rx（列主序）
+    return new Float32Array([
+      cy * cz, cy * sz, -sy, 0,
+      sx * sy * cz - cx * sz, sx * sy * sz + cx * cz, sx * cy, 0,
+      cx * sy * cz + sx * sz, cx * sy * sz - sx * cz, cx * cy, 0,
+      tx, ty, 0, 1,
+    ]);
+  }
+  const view = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -CONFIG.cameraDistance, 1]);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniformMatrix4fv(U('uProj'), false, perspective(FOV, canvas.width / canvas.height, 0.1, 100));
+  }
+  resize(); addEventListener('resize', resize);
+  gl.uniformMatrix4fv(U('uView'), false, view);
+  gl.uniform1f(U('uSpread'), CONFIG.particleSpread);
+  gl.uniform1f(U('uBaseSize'), CONFIG.particleBaseSize * dpr);
+  gl.uniform1f(U('uSizeRand'), CONFIG.sizeRandomness);
+  gl.uniform1f(U('uAlpha'), CONFIG.alphaParticles ? 1 : 0);
+  const uTime = U('uTime'), uModel = U('uModel');
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.clearColor(0, 0, 0, 0);
+
+  // 鼠标：归一化到 −1…1，整团反向轻移
+  const mouse = { x: 0, y: 0 };
+  addEventListener('pointermove', (e) => { mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = -((e.clientY / innerHeight) * 2 - 1); });
+
+  let elapsed = reduceMotion ? 3000 : 0, rz = 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(50, now - last);
+    last = now;
+    if (!reduceMotion) elapsed += dt * CONFIG.speed;
+    const rx = CONFIG.disableRotation ? 0 : Math.sin(elapsed * 0.0002) * 0.1;
+    const ry = CONFIG.disableRotation ? 0 : Math.cos(elapsed * 0.0005) * 0.15;
+    if (!CONFIG.disableRotation && !reduceMotion) rz += 0.01 * CONFIG.speed;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uTime, elapsed * 0.001);
+    gl.uniformMatrix4fv(uModel, false, modelMatrix(rx, ry, rz, -mouse.x * CONFIG.hoverFactor, -mouse.y * CONFIG.hoverFactor));
+    gl.drawArrays(gl.POINTS, 0, n);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

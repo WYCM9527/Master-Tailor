@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>涟漪网格</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（网格以外透出它） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态网格 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    gridColor: "#27ff64",    // 网格颜色
+    enableRainbow: false,    // 彩虹流变
+    rippleIntensity: 0.05,   // 涟漪强度
+    gridSize: 10,            // 网格密度
+    gridThickness: 15,       // 线条锐度
+    fadeDistance: 1.5,       // 边缘衰减
+    vignetteStrength: 2,     // 暗角强度
+    glowIntensity: 0.1,      // 辉光
+    gridRotation: 0,         // 网格旋转（度）
+    mouseRadius: 1,          // 鼠标波纹半径
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：以中心为原点，先按「sin(π(t − 距离))」把坐标向外/向内推一点（涟漪），
+  // 再对推过的坐标取正弦得到网格线，用指数衰减做出细亮线 + 辉光，最后乘边缘衰减与暗角
+  const FS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform float uTime;
+    uniform vec2  uRes;
+    uniform vec3  uColor;
+    uniform float uRainbow, uRipple, uGridSize, uThick, uFade, uVignette, uGlow, uRotation;
+    uniform vec2  uMouse;          // 鼠标 0–1
+    uniform float uMouseK;         // 鼠标影响 0–1（进入渐强、离开渐弱）
+    uniform float uMouseR;         // 鼠标波纹半径
+    const float PI = 3.141592;
+
+    mat2 rot(float a) { float s = sin(a), c = cos(a); return mat2(c, -s, s, c); }
+
+    void main() {
+      vec2 uv = vUv * 2.0 - 1.0;
+      uv.x *= uRes.x / uRes.y;
+      if (uRotation != 0.0) uv = rot(uRotation) * uv;
+
+      // 全局涟漪：从中心向外传播的一圈圈径向推拉
+      float dist = length(uv);
+      float wave = sin(PI * (uTime - dist));
+      vec2 ruv = uv + uv * wave * uRipple;
+
+      // 鼠标涟漪：以鼠标为中心的高斯范围内，再叠一圈更快更密的小波
+      if (uMouseK > 0.0) {
+        vec2 m = uMouse * 2.0 - 1.0;
+        m.x *= uRes.x / uRes.y;
+        float md = length(uv - m);
+        float k = uMouseK * exp(-md * md / (uMouseR * uMouseR));
+        float mw = sin(PI * (uTime * 2.0 - md * 3.0)) * k;
+        ruv += normalize(uv - m) * mw * uRipple * 0.3;
+      }
+
+      // 网格线：正弦过零处最亮，指数衰减控制线宽；横线亮度随时间呼吸
+      vec2 a = sin(uGridSize * 0.5 * PI * ruv - PI / 2.0);
+      vec2 b = abs(a);
+      vec2 sb = vec2(smoothstep(0.0, 0.5, b.x), smoothstep(0.0, 0.5, b.y));
+      vec3 col = vec3(0.0);
+      col += exp(-uThick * sb.x * (0.8 + 0.5 * sin(PI * uTime)));
+      col += exp(-uThick * sb.y);
+      col += 0.5 * exp(-(uThick / 4.0) * sin(sb.x));
+      col += 0.5 * exp(-(uThick / 3.0) * sb.y);
+      if (uGlow > 0.0) {
+        col += uGlow * exp(-uThick * 0.5 * sb.x);
+        col += uGlow * exp(-uThick * 0.5 * sb.y);
+      }
+
+      // 边缘衰减 + 暗角
+      float fall = exp(-2.0 * clamp(pow(dist, uFade), 0.0, 1.0));
+      float vd = length(vUv - 0.5);
+      float vig = clamp(1.0 - pow(vd * 2.0, uVignette), 0.0, 1.0);
+
+      // 颜色：固定色，或随位置与时间流变的彩虹
+      vec3 tint = uRainbow > 0.5
+        ? vec3(uv.x * 0.5 + 0.5 * sin(uTime), uv.y * 0.5 + 0.5 * cos(uTime), pow(cos(uTime), 4.0)) + 0.5
+        : uColor;
+      float fade = fall * vig;
+      gl_FragColor = vec4(col * tint * fade, length(col) * fade);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+
+  gl.uniform3fv(U('uColor'), hexRgb(CONFIG.gridColor));
+  gl.uniform1f(U('uRainbow'), CONFIG.enableRainbow ? 1 : 0);
+  gl.uniform1f(U('uRipple'), CONFIG.rippleIntensity);
+  gl.uniform1f(U('uGridSize'), CONFIG.gridSize);
+  gl.uniform1f(U('uThick'), CONFIG.gridThickness);
+  gl.uniform1f(U('uFade'), CONFIG.fadeDistance);
+  gl.uniform1f(U('uVignette'), CONFIG.vignetteStrength);
+  gl.uniform1f(U('uGlow'), CONFIG.glowIntensity);
+  gl.uniform1f(U('uRotation'), (CONFIG.gridRotation * Math.PI) / 180);
+  gl.uniform1f(U('uMouseR'), CONFIG.mouseRadius);
+  const uTime = U('uTime'), uMouse = U('uMouse'), uMouseK = U('uMouseK');
+
+  // 鼠标：位置 10% 平滑，影响度进入/离开 5% 渐变（uv 的 y 向上为正，所以翻转）
+  const target = { x: 0.5, y: 0.5 }, mouse = { x: 0.5, y: 0.5 };
+  let targetK = 0, k = 0;
+  addEventListener('pointermove', (e) => { target.x = e.clientX / innerWidth; target.y = 1 - e.clientY / innerHeight; targetK = 1; });
+  addEventListener('pointerleave', () => { targetK = 0; });
+  document.addEventListener('mouseleave', () => { targetK = 0; });
+
+  let time = reduceMotion ? 1.5 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    mouse.x += (target.x - mouse.x) * 0.1; mouse.y += (target.y - mouse.y) * 0.1;
+    k += (targetK - k) * 0.05;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.uniform1f(uMouseK, k);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  gl.clearColor(0, 0, 0, 0);
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

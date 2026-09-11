@@ -1,0 +1,52 @@
+{
+  "slug": "glow-orb",
+  "name": "噪声光球",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["光球", "光环", "噪声", "WebGL"],
+  "summary": "一枚紫青色的发光圆环悬在黑暗中，环身随噪声轻轻起伏、一个亮点绕着环游走；鼠标伸进去它会扭动并转起来",
+  "params": [
+    {
+      "key": "hue",
+      "label": "色相偏移",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 360,
+      "step": 5,
+      "default": 0,
+      "unit": "°"
+    },
+    {
+      "key": "hoverIntensity",
+      "label": "悬停扭动",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.2
+    },
+    { "key": "rotateOnHover", "label": "悬停旋转", "type": "toggle", "target": "config", "default": true },
+    { "key": "forceHover", "label": "常驻悬停态", "type": "toggle", "target": "config", "default": false },
+    { "key": "backgroundColor", "label": "背景色", "type": "color", "target": "config", "default": "#000000", "help": "浅色背景下光球会切换为亮色模式" },
+    {
+      "key": "size",
+      "label": "光球大小",
+      "type": "range",
+      "target": "config",
+      "min": 0.4,
+      "max": 1.4,
+      "step": 0.05,
+      "default": 1,
+      "help": "相对短边的比例"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "gold", "name": "金橙", "values": { "hue": 200, "hoverIntensity": 0.5 } },
+    { "id": "light", "name": "浅底亮球", "values": { "backgroundColor": "#f2f2f5", "forceHover": true } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

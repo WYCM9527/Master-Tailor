@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>噪声光球</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（与「背景色」参数一致时光球融合最好） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态光球 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    hue: 0,                    // 色相偏移（度）
+    hoverIntensity: 0.2,       // 悬停扭动
+    rotateOnHover: true,       // 悬停旋转
+    forceHover: false,         // 常驻悬停态
+    backgroundColor: "#000000",// 背景色
+    size: 1,                   // 光球大小
+  };
+  const ROTATION_SPEED = 0.3;  // 悬停时的旋转速度（弧度/秒）
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: true });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.body.style.background = CONFIG.backgroundColor;
+
+  const VS = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：环的半径由三维 simplex 噪声起伏；三个光项——环身光(v0)、绕环游走的亮点(v1)、内外遮罩(v2,v3)；
+  // 色相用 YIQ 空间旋转；按背景亮度在「暗底模式」与「亮底模式」之间混合
+  const FS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform vec2  uRes;
+    uniform float uTime, uHue, uHover, uRot, uHoverK, uSize;
+    uniform vec3  uBg;
+
+    vec3 rgb2yiq(vec3 c) { return vec3(dot(c, vec3(0.299, 0.587, 0.114)), dot(c, vec3(0.596, -0.274, -0.322)), dot(c, vec3(0.211, -0.523, 0.312))); }
+    vec3 yiq2rgb(vec3 c) { return vec3(c.x + 0.956 * c.y + 0.621 * c.z, c.x - 0.272 * c.y - 0.647 * c.z, c.x - 1.106 * c.y + 1.703 * c.z); }
+    vec3 shiftHue(vec3 color, float deg) {
+      float a = radians(deg); vec3 yiq = rgb2yiq(color);
+      float i = yiq.y * cos(a) - yiq.z * sin(a), q = yiq.y * sin(a) + yiq.z * cos(a);
+      return yiq2rgb(vec3(yiq.x, i, q));
+    }
+    vec3 hash33(vec3 p) {
+      p = fract(p * vec3(0.1031, 0.11369, 0.13787));
+      p += dot(p, p.yxz + 19.19);
+      return -1.0 + 2.0 * fract(vec3(p.x + p.y, p.x + p.z, p.y + p.z) * p.zyx);
+    }
+    // 三维 simplex 噪声
+    float snoise3(vec3 p) {
+      const float K1 = 0.333333333, K2 = 0.166666667;
+      vec3 i = floor(p + (p.x + p.y + p.z) * K1);
+      vec3 d0 = p - (i - (i.x + i.y + i.z) * K2);
+      vec3 e = step(vec3(0.0), d0 - d0.yzx);
+      vec3 i1 = e * (1.0 - e.zxy), i2 = 1.0 - e.zxy * (1.0 - e);
+      vec3 d1 = d0 - (i1 - K2), d2 = d0 - (i2 - K1), d3 = d0 - 0.5;
+      vec4 h = max(0.6 - vec4(dot(d0, d0), dot(d1, d1), dot(d2, d2), dot(d3, d3)), 0.0);
+      vec4 n = h * h * h * h * vec4(dot(d0, hash33(i)), dot(d1, hash33(i + i1)), dot(d2, hash33(i + i2)), dot(d3, hash33(i + 1.0)));
+      return dot(vec4(31.316), n);
+    }
+    vec4 extractAlpha(vec3 c) { float a = max(max(c.r, c.g), c.b); return vec4(c / (a + 1e-5), a); }
+
+    const vec3 BASE1 = vec3(0.611765, 0.262745, 0.996078);   // 紫
+    const vec3 BASE2 = vec3(0.298039, 0.760784, 0.913725);   // 青
+    const vec3 BASE3 = vec3(0.062745, 0.078431, 0.600000);   // 深蓝
+    const float INNER = 0.6, NOISE_SCALE = 0.65;
+    float light1(float i, float att, float d) { return i / (1.0 + d * att); }
+    float light2(float i, float att, float d) { return i / (1.0 + d * d * att); }
+
+    vec4 draw(vec2 uv) {
+      vec3 c1 = shiftHue(BASE1, uHue), c2 = shiftHue(BASE2, uHue), c3 = shiftHue(BASE3, uHue);
+      float ang = atan(uv.y, uv.x), len = length(uv), invLen = len > 0.0 ? 1.0 / len : 0.0;
+      float bgLum = dot(uBg, vec3(0.299, 0.587, 0.114));
+
+      // 环半径随噪声在 0.76–0.84 之间起伏
+      float n0 = snoise3(vec3(uv * NOISE_SCALE, uTime * 0.5)) * 0.5 + 0.5;
+      float r0 = mix(mix(INNER, 1.0, 0.4), mix(INNER, 1.0, 0.6), n0);
+      float d0 = distance(uv, (r0 * invLen) * uv);        // 到环线的距离
+      float v0 = light1(1.0, 10.0, d0);
+      v0 *= smoothstep(r0 * 1.05, r0, len);
+      float innerFade = smoothstep(r0 * 0.8, r0 * 0.95, len);
+      v0 *= mix(innerFade, 1.0, bgLum * 0.7);
+      float cl = cos(ang + uTime * 2.0) * 0.5 + 0.5;       // 紫青沿环角度交替
+
+      // 绕环游走的亮点
+      float a = uTime * -1.0;
+      vec2 pos = vec2(cos(a), sin(a)) * r0;
+      float d = distance(uv, pos);
+      float v1 = light2(1.5, 5.0, d) * light1(1.0, 50.0, d0);
+
+      float v2 = smoothstep(1.0, mix(INNER, 1.0, n0 * 0.5), len);
+      float v3 = smoothstep(INNER, mix(INNER, 1.0, 0.5), len);
+
+      vec3 colBase = mix(c1, c2, cl);
+      float fadeAmount = mix(1.0, 0.1, bgLum);
+      vec3 darkCol = clamp((mix(c3, colBase, v0) + v1) * v2 * v3, 0.0, 1.0);
+      vec3 lightCol = clamp(mix(uBg, (colBase + v1) * mix(1.0, v2 * v3, fadeAmount), v0), 0.0, 1.0);
+      return extractAlpha(mix(darkCol, lightCol, bgLum));
+    }
+
+    void main() {
+      vec2 frag = vUv * uRes;
+      float size = min(uRes.x, uRes.y) * uSize;
+      vec2 uv = (frag - uRes * 0.5) / size * 2.0;
+      float s = sin(uRot), c = cos(uRot);
+      uv = vec2(c * uv.x - s * uv.y, s * uv.x + c * uv.y);
+      // 悬停扭动：两个方向的正弦位移
+      uv.x += uHover * uHoverK * 0.1 * sin(uv.y * 10.0 + uTime);
+      uv.y += uHover * uHoverK * 0.1 * sin(uv.x * 10.0 + uTime);
+      vec4 col = draw(uv);
+      gl_FragColor = vec4(col.rgb * col.a, col.a);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+  gl.uniform1f(U('uHue'), CONFIG.hue);
+  gl.uniform1f(U('uHoverK'), CONFIG.hoverIntensity);
+  gl.uniform1f(U('uSize'), CONFIG.size);
+  gl.uniform3fv(U('uBg'), hexRgb(CONFIG.backgroundColor));
+  const uTime = U('uTime'), uHover = U('uHover'), uRot = U('uRot');
+
+  // 悬停判定：鼠标落在光球半径 0.8 以内
+  let targetHover = 0, hover = 0, rot = 0;
+  addEventListener('pointermove', (e) => {
+    const size = Math.min(innerWidth, innerHeight) * CONFIG.size;
+    const ux = ((e.clientX - innerWidth / 2) / size) * 2, uy = ((e.clientY - innerHeight / 2) / size) * 2;
+    targetHover = Math.hypot(ux, uy) < 0.8 ? 1 : 0;
+  });
+  document.addEventListener('mouseleave', () => (targetHover = 0));
+
+  let time = reduceMotion ? 2 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    const effective = CONFIG.forceHover ? 1 : targetHover;
+    hover += (effective - hover) * 0.1;
+    if (CONFIG.rotateOnHover && effective > 0.5 && !reduceMotion) rot += dt * ROTATION_SPEED;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uTime, time);
+    gl.uniform1f(uHover, hover);
+    gl.uniform1f(uRot, rot);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  gl.clearColor(0, 0, 0, 0);
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+{
+  "slug": "warp-line-waves",
+  "name": "扭曲线波",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["线条", "扭曲", "波纹", "WebGL"],
+  "summary": "几十根斜向细线被两股流场揉成起伏的波纹，中间密、两端疏，鼠标靠近处线条被顶开一个鼓包",
+  "params": [
+    {
+      "key": "colors",
+      "label": "三通道颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 3,
+      "max": 3,
+      "default": ["#ffffff", "#ffffff", "#ffffff"],
+      "help": "三个通道各自的着色，同色时为单色线"
+    },
+    {
+      "key": "speed",
+      "label": "流速",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "innerLineCount",
+      "label": "中部线数",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 80,
+      "step": 2,
+      "default": 32
+    },
+    {
+      "key": "outerLineCount",
+      "label": "边缘线数",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 80,
+      "step": 2,
+      "default": 36
+    },
+    {
+      "key": "warpIntensity",
+      "label": "扭曲强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "rotation",
+      "label": "整体角度",
+      "type": "range",
+      "target": "config",
+      "min": -180,
+      "max": 180,
+      "step": 5,
+      "default": -45,
+      "unit": "°"
+    },
+    {
+      "key": "edgeFadeWidth",
+      "label": "边缘渐隐",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0
+    },
+    {
+      "key": "colorCycleSpeed",
+      "label": "色彩循环速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 4,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "brightness",
+      "label": "亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.2
+    },
+    {
+      "key": "mouseInfluence",
+      "label": "鼠标顶起",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "default": 2,
+      "help": "0 关闭鼠标交互"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "rgb", "name": "三色分离", "values": { "colors": ["#ff4d6d", "#4dff88", "#4d9dff"], "brightness": 0.35, "colorCycleSpeed": 2 } },
+    { "id": "sparse", "name": "疏线横向", "values": { "innerLineCount": 10, "outerLineCount": 14, "rotation": 0, "warpIntensity": 1.6 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

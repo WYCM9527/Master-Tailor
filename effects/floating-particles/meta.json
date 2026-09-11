@@ -1,0 +1,100 @@
+{
+  "slug": "floating-particles",
+  "name": "漂浮粒子云",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["粒子", "3D", "点云", "WebGL"],
+  "summary": "一团三维的圆点粒子云悬在画面里缓缓自转，每颗粒子各自漂浮呼吸，近大远小；鼠标移动时整团轻轻跟着偏",
+  "params": [
+    {
+      "key": "particleCount",
+      "label": "粒子数量",
+      "type": "range",
+      "target": "config",
+      "min": 50,
+      "max": 1000,
+      "step": 50,
+      "default": 200
+    },
+    {
+      "key": "particleSpread",
+      "label": "云团大小",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 30,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "key": "speed",
+      "label": "速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.1
+    },
+    {
+      "key": "colors",
+      "label": "粒子颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 6,
+      "default": ["#ffffff", "#ffffff", "#ffffff"]
+    },
+    {
+      "key": "particleBaseSize",
+      "label": "粒子基础大小",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 300,
+      "step": 10,
+      "default": 100
+    },
+    {
+      "key": "sizeRandomness",
+      "label": "大小随机",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1,
+      "help": "0 为全部同大（且不随距离缩放）"
+    },
+    {
+      "key": "cameraDistance",
+      "label": "镜头距离",
+      "type": "range",
+      "target": "config",
+      "min": 5,
+      "max": 60,
+      "step": 1,
+      "default": 20
+    },
+    { "key": "alphaParticles", "label": "柔边粒子", "type": "toggle", "target": "config", "default": false },
+    { "key": "disableRotation", "label": "关闭自转", "type": "toggle", "target": "config", "default": false },
+    {
+      "key": "hoverFactor",
+      "label": "鼠标跟随幅度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "default": 1,
+      "help": "0 关闭鼠标跟随"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "nebula", "name": "星云彩粒", "values": { "colors": ["#a855f7", "#38bdf8", "#f472b6", "#fde047"], "particleCount": 600, "alphaParticles": true, "particleBaseSize": 140 } },
+    { "id": "dense", "name": "致密小点", "values": { "particleCount": 1000, "particleBaseSize": 40, "particleSpread": 14, "speed": 0.3 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

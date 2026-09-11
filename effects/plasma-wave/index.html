@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>等离子波束</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（光束以外的暗部直接透出它） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态光束 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    colors: ["#a855f7", "#06b6d4"],  // 两束颜色
+    speed1: 0.05,        // 第一束流速
+    speed2: 0.05,        // 第二束流速
+    reverse2: false,     // 第二束反向
+    bend1: 1,            // 第一束弯曲
+    bend2: 0.5,          // 第二束弯曲
+    focalLength: 0.8,    // 镜头焦距
+    rotation: 0,         // 画面旋转（度）
+    xOffset: 0,          // 横向偏移（px）
+    yOffset: 0,          // 纵向偏移（px）
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: true, premultipliedAlpha: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：从镜头沿视线做 14 步光线步进，场景是两根沿 x 轴延伸、在 yz 平面上按正弦/余弦摆动的细管；
+  // 用步进距离与到管面的最近距离着色，暗部直接丢弃（透出页面底色）
+  const FS = `
+    precision mediump float;
+    uniform float uTime;
+    uniform vec2  uRes;
+    uniform vec2  uOffset;
+    uniform float uRotation, uFocal, uSpeed1, uSpeed2, uDir2, uBend1, uBend2;
+    uniform vec3  uColor1, uColor2;
+    const float LT = 0.3;                 // 管的粗细
+    const float PI = 3.14159, PI2 = 6.28318, HALF_PI = 1.5708;
+
+    vec4 march(vec2 U) {
+      float t = uTime * PI;
+      float s = 1.0, d = 0.0;
+      vec3 o = vec3(0.0, 0.0, -7.0);                                 // 镜头位置
+      vec3 u = normalize(vec3((U - 0.5 * uRes) / uRes.y, uFocal));  // 视线方向
+      vec2 k = vec2(0.0);
+      vec3 p;
+      float t1 = t * 0.7, t2 = t * 0.9, ts1 = t * uSpeed1, ts2 = t * uSpeed2 * uDir2;
+      for (int i = 0; i < 14; ++i) {
+        p = o + u * d;
+        p.x -= 15.0;
+        float px = p.x;
+        // 两根管各自的摆幅随 x 轻微起伏（wobble）
+        float wob1 = uBend1 + sin(t1 + px * 0.8) * 0.1;
+        float wob2 = uBend2 + cos(t2 + px * 1.1) * 0.1;
+        float px2 = px + HALF_PI;
+        vec2 sinOff = sin(vec2(px, px2) + ts1) * wob1;   // 第一根：正弦轨迹
+        vec2 cosOff = cos(vec2(px, px2) + ts2) * wob2;   // 第二根：余弦轨迹
+        vec2 yz = p.yz;
+        float pxLt = px + LT;
+        k.x = max(pxLt, length(yz - sinOff) - LT);        // 到第一根管面的距离（x 端封口）
+        k.y = max(pxLt, length(yz - cosOff) - LT);
+        float cur = min(k.x, k.y);
+        s = min(s, cur);
+        if (s < 0.001 || d > 300.0) break;
+        d += s * 0.7;
+      }
+      // 着色：沿步进距离的余弦条纹 − 最近距离，形成发光带；太暗的像素丢弃
+      float sq = sqrt(d);
+      vec3 raw = max(cos(d * PI2) - s * sq - vec3(k, 0.0), 0.0);
+      raw.gb += 0.1;
+      float maxC = max(raw.r, max(raw.g, raw.b));
+      if (maxC < 0.15) discard;
+      raw = raw * 0.4 + raw.brg * 0.6 + raw * raw;
+      float lum = dot(raw, vec3(0.299, 0.587, 0.114));
+      // 按离两根管的远近把亮度分配给两种颜色
+      float w1 = max(0.0, 1.0 - k.x * 2.0), w2 = max(0.0, 1.0 - k.y * 2.0);
+      vec3 c = (uColor1 * w1 + uColor2 * w2) / (w1 + w2 + 0.001) * lum * 3.5;
+      return vec4(c, 1.0);
+    }
+
+    void main() {
+      // 屏幕坐标先平移、绕中心旋转，再交给步进
+      vec2 coord = gl_FragCoord.xy + uOffset - 0.5 * uRes;
+      float c = cos(uRotation), s = sin(uRotation);
+      coord = mat2(c, -s, s, c) * coord + 0.5 * uRes;
+      gl_FragColor = march(coord);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+    gl.uniform2f(U('uOffset'), CONFIG.xOffset * dpr, CONFIG.yOffset * dpr);
+  }
+  resize(); addEventListener('resize', resize);
+
+  gl.uniform3fv(U('uColor1'), hexRgb(CONFIG.colors[0]));
+  gl.uniform3fv(U('uColor2'), hexRgb(CONFIG.colors[1] || CONFIG.colors[0]));
+  gl.uniform1f(U('uRotation'), (CONFIG.rotation * Math.PI) / 180);
+  gl.uniform1f(U('uFocal'), CONFIG.focalLength);
+  gl.uniform1f(U('uSpeed1'), CONFIG.speed1);
+  gl.uniform1f(U('uSpeed2'), CONFIG.speed2);
+  gl.uniform1f(U('uDir2'), CONFIG.reverse2 ? -1 : 1);
+  gl.uniform1f(U('uBend1'), CONFIG.bend1);
+  gl.uniform1f(U('uBend2'), CONFIG.bend2);
+  const uTime = U('uTime');
+
+  let time = reduceMotion ? 2 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  gl.clearColor(0, 0, 0, 0);
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

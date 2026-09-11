@@ -1,0 +1,102 @@
+{
+  "slug": "ripple-grid",
+  "name": "涟漪网格",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["网格", "涟漪", "发光", "WebGL"],
+  "summary": "一张发光的绿色网格从中心向外一圈圈泛起涟漪，线条随之呼吸明暗，鼠标经过处再荡开一圈小波",
+  "params": [
+    { "key": "gridColor", "label": "网格颜色", "type": "color", "target": "config", "default": "#27ff64" },
+    { "key": "enableRainbow", "label": "彩虹流变", "type": "toggle", "target": "config", "default": false },
+    {
+      "key": "rippleIntensity",
+      "label": "涟漪强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.05
+    },
+    {
+      "key": "gridSize",
+      "label": "网格密度",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 30,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "key": "gridThickness",
+      "label": "线条锐度",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 40,
+      "step": 1,
+      "default": 15,
+      "help": "越大线越细越锐"
+    },
+    {
+      "key": "fadeDistance",
+      "label": "边缘衰减",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.5
+    },
+    {
+      "key": "vignetteStrength",
+      "label": "暗角强度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.1,
+      "default": 2
+    },
+    {
+      "key": "glowIntensity",
+      "label": "辉光",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.1
+    },
+    {
+      "key": "gridRotation",
+      "label": "网格旋转",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "default": 0,
+      "unit": "°"
+    },
+    {
+      "key": "mouseRadius",
+      "label": "鼠标波纹半径",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "help": "0.2 几乎无鼠标交互"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "rainbow", "name": "彩虹斜格", "values": { "enableRainbow": true, "gridRotation": 45, "gridSize": 14 } },
+    { "id": "cyan", "name": "青色粗格", "values": { "gridColor": "#22d3ee", "gridThickness": 6, "gridSize": 6, "glowIntensity": 0.4 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}
