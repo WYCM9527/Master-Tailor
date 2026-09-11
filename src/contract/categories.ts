@@ -2,8 +2,8 @@ import type { CategoryId, SubDef } from './types';
 
 /** 原有 6 类共用的二级分类：触发方式 */
 const TRIGGER_SUBS: SubDef[] = [
-  { id: 'idle', name: '默认效果', desc: '不需要任何操作，打开页面就在动或直接呈现' },
-  { id: 'hover', name: '鼠标悬浮', desc: '鼠标移入、悬停或移动时触发' },
+  { id: 'idle', name: '自动效果', desc: '不需要任何操作，打开页面就在动或直接呈现' },
+  { id: 'hover', name: '鼠标交互', desc: '鼠标移入、悬停或移动时触发' },
   { id: 'click', name: '点击效果', desc: '点击或按下时触发' },
   { id: 'scroll', name: '滚动触发', desc: '页面滚动到指定位置时触发' },
 ];
