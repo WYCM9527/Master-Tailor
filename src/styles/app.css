@@ -186,12 +186,25 @@
 /* ============================================================
    Hero：海报级巨字
    ============================================================ */
+/* 首页只有这一屏：Hero 撑满视口（减去顶栏 56px 与两条 1px 横线），巨字行吃掉多余高度 */
+.hero {
+  min-height: calc(100vh - 58px);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
 .hero-title {
   padding: var(--pad-l);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 28px;
+}
+/* 小字钉在顶部，巨字与口号沉到底部 */
+.hero-title > .mono {
+  margin-bottom: auto;
+}
+/* 元数据三格均分整列高度（覆盖 .sub 的 min-content 行高，避免露出灰底） */
+.hero-meta {
+  grid-auto-rows: minmax(112px, 1fr);
 }
 .hero-title h1 {
   font-size: var(--fs-display);
@@ -260,52 +273,6 @@
   color: var(--bg);
 }
 .step-cta:hover .arrow {
-  transform: translateX(4px);
-}
-
-/* ============================================================
-   首页：分类索引 Cell（进入效果页的入口）
-   ============================================================ */
-.cat-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 200px;
-  color: var(--fg);
-  transition:
-    background var(--ease),
-    color var(--ease);
-}
-.cat-cell .cat-top {
-  display: flex;
-  justify-content: space-between;
-}
-.cat-cell h3 {
-  font-size: clamp(22px, 2vw, 30px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.cat-cell .cat-subs {
-  flex: 1;
-  color: var(--fg-dim);
-  font-size: var(--fs-small);
-  line-height: 1.6;
-}
-.cat-cell .cat-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-}
-.cat-cell:hover {
-  background: var(--fg);
-  color: var(--bg);
-}
-.cat-cell:hover .cat-subs,
-.cat-cell:hover .mono {
-  color: var(--bg);
-}
-.cat-cell:hover .arrow {
   transform: translateX(4px);
 }
 
@@ -514,22 +481,6 @@
 .empty {
   color: var(--fg-dim);
   min-height: 200px;
-}
-
-/* ============================================================
-   区块标题条（分类索引）：左大标题、右等宽小字
-   ============================================================ */
-.howto-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-}
-.howto-head h2 {
-  font-size: var(--fs-h1);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1;
 }
 
 /* 页面底边收口线（无 footer） */
@@ -1292,9 +1243,6 @@ input[type='color']::-webkit-color-swatch {
   .step-cta {
     grid-column: span 12;
     min-height: 88px;
-  }
-  .cat-cell {
-    grid-column: span 6;
   }
   .hdr-brand {
     grid-column: span 3;
