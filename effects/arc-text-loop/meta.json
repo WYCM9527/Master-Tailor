@@ -3,8 +3,12 @@
   "name": "弧线循环文字",
   "category": "text",
   "sub": "marquee",
-  "tags": ["弧线", "跑马灯", "循环"],
-  "summary": "一串文字沿着一条大弧线不停地流过，像挂在天边的横幅",
+  "tags": [
+    "弧线",
+    "跑马灯",
+    "循环"
+  ],
+  "summary": "一串文字沿着一条大弧线不停地流过，像挂在天边的横幅；可以按住拖动，松手后顺着甩的方向续跑",
   "params": [
     {
       "key": "text",
@@ -44,19 +48,32 @@
       "type": "select",
       "target": "config",
       "options": [
-        { "value": "left", "label": "向左" },
-        { "value": "right", "label": "向右" }
+        {
+          "value": "left",
+          "label": "向左"
+        },
+        {
+          "value": "right",
+          "label": "向右"
+        }
       ],
       "default": "left"
     },
     {
-      "key": "hoverPause",
-      "label": "悬停暂停",
+      "key": "draggable",
+      "label": "可按住拖动",
       "type": "toggle",
       "target": "config",
-      "default": true
+      "default": true,
+      "help": "按住左右拖动文字，松手后按甩动方向继续跑"
     },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
     {
       "key": "fontSize",
       "label": "字号",
@@ -68,21 +85,44 @@
       "default": 56,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "smiley-sans" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "smiley-sans"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "smile",
       "name": "下垂微笑线",
-      "values": { "curve": -180, "direction": "right", "speed": 90, "font": "system-sans" }
+      "values": {
+        "curve": -180,
+        "direction": "right",
+        "speed": 90,
+        "font": "system-sans"
+      }
     },
     {
       "id": "flat",
       "name": "近直线大字",
-      "values": { "curve": 40, "fontSize": 88, "speed": 120 }
+      "values": {
+        "curve": 40,
+        "fontSize": 88,
+        "speed": 120
+      }
     }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

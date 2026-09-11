@@ -10,7 +10,7 @@
     --mt-bg: #0a0a0f;        /* 页面底色 */
     --mt-accent: #ffffff;    /* 高亮色 */
     --mt-text: #a3a3a3;      /* 文字颜色 */
-    --mt-duration: 0.5s;     /* 滑动时长 */
+    --mt-duration: 0.6s;     /* 液珠动画基准时长 */
   }
   html, body { margin: 0; height: 100%; }
   body {
@@ -28,32 +28,6 @@
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 999px;
   }
-  /* 粘液层：高亮块 + 液珠都在这一层，整层挂黏合滤镜 */
-  .mt-goo {
-    position: absolute;
-    inset: 0;
-    filter: url(#mtGoo);
-    pointer-events: none;
-  }
-  .mt-blob {
-    position: absolute;
-    top: 6px;
-    height: calc(100% - 12px);
-    border-radius: 999px;
-    background: var(--mt-accent);
-    transition: left var(--mt-duration) cubic-bezier(0.6, 0, 0.2, 1.2), width var(--mt-duration) cubic-bezier(0.6, 0, 0.2, 1.2);
-  }
-  .mt-drop {
-    position: absolute;
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--mt-accent);
-    animation: mt-drop var(--mt-duration) ease-out forwards;
-  }
-  @keyframes mt-drop {
-    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
-    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
-  }
   .mt-item {
     position: relative;
     border: none;
@@ -65,76 +39,123 @@
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: color var(--mt-duration) ease;
+    z-index: 2;
+    transition: color 0.3s ease;
   }
   .mt-item.active { color: var(--mt-bg); }
+  /* 粘液层：覆盖在选中项位置，blur → 高对比 的 CSS 滤镜把模糊的圆点们「黏」成一团液体；
+     ::before 是让对比运算有底的黑色垫底，::after 是原地弹出的高亮药丸 */
+  .mt-goo {
+    position: absolute;
+    display: grid; place-items: center;
+    pointer-events: none;
+    z-index: 1;
+    filter: blur(7px) contrast(100) blur(0);
+    mix-blend-mode: lighten;
+  }
+  .mt-goo::before { content: ''; position: absolute; inset: -75px; z-index: -2; background: var(--mt-bg); }
+  .mt-goo::after {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    border-radius: 999px; background: var(--mt-accent);
+    transform: scale(0); opacity: 0;
+  }
+  .mt-goo.active::after { animation: mt-pill 0.3s ease both; }
+  @keyframes mt-pill { to { transform: scale(1); opacity: 1; } }
+  /* 液珠：从外围（--sx,--sy）汇向药丸（--ex,--ey），路上带旋转；内部的圆点先长大再缩没 */
+  .mt-particle, .mt-point { display: block; width: 20px; height: 20px; border-radius: 999px; transform-origin: center; opacity: 0; }
+  .mt-particle {
+    position: absolute; top: calc(50% - 8px); left: calc(50% - 8px);
+    animation: mt-particle var(--time) ease 1 -350ms;
+  }
+  .mt-point { background: var(--color); opacity: 1; animation: mt-point var(--time) ease 1 -350ms; }
+  @keyframes mt-particle {
+    0%   { transform: rotate(0deg) translate(var(--sx), var(--sy)); opacity: 1; animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+    70%  { transform: rotate(calc(var(--rot) * 0.5)) translate(calc(var(--ex) * 1.2), calc(var(--ey) * 1.2)); opacity: 1; animation-timing-function: ease; }
+    85%  { transform: rotate(calc(var(--rot) * 0.66)) translate(var(--ex), var(--ey)); opacity: 1; }
+    100% { transform: rotate(calc(var(--rot) * 1.2)) translate(calc(var(--ex) * 0.5), calc(var(--ey) * 0.5)); opacity: 1; }
+  }
+  @keyframes mt-point {
+    0%   { transform: scale(0); opacity: 0; animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+    25%  { transform: scale(calc(var(--scale) * 0.25)); }
+    38%  { opacity: 1; }
+    65%  { transform: scale(var(--scale)); opacity: 1; animation-timing-function: ease; }
+    85%  { transform: scale(var(--scale)); opacity: 1; }
+    100% { transform: scale(0); opacity: 0; }
+  }
 
-  /* 用户开启「减少动态效果」时：高亮块直接跳到位、不甩液珠 */
+  /* 用户开启「减少动态效果」时：药丸直接出现、不甩液珠 */
   @media (prefers-reduced-motion: reduce) {
-    .mt-blob { transition: none; }
-    .mt-drop { display: none; }
+    .mt-goo.active::after { animation: none; transform: scale(1); opacity: 1; }
+    .mt-particle { display: none; }
   }
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <filter id="mtGoo">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/>
-    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10" result="goo"/>
-    <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
-  </filter>
-</svg>
 <nav class="mt-nav" id="mtNav" aria-label="主导航">
-  <div class="mt-goo" id="mtGooLayer"><div class="mt-blob" id="mtBlob"></div></div>
+  <div class="mt-goo" id="mtGoo"></div>
 </nav>
 <script>
   const CONFIG = {
     items: "首页｜项目｜团队｜博客｜招聘", // 菜单项，用「｜」分隔
-    drops: 8,    // 液珠数量
-    goo: 10,     // 黏合强度（模糊半径）
+    drops: 15,   // 液珠数量
+    goo: 7,      // 黏合强度（模糊半径）
   };
+  const DIST = [90, 10];     // 液珠起点 / 终点到中心的距离
+  const ROT_R = 100;         // 液珠旋转幅度
+  const TIME_VAR = 300;      // 每颗液珠时长的随机浮动（ms）
+  const DROP_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ff6b6b', '#4ecdc4', '#45b7d1', '#ff6b6b', '#f9ca24'];
 
   const nav = document.getElementById('mtNav');
-  const gooLayer = document.getElementById('mtGooLayer');
-  const blob = document.getElementById('mtBlob');
+  const goo = document.getElementById('mtGoo');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.querySelector('#mtGoo feGaussianBlur').setAttribute('stdDeviation', CONFIG.goo);
+  goo.style.filter = `blur(${CONFIG.goo}px) contrast(100) blur(0)`;
+  const baseMs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-duration')) * 1000 || 600;
   const names = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
 
   const items = names.map((name, i) => {
     const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'mt-item';
-    b.textContent = name;
+    b.type = 'button'; b.className = 'mt-item'; b.textContent = name;
     b.addEventListener('click', () => select(i));
     nav.appendChild(b);
     return b;
   });
 
+  const noise = (n = 1) => n / 2 - Math.random() * n;
+  const xy = (dist, idx, total) => { const a = ((360 + noise(8)) / total) * idx * (Math.PI / 180); return [dist * Math.cos(a), dist * Math.sin(a)]; };
+  /* 造液珠：均匀分布在圆周上，从外圈向内汇入，每颗时长、缩放、颜色、旋转略随机 */
+  function makeParticles() {
+    goo.querySelectorAll('.mt-particle').forEach(p => p.remove());
+    for (let i = 0; i < CONFIG.drops; i++) {
+      const t = baseMs * 2 + noise(TIME_VAR * 2);
+      const rot = noise(ROT_R / 10);
+      const [sx, sy] = xy(DIST[0], CONFIG.drops - i, CONFIG.drops);
+      const [ex, ey] = xy(DIST[1] + noise(7), CONFIG.drops - i, CONFIG.drops);
+      setTimeout(() => {
+        const p = document.createElement('span');
+        p.className = 'mt-particle';
+        p.style.setProperty('--sx', `${sx}px`); p.style.setProperty('--sy', `${sy}px`);
+        p.style.setProperty('--ex', `${ex}px`); p.style.setProperty('--ey', `${ey}px`);
+        p.style.setProperty('--time', `${t}ms`);
+        p.style.setProperty('--scale', `${1 + noise(0.2)}`);
+        p.style.setProperty('--color', DROP_COLORS[Math.floor(Math.random() * DROP_COLORS.length)]);
+        p.style.setProperty('--rot', `${rot > 0 ? (rot + ROT_R / 20) * 10 : (rot - ROT_R / 20) * 10}deg`);
+        const dot = document.createElement('span'); dot.className = 'mt-point';
+        p.appendChild(dot); goo.appendChild(p);
+        setTimeout(() => p.remove(), t);
+      }, 30);
+    }
+  }
+
   let current = -1;
   function select(i) {
     if (i === current) return;
-    const from = current >= 0 ? items[current] : null;
     current = i;
     items.forEach((el, k) => { el.classList.toggle('active', k === i); el.toggleAttribute('aria-current', k === i); });
+    // 粘液层整体挪到选中项的位置（不做滑动），药丸在原地从 0 弹出
     const r = items[i].getBoundingClientRect(), n = nav.getBoundingClientRect();
-    blob.style.left = (r.left - n.left) + 'px';
-    blob.style.width = r.width + 'px';
-    // 甩液珠：从起点与终点之间的路径上向四周溅出，随后缩小消失
-    if (from && !reduceMotion) {
-      const f = from.getBoundingClientRect();
-      for (let k = 0; k < CONFIG.drops; k++) {
-        const d = document.createElement('div');
-        d.className = 'mt-drop';
-        const t = Math.random();
-        const x = (f.left - n.left + f.width / 2) * (1 - t) + (r.left - n.left + r.width / 2) * t;
-        d.style.left = (x - 5) + 'px'; d.style.top = (n.height / 2 - 5) + 'px';
-        d.style.setProperty('--dx', ((Math.random() - 0.5) * 80) + 'px');
-        d.style.setProperty('--dy', ((Math.random() - 0.5) * 70) + 'px');
-        gooLayer.appendChild(d);
-        d.addEventListener('animationend', () => d.remove());
-      }
-    }
+    Object.assign(goo.style, { left: `${r.left - n.left}px`, top: `${r.top - n.top}px`, width: `${r.width}px`, height: `${r.height}px` });
+    goo.classList.remove('active'); void goo.offsetWidth; goo.classList.add('active');
+    if (!reduceMotion) makeParticles();
   }
   select(0);
   addEventListener('resize', () => { const i = current; current = -1; select(i); });
@@ -147,7 +168,7 @@
     setInterval(() => {
       if (document.hidden || !auto) return;
       select(k % items.length); k++;
-    }, 1400);
+    }, 1600);
   }
   /* @mt:thumb-end */
 </script>

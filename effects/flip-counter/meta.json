@@ -3,8 +3,12 @@
   "name": "翻牌计数器",
   "category": "text",
   "sub": "idle",
-  "tags": ["数字", "翻牌", "里程表"],
-  "summary": "每一位数字像机场翻牌牌一样上下滚动到新值",
+  "tags": [
+    "数字",
+    "翻牌",
+    "里程表"
+  ],
+  "summary": "每一位数字像老里程表一样带弹簧感向上滚到新值，进位顺向滚过、上下渐隐",
   "params": [
     {
       "key": "start",
@@ -60,8 +64,20 @@
       "unit": "s",
       "displayUnit": " 秒"
     },
-    { "key": "color", "label": "数字颜色", "type": "color", "target": "css", "default": "#ffffff" },
-    { "key": "cell", "label": "格子底色", "type": "color", "target": "css", "default": "#1c1c1c" },
+    {
+      "key": "color",
+      "label": "数字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "cell",
+      "label": "格子底色",
+      "type": "color",
+      "target": "css",
+      "default": "#1c1c1c"
+    },
     {
       "key": "fontSize",
       "label": "字号",
@@ -75,18 +91,37 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "fast",
       "name": "疾速跳表",
-      "values": { "stepValue": 999, "interval": 0.5, "duration": 0.3, "digits": 7 }
+      "values": {
+        "stepValue": 999,
+        "interval": 0.5,
+        "duration": 0.3,
+        "digits": 7
+      }
     },
     {
       "id": "clock",
       "name": "慢翻",
-      "values": { "stepValue": 1, "interval": 2, "duration": 1, "digits": 4, "start": 9996 }
+      "values": {
+        "stepValue": 1,
+        "interval": 2,
+        "duration": 1,
+        "digits": 4,
+        "start": 9996
+      }
     }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

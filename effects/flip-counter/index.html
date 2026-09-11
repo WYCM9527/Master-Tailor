@@ -8,7 +8,7 @@
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;        /* 页面底色 */
-    --mt-duration: 0.5s;     /* 翻动时长 */
+    --mt-duration: 0.5s;     /* 翻动时长（越长弹簧越软） */
     --mt-color: #ffffff;     /* 数字颜色 */
     --mt-cell: #1c1c1c;      /* 格子底色 */
     --mt-fontSize: 72px;     /* 字号 */
@@ -22,7 +22,8 @@
     font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   }
   .mt-counter { display: flex; gap: 6px; }
-  /* 每一位是一个只露一格高的窗口，里面竖着 0–9 十个数字，用 translateY 滚到目标位 */
+  /* 每一位是一个只露一格高的窗口，里面 0–9 十个数字绝对定位；
+     每个数字的纵向位置由「当前连续值」决定并首尾环绕，所以进位时永远顺向滚过、不会倒回 */
   .mt-digit {
     position: relative;
     width: calc(var(--mt-fontSize) * 0.72);
@@ -35,25 +36,21 @@
     font-weight: 700;
     line-height: calc(var(--mt-fontSize) * 1.25);
     text-align: center;
+    font-variant-numeric: tabular-nums;
   }
-  .mt-digit .reel {
-    display: flex; flex-direction: column;
-    transform: translateY(calc(var(--n, 0) * -1 * var(--mt-fontSize) * 1.25));
-    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+  .mt-digit span {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    will-change: transform;
   }
-  .mt-digit .reel span { display: block; height: calc(var(--mt-fontSize) * 1.25); }
-  /* 中间的折痕线，像翻牌牌 */
-  .mt-digit::after {
-    content: '';
-    position: absolute; left: 0; right: 0; top: 50%;
-    height: 1px;
-    background: rgba(0, 0, 0, 0.45);
+  /* 上下两道渐隐，数字滚入滚出时从阴影里浮现 / 沉入 */
+  .mt-digit::before, .mt-digit::after {
+    content: ''; position: absolute; left: 0; right: 0; height: 22%; z-index: 2; pointer-events: none;
   }
+  .mt-digit::before { top: 0; background: linear-gradient(to bottom, var(--mt-cell), transparent); }
+  .mt-digit::after { bottom: 0; background: linear-gradient(to top, var(--mt-cell), transparent); }
 
-  /* 用户开启「减少动态效果」时：数字直接切换 */
-  @media (prefers-reduced-motion: reduce) {
-    .mt-digit .reel { transition: none; }
-  }
+  /* 用户开启「减少动态效果」时：数字直接切换（JS 同步处理） */
 </style>
 </head>
 <body>
@@ -71,39 +68,61 @@
   const max = Math.pow(10, CONFIG.digits);
   let value = CONFIG.start % max;
 
-  // 生成每一位的滚轮
-  const reels = [];
+  // 每一位：10 个数字 span + 一个弹簧驱动的连续值（value / 10^place）
+  const cols = [];
   for (let i = 0; i < CONFIG.digits; i++) {
     const d = document.createElement('div');
     d.className = 'mt-digit';
-    const reel = document.createElement('div');
-    reel.className = 'reel';
-    for (let n = 0; n <= 9; n++) { const s = document.createElement('span'); s.textContent = String(n); reel.appendChild(s); }
-    d.appendChild(reel);
+    const spans = [];
+    for (let n = 0; n <= 9; n++) { const s = document.createElement('span'); s.textContent = String(n); d.appendChild(s); spans.push(s); }
     host.appendChild(d);
-    reels.push(reel);
+    cols.push({ el: d, spans, place: Math.pow(10, CONFIG.digits - 1 - i), cur: 0, vel: 0, target: 0 });
   }
-  function render() {
-    const str = String(value).padStart(CONFIG.digits, '0');
-    host.setAttribute('aria-label', str);
-    // 只改变化的位；低位先翻，高位跟着翻，带一点错开
-    Array.from(str).forEach((ch, i) => {
-      const reel = reels[i];
-      if (reel.dataset.n !== ch) {
-        reel.dataset.n = ch;
-        reel.style.transitionDelay = ((CONFIG.digits - 1 - i) * 40) + 'ms';
-        reel.style.setProperty('--n', ch);
-      }
-    });
+  // 弹簧：刚度随「翻动时长」调整（时长 0.5s ≈ 刚度 300、阻尼 30）
+  const durSec = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-duration')) || 0.5;
+  const STIFF = 300 * (0.5 / durSec), DAMP = 30 * Math.sqrt(0.5 / durSec);
+
+  function setTargets(v) {
+    host.setAttribute('aria-label', String(v).padStart(CONFIG.digits, '0'));
+    for (const c of cols) c.target = Math.floor(v / c.place);     // 本位及以上的整数部分，个位以上带进位
   }
-  render();
+  function layout(c) {
+    const h = c.el.clientHeight;
+    const placeValue = ((c.cur % 10) + 10) % 10;
+    for (let i = 0; i < 10; i++) {
+      // 数字 i 相对当前值的环绕偏移：0–4 在下方等待，6–9 折到上方
+      const off = (10 + i - placeValue) % 10;
+      let y = off * h;
+      if (off > 5) y -= 10 * h;
+      c.spans[i].style.transform = `translateY(${y.toFixed(1)}px)`;
+    }
+  }
+  setTargets(value);
+  for (const c of cols) { c.cur = c.target; layout(c); }
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (document.hidden) return;
+    for (const c of cols) {
+      if (reduceMotion) { c.cur = c.target; layout(c); continue; }
+      // 半隐式欧拉弹簧
+      const a = -STIFF * (c.cur - c.target) - DAMP * c.vel;
+      c.vel += a * dt; c.cur += c.vel * dt;
+      if (Math.abs(c.cur - c.target) < 0.0005 && Math.abs(c.vel) < 0.001) { c.cur = c.target; c.vel = 0; }
+      layout(c);
+    }
+  }
+  requestAnimationFrame(frame);
+
   // 按间隔递增，越界回到 0；后台不推进
   setInterval(() => {
     if (document.hidden) return;
     value = (value + CONFIG.stepValue) % max;
-    render();
+    setTargets(value);
   }, CONFIG.interval * 1000);
-  void reduceMotion;
 </script>
 </body>
 </html>

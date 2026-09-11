@@ -21,17 +21,18 @@
     place-items: center;
     cursor: crosshair;
   }
-  /* 每格中央一根短线，绕自己中心旋转指向鼠标 */
+  /* 每格中央一根竖着的短线，绕自己中心旋转：旋转角是「格心→鼠标」的方位角，
+     竖线转过这个角后正好与该方向垂直，于是整片线阵呈以鼠标为中心的同心环纹 */
   .mt-line {
-    width: var(--mt-length);
-    height: var(--mt-thickness);
+    width: var(--mt-thickness);
+    height: var(--mt-length);
     background: var(--mt-color);
     opacity: var(--o, 0.5);
     transform: rotate(var(--a, 0deg));
     will-change: transform, opacity;
   }
 
-  /* 用户开启「减少动态效果」时：线条全部水平静止 */
+  /* 用户开启「减少动态效果」时：线条全部竖直静止 */
   @media (prefers-reduced-motion: reduce) {
     .mt-line { transform: none !important; opacity: 0.5 !important; }
   }

@@ -55,7 +55,7 @@
     curve: 160,        // 弧线弯度（px）：正值上拱 / 负值下垂 / 0 直线
     speed: 60,         // 流动速度（px/秒）
     direction: "left", // 流动方向：left 向左 / right 向右
-    hoverPause: true,  // 悬停暂停
+    draggable: true,   // 可按住拖动：松手后按甩动方向续跑
   };
 
   const svg = document.getElementById('mtArc');
@@ -83,24 +83,34 @@
   setInterval(() => { if (!document.hidden) measure(); }, 1500);
 
   // 用 startOffset 从 -unitLength 到 0（或反向）循环平移，正好平移一个文案单位后回位，肉眼无缝
-  let offset = 0, paused = false, last = performance.now();
+  let offset = 0, dragging = false, dir = CONFIG.direction === 'left' ? -1 : 1, last = performance.now();
+  const wrap = (v) => ((v % unitLength) - unitLength) % unitLength;
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    if (!document.hidden && !paused && !reduceMotion) {
-      const dir = CONFIG.direction === 'left' ? -1 : 1;
-      offset += dir * CONFIG.speed * dt;
-      // 归一到 [-unitLength, 0]
-      offset = ((offset % unitLength) - unitLength) % unitLength;
+    if (!document.hidden && !dragging && !reduceMotion) {
+      offset = wrap(offset + dir * CONFIG.speed * dt);
       textPath.setAttribute('startOffset', offset);
     }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 
-  if (CONFIG.hoverPause) {
-    svg.addEventListener('pointerenter', () => (paused = true));
-    svg.addEventListener('pointerleave', () => (paused = false));
+  // 拖动：按住时文字跟手左右平移（把屏幕像素换算成 viewBox 单位），松手后按最后一次甩动的方向续跑
+  if (CONFIG.draggable) {
+    svg.style.cursor = 'grab';
+    let lastX = 0, vel = 0;
+    svg.addEventListener('pointerdown', (e) => { dragging = true; lastX = e.clientX; vel = 0; svg.style.cursor = 'grabbing'; svg.setPointerCapture(e.pointerId); });
+    svg.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const scale = 1200 / svg.getBoundingClientRect().width;   // 屏幕 px → viewBox 单位
+      const dx = (e.clientX - lastX) * scale;
+      lastX = e.clientX; vel = dx;
+      offset = wrap(offset + dx);
+      textPath.setAttribute('startOffset', offset);
+    });
+    const end = () => { if (!dragging) return; dragging = false; svg.style.cursor = 'grab'; if (vel !== 0) dir = vel > 0 ? 1 : -1; };
+    svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
   }
 </script>
 </body>

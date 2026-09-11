@@ -3,8 +3,12 @@
   "name": "粘液导航",
   "category": "nav",
   "sub": "click",
-  "tags": ["导航", "粘液", "选中"],
-  "summary": "选中的高亮块像一滴粘液滑到新选项上，路上甩出几颗小液珠",
+  "tags": [
+    "导航",
+    "粘液",
+    "选中"
+  ],
+  "summary": "点选时高亮胶囊在新选项原地弹出，十几颗彩色小液珠从四周汇入黏成一团再缩没",
   "params": [
     {
       "key": "items",
@@ -15,17 +19,29 @@
       "maxLength": 80,
       "help": "用「｜」分隔"
     },
-    { "key": "accent", "label": "高亮色", "type": "color", "target": "css", "default": "#ffffff" },
-    { "key": "text", "label": "文字颜色", "type": "color", "target": "css", "default": "#a3a3a3" },
+    {
+      "key": "accent",
+      "label": "高亮色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "text",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#a3a3a3"
+    },
     {
       "key": "duration",
-      "label": "滑动时长",
+      "label": "液珠时长",
       "type": "range",
       "target": "css",
       "min": 0.2,
       "max": 1,
       "step": 0.05,
-      "default": 0.5,
+      "default": 0.6,
       "unit": "s",
       "displayUnit": " 秒"
     },
@@ -35,9 +51,9 @@
       "type": "range",
       "target": "config",
       "min": 0,
-      "max": 16,
+      "max": 24,
       "step": 1,
-      "default": 8,
+      "default": 15,
       "help": "切换时甩出的小液珠个数"
     },
     {
@@ -47,23 +63,39 @@
       "target": "config",
       "min": 4,
       "max": 20,
-      "step": 2,
-      "default": 10
+      "step": 1,
+      "default": 7
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "splashy",
       "name": "飞溅",
-      "values": { "drops": 16, "goo": 16, "duration": 0.7 }
+      "values": {
+        "drops": 16,
+        "goo": 16,
+        "duration": 0.7
+      }
     },
     {
       "id": "clean",
       "name": "干净滑动",
-      "values": { "drops": 0, "goo": 4, "duration": 0.3 }
+      "values": {
+        "drops": 0,
+        "goo": 4,
+        "duration": 0.3
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

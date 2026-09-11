@@ -3,8 +3,12 @@
   "name": "磁力线阵",
   "category": "background",
   "sub": "hover",
-  "tags": ["磁场", "线条", "光标"],
-  "summary": "一片短线像铁屑一样，齐齐转向鼠标所在的方向",
+  "tags": [
+    "磁场",
+    "线条",
+    "光标"
+  ],
+  "summary": "整屏短线像铁屑一样随鼠标排成一圈圈同心环纹，越近越亮",
   "params": [
     {
       "key": "cols",
@@ -67,21 +71,48 @@
       "default": true,
       "help": "离鼠标越近的线越亮"
     },
-    { "key": "color", "label": "线条颜色", "type": "color", "target": "css", "default": "#ffffff" }
+    {
+      "key": "color",
+      "label": "线条颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "fine",
       "name": "细密针阵",
-      "values": { "cols": 30, "rows": 18, "length": 14, "thickness": 1, "lag": 0.5 }
+      "values": {
+        "cols": 30,
+        "rows": 18,
+        "length": 14,
+        "thickness": 1,
+        "lag": 0.5
+      }
     },
     {
       "id": "heavy",
       "name": "粗线慢转",
-      "values": { "cols": 9, "rows": 5, "length": 56, "thickness": 5, "lag": 0.08, "glow": false }
+      "values": {
+        "cols": 9,
+        "rows": 5,
+        "length": 56,
+        "thickness": 5,
+        "lag": 0.08,
+        "glow": false
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }
