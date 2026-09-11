@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片拖尾</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-size: 180px;        /* 图片宽度 */
+    --mt-lifetime: 1.2s;     /* 停留时间 */
+    --mt-rounded: 8px;       /* 图片圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  .mt-field { position: fixed; inset: 0; cursor: crosshair; overflow: hidden; }
+  .mt-hint {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.35);
+    font: 14px/1 -apple-system, "PingFang SC", sans-serif;
+    letter-spacing: 0.14em;
+    pointer-events: none;
+  }
+  /* 每张冒出的图：弹出 → 停留 → 缩小淡出 */
+  .mt-shot {
+    position: absolute;
+    left: 0; top: 0;
+    width: var(--mt-size);
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--mt-rounded);
+    pointer-events: none;
+    will-change: transform, opacity;
+    animation: mt-shot var(--mt-lifetime) cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  @keyframes mt-shot {
+    0%   { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot)) scale(0.6); }
+    12%  { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot)) scale(1.04); }
+    25%  { transform: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
+    70%  { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot)) scale(0.7); }
+  }
+
+  /* 用户开启「减少动态效果」时：不冒图（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-shot { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-field" id="mtField" aria-hidden="true">
+  <div class="mt-hint">在这里移动鼠标</div>
+</div>
+<script>
+  const CONFIG = {
+    slides: [{ src: '/samples/sample-1.webp', caption: '' }], // 轮流出现的图片
+    spacing: 90,     // 出现间距（px）
+    maxCount: 8,     // 最多同屏
+    tilt: 12,        // 随机倾斜（度）
+  };
+
+  const field = document.getElementById('mtField');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const srcs = CONFIG.slides.map(s => s.src);
+  // 预加载，避免第一次冒出时闪白
+  srcs.forEach(s => { const i = new Image(); i.src = s; });
+
+  let k = 0, lastX = null, lastY = null, auto = true;
+  const live = [];
+  function spawn(x, y) {
+    if (reduceMotion || srcs.length === 0) return;
+    const img = document.createElement('img');
+    img.className = 'mt-shot';
+    img.src = srcs[k++ % srcs.length];
+    img.alt = '';
+    img.style.left = x + 'px';
+    img.style.top = y + 'px';
+    img.style.setProperty('--rot', ((Math.random() * 2 - 1) * CONFIG.tilt) + 'deg');
+    img.style.zIndex = String(k);
+    field.appendChild(img);
+    live.push(img);
+    while (live.length > CONFIG.maxCount) live.shift().remove();
+    img.addEventListener('animationend', () => { img.remove(); const i = live.indexOf(img); if (i >= 0) live.splice(i, 1); });
+  }
+  function trail(x, y) {
+    if (lastX === null) { lastX = x; lastY = y; spawn(x, y); return; }
+    if (Math.hypot(x - lastX, y - lastY) < CONFIG.spacing) return;
+    lastX = x; lastY = y;
+    spawn(x, y);
+  }
+  field.addEventListener('pointermove', e => { auto = false; trail(e.clientX, e.clientY); });
+  document.documentElement.addEventListener('pointerleave', () => { auto = true; lastX = null; });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针沿 8 字游走；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.03;
+      trail(innerWidth / 2 + Math.sin(t) * innerWidth * 0.34, innerHeight / 2 + Math.sin(t * 2) * innerHeight * 0.24);
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素拖尾</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+
+  /* 用户开启「减少动态效果」时：格子不亮（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    canvas { cursor: default; }
+  }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    cell: 24,          // 格子大小（px）
+    fade: 900,         // 熄灭时长（毫秒）
+    spread: 1,         // 点亮范围（格）
+    gap: 2,            // 格间缝（px）
+    color: "#ffffff",  // 亮起颜色
+    grid: true,        // 显示底格
+    rounded: false,    // 圆角格
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  let cols = 0, rows = 0, lit = new Map(); // key "c,r" → 点亮时间
+
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cols = Math.ceil(innerWidth / CONFIG.cell); rows = Math.ceil(innerHeight / CONFIG.cell);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // 鼠标所在格及周围 spread 格一起点亮（记录点亮时刻，之后按时间衰减）
+  function light(x, y) {
+    if (reduceMotion) return;
+    const c0 = Math.floor(x / CONFIG.cell), r0 = Math.floor(y / CONFIG.cell);
+    const now = performance.now();
+    for (let dc = -CONFIG.spread; dc <= CONFIG.spread; dc++) for (let dr = -CONFIG.spread; dr <= CONFIG.spread; dr++) {
+      // 外圈略早一点「点亮」，衰减得更快，形成中心亮四周暗
+      const ring = Math.max(Math.abs(dc), Math.abs(dr));
+      lit.set((c0 + dc) + ',' + (r0 + dr), now - ring * CONFIG.fade * 0.25);
+    }
+  }
+  let auto = true;
+  addEventListener('pointermove', e => { auto = false; light(e.clientX, e.clientY); });
+  document.documentElement.addEventListener('pointerleave', () => (auto = true));
+
+  function rect(x, y, s) {
+    if (CONFIG.rounded) { const r = s * 0.25; ctx.beginPath(); ctx.roundRect(x, y, s, s, r); ctx.fill(); }
+    else ctx.fillRect(x, y, s, s);
+  }
+
+  function frame(now) {
+    if (!document.hidden) {
+      ctx.clearRect(0, 0, innerWidth, innerHeight);
+      const s = CONFIG.cell - CONFIG.gap;
+      if (CONFIG.grid) {
+        ctx.globalAlpha = 0.06; ctx.fillStyle = CONFIG.color;
+        for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) rect(c * CONFIG.cell, r * CONFIG.cell, s);
+      }
+      ctx.fillStyle = CONFIG.color;
+      for (const [key, t0] of lit) {
+        const k = 1 - (now - t0) / CONFIG.fade;
+        if (k <= 0) { lit.delete(key); continue; }
+        const [c, r] = key.split(',').map(Number);
+        ctx.globalAlpha = k * k; // 先快后慢地熄灭
+        rect(c * CONFIG.cell, r * CONFIG.cell, s);
+      }
+      ctx.globalAlpha = 1;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针沿 8 字游走；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.035;
+      light(innerWidth / 2 + Math.sin(t) * innerWidth * 0.36, innerHeight / 2 + Math.sin(t * 2) * innerHeight * 0.28);
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

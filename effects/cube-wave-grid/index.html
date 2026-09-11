@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方块波纹网格</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-gap: 6px;           /* 方块间隙 */
+    --mt-color: #1c1c1c;     /* 方块颜色 */
+    --mt-accent: #ffffff;    /* 抬起时的颜色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  /* 网格整体带透视，方块抬起时向观察者靠近 */
+  .mt-grid {
+    display: grid;
+    gap: var(--mt-gap);
+    perspective: 900px;
+    transform-style: preserve-3d;
+    width: min(92vw, 1100px);
+    aspect-ratio: var(--ratio);
+    cursor: crosshair;
+  }
+  .mt-cell {
+    /* --k 抬起程度 0–1、--rx/--ry 倾斜角，由 JS 逐帧写入 */
+    background: color-mix(in srgb, var(--mt-accent) calc(var(--k, 0) * 100%), var(--mt-color));
+    transform: translateZ(calc(var(--k, 0) * var(--lift))) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    will-change: transform, background;
+    border-radius: 2px;
+  }
+
+  /* 用户开启「减少动态效果」时：网格静止平铺 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-cell { transform: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-grid" id="mtGrid" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    cols: 12,        // 列数
+    rows: 7,         // 行数
+    radius: 2.5,     // 影响半径（格）
+    lift: 36,        // 抬起高度（px）
+    tilt: 25,        // 倾斜角度（度）
+    autoWave: true,  // 无鼠标时自动泛波
+  };
+
+  const grid = document.getElementById('mtGrid');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  grid.style.gridTemplateColumns = 'repeat(' + CONFIG.cols + ', 1fr)';
+  grid.style.setProperty('--ratio', CONFIG.cols + ' / ' + CONFIG.rows);
+  grid.style.setProperty('--lift', CONFIG.lift + 'px');
+
+  const cells = [];
+  for (let r = 0; r < CONFIG.rows; r++) for (let c = 0; c < CONFIG.cols; c++) {
+    const el = document.createElement('div');
+    el.className = 'mt-cell';
+    grid.appendChild(el);
+    cells.push({ el, r, c, k: 0 });
+  }
+
+  // 鼠标位置换算成「格坐标」（小数），无鼠标时放到远处
+  let gx = -99, gy = -99, hasPointer = false;
+  grid.addEventListener('pointermove', e => {
+    const b = grid.getBoundingClientRect();
+    gx = (e.clientX - b.left) / b.width * CONFIG.cols - 0.5;
+    gy = (e.clientY - b.top) / b.height * CONFIG.rows - 0.5;
+    hasPointer = true;
+  });
+  grid.addEventListener('pointerleave', () => { hasPointer = false; gx = -99; gy = -99; });
+
+  let t = 0;
+  function frame() {
+    if (!document.hidden && !reduceMotion) {
+      t += 0.016;
+      let cx = gx, cy = gy;
+      // 自动泛波：没有鼠标时一个看不见的点在网格上游走
+      if (!hasPointer && CONFIG.autoWave) {
+        cx = CONFIG.cols / 2 + Math.cos(t * 0.9) * CONFIG.cols * 0.35;
+        cy = CONFIG.rows / 2 + Math.sin(t * 1.3) * CONFIG.rows * 0.35;
+      }
+      for (const cell of cells) {
+        const dx = cell.c - cx, dy = cell.r - cy;
+        const d = Math.hypot(dx, dy);
+        // 目标抬起量：半径内按余弦衰减，形成圆润的波峰
+        const target = d < CONFIG.radius ? 0.5 + 0.5 * Math.cos(d / CONFIG.radius * Math.PI) : 0;
+        cell.k += (target - cell.k) * 0.18;
+        const k = cell.k;
+        // 倾斜：朝波峰中心的方向倒
+        const rx = d > 0.01 ? (dy / d) * k * CONFIG.tilt : 0;
+        const ry = d > 0.01 ? (-dx / d) * k * CONFIG.tilt : 0;
+        cell.el.style.setProperty('--k', k.toFixed(3));
+        cell.el.style.setProperty('--rx', rx.toFixed(1) + 'deg');
+        cell.el.style.setProperty('--ry', ry.toFixed(1) + 'deg');
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：依赖上面的自动泛波（autoWave 关闭时缩略图静止平铺）
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

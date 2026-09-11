@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>融球</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #ffffff;     /* 球体颜色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  /* 球层整体挂黏合滤镜：模糊 + alpha 高对比，相邻球边缘融合 */
+  .mt-field { position: fixed; inset: 0; filter: url(#mtGoo); }
+  .mt-ball {
+    position: absolute;
+    left: 0; top: 0;
+    border-radius: 50%;
+    background: var(--mt-color);
+    will-change: transform;
+  }
+
+  /* 用户开启「减少动态效果」时：球体静止（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-ball { transition: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="mtGoo">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="blur"/>
+    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 30 -14" result="goo"/>
+    <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+  </filter>
+</svg>
+<div class="mt-field" id="mtField" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    count: 6,      // 球体数量
+    size: 110,     // 球体平均直径（px）
+    speed: 1,      // 游动速度倍率
+    goo: 20,       // 黏合强度（模糊半径）
+    follow: true,  // 一颗跟随鼠标
+  };
+
+  const field = document.getElementById('mtField');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelector('#mtGoo feGaussianBlur').setAttribute('stdDeviation', CONFIG.goo);
+
+  // 每颗球沿各自的椭圆轨道慢慢游动（两组不同频率的正弦叠加，轨迹不重复）
+  const balls = Array.from({ length: CONFIG.count }, (_, i) => {
+    const el = document.createElement('div');
+    el.className = 'mt-ball';
+    const d = CONFIG.size * (0.6 + Math.random() * 0.8);
+    el.style.width = el.style.height = d + 'px';
+    el.style.margin = (-d / 2) + 'px 0 0 ' + (-d / 2) + 'px';
+    field.appendChild(el);
+    return {
+      el, d,
+      ax: 0.2 + Math.random() * 0.25, ay: 0.2 + Math.random() * 0.25,   // 轨道半径（占屏比例）
+      fx: 0.3 + Math.random() * 0.5, fy: 0.3 + Math.random() * 0.5,     // 频率
+      px: Math.random() * Math.PI * 2, py: Math.random() * Math.PI * 2, // 相位
+      x: innerWidth / 2, y: innerHeight / 2,
+    };
+  });
+
+  let mx = -9999, my = -9999;
+  addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; });
+  document.documentElement.addEventListener('pointerleave', () => { mx = -9999; my = -9999; });
+
+  let t = 0;
+  function frame() {
+    if (!document.hidden && !reduceMotion) {
+      t += 0.016 * CONFIG.speed;
+      const cx = innerWidth / 2, cy = innerHeight / 2;
+      balls.forEach((b, i) => {
+        let tx = cx + Math.sin(t * b.fx + b.px) * innerWidth * b.ax;
+        let ty = cy + Math.cos(t * b.fy + b.py) * innerHeight * b.ay;
+        // 第一颗可选跟随鼠标（鼠标不在时回到自己的轨道）
+        if (CONFIG.follow && i === 0 && mx > -9000) { tx = mx; ty = my; }
+        b.x += (tx - b.x) * 0.08; b.y += (ty - b.y) * 0.08;
+        b.el.style.transform = 'translate(' + b.x + 'px,' + b.y + 'px)';
+      });
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

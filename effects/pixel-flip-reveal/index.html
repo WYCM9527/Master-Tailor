@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素块揭示卡片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-pixelColor: #ffffff; /* 像素块翻走瞬间的过渡色 */
+    --mt-rounded: 12px;      /* 卡片圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .mt-card {
+    position: relative;
+    width: min(420px, 84vw);
+    aspect-ratio: 4 / 3;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    cursor: pointer;
+    background: #14151f;
+  }
+  /* 底层：揭示图；上层：封面被切成一格格，每格只显示自己那块 */
+  .mt-card .back {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .mt-card .grid {
+    position: absolute; inset: 0;
+    display: grid;
+    pointer-events: none;
+  }
+  .mt-card .px {
+    background-image: var(--front);
+    background-size: var(--cols) var(--rows);
+    background-position: var(--bx) var(--by);
+    transition: opacity 0.12s linear, background-color 0.12s linear;
+    transition-delay: var(--d, 0s);
+  }
+  /* 翻走：先闪一下过渡色再消失 */
+  .mt-card.on .px {
+    background-image: none;
+    background-color: var(--mt-pixelColor);
+    opacity: 0;
+  }
+
+  /* 用户开启「减少动态效果」时：悬停直接切换到揭示图 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-card .px { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-card" id="mtCard">
+  <img class="back" id="mtBack" src="/samples/sample-8.webp" alt="">
+  <div class="grid" id="mtGrid" aria-hidden="true"></div>
+</div>
+<script>
+  const CONFIG = {
+    front: "/samples/sample-4.webp", // 封面图
+    back: "/samples/sample-8.webp",  // 揭示图
+    grid: 10,          // 像素格数（每边）
+    duration: 0.8,     // 翻转总时长（秒）
+    order: "random",   // 翻走顺序：random 随机 / wave 左上到右下 / center 中心向外
+  };
+
+  const card = document.getElementById('mtCard');
+  const grid = document.getElementById('mtGrid');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtBack').src = CONFIG.back;
+  const n = CONFIG.grid;
+  grid.style.gridTemplateColumns = 'repeat(' + n + ', 1fr)';
+  grid.style.gridTemplateRows = 'repeat(' + n + ', 1fr)';
+  grid.style.setProperty('--front', 'url("' + CONFIG.front + '")');
+  grid.style.setProperty('--cols', (n * 100) + '%');
+  grid.style.setProperty('--rows', (n * 100) + '%');
+
+  // 每格的延迟按顺序分配：随机 / 按 (c + r) 斜扫 / 按到中心的距离
+  const cells = [];
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    const el = document.createElement('div');
+    el.className = 'px';
+    // 背景按格子位置偏移，使每格显示封面对应区域
+    el.style.setProperty('--bx', (c / (n - 1) * 100) + '%');
+    el.style.setProperty('--by', (r / (n - 1) * 100) + '%');
+    let rank;
+    if (CONFIG.order === 'wave') rank = (c + r) / (2 * (n - 1));
+    else if (CONFIG.order === 'center') rank = Math.hypot(c - (n - 1) / 2, r - (n - 1) / 2) / (Math.SQRT2 * (n - 1) / 2);
+    else rank = Math.random();
+    el.style.setProperty('--d', (rank * CONFIG.duration * 0.85).toFixed(3) + 's');
+    grid.appendChild(el);
+    cells.push(el);
+  }
+
+  card.addEventListener('pointerenter', () => card.classList.add('on'));
+  card.addEventListener('pointerleave', () => card.classList.remove('on'));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动翻开 / 盖回循环；真实鼠标进入后停止
+  if (!reduceMotion) {
+    let auto = true;
+    card.addEventListener('pointerenter', () => (auto = false));
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      card.classList.toggle('on');
+    }, CONFIG.duration * 1000 + 1500);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

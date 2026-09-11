@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>果冻光标</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-size: 60px;         /* 主球大小 */
+    --mt-color: #ffffff;     /* 球体颜色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+
+  /* 舞台：黏合滤镜作用在整个球层上，球之间靠近时边缘融合 */
+  .mt-field {
+    position: fixed;
+    inset: 0;
+    cursor: none;
+  }
+  .mt-field.show-cursor { cursor: auto; }
+  .mt-blobs {
+    position: absolute;
+    inset: 0;
+    filter: url(#mtGoo);
+    pointer-events: none;
+  }
+  .mt-blob {
+    position: absolute;
+    left: 0; top: 0;
+    width: var(--mt-size);
+    height: var(--mt-size);
+    margin: calc(var(--mt-size) / -2) 0 0 calc(var(--mt-size) / -2);
+    border-radius: 50%;
+    background: var(--mt-color);
+    will-change: transform;
+  }
+  .mt-hint {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.3);
+    font: 14px/1 -apple-system, "PingFang SC", sans-serif;
+    letter-spacing: 0.14em;
+    pointer-events: none;
+  }
+
+  /* 用户开启「减少动态效果」时：球不拖尾，直接跟在鼠标下 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-blobs { filter: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="mtGoo">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur"/>
+    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -12" result="goo"/>
+    <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+  </filter>
+</svg>
+<div class="mt-field" id="mtField">
+  <div class="mt-hint">移动鼠标</div>
+  <div class="mt-blobs" id="mtBlobs" aria-hidden="true"></div>
+</div>
+<script>
+  const CONFIG = {
+    count: 3,          // 球体数量
+    lag: 0.18,         // 跟随迟滞（越小越黏）
+    goo: 12,           // 黏合强度（模糊半径）
+    hideCursor: true,  // 隐藏系统光标
+  };
+
+  const field = document.getElementById('mtField');
+  const layer = document.getElementById('mtBlobs');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!CONFIG.hideCursor) field.classList.add('show-cursor');
+  document.querySelector('#mtGoo feGaussianBlur').setAttribute('stdDeviation', CONFIG.goo);
+
+  // 每个球跟随前一个球，越靠后越小、越慢——形成拖尾的黏液感
+  const blobs = Array.from({ length: CONFIG.count }, (_, i) => {
+    const el = document.createElement('div');
+    el.className = 'mt-blob';
+    const s = 1 - i * 0.18;
+    el.style.transform = 'translate(-100px,-100px) scale(' + s + ')';
+    layer.appendChild(el);
+    return { el, x: innerWidth / 2, y: innerHeight / 2, s };
+  });
+
+  let px = innerWidth / 2, py = innerHeight / 2, auto = true;
+  field.addEventListener('pointermove', e => { auto = false; px = e.clientX; py = e.clientY; });
+  document.documentElement.addEventListener('pointerleave', () => (auto = true));
+
+  function frame() {
+    if (!document.hidden) {
+      let tx = px, ty = py;
+      blobs.forEach((b, i) => {
+        // 第一个球追鼠标，后面的球追前一个球；迟滞越小越拖
+        const k = reduceMotion ? 1 : CONFIG.lag * (1 + i * 0.3);
+        b.x += (tx - b.x) * k; b.y += (ty - b.y) * k;
+        b.el.style.transform = 'translate(' + b.x + 'px,' + b.y + 'px) scale(' + b.s + ')';
+        tx = b.x; ty = b.y;
+      });
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针画 8 字游走；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.04;
+      px = innerWidth / 2 + Math.sin(t) * innerWidth * 0.32;
+      py = innerHeight / 2 + Math.sin(t * 2) * innerHeight * 0.26;
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

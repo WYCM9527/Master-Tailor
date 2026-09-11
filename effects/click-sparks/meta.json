@@ -1,0 +1,100 @@
+{
+  "slug": "click-sparks",
+  "name": "点击火花",
+  "category": "button",
+  "sub": "click",
+  "tags": ["点击", "火花", "反馈"],
+  "summary": "点到哪里，哪里炸开一圈短线火花，飞出去就消失",
+  "params": [
+    {
+      "key": "count",
+      "label": "火花数量",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 24,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "key": "length",
+      "label": "火花长度",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 40,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    },
+    {
+      "key": "distance",
+      "label": "飞出距离",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 160,
+      "step": 10,
+      "default": 60,
+      "unit": "px"
+    },
+    {
+      "key": "duration",
+      "label": "持续时间",
+      "type": "range",
+      "target": "config",
+      "min": 200,
+      "max": 1200,
+      "step": 50,
+      "default": 450,
+      "displayUnit": " 毫秒"
+    },
+    {
+      "key": "thickness",
+      "label": "线条粗细",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 6,
+      "step": 0.5,
+      "default": 2
+    },
+    {
+      "key": "color",
+      "label": "火花颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#ffffff"
+    },
+    {
+      "key": "accent",
+      "label": "按钮颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "点我一下",
+      "maxLength": 12
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "burst",
+      "name": "大爆花",
+      "values": { "count": 18, "length": 24, "distance": 120, "duration": 700, "thickness": 3 }
+    },
+    {
+      "id": "tiny",
+      "name": "细碎星火",
+      "values": { "count": 12, "length": 6, "distance": 36, "duration": 300, "thickness": 1 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

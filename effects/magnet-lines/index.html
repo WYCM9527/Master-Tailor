@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>磁力线阵</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-length: 28px;       /* 线长 */
+    --mt-thickness: 2px;     /* 线粗 */
+    --mt-color: #ffffff;     /* 线条颜色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  .mt-field {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    cursor: crosshair;
+  }
+  /* 每格中央一根短线，绕自己中心旋转指向鼠标 */
+  .mt-line {
+    width: var(--mt-length);
+    height: var(--mt-thickness);
+    background: var(--mt-color);
+    opacity: var(--o, 0.5);
+    transform: rotate(var(--a, 0deg));
+    will-change: transform, opacity;
+  }
+
+  /* 用户开启「减少动态效果」时：线条全部水平静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-line { transform: none !important; opacity: 0.5 !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-field" id="mtField" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    cols: 16,     // 列数
+    rows: 9,      // 行数
+    lag: 0.25,    // 转向迟滞（1 瞬间转向）
+    glow: true,   // 靠近变亮
+  };
+
+  const field = document.getElementById('mtField');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  field.style.gridTemplateColumns = 'repeat(' + CONFIG.cols + ', 1fr)';
+  field.style.gridTemplateRows = 'repeat(' + CONFIG.rows + ', 1fr)';
+
+  const lines = [];
+  for (let i = 0; i < CONFIG.cols * CONFIG.rows; i++) {
+    const el = document.createElement('div');
+    el.className = 'mt-line';
+    field.appendChild(el);
+    lines.push({ el, a: 0, cx: 0, cy: 0 });
+  }
+  // 记录每根线的中心（窗口尺寸变化时重算）
+  function layout() {
+    for (const l of lines) {
+      const r = l.el.getBoundingClientRect();
+      l.cx = r.left + r.width / 2; l.cy = r.top + r.height / 2;
+    }
+  }
+  layout();
+  addEventListener('resize', layout);
+
+  let px = innerWidth / 2, py = innerHeight / 2, auto = true;
+  addEventListener('pointermove', e => { auto = false; px = e.clientX; py = e.clientY; });
+  document.documentElement.addEventListener('pointerleave', () => (auto = true));
+
+  const maxD = Math.hypot(innerWidth, innerHeight) * 0.5;
+  function frame() {
+    if (!document.hidden && !reduceMotion) {
+      for (const l of lines) {
+        const dx = px - l.cx, dy = py - l.cy;
+        const target = Math.atan2(dy, dx);
+        // 角度按最短路径插值，避免 ±180° 处打转
+        let diff = target - l.a;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        l.a += diff * CONFIG.lag;
+        l.el.style.setProperty('--a', (l.a * 180 / Math.PI).toFixed(1) + 'deg');
+        if (CONFIG.glow) {
+          const d = Math.hypot(dx, dy);
+          l.el.style.setProperty('--o', (0.25 + 0.75 * Math.max(0, 1 - d / maxD)).toFixed(2));
+        }
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针绕圈游走；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.03;
+      px = innerWidth / 2 + Math.cos(t) * innerWidth * 0.3;
+      py = innerHeight / 2 + Math.sin(t * 1.4) * innerHeight * 0.3;
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

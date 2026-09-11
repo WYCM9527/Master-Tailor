@@ -1,0 +1,84 @@
+{
+  "slug": "target-cursor",
+  "name": "目标框光标",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["光标", "取景框", "锁定"],
+  "summary": "四个角括号跟着鼠标缓缓旋转，指到目标就展开套住它",
+  "params": [
+    {
+      "key": "size",
+      "label": "空闲时大小",
+      "type": "range",
+      "target": "config",
+      "min": 16,
+      "max": 60,
+      "step": 2,
+      "default": 28,
+      "unit": "px"
+    },
+    {
+      "key": "spin",
+      "label": "空闲旋转周期",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "default": 3,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "没指到目标时四角自转一圈的时间"
+    },
+    {
+      "key": "padding",
+      "label": "锁定留边",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 8,
+      "unit": "px",
+      "help": "套住目标时比目标外扩多少"
+    },
+    {
+      "key": "lag",
+      "label": "跟随迟滞",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.3
+    },
+    { "key": "dot", "label": "中心圆点", "type": "toggle", "target": "css", "default": true },
+    { "key": "color", "label": "框线颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "thickness",
+      "label": "框线粗细",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 4,
+      "step": 0.5,
+      "default": 2,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "hud",
+      "name": "快速 HUD",
+      "values": { "spin": 1.5, "lag": 0.6, "size": 40, "padding": 14, "thickness": 1 }
+    },
+    {
+      "id": "soft",
+      "name": "慢转无点",
+      "values": { "spin": 8, "lag": 0.15, "dot": false, "size": 22 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

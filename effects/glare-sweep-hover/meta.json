@@ -1,0 +1,97 @@
+{
+  "slug": "glare-sweep-hover",
+  "name": "扫光悬停卡片",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["悬停", "扫光", "卡片"],
+  "summary": "鼠标移入的一瞬，一道斜光从卡片一角扫到另一角",
+  "params": [
+    {
+      "key": "photo",
+      "label": "卡片图片",
+      "type": "image",
+      "target": "config",
+      "default": "/samples/sample-7.webp"
+    },
+    { "key": "glare", "label": "光带颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "opacity",
+      "label": "光带亮度",
+      "type": "range",
+      "target": "css",
+      "min": 0.1,
+      "max": 0.9,
+      "step": 0.1,
+      "default": 0.45
+    },
+    {
+      "key": "width",
+      "label": "光带宽度",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "default": 25,
+      "unit": "%"
+    },
+    {
+      "key": "angle",
+      "label": "光带角度",
+      "type": "range",
+      "target": "css",
+      "min": -60,
+      "max": 60,
+      "step": 5,
+      "default": -25,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "duration",
+      "label": "扫过时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 1.5,
+      "step": 0.1,
+      "default": 0.7,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "backOnLeave",
+      "label": "移出时扫回",
+      "type": "toggle",
+      "target": "css",
+      "default": true,
+      "help": "关闭则移出时光带直接消失"
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "sharp",
+      "name": "锐利快闪",
+      "values": { "width": 12, "opacity": 0.8, "duration": 0.35, "angle": -45 }
+    },
+    {
+      "id": "soft",
+      "name": "柔光慢扫",
+      "values": { "width": 55, "opacity": 0.25, "duration": 1.3, "angle": 20, "backOnLeave": false }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

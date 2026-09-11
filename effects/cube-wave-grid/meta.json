@@ -1,0 +1,106 @@
+{
+  "slug": "cube-wave-grid",
+  "name": "方块波纹网格",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["网格", "3D", "波纹"],
+  "summary": "一片立体小方块随鼠标掠过起伏倾斜，像水面被手指划过",
+  "params": [
+    {
+      "key": "cols",
+      "label": "列数",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 20,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "key": "rows",
+      "label": "行数",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 14,
+      "step": 1,
+      "default": 7
+    },
+    {
+      "key": "radius",
+      "label": "影响半径",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 5,
+      "step": 0.5,
+      "default": 2.5,
+      "displayUnit": " 格",
+      "help": "鼠标周围多少格内的方块会起伏"
+    },
+    {
+      "key": "lift",
+      "label": "抬起高度",
+      "type": "range",
+      "target": "config",
+      "min": 10,
+      "max": 80,
+      "step": 5,
+      "default": 36,
+      "unit": "px"
+    },
+    {
+      "key": "tilt",
+      "label": "倾斜角度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 45,
+      "step": 5,
+      "default": 25,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "gap",
+      "label": "方块间隙",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 16,
+      "step": 2,
+      "default": 6,
+      "unit": "px"
+    },
+    { "key": "color", "label": "方块颜色", "type": "color", "target": "css", "default": "#1c1c1c" },
+    {
+      "key": "accent",
+      "label": "抬起时颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "autoWave",
+      "label": "无鼠标时自动泛波",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "dense",
+      "name": "密网小起伏",
+      "values": { "cols": 20, "rows": 12, "radius": 3, "lift": 16, "tilt": 15, "gap": 3 }
+    },
+    {
+      "id": "chunky",
+      "name": "大块重倾斜",
+      "values": { "cols": 8, "rows": 5, "radius": 1.5, "lift": 70, "tilt": 45, "gap": 12 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

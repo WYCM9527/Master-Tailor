@@ -1,0 +1,88 @@
+{
+  "slug": "electric-border",
+  "name": "电流边框卡片",
+  "category": "card",
+  "sub": "idle",
+  "tags": ["边框", "电流", "发光"],
+  "summary": "卡片边框像通了电，一圈毛刺光线不停抖动游走",
+  "params": [
+    { "key": "color", "label": "电流颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "thickness",
+      "label": "电流粗细",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 4,
+      "step": 0.5,
+      "default": 2,
+      "unit": "px"
+    },
+    {
+      "key": "jitter",
+      "label": "抖动幅度",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 24,
+      "step": 2,
+      "default": 10,
+      "help": "边框偏离直线的最大距离"
+    },
+    {
+      "key": "speed",
+      "label": "抖动速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "glow",
+      "label": "外发光",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "key": "title",
+      "label": "卡片标题",
+      "type": "text",
+      "target": "config",
+      "default": "高压电流",
+      "maxLength": 16
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "cyan",
+      "name": "青色高压",
+      "values": { "color": "#00e5ff", "jitter": 16, "speed": 1.8, "glow": 28 }
+    },
+    {
+      "id": "calm",
+      "name": "细弱微颤",
+      "values": { "thickness": 1, "jitter": 4, "speed": 0.5, "glow": 8, "rounded": 4 }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

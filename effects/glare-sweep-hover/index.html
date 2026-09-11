@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扫光悬停卡片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-glare: #ffffff;     /* 光带颜色 */
+    --mt-opacity: 0.45;      /* 光带亮度 */
+    --mt-width: 25%;         /* 光带宽度（占卡片宽） */
+    --mt-angle: -25deg;      /* 光带角度 */
+    --mt-duration: 0.7s;     /* 扫过时长 */
+    --mt-backOnLeave: 1;     /* 移出时扫回：1 扫回 / 0 直接消失 */
+    --mt-rounded: 16px;      /* 卡片圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  .mt-card {
+    position: relative;
+    width: min(360px, 80vw);
+    aspect-ratio: 4 / 5;
+    border-radius: var(--mt-rounded);
+    overflow: hidden;
+    background: #14151f;
+    cursor: pointer;
+  }
+  .mt-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .mt-card .caption {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 40px 22px 20px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  }
+  /* 光带：一条斜向的透明→光色→透明渐变条，比卡片大得多，靠 background-position 从一角扫到另一角 */
+  .mt-card .glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(
+      var(--mt-angle),
+      transparent calc(50% - var(--mt-width) / 2),
+      color-mix(in srgb, var(--mt-glare) calc(var(--mt-opacity) * 100%), transparent) 50%,
+      transparent calc(50% + var(--mt-width) / 2)
+    );
+    background-size: 300% 300%;
+    background-position: 100% 100%;
+    transition: background-position var(--mt-duration) ease;
+    /* 移出时不扫回：过渡时长置 0 直接归位 */
+    transition-duration: calc(var(--mt-duration) * var(--mt-backOnLeave));
+  }
+  .mt-card:hover .glare,
+  .mt-card.is-hover .glare {
+    background-position: 0% 0%;
+    transition-duration: var(--mt-duration);
+  }
+
+  /* 用户开启「减少动态效果」时：光带直接出现 / 消失，不扫动 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-card .glare { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-card" id="mtCard">
+  <img id="mtPhoto" src="/samples/sample-7.webp" alt="">
+  <div class="glare" aria-hidden="true"></div>
+  <div class="caption">悬停看扫光</div>
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-7.webp", // 卡片图片
+  };
+  const card = document.getElementById('mtCard');
+  document.getElementById('mtPhoto').src = CONFIG.photo;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* @mt:thumb-start */
+  // 缩略图演示：模拟悬停进入 / 离开循环；真实鼠标进入后停止模拟
+  if (!reduceMotion) {
+    let auto = true;
+    card.addEventListener('pointerenter', () => { auto = false; card.classList.remove('is-hover'); });
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      card.classList.toggle('is-hover');
+    }, 1400);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

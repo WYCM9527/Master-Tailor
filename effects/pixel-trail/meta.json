@@ -1,0 +1,86 @@
+{
+  "slug": "pixel-trail",
+  "name": "像素拖尾",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["像素", "网格", "光标"],
+  "summary": "鼠标经过的格子亮起，身后拖出一串慢慢熄灭的像素",
+  "params": [
+    {
+      "key": "cell",
+      "label": "格子大小",
+      "type": "range",
+      "target": "config",
+      "min": 8,
+      "max": 60,
+      "step": 2,
+      "default": 24,
+      "unit": "px"
+    },
+    {
+      "key": "fade",
+      "label": "熄灭时长",
+      "type": "range",
+      "target": "config",
+      "min": 200,
+      "max": 3000,
+      "step": 100,
+      "default": 900,
+      "displayUnit": " 毫秒"
+    },
+    {
+      "key": "spread",
+      "label": "点亮范围",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 1,
+      "default": 1,
+      "displayUnit": " 格",
+      "help": "鼠标所在格周围几格一起亮，0 只亮所在格"
+    },
+    {
+      "key": "gap",
+      "label": "格间缝",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 6,
+      "step": 1,
+      "default": 2,
+      "unit": "px"
+    },
+    {
+      "key": "color",
+      "label": "亮起颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#ffffff"
+    },
+    {
+      "key": "grid",
+      "label": "显示底格",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "未亮的格子画一层极淡的底色"
+    },
+    { "key": "rounded", "label": "圆角格", "type": "toggle", "target": "config", "default": false }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "fine",
+      "name": "细像素长尾",
+      "values": { "cell": 12, "fade": 2000, "spread": 0, "gap": 1 }
+    },
+    {
+      "id": "blocks",
+      "name": "大格圆角",
+      "values": { "cell": 52, "fade": 600, "spread": 1, "gap": 6, "rounded": true, "grid": false }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

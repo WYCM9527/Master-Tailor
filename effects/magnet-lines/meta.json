@@ -1,0 +1,87 @@
+{
+  "slug": "magnet-lines",
+  "name": "磁力线阵",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["磁场", "线条", "光标"],
+  "summary": "一片短线像铁屑一样，齐齐转向鼠标所在的方向",
+  "params": [
+    {
+      "key": "cols",
+      "label": "列数",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 30,
+      "step": 1,
+      "default": 16
+    },
+    {
+      "key": "rows",
+      "label": "行数",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 20,
+      "step": 1,
+      "default": 9
+    },
+    {
+      "key": "length",
+      "label": "线长",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 60,
+      "step": 2,
+      "default": 28,
+      "unit": "px"
+    },
+    {
+      "key": "thickness",
+      "label": "线粗",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 6,
+      "step": 0.5,
+      "default": 2,
+      "unit": "px"
+    },
+    {
+      "key": "lag",
+      "label": "转向迟滞",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.25,
+      "help": "1 为瞬间转向，越小越像有惯性"
+    },
+    {
+      "key": "glow",
+      "label": "靠近变亮",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "离鼠标越近的线越亮"
+    },
+    { "key": "color", "label": "线条颜色", "type": "color", "target": "css", "default": "#ffffff" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "fine",
+      "name": "细密针阵",
+      "values": { "cols": 30, "rows": 18, "length": 14, "thickness": 1, "lag": 0.5 }
+    },
+    {
+      "id": "heavy",
+      "name": "粗线慢转",
+      "values": { "cols": 9, "rows": 5, "length": 56, "thickness": 5, "lag": 0.08, "glow": false }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

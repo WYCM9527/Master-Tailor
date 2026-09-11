@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>目标框光标</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-spin: 3s;           /* 空闲旋转周期 */
+    --mt-dot: 1;             /* 中心圆点：1 显示 / 0 隐藏 */
+    --mt-color: #ffffff;     /* 框线颜色 */
+    --mt-thickness: 2px;     /* 框线粗细 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    overflow: hidden;
+    cursor: none;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #f2f3f8;
+  }
+  /* 目标框：一个跟随鼠标的容器 + 四个角括号 + 中心点；空闲时整体自转 */
+  .mt-target {
+    position: fixed;
+    left: 0; top: 0;
+    width: 28px; height: 28px;
+    pointer-events: none;
+    will-change: transform, width, height;
+  }
+  .mt-target .spin {
+    position: absolute; inset: 0;
+    animation: mt-spin var(--mt-spin) linear infinite;
+    animation-play-state: var(--play, running);
+    transition: transform 0.3s ease;
+  }
+  .mt-target.locked .spin { animation: none; }
+  @keyframes mt-spin { to { transform: rotate(360deg); } }
+  .mt-target i {
+    position: absolute;
+    width: 30%; height: 30%;
+    min-width: 6px; min-height: 6px;
+    max-width: 14px; max-height: 14px;
+    border: var(--mt-thickness) solid var(--mt-color);
+  }
+  .mt-target i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+  .mt-target i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+  .mt-target i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; }
+  .mt-target i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+  .mt-target .dot {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 4px; height: 4px;
+    margin: -2px 0 0 -2px;
+    background: var(--mt-color);
+    opacity: var(--mt-dot);
+  }
+  /* 示范目标：几个可被锁定的按钮 */
+  .mt-targets {
+    position: fixed; inset: 0;
+    display: flex; gap: 6vw;
+    align-items: center; justify-content: center;
+    flex-wrap: wrap;
+    padding: 0 8vw;
+  }
+  .mt-btn {
+    padding: 14px 26px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: #f2f3f8;
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    cursor: none;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .mt-btn:hover { background: var(--mt-color); color: #0a0a0f; }
+
+  /* 用户开启「减少动态效果」时：不自转、直接跟手（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-target .spin { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-targets">
+  <button type="button" class="mt-btn">锁定我</button>
+  <button type="button" class="mt-btn">或者我</button>
+  <button type="button" class="mt-btn">再试这个</button>
+</div>
+<div class="mt-target" id="mtTarget" aria-hidden="true">
+  <div class="spin"><i></i><i></i><i></i><i></i></div>
+  <div class="dot"></div>
+</div>
+<script>
+  const CONFIG = {
+    size: 28,      // 空闲时大小（px）
+    padding: 8,    // 锁定留边（px）
+    lag: 0.3,      // 跟随迟滞（1 完全跟手）
+  };
+
+  const target = document.getElementById('mtTarget');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 当前几何与目标几何：中心点与宽高，逐帧插值
+  let x = innerWidth / 2, y = innerHeight / 2, w = CONFIG.size, h = CONFIG.size;
+  let tx = x, ty = y, tw = w, th = h, locked = null, auto = true;
+
+  addEventListener('pointermove', e => {
+    auto = false;
+    const el = e.target && e.target.closest ? e.target.closest('.mt-btn') : null;
+    setTarget(e.clientX, e.clientY, el);
+  });
+  document.documentElement.addEventListener('pointerleave', () => (auto = true));
+
+  function setTarget(px, py, el) {
+    if (el) {
+      const r = el.getBoundingClientRect();
+      tx = r.left + r.width / 2; ty = r.top + r.height / 2;
+      tw = r.width + CONFIG.padding * 2; th = r.height + CONFIG.padding * 2;
+      locked = el;
+    } else {
+      tx = px; ty = py; tw = CONFIG.size; th = CONFIG.size; locked = null;
+    }
+    target.classList.toggle('locked', !!locked);
+  }
+
+  function frame() {
+    if (!document.hidden) {
+      const k = reduceMotion ? 1 : CONFIG.lag;
+      x += (tx - x) * k; y += (ty - y) * k; w += (tw - w) * k; h += (th - h) * k;
+      target.style.width = w + 'px'; target.style.height = h + 'px';
+      target.style.transform = 'translate(' + (x - w / 2) + 'px,' + (y - h / 2) + 'px)';
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针在几个目标之间巡游并停留锁定；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    const btns = [...document.querySelectorAll('.mt-btn')];
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.02;
+      const i = Math.floor(t) % btns.length, f = t - Math.floor(t);
+      const r = btns[i].getBoundingClientRect();
+      const nx = r.left + r.width / 2 + Math.sin(f * Math.PI * 2) * r.width * 0.9;
+      const ny = r.top + r.height / 2 + Math.cos(f * Math.PI) * 60;
+      // 前半段在目标外游走，后半段停在目标上锁定
+      setTarget(nx, ny, f > 0.45 ? btns[i] : null);
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

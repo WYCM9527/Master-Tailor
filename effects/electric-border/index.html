@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电流边框卡片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #ffffff;     /* 电流颜色 */
+    --mt-thickness: 2px;     /* 电流粗细 */
+    --mt-glow: 16px;         /* 外发光半径 */
+    --mt-rounded: 16px;      /* 卡片圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #f2f3f8;
+  }
+  .mt-card {
+    position: relative;
+    width: min(360px, 78vw);
+    padding: 34px 30px;
+    border-radius: var(--mt-rounded);
+    background: #101016;
+  }
+  .mt-card h3 { margin: 0 0 10px; font-size: 22px; letter-spacing: 0.04em; }
+  .mt-card p { margin: 0; font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, 0.72); }
+  /* 电流层：一张覆盖卡片并向外扩出抖动余量的 SVG，描一条圆角矩形，经湍流位移滤镜变形 */
+  .mt-bolt {
+    position: absolute;
+    inset: -24px;
+    width: calc(100% + 48px);
+    height: calc(100% + 48px);
+    pointer-events: none;
+    overflow: visible;
+    filter: drop-shadow(0 0 var(--mt-glow) var(--mt-color));
+  }
+  .mt-bolt rect {
+    fill: none;
+    stroke: var(--mt-color);
+    stroke-width: var(--mt-thickness);
+    filter: url(#mtElectric);
+  }
+
+  /* 用户开启「减少动态效果」时：边框静止为一条发光直线框 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-bolt rect { filter: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-card">
+  <svg class="mt-bolt" aria-hidden="true">
+    <defs>
+      <filter id="mtElectric" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="2" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+    <rect id="mtRect" x="24" y="24" rx="16" ry="16"/>
+  </svg>
+  <h3 id="mtTitle">高压电流</h3>
+  <p>一圈毛刺状的电光沿着卡片边缘持续抖动、游走，像边框里真的通着电。</p>
+</div>
+<script>
+  const CONFIG = {
+    jitter: 10,    // 抖动幅度（px）
+    speed: 1,      // 抖动速度倍率
+    title: "高压电流", // 卡片标题
+  };
+
+  const card = document.querySelector('.mt-card');
+  const rect = document.getElementById('mtRect');
+  const turb = document.querySelector('#mtElectric feTurbulence');
+  const disp = document.querySelector('#mtElectric feDisplacementMap');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  disp.setAttribute('scale', CONFIG.jitter);
+
+  // 描边矩形跟随卡片尺寸与圆角
+  function fit() {
+    const w = card.clientWidth, h = card.clientHeight;
+    const r = parseFloat(getComputedStyle(card).borderRadius) || 0;
+    rect.setAttribute('width', w); rect.setAttribute('height', h);
+    rect.setAttribute('rx', r); rect.setAttribute('ry', r);
+  }
+  fit();
+  addEventListener('resize', fit);
+  setInterval(fit, 1000); // 调参改圆角后跟上
+
+  // 让噪声随时间流动：每帧换 seed 太跳，改为缓慢推进 baseFrequency 的微小抖动 + 周期性换 seed
+  let t = 0, last = 0;
+  function frame(now) {
+    if (!document.hidden && !reduceMotion && now - last > 40 / CONFIG.speed) {
+      last = now;
+      t += 1;
+      // 每隔几帧换一个种子，配合微调频率，电流看起来在边框上游走
+      if (t % 3 === 0) turb.setAttribute('seed', String((t / 3) % 1000));
+      const bf = 0.02 + Math.sin(t * 0.1) * 0.006;
+      turb.setAttribute('baseFrequency', bf.toFixed(4));
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

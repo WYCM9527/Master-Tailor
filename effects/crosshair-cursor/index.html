@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>十字瞄准线</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #ffffff;     /* 线条颜色 */
+    --mt-opacity: 0.6;       /* 线条透明度 */
+    --mt-accent: #ffffff;    /* 指到目标时的高亮色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    overflow: hidden;
+    cursor: none;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  /* 四段线：以交叉点为中心留出空隙，各自延伸到屏幕边缘 */
+  .mt-line {
+    position: fixed;
+    background: var(--mt-color);
+    opacity: var(--mt-opacity);
+    pointer-events: none;
+    will-change: transform, width, height;
+  }
+  .mt-line.h { height: 1px; }
+  .mt-line.v { width: 1px; }
+  .mt-coords {
+    position: fixed;
+    color: var(--mt-color);
+    opacity: var(--mt-opacity);
+    font: 11px/1 ui-monospace, monospace;
+    letter-spacing: 0.08em;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  /* 几个示范目标：指到时边线亮起，十字中心张开 */
+  .mt-targets {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    place-items: center;
+    padding: 12vh 8vw;
+  }
+  .mt-target {
+    width: min(180px, 22vw);
+    aspect-ratio: 4 / 3;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .mt-target:hover { border-color: var(--mt-accent); color: var(--mt-accent); }
+
+  /* 用户开启「减少动态效果」时：线条直接跟手、不做迟滞（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-line { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-targets" aria-hidden="true">
+  <div class="mt-target">TARGET 01</div>
+  <div class="mt-target">TARGET 02</div>
+  <div class="mt-target">TARGET 03</div>
+</div>
+<div class="mt-line h" id="lT" aria-hidden="true"></div>
+<div class="mt-line h" id="lB" aria-hidden="true"></div>
+<div class="mt-line v" id="lL" aria-hidden="true"></div>
+<div class="mt-line v" id="lR" aria-hidden="true"></div>
+<div class="mt-coords" id="mtCoords" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    lag: 0.35,      // 跟随迟滞（1 完全跟手）
+    gap: 12,        // 中心留空半径（px）
+    hoverGap: 40,   // 指到目标时留空半径（px）
+    coords: true,   // 显示坐标读数
+  };
+
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const lT = document.getElementById('lT'), lB = document.getElementById('lB');
+  const lL = document.getElementById('lL'), lR = document.getElementById('lR');
+  const coords = document.getElementById('mtCoords');
+  if (!CONFIG.coords) coords.style.display = 'none';
+
+  let px = innerWidth / 2, py = innerHeight / 2, x = px, y = py, gap = CONFIG.gap, onTarget = false, auto = true;
+  addEventListener('pointermove', e => {
+    auto = false; px = e.clientX; py = e.clientY;
+    onTarget = !!(e.target && e.target.closest && e.target.closest('.mt-target'));
+  });
+  document.documentElement.addEventListener('pointerleave', () => (auto = true));
+
+  function frame() {
+    if (!document.hidden) {
+      const k = reduceMotion ? 1 : CONFIG.lag;
+      x += (px - x) * k; y += (py - y) * k;
+      const targetGap = onTarget ? CONFIG.hoverGap : CONFIG.gap;
+      gap += (targetGap - gap) * (reduceMotion ? 1 : 0.2);
+      // 水平线：左段 0 → x−gap，右段 x+gap → 右边缘；垂直线同理
+      // 用 top/left/width/height 直接布局，四段线各自一条
+      lT.style.cssText = 'left:0;top:' + y + 'px;width:' + Math.max(0, x - gap) + 'px';
+      lB.style.cssText = 'left:' + (x + gap) + 'px;top:' + y + 'px;width:' + Math.max(0, innerWidth - x - gap) + 'px';
+      lL.style.cssText = 'left:' + x + 'px;top:0;height:' + Math.max(0, y - gap) + 'px';
+      lR.style.cssText = 'left:' + x + 'px;top:' + (y + gap) + 'px;height:' + Math.max(0, innerHeight - y - gap) + 'px';
+      if (CONFIG.coords) {
+        coords.textContent = Math.round(x) + ' , ' + Math.round(y);
+        coords.style.transform = 'translate(' + (x + gap + 8) + 'px,' + (y + gap + 6) + 'px)';
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针在三个目标之间巡游；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    const targets = [...document.querySelectorAll('.mt-target')];
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.02;
+      const i = Math.floor(t) % targets.length;
+      const r = targets[i].getBoundingClientRect();
+      const f = t - Math.floor(t); // 0→1 在目标内慢慢移动
+      px = r.left + r.width * (0.2 + 0.6 * f); py = r.top + r.height * (0.3 + 0.4 * Math.sin(f * Math.PI));
+      onTarget = f > 0.15 && f < 0.95;
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

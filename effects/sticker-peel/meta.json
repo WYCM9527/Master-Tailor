@@ -1,0 +1,99 @@
+{
+  "slug": "sticker-peel",
+  "name": "贴纸翻角",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["贴纸", "翻角", "拖拽"],
+  "summary": "一张贴纸悬停时翘起一角露出背胶，还能拖着到处贴",
+  "params": [
+    {
+      "key": "photo",
+      "label": "贴纸图片",
+      "type": "image",
+      "target": "config",
+      "default": "/samples/sample-5.webp"
+    },
+    {
+      "key": "size",
+      "label": "贴纸大小",
+      "type": "range",
+      "target": "css",
+      "min": 120,
+      "max": 360,
+      "step": 10,
+      "default": 220,
+      "unit": "px"
+    },
+    {
+      "key": "peel",
+      "label": "翘起幅度",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "default": 30,
+      "unit": "%",
+      "help": "悬停时翘起的那一角占贴纸边长的比例"
+    },
+    {
+      "key": "corner",
+      "label": "翘起的角",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "br", "label": "右下" },
+        { "value": "tr", "label": "右上" },
+        { "value": "bl", "label": "左下" },
+        { "value": "tl", "label": "左上" }
+      ],
+      "default": "br"
+    },
+    {
+      "key": "rotate",
+      "label": "初始歪斜",
+      "type": "range",
+      "target": "css",
+      "min": -20,
+      "max": 20,
+      "step": 1,
+      "default": -6,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "draggable",
+      "label": "可拖拽",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    { "key": "shadow", "label": "翘起投影", "type": "toggle", "target": "css", "default": true },
+    {
+      "key": "rounded",
+      "label": "贴纸圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "big",
+      "name": "大翻角",
+      "values": { "peel": 55, "corner": "tr", "size": 300, "rotate": 4 }
+    },
+    {
+      "id": "flat",
+      "name": "小翘不拖",
+      "values": { "peel": 12, "draggable": false, "rotate": 0, "rounded": 4 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

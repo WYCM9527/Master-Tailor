@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贴纸翻角</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-size: 220px;        /* 贴纸大小 */
+    --mt-peel: 30%;          /* 翘起幅度（占边长） */
+    --mt-rotate: -6deg;      /* 初始歪斜 */
+    --mt-shadow: 1;          /* 翘起投影：1 开 / 0 关 */
+    --mt-rounded: 16px;      /* 贴纸圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  /* 贴纸：正面图 + 翻起的角（同一张图镜像后露出的「背胶面」） */
+  .mt-sticker {
+    position: relative;
+    width: var(--mt-size);
+    height: var(--mt-size);
+    transform: translate(var(--x, 0px), var(--y, 0px)) rotate(var(--mt-rotate));
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+  }
+  .mt-sticker.dragging { cursor: grabbing; }
+  .mt-sticker .face,
+  .mt-sticker .flap {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--mt-rounded);
+    background-image: var(--photo);
+    background-size: cover;
+    background-position: center;
+    transition: clip-path 0.35s ease, transform 0.35s ease, opacity 0.35s ease;
+  }
+  /* 正面：翘起的角被斜切掉；四个角各自一组切法 */
+  .mt-sticker .face {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, calc(0.4 * var(--mt-shadow)));
+  }
+  .mt-sticker.br .face { clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%); }
+  .mt-sticker.tr .face { clip-path: polygon(0 0, calc(100% - var(--cut)) 0, 100% var(--cut), 100% 100%, 0 100%); }
+  .mt-sticker.bl .face { clip-path: polygon(0 0, 100% 0, 100% 100%, var(--cut) 100%, 0 calc(100% - var(--cut))); }
+  .mt-sticker.tl .face { clip-path: polygon(var(--cut) 0, 100% 0, 100% 100%, 0 100%, 0 var(--cut)); }
+  /* 翻起的角：只显示那一角的三角形，内容是镜像的正面（像真实贴纸翻过来的背面），带白色背胶感 */
+  .mt-sticker .flap {
+    filter: brightness(1.35) saturate(0.4);
+    box-shadow: -6px -6px 18px rgba(0, 0, 0, calc(0.35 * var(--mt-shadow)));
+  }
+  .mt-sticker.br .flap { clip-path: polygon(100% calc(100% - var(--cut)), 100% 100%, calc(100% - var(--cut)) 100%); transform: translate(calc(var(--cut) * -1), calc(var(--cut) * -1)) scale(-1); transform-origin: 100% 100%; }
+  .mt-sticker.tr .flap { clip-path: polygon(calc(100% - var(--cut)) 0, 100% 0, 100% var(--cut)); transform: translate(calc(var(--cut) * -1), var(--cut)) scale(-1); transform-origin: 100% 0; }
+  .mt-sticker.bl .flap { clip-path: polygon(0 calc(100% - var(--cut)), var(--cut) 100%, 0 100%); transform: translate(var(--cut), calc(var(--cut) * -1)) scale(-1); transform-origin: 0 100%; }
+  .mt-sticker.tl .flap { clip-path: polygon(0 0, var(--cut) 0, 0 var(--cut)); transform: translate(var(--cut), var(--cut)) scale(-1); transform-origin: 0 0; }
+  .mt-hint {
+    position: fixed;
+    left: 50%; bottom: 22px;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.35);
+    font: 13px/1 -apple-system, "PingFang SC", sans-serif;
+    letter-spacing: 0.12em;
+    pointer-events: none;
+  }
+
+  /* 用户开启「减少动态效果」时：翘角直接切换、不做过渡 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-sticker .face, .mt-sticker .flap { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-sticker br" id="mtSticker" role="img" aria-label="贴纸">
+  <div class="face"></div>
+  <div class="flap" aria-hidden="true"></div>
+</div>
+<div class="mt-hint" id="mtHint">悬停翘角，按住拖走</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-5.webp", // 贴纸图片
+    corner: "br",       // 翘起的角：br 右下 / tr 右上 / bl 左下 / tl 左上
+    draggable: true,    // 可拖拽
+  };
+
+  const sticker = document.getElementById('mtSticker');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  sticker.className = 'mt-sticker ' + CONFIG.corner;
+  sticker.style.setProperty('--photo', 'url("' + CONFIG.photo + '")');
+  if (!CONFIG.draggable) { sticker.style.cursor = 'default'; document.getElementById('mtHint').textContent = '悬停翘角'; }
+
+  // 翘起量：--cut 为被翻起的角的边长；平时露一点小角（暗示可翻），悬停 / 拖拽时翘到设定幅度
+  function setPeel(on) {
+    const peel = getComputedStyle(document.documentElement).getPropertyValue('--mt-peel').trim() || '30%';
+    sticker.style.setProperty('--cut', on ? 'calc(' + peel + ')' : '6%');
+  }
+  setPeel(false);
+  sticker.addEventListener('pointerenter', () => setPeel(true));
+  sticker.addEventListener('pointerleave', () => { if (!dragging) setPeel(false); });
+
+  // 拖拽：记录起点偏移，移动时写入 translate 变量
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  if (CONFIG.draggable) {
+    sticker.addEventListener('pointerdown', e => {
+      dragging = true; sticker.classList.add('dragging');
+      sx = e.clientX - ox; sy = e.clientY - oy;
+      sticker.setPointerCapture(e.pointerId);
+      setPeel(true);
+    });
+    sticker.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      ox = e.clientX - sx; oy = e.clientY - sy;
+      sticker.style.setProperty('--x', ox + 'px'); sticker.style.setProperty('--y', oy + 'px');
+    });
+    const end = () => { dragging = false; sticker.classList.remove('dragging'); setPeel(false); };
+    sticker.addEventListener('pointerup', end);
+    sticker.addEventListener('pointercancel', end);
+  }
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动翘起 / 放平循环；真实鼠标进入后停止
+  if (!reduceMotion) {
+    let auto = true, on = false;
+    sticker.addEventListener('pointerenter', () => (auto = false));
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      on = !on; setPeel(on);
+    }, 1500);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

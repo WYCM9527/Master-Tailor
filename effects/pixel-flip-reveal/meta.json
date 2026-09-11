@@ -1,0 +1,92 @@
+{
+  "slug": "pixel-flip-reveal",
+  "name": "像素块揭示卡片",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["像素", "揭示", "卡片"],
+  "summary": "悬停时一片像素块随机翻走，露出底下的另一张图",
+  "params": [
+    {
+      "key": "front",
+      "label": "封面图",
+      "type": "image",
+      "target": "config",
+      "default": "/samples/sample-4.webp"
+    },
+    {
+      "key": "back",
+      "label": "揭示图",
+      "type": "image",
+      "target": "config",
+      "default": "/samples/sample-8.webp"
+    },
+    {
+      "key": "grid",
+      "label": "像素格数",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 20,
+      "step": 1,
+      "default": 10,
+      "help": "每边切成多少格"
+    },
+    {
+      "key": "duration",
+      "label": "翻转总时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.8,
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "order",
+      "label": "翻走顺序",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "random", "label": "随机" },
+        { "value": "wave", "label": "从左上到右下" },
+        { "value": "center", "label": "从中心向外" }
+      ],
+      "default": "random"
+    },
+    {
+      "key": "pixelColor",
+      "label": "像素块颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff",
+      "help": "翻走瞬间闪现的过渡色"
+    },
+    {
+      "key": "rounded",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "wave",
+      "name": "斜扫波",
+      "values": { "order": "wave", "grid": 14, "duration": 1.2 }
+    },
+    {
+      "id": "burst",
+      "name": "中心炸开",
+      "values": { "order": "center", "grid": 8, "duration": 0.5, "pixelColor": "#000000" }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}
