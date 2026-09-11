@@ -40,12 +40,14 @@
       var(--mt-color) calc(50% + var(--mt-width) / 2)
     );
     background-size: 200% 100%;
-    background-repeat: no-repeat;
+    /* 必须 repeat：位移到后半段时图像会整体移出容器，no-repeat 会让 clip 到文字上的背景变透明、文字凭空消失；
+       渐变两端都是底色，重复接缝无痕 */
+    background-repeat: repeat;
     -webkit-background-clip: text;
     background-clip: text;
     animation: mt-sweep var(--mt-period) linear infinite;
   }
-  /* 背景从右侧 100% 滑到左侧 -100%，光带正好从左扫到右各经过一次 */
+  /* 背景从右侧 100% 滑到左侧 -100%：前半段光带从左扫到右，后半段光带在容器外，形成「扫一次、停一下」的节奏 */
   @keyframes mt-sweep {
     from { background-position: 100% 0; }
     to   { background-position: -100% 0; }

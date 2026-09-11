@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-文字 color: transparent，用 background-clip: text 让背景渐变充当字色；渐变为「底色 → 光色 → 底色」三段、方向用光带倾角，光带宽度用 calc(50% ± 宽度/2) 控制中段占比；background-size: 200% 100%，keyframes 让 background-position 从 100% 滑到 -100%，线性无限循环，时长即扫过周期。
+文字 color: transparent，用 background-clip: text 让背景渐变充当字色；渐变为「底色 → 光色 → 底色」三段、方向用光带倾角，光带宽度用 calc(50% ± 宽度/2) 控制中段占比；background-size: 200% 100%，keyframes 让 background-position 从 100% 滑到 -100%，线性无限循环，时长即扫过周期。background-repeat 必须保持 repeat（不要写 no-repeat）：位移后半段图像会整体移出文字框，no-repeat 会让文字变透明凭空消失；渐变两端都是底色，重复接缝看不出来。
 
 ## 完成后请检查
 
