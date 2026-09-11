@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-每行 overflow: hidden，里面叠一层「带子」div（绝对定位铺满），默认 translateY(±101%) 藏在行外，:hover 时过渡到 0；pointerenter/leave 时按鼠标 clientY 相对行中线判断方向，写入 CSS 变量决定藏在上方还是下方。带子内是一条 flex 轨道，内容重复两遍、用 keyframes 把 translateX 从 0 到 −50% 线性无限循环即无缝跑马灯。菜单名在悬停时 color: transparent。
+每行 overflow: hidden，里面叠一层「带子」div（绝对定位铺满），默认 translateY(±101%) 藏在行外，悬停时过渡到 0。两个易踩的坑：①行如果用 `<a>` 做，必须 `display: block`，否则 inline 元素的 height 与 overflow: hidden 都不生效、整个菜单会塌掉；②涌入方向不要靠 :hover 伪类驱动——pointerenter 里要「先关过渡、把带子挪到进入侧、强制回流（读一次 offsetHeight），再恢复过渡并加悬停类」，否则过渡会从带子上一次的旧位置开始、方向判断失效。pointerenter/leave 按鼠标 clientY 相对行中线判断方向写入 CSS 变量。带子内是一条 flex 轨道，内容重复两遍、用 keyframes 把 translateX 从 0 到 −50% 线性无限循环即无缝跑马灯。菜单名在悬停时 color: transparent。
 
 ## 完成后请检查
 

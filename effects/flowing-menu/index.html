@@ -27,6 +27,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.16);
   }
   .mt-row {
+    display: block;              /* a 默认是 inline：height 与 overflow 都会失效，必须转块级 */
     position: relative;
     height: calc(var(--mt-fontSize) * 2.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.16);
@@ -52,8 +53,10 @@
     transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
     pointer-events: none;
   }
-  .mt-row:hover .band, .mt-row.is-hover .band { transform: translateY(0); }
-  .mt-row:hover .name, .mt-row.is-hover .name { color: transparent; }
+  /* 悬停态统一由 JS 加 is-hover 类驱动：涌入前要先把带子无过渡地挪到进入侧，
+     用 :hover 伪类会让过渡从上一次的旧位置开始（方向判断失效） */
+  .mt-row.is-hover .band { transform: translateY(0); }
+  .mt-row.is-hover .name { color: transparent; }
   .mt-track {
     display: flex; align-items: center; gap: 28px;
     white-space: nowrap;
@@ -114,11 +117,18 @@
     // 鼠标从上方还是下方进入：带子从同一侧涌入、从离开侧退出
     row.addEventListener('pointerenter', e => {
       const r = row.getBoundingClientRect();
+      // 三步走：先无过渡跳到进入侧 → 强制回流让起点生效 → 再加类触发涌入过渡
+      band.style.transition = 'none';
       row.style.setProperty('--from', e.clientY < r.top + r.height / 2 ? '-101%' : '101%');
+      void band.offsetHeight;
+      band.style.transition = '';
+      row.classList.add('is-hover');
     });
     row.addEventListener('pointerleave', e => {
       const r = row.getBoundingClientRect();
+      // 退出方向 = 离开侧：目标本来就是 var(--from)，直接改变量即可正确过渡
       row.style.setProperty('--from', e.clientY < r.top + r.height / 2 ? '-101%' : '101%');
+      row.classList.remove('is-hover');
     });
     menu.appendChild(row);
     return row;
@@ -133,7 +143,12 @@
       if (document.hidden || !auto) return;
       rows.forEach(r => r.classList.remove('is-hover'));
       const row = rows[i % rows.length];
+      const band = row.querySelector('.band');
+      // 与真实悬停同款三步走：先无过渡挪到涌入侧，回流后再触发过渡
+      band.style.transition = 'none';
       row.style.setProperty('--from', i % 2 ? '-101%' : '101%');
+      void band.offsetHeight;
+      band.style.transition = '';
       row.classList.add('is-hover');
       i++;
     }, 1600);
