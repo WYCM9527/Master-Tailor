@@ -26,7 +26,7 @@ describe('matchEffect', () => {
   const m = meta({
     name: '卡片展开转场',
     summary: '点击卡片原地长大成详情页大图',
-    slug: 'card-expand',
+    slug: 'demo-expand',
     category: 'transition',
     sub: 'shared',
     tags: ['转场', '共享元素', 'View Transitions', '苹果风'],

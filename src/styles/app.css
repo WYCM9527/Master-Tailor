@@ -182,11 +182,17 @@
 .hdr-brand:hover .mono {
   color: var(--bg);
 }
-/* 通栏搜索格：透明输入框吃满整格，清空按钮通栏融合，补全浮层挂在格子下沿 */
+/* 通栏搜索格：底色比页面浅一档与其他板块区分，聚焦再亮一档；
+   透明输入框吃满整格，清空按钮通栏融合，补全浮层挂在格子下沿 */
 .hdr-search {
   position: relative;
   gap: 12px;
   padding-right: 0;
+  background: var(--k1);
+  transition: background var(--ease);
+}
+.hdr-search:focus-within {
+  background: var(--k2);
 }
 .hdr-search .search-icon {
   flex: none;

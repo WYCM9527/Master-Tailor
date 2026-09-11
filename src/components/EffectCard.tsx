@@ -15,7 +15,7 @@ const DESIGN_H = 720;
  * 效果页的效果 Cell（效果区内部 3 列之一）：
  * - 预览铺满 Cell（16:9，与详情页舞台同比例），IntersectionObserver 首次进入视口才挂载 iframe
  * - iframe 固定按 1280×720 设计视口渲染，再 transform: scale 等比缩小到卡片宽度——
- *   避免整屏效果在小视口下文字换行 / 溢出错乱（如竖向沉浸 Feed）
+ *   避免整屏效果在小视口下文字换行 / 溢出错乱（如 Hero 图文轮播）
  * - 底部标题条，悬停整条黑白反转、箭头右移
  * - iframe 常态 pointer-events:none，整 Cell 可点击进详情；
  *   Cell 把真实鼠标坐标（换算回设计坐标）postMessage 给 iframe，thumb 演示块可跟随真实指针
