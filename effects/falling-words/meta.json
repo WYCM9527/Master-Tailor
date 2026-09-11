@@ -1,0 +1,108 @@
+{
+  "slug": "falling-words",
+  "name": "文字坠落堆叠",
+  "category": "text",
+  "sub": "click",
+  "tags": ["物理", "坠落", "互动"],
+  "summary": "点一下，整段话的词一个个掉下来，在底部翻滚堆成一堆",
+  "params": [
+    {
+      "key": "text",
+      "label": "段落文案",
+      "type": "text",
+      "target": "config",
+      "default": "点击 这段 文字 看看 它们 会 怎样 一个一个 掉 下来 然后 堆 在 一起",
+      "maxLength": 160,
+      "help": "按空格分词，每个词是一块会掉落的积木"
+    },
+    {
+      "key": "trigger",
+      "label": "触发方式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "click", "label": "点击" },
+        { "value": "hover", "label": "鼠标移入" },
+        { "value": "auto", "label": "自动（进入即掉）" }
+      ],
+      "default": "click"
+    },
+    {
+      "key": "gravity",
+      "label": "重力",
+      "type": "range",
+      "target": "config",
+      "min": 400,
+      "max": 3000,
+      "step": 100,
+      "default": 1400,
+      "help": "越大掉得越快"
+    },
+    {
+      "key": "bounce",
+      "label": "弹性",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.35,
+      "help": "落地反弹保留的速度比例，0 为一落即停"
+    },
+    {
+      "key": "stagger",
+      "label": "掉落错开",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 300,
+      "step": 20,
+      "default": 60,
+      "displayUnit": " 毫秒",
+      "help": "相邻词开始掉落的时间差"
+    },
+    { "key": "spin", "label": "翻滚", "type": "toggle", "target": "config", "default": true },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "accent",
+      "label": "强调词颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff",
+      "help": "文案里第一个词与最后一个词用此色"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 18,
+      "max": 48,
+      "step": 2,
+      "default": 28,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "moon",
+      "name": "月球重力",
+      "values": { "gravity": 500, "bounce": 0.6, "stagger": 120 }
+    },
+    {
+      "id": "brick",
+      "name": "砖块直落",
+      "values": {
+        "gravity": 2600,
+        "bounce": 0.05,
+        "spin": false,
+        "stagger": 20,
+        "trigger": "hover"
+      }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

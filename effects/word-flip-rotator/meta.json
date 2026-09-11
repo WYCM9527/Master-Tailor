@@ -1,0 +1,106 @@
+{
+  "slug": "word-flip-rotator",
+  "name": "词语翻转轮换",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["轮换", "翻转", "标题"],
+  "summary": "句子里的关键词按节拍翻页轮换，字符逐个上翻",
+  "params": [
+    {
+      "key": "prefix",
+      "label": "固定前缀",
+      "type": "text",
+      "target": "config",
+      "default": "我们让界面",
+      "maxLength": 30
+    },
+    {
+      "key": "words",
+      "label": "轮换词语",
+      "type": "text",
+      "target": "config",
+      "default": "更生动｜更有呼吸｜更好用｜更像你",
+      "maxLength": 80,
+      "help": "多个词用「｜」分隔"
+    },
+    {
+      "key": "interval",
+      "label": "每词停留",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 6,
+      "step": 0.5,
+      "default": 2.2,
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "stagger",
+      "label": "字符错开",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "default": 40,
+      "displayUnit": " 毫秒",
+      "help": "同一个词里相邻字符翻转的时间差"
+    },
+    {
+      "key": "duration",
+      "label": "翻转时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.45,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "pill",
+      "label": "关键词底块",
+      "type": "toggle",
+      "target": "css",
+      "default": true,
+      "help": "轮换词带一块强调色底"
+    },
+    { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 24,
+      "max": 80,
+      "step": 2,
+      "default": 44,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "plain",
+      "name": "无底块",
+      "values": { "pill": false, "accent": "#a3a3a3", "stagger": 0, "duration": 0.35 }
+    },
+    {
+      "id": "en",
+      "name": "英文快切",
+      "values": {
+        "prefix": "Make it",
+        "words": "faster｜smoother｜yours",
+        "interval": 1.5,
+        "stagger": 30,
+        "font": "smiley-sans",
+        "fontSize": 56
+      }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

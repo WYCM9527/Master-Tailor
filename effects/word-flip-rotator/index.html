@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>词语翻转轮换</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-duration: 0.45s;    /* 翻转时长 */
+    --mt-pill: 1;            /* 关键词底块：1 开 / 0 关 */
+    --mt-accent: #ffffff;    /* 强调色：底块（或无底块时的关键词颜色） */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 44px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-rot {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25em;
+    max-width: 92vw;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--mt-color);
+  }
+  /* 轮换词：一个裁切窗口，字符在里面上翻；底块用强调色，开关为 0 时透明 */
+  .mt-rot .word {
+    position: relative;
+    display: inline-flex;
+    overflow: hidden;
+    padding: 0.08em 0.3em;
+    border-radius: 0.18em;
+    background: color-mix(in srgb, var(--mt-accent) calc(var(--mt-pill) * 100%), transparent);
+    /* 有底块时字用底色反白，无底块时字用强调色 */
+    color: color-mix(in srgb, var(--mt-bg) calc(var(--mt-pill) * 100%), var(--mt-accent));
+    min-width: 2em;
+    justify-content: center;
+  }
+  .mt-rot .c {
+    display: inline-block;
+    white-space: pre;
+    transform: translateY(0);
+  }
+  /* 进场：从下方翻上来；离场：向上翻出去 */
+  .mt-rot .c.in {
+    animation: mt-in var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: var(--d, 0s);
+  }
+  .mt-rot .c.out {
+    animation: mt-out var(--mt-duration) cubic-bezier(0.6, 0, 0.8, 0.4) both;
+    animation-delay: var(--d, 0s);
+  }
+  @keyframes mt-in  { from { transform: translateY(110%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes mt-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-110%); opacity: 0; } }
+
+  /* 用户开启「减少动态效果」时：直接切换、不翻转 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-rot .c.in, .mt-rot .c.out { animation: none; }
+  }
+</style>
+</head>
+<body>
+<h1 class="mt-rot" id="mtRot" aria-live="polite">
+  <span id="mtPrefix"></span><span class="word" id="mtWord"></span>
+</h1>
+<script>
+  const CONFIG = {
+    prefix: "我们让界面",                 // 固定前缀
+    words: "更生动｜更有呼吸｜更好用｜更像你", // 轮换词语，用「｜」分隔
+    interval: 2.2,  // 每词停留（秒）
+    stagger: 40,    // 字符错开（毫秒）
+  };
+
+  const prefixEl = document.getElementById('mtPrefix');
+  const wordEl = document.getElementById('mtWord');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const words = CONFIG.words.split('｜').map(w => w.trim()).filter(Boolean);
+  const durationMs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-duration')) * 1000 || 450;
+  prefixEl.textContent = CONFIG.prefix;
+
+  // 关键词窗口按最长的词定宽，换词时前缀不跳动
+  const probe = document.createElement('span');
+  probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre;';
+  probe.className = 'c';
+  wordEl.appendChild(probe);
+  let widest = 0;
+  for (const w of words) { probe.textContent = w; widest = Math.max(widest, probe.offsetWidth); }
+  probe.remove();
+  wordEl.style.minWidth = 'calc(' + widest + 'px + 0.6em)';
+
+  let index = 0;
+  function show(word, animate) {
+    wordEl.textContent = '';
+    Array.from(word).forEach((ch, i) => {
+      const c = document.createElement('span');
+      c.className = 'c' + (animate ? ' in' : '');
+      c.textContent = ch;
+      c.style.setProperty('--d', (i * CONFIG.stagger) + 'ms');
+      wordEl.appendChild(c);
+    });
+  }
+  function next() {
+    if (document.hidden) return; // 后台不推进
+    const cells = wordEl.querySelectorAll('.c');
+    // 先让当前词逐字翻出，再换下一个词翻入
+    cells.forEach((c, i) => { c.classList.remove('in'); c.classList.add('out'); c.style.setProperty('--d', (i * CONFIG.stagger) + 'ms'); });
+    const outTime = durationMs + cells.length * CONFIG.stagger;
+    setTimeout(() => {
+      index = (index + 1) % words.length;
+      show(words[index], true);
+    }, outTime);
+  }
+
+  show(words[0] || '', false);
+  if (!reduceMotion && words.length > 1) {
+    setInterval(next, CONFIG.interval * 1000);
+  } else if (words.length > 1) {
+    // reduced-motion：不翻转，直接按节拍换词
+    setInterval(() => { if (!document.hidden) { index = (index + 1) % words.length; show(words[index], false); } }, CONFIG.interval * 1000);
+  }
+</script>
+</body>
+</html>

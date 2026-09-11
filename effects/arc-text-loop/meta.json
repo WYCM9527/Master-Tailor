@@ -1,0 +1,88 @@
+{
+  "slug": "arc-text-loop",
+  "name": "弧线循环文字",
+  "category": "text",
+  "sub": "marquee",
+  "tags": ["弧线", "跑马灯", "循环"],
+  "summary": "一串文字沿着一条大弧线不停地流过，像挂在天边的横幅",
+  "params": [
+    {
+      "key": "text",
+      "label": "文案",
+      "type": "text",
+      "target": "config",
+      "default": "沿着弧线流动的文字 ✦ ARC LOOP ✦ ",
+      "maxLength": 60,
+      "help": "会首尾相接循环，建议以分隔符结尾"
+    },
+    {
+      "key": "curve",
+      "label": "弧线弯度",
+      "type": "range",
+      "target": "config",
+      "min": -300,
+      "max": 300,
+      "step": 20,
+      "default": 160,
+      "unit": "px",
+      "help": "正值向上拱起，负值向下垂，0 为直线"
+    },
+    {
+      "key": "speed",
+      "label": "流动速度",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 200,
+      "step": 10,
+      "default": 60,
+      "displayUnit": " px/秒"
+    },
+    {
+      "key": "direction",
+      "label": "流动方向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "left", "label": "向左" },
+        { "value": "right", "label": "向右" }
+      ],
+      "default": "left"
+    },
+    {
+      "key": "hoverPause",
+      "label": "悬停暂停",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 24,
+      "max": 96,
+      "step": 4,
+      "default": 56,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "smiley-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "smile",
+      "name": "下垂微笑线",
+      "values": { "curve": -180, "direction": "right", "speed": 90, "font": "system-sans" }
+    },
+    {
+      "id": "flat",
+      "name": "近直线大字",
+      "values": { "curve": 40, "fontSize": 88, "speed": 120 }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

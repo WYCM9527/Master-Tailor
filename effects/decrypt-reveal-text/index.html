@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>解密显形文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色（解出后） */
+    --mt-cipher: #6b6b6b;    /* 乱码颜色 */
+    --mt-fontSize: 36px;     /* 字号 */
+    --mt-font: "JetBrains Mono", ui-monospace, monospace; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-decrypt {
+    max-width: 92vw;
+    text-align: center;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    color: var(--mt-color);
+  }
+  .mt-decrypt .c {
+    display: inline-block;
+    min-width: 0.62em;
+    text-align: center;
+    white-space: pre;
+  }
+  .mt-decrypt .c.cipher { color: var(--mt-cipher); }
+
+  /* 用户开启「减少动态效果」时：直接显示明文（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-decrypt .c { transition: none; }
+  }
+</style>
+</head>
+<body>
+<p class="mt-decrypt" id="mtDecrypt"></p>
+<script>
+  const CONFIG = {
+    text: "ACCESS GRANTED · 欢迎回来", // 文案
+    order: "ltr",    // 解出顺序：ltr 从左到右 / center 从中间向两边 / random 随机
+    speed: 45,       // 解出速度（毫秒/位）
+    flicker: 50,     // 乱码刷新间隔（毫秒）
+    glyphs: "mixed", // 乱码字符：mixed 字母数字符号 / binary 0 和 1 / kana 假名方块
+  };
+
+  const POOLS = {
+    mixed: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*<>?/",
+    binary: "01",
+    kana: "アイウエオカキクケコサシスセソタチツテト▓▒░█",
+  };
+  const host = document.getElementById('mtDecrypt');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const chars = Array.from(CONFIG.text);
+  const pool = Array.from(POOLS[CONFIG.glyphs] || POOLS.mixed);
+  host.setAttribute('aria-label', CONFIG.text);
+
+  const cells = chars.map(ch => {
+    const c = document.createElement('span');
+    c.className = 'c';
+    c.textContent = ch;
+    c.setAttribute('aria-hidden', 'true');
+    host.appendChild(c);
+    return c;
+  });
+
+  // 解出顺序：返回每个位置被解出的名次
+  function revealOrder() {
+    const idx = chars.map((_, i) => i).filter(i => chars[i].trim());
+    if (CONFIG.order === 'random') {
+      for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    } else if (CONFIG.order === 'center') {
+      // 按「与中间位置的距离」排序，先记下原始名次再排（排序中不能再查 indexOf）
+      const rank = new Map(idx.map((v, k) => [v, k]));
+      const mid = (idx.length - 1) / 2;
+      idx.sort((a, b) => Math.abs(rank.get(a) - mid) - Math.abs(rank.get(b) - mid));
+    }
+    return idx;
+  }
+
+  let flickerTimer = 0, revealTimer = 0;
+  function play() {
+    clearInterval(flickerTimer); clearInterval(revealTimer);
+    const solved = new Set();
+    const order = revealOrder();
+    cells.forEach((c, i) => { if (chars[i].trim()) c.classList.add('cipher'); });
+    // 未解出的位持续闪乱码
+    flickerTimer = setInterval(() => {
+      if (document.hidden) return;
+      cells.forEach((c, i) => {
+        if (!solved.has(i) && chars[i].trim()) c.textContent = pool[Math.floor(Math.random() * pool.length)];
+      });
+    }, CONFIG.flicker);
+    // 按顺序逐位解出
+    let k = 0;
+    revealTimer = setInterval(() => {
+      if (document.hidden) return;
+      const i = order[k++];
+      if (i === undefined) { clearInterval(flickerTimer); clearInterval(revealTimer); return; }
+      solved.add(i);
+      cells[i].textContent = chars[i];
+      cells[i].classList.remove('cipher');
+    }, CONFIG.speed);
+  }
+
+  if (!reduceMotion) {
+    play();
+    // 循环演示：全部解出后停 2.4s 再来一遍
+    const total = chars.length * CONFIG.speed + 2400;
+    setInterval(() => { if (!document.hidden) play(); }, total);
+  }
+</script>
+</body>
+</html>

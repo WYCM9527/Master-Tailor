@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模糊逐字浮现</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-direction: -1;      /* 浮现方向：-1 从上落下 / 1 从下升起 */
+    --mt-duration: 0.8s;     /* 单字对焦时长 */
+    --mt-blurAmount: 12px;   /* 起始模糊半径 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 40px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-blur {
+    max-width: 86vw;
+    text-align: center;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--mt-color);
+  }
+  /* 每个单位一个 span：先模糊 + 偏移 + 透明，按各自延迟对焦到位 */
+  .mt-blur .u {
+    display: inline-block;
+    white-space: pre;
+    filter: blur(var(--mt-blurAmount));
+    opacity: 0;
+    transform: translateY(calc(var(--mt-direction) * -0.6em));
+    animation: mt-focus var(--mt-duration) cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+    animation-delay: var(--d, 0s);
+  }
+  @keyframes mt-focus {
+    /* 中途先过一个「半清晰、略过头」的点，落定更有呼吸感 */
+    50% { filter: blur(calc(var(--mt-blurAmount) * 0.35)); opacity: 0.6; transform: translateY(calc(var(--mt-direction) * 0.12em)); }
+    100% { filter: blur(0); opacity: 1; transform: none; }
+  }
+
+  /* 用户开启「减少动态效果」时：直接清晰显示 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-blur .u { animation: none; filter: none; opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+<p class="mt-blur" id="mtBlur" aria-label=""></p>
+<script>
+  const CONFIG = {
+    text: "每一个字，都在被看清的路上。", // 文案
+    unit: "char",  // 浮现单位：char 逐字 / word 逐词（按空格）
+    stagger: 60,   // 相邻错开（毫秒）
+  };
+
+  const host = document.getElementById('mtBlur');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  host.setAttribute('aria-label', CONFIG.text);
+
+  // 拆分：逐字保留空格为独立单位；逐词按空格切并把空格挂回词尾
+  function split(text) {
+    if (CONFIG.unit === 'word') return text.split(/(\s+)/).filter(Boolean);
+    return Array.from(text);
+  }
+
+  function render() {
+    host.textContent = '';
+    const units = split(CONFIG.text);
+    units.forEach((u, i) => {
+      const span = document.createElement('span');
+      span.className = 'u';
+      span.textContent = u;
+      span.setAttribute('aria-hidden', 'true');
+      span.style.setProperty('--d', (i * CONFIG.stagger) + 'ms');
+      host.appendChild(span);
+    });
+    return units.length;
+  }
+
+  const count = render();
+  // 循环演示：全部对焦后停留 1.8s，再从头来一遍（reduced-motion 下只显示一次）
+  if (!reduceMotion) {
+    const durationMs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-duration')) * 1000 || 800;
+    const total = count * CONFIG.stagger + durationMs + 1800;
+    setInterval(() => { if (!document.hidden) render(); }, total);
+  }
+</script>
+</body>
+</html>

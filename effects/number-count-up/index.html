@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数字滚动计数</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #ffffff;     /* 数字颜色 */
+    --mt-fontSize: 72px;     /* 字号 */
+    --mt-font: "JetBrains Mono", ui-monospace, monospace; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+
+  .mt-count {
+    text-align: center;
+  }
+  .mt-count .num {
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--mt-color);
+    /* 等宽数字：滚动时宽度不抖 */
+    font-variant-numeric: tabular-nums;
+  }
+  .mt-count .affix {
+    font-size: 0.55em;
+    vertical-align: 0.25em;
+    margin: 0 0.1em;
+    opacity: 0.85;
+  }
+  .mt-count .label {
+    margin-top: 14px;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  /* 用户开启「减少动态效果」时：直接显示目标值（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-count .num { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-count">
+  <div class="num" id="mtNum" aria-live="polite"></div>
+  <div class="label" id="mtLabel"></div>
+</div>
+<script>
+  const CONFIG = {
+    target: 128500,    // 目标数值
+    duration: 2.5,     // 滚动时长（秒）
+    ease: "out",       // 收尾方式：out 先快后慢 / inout 慢起慢收 / linear 匀速
+    separator: true,   // 千位分隔符
+    prefix: "",        // 前缀（如 ¥）
+    suffix: "+",       // 后缀（如 + / %）
+    label: "累计服务用户", // 说明文字
+  };
+
+  const numEl = document.getElementById('mtNum');
+  document.getElementById('mtLabel').textContent = CONFIG.label;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const EASES = {
+    out: t => 1 - Math.pow(1 - t, 3),
+    inout: t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+    linear: t => t,
+  };
+  const ease = EASES[CONFIG.ease] || EASES.out;
+
+  function format(n) {
+    const s = Math.round(n).toString();
+    const body = CONFIG.separator ? s.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : s;
+    return (CONFIG.prefix ? '<span class="affix">' + CONFIG.prefix + '</span>' : '')
+      + body
+      + (CONFIG.suffix ? '<span class="affix">' + CONFIG.suffix + '</span>' : '');
+  }
+
+  let raf = 0;
+  function run() {
+    cancelAnimationFrame(raf);
+    const start = performance.now();
+    const total = CONFIG.duration * 1000;
+    function frame(now) {
+      if (document.hidden) { raf = requestAnimationFrame(frame); return; } // 后台不推进
+      const t = Math.min(1, (now - start) / total);
+      numEl.innerHTML = format(CONFIG.target * ease(t));
+      if (t < 1) raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  if (reduceMotion) {
+    numEl.innerHTML = format(CONFIG.target);
+  } else {
+    run();
+    // 循环演示：到达目标后停 2.5s 再从零滚一遍
+    setInterval(() => { if (!document.hidden) run(); }, CONFIG.duration * 1000 + 2500);
+  }
+</script>
+</body>
+</html>

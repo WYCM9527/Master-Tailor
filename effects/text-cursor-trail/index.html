@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文字光标拖尾</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #ffffff;     /* 文字颜色 */
+    --mt-fontSize: 26px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+
+  .mt-field {
+    position: fixed;
+    inset: 0;
+    cursor: crosshair;
+    overflow: hidden;
+  }
+  .mt-hint {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.35);
+    font: 14px/1 -apple-system, "PingFang SC", sans-serif;
+    letter-spacing: 0.14em;
+    pointer-events: none;
+  }
+  /* 每个撒下的字：出生时放大弹出，随后按消失方式退场 */
+  .mt-drop {
+    position: absolute;
+    left: 0; top: 0;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    color: var(--mt-color);
+    pointer-events: none;
+    white-space: nowrap;
+    will-change: transform, opacity;
+    animation: mt-life var(--life) ease-out forwards;
+  }
+  .mt-drop.shrink { --end: translate(-50%, -50%) rotate(var(--rot)) scale(0.2); }
+  .mt-drop.float  { --end: translate(-50%, -160%) rotate(var(--rot)) scale(0.9); }
+  .mt-drop.fade   { --end: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
+  @keyframes mt-life {
+    0%   { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot)) scale(0.4); }
+    15%  { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot)) scale(1.15); }
+    35%  { transform: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
+    100% { opacity: 0; transform: var(--end); }
+  }
+
+  /* 用户开启「减少动态效果」时：不撒字（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-drop { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-field" id="mtField" aria-hidden="true">
+  <div class="mt-hint">在这里移动鼠标</div>
+</div>
+<script>
+  const CONFIG = {
+    text: "✦",         // 撒下的文字，多个用「｜」分隔轮流撒
+    spacing: 40,       // 撒落间距（px）
+    lifetime: 1200,    // 存活时间（毫秒）
+    maxCount: 30,      // 最多同屏
+    spin: true,        // 随机旋转
+    exit: "shrink",    // 消失方式：shrink 缩小淡出 / float 上浮淡出 / fade 原地淡出
+  };
+
+  const field = document.getElementById('mtField');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const items = CONFIG.text.split('｜').map(s => s.trim()).filter(Boolean);
+  let lastX = null, lastY = null, k = 0;
+  const live = [];
+
+  function spawn(x, y) {
+    if (reduceMotion || items.length === 0) return;
+    const el = document.createElement('span');
+    el.className = 'mt-drop ' + CONFIG.exit;
+    el.textContent = items[k++ % items.length];
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.setProperty('--rot', (CONFIG.spin ? (Math.random() * 60 - 30) : 0) + 'deg');
+    el.style.setProperty('--life', CONFIG.lifetime + 'ms');
+    field.appendChild(el);
+    live.push(el);
+    // 超出同屏上限时移除最早的
+    while (live.length > CONFIG.maxCount) live.shift().remove();
+    el.addEventListener('animationend', () => { el.remove(); const i = live.indexOf(el); if (i >= 0) live.splice(i, 1); });
+  }
+
+  // 沿鼠标轨迹按间距撒字：两次事件之间距离大时补点，保证间距均匀
+  function trail(x, y) {
+    if (lastX === null) { lastX = x; lastY = y; spawn(x, y); return; }
+    const dx = x - lastX, dy = y - lastY;
+    const dist = Math.hypot(dx, dy);
+    if (dist < CONFIG.spacing) return;
+    const steps = Math.floor(dist / CONFIG.spacing);
+    for (let i = 1; i <= steps; i++) spawn(lastX + dx * i / steps, lastY + dy * i / steps);
+    lastX = x; lastY = y;
+  }
+  field.addEventListener('pointermove', e => trail(e.clientX, e.clientY));
+  field.addEventListener('pointerleave', () => { lastX = null; lastY = null; });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：一个虚拟指针画着 8 字形游走；真实鼠标进入后交还控制
+  if (!reduceMotion) {
+    let t = 0, auto = true;
+    field.addEventListener('pointerenter', () => { auto = false; lastX = null; });
+    field.addEventListener('pointerleave', () => (auto = true));
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.04;
+      const w = innerWidth, h = innerHeight;
+      trail(w / 2 + Math.sin(t) * w * 0.36, h / 2 + Math.sin(t * 2) * h * 0.26);
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

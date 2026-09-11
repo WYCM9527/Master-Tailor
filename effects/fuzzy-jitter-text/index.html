@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>毛边抖动文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-font: "Smiley Sans Oblique", "Smiley Sans", -apple-system, "PingFang SC", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  /* 画布尺寸由 JS 按文字量好后设定，这里只保证居中 */
+  canvas { display: block; max-width: 96vw; }
+
+  /* 用户开启「减少动态效果」时：只画一帧静止文字（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    canvas { image-rendering: auto; }
+  }
+</style>
+</head>
+<body>
+<canvas id="mtFuzzy" role="img"></canvas>
+<script>
+  const CONFIG = {
+    text: "SIGNAL LOST",   // 文案
+    intensity: 0.2,        // 抖动强度（相对字高）
+    hoverIntensity: 0.55,  // 悬停时强度
+    sliceHeight: 2,        // 扫描线粗细（px）
+    fps: 24,               // 抖动频率（次/秒）
+    color: "#ffffff",      // 文字颜色
+    fontSize: 120,         // 字号（px）
+  };
+
+  const canvas = document.getElementById('mtFuzzy');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  canvas.setAttribute('aria-label', CONFIG.text);
+  const dpr = Math.min(2, devicePixelRatio || 1);
+
+  // 离屏画一份干净文字，之后每帧按扫描线切片错位复制到主画布
+  const off = document.createElement('canvas');
+  const offCtx = off.getContext('2d');
+  let pad = 0, w = 0, h = 0;
+
+  function layout() {
+    const font = '700 ' + CONFIG.fontSize + 'px ' + getComputedStyle(document.documentElement).getPropertyValue('--mt-font');
+    offCtx.font = font;
+    const m = offCtx.measureText(CONFIG.text);
+    pad = Math.ceil(CONFIG.fontSize * 0.6);
+    w = Math.ceil(m.width) + pad * 2;
+    h = Math.ceil(CONFIG.fontSize * 1.3) + pad;
+    for (const c of [off, canvas]) { c.width = w * dpr; c.height = h * dpr; }
+    canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+    offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    offCtx.clearRect(0, 0, w, h);
+    offCtx.font = font;
+    offCtx.fillStyle = CONFIG.color;
+    offCtx.textBaseline = 'alphabetic';
+    offCtx.fillText(CONFIG.text, pad, CONFIG.fontSize * 1.05);
+  }
+  layout();
+  if (document.fonts) document.fonts.ready.then(() => { layout(); draw(); });
+
+  let hovering = false;
+  canvas.addEventListener('pointerenter', () => (hovering = true));
+  canvas.addEventListener('pointerleave', () => (hovering = false));
+
+  // 每条扫描线随机左右错位，幅度 = 强度 × 字高 × 随机
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const amp = (hovering ? CONFIG.hoverIntensity : CONFIG.intensity) * CONFIG.fontSize * 0.3;
+    const sh = CONFIG.sliceHeight;
+    for (let y = 0; y < h; y += sh) {
+      const dx = reduceMotion ? 0 : (Math.random() * 2 - 1) * amp;
+      ctx.drawImage(off, 0, y * dpr, w * dpr, sh * dpr, dx, y, w, sh);
+    }
+  }
+
+  if (reduceMotion) {
+    draw();
+  } else {
+    let last = 0;
+    (function loop(now) {
+      if (!document.hidden && now - last >= 1000 / CONFIG.fps) { last = now; draw(); }
+      requestAnimationFrame(loop);
+    })(0);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扫光文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #6b6b6b;     /* 底色：没被光扫到时的文字颜色 */
+    --mt-sheen: #ffffff;     /* 光色 */
+    --mt-width: 25%;         /* 光带宽度（占文字总宽） */
+    --mt-period: 3s;         /* 扫过周期 */
+    --mt-angle: 100deg;      /* 光带倾角 */
+    --mt-fontSize: 56px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  /* 文字本身透明，用背景渐变填充：底色 → 光色 → 底色，背景宽 200% 左右滑动 */
+  .mt-sheen {
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    color: transparent;
+    background-image: linear-gradient(
+      var(--mt-angle),
+      var(--mt-color) calc(50% - var(--mt-width) / 2),
+      var(--mt-sheen) 50%,
+      var(--mt-color) calc(50% + var(--mt-width) / 2)
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: mt-sweep var(--mt-period) linear infinite;
+  }
+  /* 背景从右侧 100% 滑到左侧 -100%，光带正好从左扫到右各经过一次 */
+  @keyframes mt-sweep {
+    from { background-position: 100% 0; }
+    to   { background-position: -100% 0; }
+  }
+
+  /* 用户开启「减少动态效果」时：光带停在中间，仍是双色字 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-sheen { animation: none; background-position: 0 0; }
+  }
+</style>
+</head>
+<body>
+<h1 class="mt-sheen" id="mtSheen">Shine on 扫光文字</h1>
+<script>
+  const CONFIG = {
+    text: "Shine on 扫光文字", // 文案
+  };
+  document.getElementById('mtSheen').textContent = CONFIG.text;
+  // 扫光是纯 CSS 动画：页面切到后台时浏览器会自动暂停渲染
+</script>
+</body>
+</html>

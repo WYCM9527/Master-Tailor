@@ -1,0 +1,89 @@
+{
+  "slug": "scroll-float-letters",
+  "name": "滚动浮起标题",
+  "category": "text",
+  "sub": "scroll",
+  "tags": ["滚动", "标题", "浮起"],
+  "summary": "标题随滚动进度一个字一个字从下方浮起，倒滚就沉回去",
+  "params": [
+    {
+      "key": "text",
+      "label": "标题文案",
+      "type": "text",
+      "target": "config",
+      "default": "随你滚动而浮起",
+      "maxLength": 30
+    },
+    {
+      "key": "rise",
+      "label": "浮起距离",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 2,
+      "step": 0.1,
+      "default": 1,
+      "displayUnit": " 字高",
+      "help": "每个字从下方多远处浮到位"
+    },
+    {
+      "key": "spread",
+      "label": "字间错位",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.6,
+      "help": "0 所有字同步浮起，1 最后一个字要等前面全部浮完才开始"
+    },
+    {
+      "key": "blur",
+      "label": "带模糊",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "浮起途中带一点模糊，到位后清晰"
+    },
+    {
+      "key": "range",
+      "label": "滚动行程",
+      "type": "range",
+      "target": "config",
+      "min": 30,
+      "max": 100,
+      "step": 5,
+      "default": 60,
+      "unit": "%",
+      "help": "从标题进入视口底部起，滚过多少比例的视口高度完成浮起"
+    },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 32,
+      "max": 120,
+      "step": 4,
+      "default": 76,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "wave",
+      "name": "长波浪",
+      "values": { "spread": 1, "rise": 1.6, "range": 90 }
+    },
+    {
+      "id": "crisp",
+      "name": "齐升无模糊",
+      "values": { "spread": 0.2, "rise": 0.6, "blur": false, "range": 40, "font": "smiley-sans" }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动逐词显形</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-dim: 0.15;          /* 未读词的透明度 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 34px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: -apple-system, "PingFang SC", sans-serif; }
+
+  .mt-page {
+    height: 100vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .mt-page::-webkit-scrollbar { display: none; }
+  .mt-intro, .mt-outro {
+    height: 70vh;
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    letter-spacing: 0.12em;
+  }
+  /* 段落钉在视口中部，滚动时词逐个显形；外层高度决定要滚多久 */
+  .mt-track { height: 260vh; position: relative; }
+  .mt-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: grid;
+    place-items: center;
+  }
+  .mt-para {
+    max-width: min(760px, 86vw);
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 600;
+    line-height: 1.7;
+    color: var(--mt-color);
+  }
+  .mt-para .w {
+    display: inline-block;
+    margin-right: 0.28em;
+    /* 未读态：透明 + 模糊 + 略下沉；显形进度由 --k (0–1) 驱动 */
+    opacity: calc(var(--mt-dim) + (1 - var(--mt-dim)) * var(--k, 0));
+    filter: blur(calc((1 - var(--k, 0)) * var(--blur, 0) * 4px));
+    transform: translateY(calc((1 - var(--k, 0)) * var(--lift, 0) * 0.35em));
+    will-change: opacity, filter, transform;
+  }
+
+  /* 用户开启「减少动态效果」时：全文常显 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-para .w { opacity: 1 !important; filter: none !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-page" id="mtPage">
+  <div class="mt-intro">往下滚动，逐词阅读</div>
+  <div class="mt-track" id="mtTrack">
+    <div class="mt-sticky"><p class="mt-para" id="mtPara"></p></div>
+  </div>
+  <div class="mt-outro">全文已显形</div>
+</div>
+<script>
+  const CONFIG = {
+    text: "好的界面 不是 被看见 而是 被感受。 每一次 滚动 都该 有回应，每一个 词 都在 你到达时 刚好 亮起。", // 段落文案，按空格分词
+    blur: true,    // 未读模糊
+    lift: true,    // 显形时上浮
+    softness: 3,   // 过渡柔度：同时半显形的词数
+  };
+
+  const page = document.getElementById('mtPage');
+  const track = document.getElementById('mtTrack');
+  const para = document.getElementById('mtPara');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const words = CONFIG.text.split(/\s+/).filter(Boolean);
+  para.setAttribute('aria-label', CONFIG.text);
+  para.style.setProperty('--blur', CONFIG.blur ? 1 : 0);
+  para.style.setProperty('--lift', CONFIG.lift ? 1 : 0);
+  const cells = words.map(w => {
+    const s = document.createElement('span');
+    s.className = 'w';
+    s.textContent = w;
+    s.setAttribute('aria-hidden', 'true');
+    para.appendChild(s);
+    return s;
+  });
+
+  // 进度 = 段落所在长轨道被滚过的比例（sticky 期间），映射到「已显形的词数」
+  function update() {
+    if (reduceMotion) return;
+    const r = track.getBoundingClientRect();
+    const usable = r.height - page.clientHeight;
+    const p = Math.min(1, Math.max(0, -r.top / Math.max(1, usable)));
+    const head = p * (cells.length + CONFIG.softness); // 显形前沿（以词为单位）
+    cells.forEach((c, i) => {
+      const k = Math.min(1, Math.max(0, (head - i) / CONFIG.softness));
+      c.style.setProperty('--k', k.toFixed(3));
+    });
+  }
+  page.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动往返滚动，用户一滚就停
+  if (!reduceMotion) {
+    let userTook = false, dir = 1;
+    for (const ev of ['wheel', 'pointerdown', 'keydown', 'touchstart']) {
+      page.addEventListener(ev, () => (userTook = true), { passive: true, once: true });
+    }
+    (function auto() {
+      if (userTook) return;
+      if (!document.hidden) {
+        const max = page.scrollHeight - page.clientHeight;
+        page.scrollTop += dir * 5;
+        if (page.scrollTop >= max - 1) dir = -1;
+        if (page.scrollTop <= 1) dir = 1;
+      }
+      requestAnimationFrame(auto);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

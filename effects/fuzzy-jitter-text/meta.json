@@ -1,0 +1,102 @@
+{
+  "slug": "fuzzy-jitter-text",
+  "name": "毛边抖动文字",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["抖动", "信号", "复古"],
+  "summary": "文字每一行扫描线都在细微地左右错动，像信号不稳的老屏幕",
+  "params": [
+    {
+      "key": "text",
+      "label": "文案",
+      "type": "text",
+      "target": "config",
+      "default": "SIGNAL LOST",
+      "maxLength": 24
+    },
+    {
+      "key": "intensity",
+      "label": "抖动强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.2,
+      "help": "每条扫描线左右错动的最大幅度，相对字高"
+    },
+    {
+      "key": "hoverIntensity",
+      "label": "悬停时强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.55,
+      "help": "鼠标停在文字上时的抖动强度"
+    },
+    {
+      "key": "sliceHeight",
+      "label": "扫描线粗细",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 2,
+      "unit": "px"
+    },
+    {
+      "key": "fps",
+      "label": "抖动频率",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 60,
+      "step": 2,
+      "default": 24,
+      "displayUnit": " 次/秒"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#ffffff"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "config",
+      "min": 40,
+      "max": 200,
+      "step": 8,
+      "default": 120,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "smiley-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "calm",
+      "name": "轻微不稳",
+      "values": { "intensity": 0.08, "hoverIntensity": 0.3, "fps": 12 }
+    },
+    {
+      "id": "broken",
+      "name": "信号崩坏",
+      "values": {
+        "intensity": 0.6,
+        "hoverIntensity": 1.2,
+        "sliceHeight": 4,
+        "fps": 40,
+        "color": "#4ade80"
+      }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

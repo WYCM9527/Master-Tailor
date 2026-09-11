@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环形旋转文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-period: 16s;        /* 转一圈用时 */
+    --mt-direction: normal;  /* 旋转方向：normal 顺时针 / reverse 逆时针 */
+    --mt-center: 1;          /* 中心标记：1 显示 / 0 隐藏 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 18px;     /* 字号 */
+    --mt-font: "JetBrains Mono", ui-monospace, monospace; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  /* 圆环容器整体旋转；每个字用 rotate(角度) translateY(-半径) 排到圆周上 */
+  .mt-ring {
+    position: relative;
+    width: var(--size);
+    height: var(--size);
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--mt-color);
+    text-transform: uppercase;
+    animation: mt-spin var(--mt-period) linear infinite;
+    animation-direction: var(--mt-direction);
+    animation-play-state: var(--play, running);
+    cursor: default;
+    user-select: none;
+  }
+  @keyframes mt-spin { to { transform: rotate(360deg); } }
+  .mt-ring .c {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 1em; height: 1em;
+    margin: -0.5em 0 0 -0.5em;
+    display: grid;
+    place-items: center;
+    transform: rotate(var(--a)) translateY(calc(var(--r) * -1));
+    white-space: pre;
+  }
+  /* 中心标记：一个小方块，跟随开关 */
+  .mt-ring::after {
+    content: '';
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 10px; height: 10px;
+    margin: -5px 0 0 -5px;
+    background: var(--mt-color);
+    opacity: var(--mt-center);
+  }
+
+  /* 用户开启「减少动态效果」时：静止的环形文字 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-ring { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-ring" id="mtRing" role="img"></div>
+<script>
+  const CONFIG = {
+    text: "MASTER TAILOR · 裁缝大师 · ", // 环上文字，首尾相接
+    radius: 110,       // 圆环半径（px）
+    hoverMode: "slow", // 鼠标悬停时：slow 放慢 / fast 加速 / pause 暂停 / none 不变
+  };
+
+  const ring = document.getElementById('mtRing');
+  const chars = Array.from(CONFIG.text);
+  const size = CONFIG.radius * 2 + 40;
+  ring.style.setProperty('--size', size + 'px');
+  ring.setAttribute('aria-label', CONFIG.text);
+
+  // 字符均匀分布在 360° 上，字号越大越挤——由使用者通过半径/字号自行平衡
+  chars.forEach((ch, i) => {
+    const c = document.createElement('span');
+    c.className = 'c';
+    c.textContent = ch;
+    c.setAttribute('aria-hidden', 'true');
+    c.style.setProperty('--a', (360 / chars.length) * i + 'deg');
+    c.style.setProperty('--r', CONFIG.radius + 'px');
+    ring.appendChild(c);
+  });
+
+  // 悬停行为：改动画时长倍率或暂停（放慢 ×3、加速 ÷3），直接引用变量以便调参时热更新
+  ring.addEventListener('pointerenter', () => {
+    if (CONFIG.hoverMode === 'pause') ring.style.setProperty('--play', 'paused');
+    else if (CONFIG.hoverMode === 'slow') ring.style.animationDuration = 'calc(var(--mt-period) * 3)';
+    else if (CONFIG.hoverMode === 'fast') ring.style.animationDuration = 'calc(var(--mt-period) / 3)';
+  });
+  ring.addEventListener('pointerleave', () => {
+    ring.style.removeProperty('--play');
+    ring.style.animationDuration = '';
+  });
+  // 纯 CSS 旋转：页面切到后台时浏览器自动暂停渲染
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+{
+  "slug": "scroll-word-reveal",
+  "name": "滚动逐词显形",
+  "category": "text",
+  "sub": "scroll",
+  "tags": ["滚动", "段落", "逐词"],
+  "summary": "一段话随滚动一个词一个词从灰雾里显形，像阅读进度条",
+  "params": [
+    {
+      "key": "text",
+      "label": "段落文案",
+      "type": "text",
+      "target": "config",
+      "default": "好的界面 不是 被看见 而是 被感受。 每一次 滚动 都该 有回应，每一个 词 都在 你到达时 刚好 亮起。",
+      "maxLength": 200,
+      "help": "按空格分词；中文请自行在想断开的地方加空格"
+    },
+    {
+      "key": "dim",
+      "label": "未读透明度",
+      "type": "range",
+      "target": "css",
+      "min": 0.05,
+      "max": 0.5,
+      "step": 0.05,
+      "default": 0.15
+    },
+    { "key": "blur", "label": "未读模糊", "type": "toggle", "target": "config", "default": true },
+    {
+      "key": "lift",
+      "label": "显形时上浮",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "词显形的同时从下方微微升起"
+    },
+    {
+      "key": "softness",
+      "label": "过渡柔度",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 3,
+      "help": "同时处于半显形状态的词数，越大越柔"
+    },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 56,
+      "step": 2,
+      "default": 34,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "sharp",
+      "name": "硬切换",
+      "values": { "blur": false, "lift": false, "softness": 1, "dim": 0.1 }
+    },
+    {
+      "id": "book",
+      "name": "书卷",
+      "values": { "font": "lxgw-wenkai", "fontSize": 40, "softness": 5, "dim": 0.25 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

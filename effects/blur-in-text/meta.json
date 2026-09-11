@@ -1,0 +1,115 @@
+{
+  "slug": "blur-in-text",
+  "name": "模糊逐字浮现",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["进场", "模糊", "逐字"],
+  "summary": "文字从一团虚影里一个个对焦浮现，像镜头逐字拉清",
+  "params": [
+    {
+      "key": "text",
+      "label": "文案",
+      "type": "text",
+      "target": "config",
+      "default": "每一个字，都在被看清的路上。",
+      "maxLength": 60
+    },
+    {
+      "key": "unit",
+      "label": "浮现单位",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "char", "label": "逐字" },
+        { "value": "word", "label": "逐词（按空格）" }
+      ],
+      "default": "char"
+    },
+    {
+      "key": "direction",
+      "label": "浮现方向",
+      "type": "select",
+      "target": "css",
+      "options": [
+        { "value": "-1", "label": "从上方落下" },
+        { "value": "1", "label": "从下方升起" }
+      ],
+      "default": "-1"
+    },
+    {
+      "key": "duration",
+      "label": "单字对焦时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 1.6,
+      "step": 0.1,
+      "default": 0.8,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "stagger",
+      "label": "相邻错开",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 200,
+      "step": 10,
+      "default": 60,
+      "displayUnit": " 毫秒",
+      "help": "后一个字比前一个晚多久开始对焦"
+    },
+    {
+      "key": "blurAmount",
+      "label": "起始模糊",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 30,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 72,
+      "step": 2,
+      "default": 40,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "words",
+      "name": "逐词升起",
+      "values": {
+        "text": "Focus on what matters most",
+        "unit": "word",
+        "direction": "1",
+        "stagger": 140,
+        "duration": 1
+      }
+    },
+    {
+      "id": "heavy",
+      "name": "重雾慢显",
+      "values": {
+        "blurAmount": 26,
+        "duration": 1.4,
+        "stagger": 90,
+        "font": "lxgw-wenkai",
+        "fontSize": 48
+      }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

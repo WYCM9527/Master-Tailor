@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动浮起标题</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 76px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: -apple-system, "PingFang SC", sans-serif; }
+
+  /* 效果自己的滚动容器：上方一段引导，标题在往下滚一屏后进入 */
+  .mt-page {
+    height: 100vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .mt-page::-webkit-scrollbar { display: none; }
+  .mt-intro, .mt-outro {
+    height: 90vh;
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    letter-spacing: 0.12em;
+  }
+  .mt-stage {
+    height: 120vh;
+    display: grid;
+    place-items: center;
+  }
+  .mt-title {
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--mt-color);
+    letter-spacing: 0.02em;
+    text-align: center;
+    max-width: 90vw;
+    overflow: hidden;
+    padding: 0.1em 0.05em;
+  }
+  .mt-title .c {
+    display: inline-block;
+    white-space: pre;
+    will-change: transform, opacity, filter;
+  }
+
+  /* 用户开启「减少动态效果」时：标题始终完整显示（JS 同步不驱动） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-title .c { transform: none !important; opacity: 1 !important; filter: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-page" id="mtPage">
+  <div class="mt-intro">往下滚动</div>
+  <div class="mt-stage"><h1 class="mt-title" id="mtTitle"></h1></div>
+  <div class="mt-outro">倒着滚回去，字会沉下去</div>
+</div>
+<script>
+  const CONFIG = {
+    text: "随你滚动而浮起", // 标题文案
+    rise: 1,       // 浮起距离（字高倍数）
+    spread: 0.6,   // 字间错位（0 同步 / 1 完全接力）
+    blur: true,    // 带模糊
+    range: 60,     // 滚动行程（视口高度百分比）
+  };
+
+  const page = document.getElementById('mtPage');
+  const title = document.getElementById('mtTitle');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const chars = Array.from(CONFIG.text);
+  title.setAttribute('aria-label', CONFIG.text);
+  const cells = chars.map(ch => {
+    const c = document.createElement('span');
+    c.className = 'c';
+    c.textContent = ch;
+    c.setAttribute('aria-hidden', 'true');
+    title.appendChild(c);
+    return c;
+  });
+
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  // 进度：标题顶部到达视口底部时为 0，再滚过 range% 视口高度为 1
+  function update() {
+    if (reduceMotion) return;
+    const r = title.getBoundingClientRect();
+    const vh = page.clientHeight;
+    const travel = vh * CONFIG.range / 100;
+    const p = Math.min(1, Math.max(0, (vh - r.top) / travel));
+    const n = cells.length;
+    cells.forEach((c, i) => {
+      // 每个字占一段进度窗口，窗口起点按 spread 错开
+      const start = (i / Math.max(1, n - 1)) * CONFIG.spread;
+      const local = Math.min(1, Math.max(0, (p - start) / (1 - CONFIG.spread + 1e-6)));
+      const k = easeOut(local);
+      c.style.transform = 'translateY(' + ((1 - k) * CONFIG.rise) + 'em)';
+      c.style.opacity = String(k);
+      c.style.filter = CONFIG.blur ? 'blur(' + ((1 - k) * 6) + 'px)' : 'none';
+    });
+  }
+  page.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动往返滚动，用户一滚就停
+  if (!reduceMotion) {
+    let userTook = false, dir = 1;
+    for (const ev of ['wheel', 'pointerdown', 'keydown', 'touchstart']) {
+      page.addEventListener(ev, () => (userTook = true), { passive: true, once: true });
+    }
+    (function auto() {
+      if (userTook) return;
+      if (!document.hidden) {
+        const max = page.scrollHeight - page.clientHeight;
+        page.scrollTop += dir * 4;
+        if (page.scrollTop >= max - 1) dir = -1;
+        if (page.scrollTop <= 1) dir = 1;
+      }
+      requestAnimationFrame(auto);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

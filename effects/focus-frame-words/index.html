@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>焦点框逐词聚焦</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-moveDuration: 0.4s; /* 取景框跳动时长 */
+    --mt-blurAmount: 5px;    /* 未聚焦词的虚化程度 */
+    --mt-frame: #ffffff;     /* 取景框颜色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 48px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-focus {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35em 0.6em;
+    max-width: 86vw;
+    padding: 0.4em;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--mt-color);
+  }
+  .mt-focus .w {
+    position: relative;
+    filter: blur(var(--mt-blurAmount));
+    opacity: 0.55;
+    transition: filter var(--mt-moveDuration) ease, opacity var(--mt-moveDuration) ease;
+    cursor: default;
+  }
+  .mt-focus .w.on { filter: blur(0); opacity: 1; }
+
+  /* 取景框：四个角括号，用 transform 滑到当前词的位置与尺寸 */
+  .mt-focus .frame {
+    position: absolute;
+    left: 0; top: 0;
+    width: 10px; height: 10px;
+    pointer-events: none;
+    transform-origin: 0 0;
+    transition: transform var(--mt-moveDuration) cubic-bezier(0.2, 0.8, 0.2, 1), width var(--mt-moveDuration) ease, height var(--mt-moveDuration) ease;
+  }
+  .mt-focus .frame i {
+    position: absolute;
+    width: 0.35em; height: 0.35em;
+    border: 3px solid var(--mt-frame);
+  }
+  .mt-focus .frame i:nth-child(1) { left: -6px; top: -6px; border-right: 0; border-bottom: 0; }
+  .mt-focus .frame i:nth-child(2) { right: -6px; top: -6px; border-left: 0; border-bottom: 0; }
+  .mt-focus .frame i:nth-child(3) { left: -6px; bottom: -6px; border-right: 0; border-top: 0; }
+  .mt-focus .frame i:nth-child(4) { right: -6px; bottom: -6px; border-left: 0; border-top: 0; }
+
+  /* 用户开启「减少动态效果」时：全部清晰、取景框瞬移 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-focus .w { filter: none; opacity: 1; transition: none; }
+    .mt-focus .frame { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-focus" id="mtFocus">
+  <span class="frame" id="mtFrame" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+</div>
+<script>
+  const CONFIG = {
+    text: "专注 当下 这一个 词", // 文案，按空格分词
+    interval: 1.2,   // 每词停留（秒）
+    hover: true,     // 鼠标指哪聚哪
+  };
+
+  const host = document.getElementById('mtFocus');
+  const frame = document.getElementById('mtFrame');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const words = CONFIG.text.split(/\s+/).filter(Boolean);
+  host.setAttribute('aria-label', CONFIG.text);
+
+  const els = words.map(w => {
+    const s = document.createElement('span');
+    s.className = 'w';
+    s.textContent = w;
+    host.appendChild(s);
+    return s;
+  });
+
+  let current = 0, paused = false;
+  function focusOn(i) {
+    current = i;
+    els.forEach((el, k) => el.classList.toggle('on', k === i));
+    const r = els[i].getBoundingClientRect();
+    const h = host.getBoundingClientRect();
+    frame.style.width = r.width + 'px';
+    frame.style.height = r.height + 'px';
+    frame.style.transform = 'translate(' + (r.left - h.left) + 'px, ' + (r.top - h.top) + 'px)';
+  }
+  focusOn(0);
+  window.addEventListener('resize', () => focusOn(current));
+
+  // 自动逐词跳动；后台不推进
+  setInterval(() => {
+    if (document.hidden || paused) return;
+    focusOn((current + 1) % els.length);
+  }, CONFIG.interval * 1000);
+
+  // 鼠标指哪聚哪：停在词上暂停自动跳动，离开后恢复
+  if (CONFIG.hover) {
+    els.forEach((el, i) => el.addEventListener('pointerenter', () => { paused = true; focusOn(i); }));
+    host.addEventListener('pointerleave', () => (paused = false));
+  }
+  // 减少动态效果：取景框仍会标出当前词，但没有虚化与滑动（由 CSS 处理）
+  void reduceMotion;
+</script>
+</body>
+</html>

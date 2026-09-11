@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚速跑马灯</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 72px;     /* 字号 */
+    --mt-font: "Smiley Sans Oblique", "Smiley Sans", -apple-system, "PingFang SC", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+
+  /* 可滚动的长页：跑马灯钉在视口中间，页面本身可以往下滚很远 */
+  .mt-page {
+    height: 100vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .mt-page::-webkit-scrollbar { display: none; }
+  .mt-spacer { height: 400vh; }
+  .mt-hint {
+    position: fixed;
+    left: 50%; bottom: 22px;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.4);
+    font: 13px/1 -apple-system, "PingFang SC", sans-serif;
+    letter-spacing: 0.12em;
+    pointer-events: none;
+  }
+
+  .mt-rows {
+    position: fixed;
+    left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    gap: 0.15em;
+    pointer-events: none;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 800;
+    color: var(--mt-color);
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1.05;
+  }
+  .mt-row { overflow: hidden; }
+  /* 轨道里放若干份文案首尾相接，JS 用 translateX 循环平移 */
+  .mt-track {
+    display: inline-flex;
+    will-change: transform;
+  }
+  .mt-track span { padding-right: 0.5em; }
+  .mt-row:nth-child(2) { color: transparent; -webkit-text-stroke: 2px var(--mt-color); }
+
+  /* 用户开启「减少动态效果」时：两排静止（JS 同步不推进） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-track { transform: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-page" id="mtPage">
+  <div class="mt-spacer"></div>
+</div>
+<div class="mt-rows" aria-hidden="true">
+  <div class="mt-row"><div class="mt-track" id="mtTrackA"></div></div>
+  <div class="mt-row"><div class="mt-track" id="mtTrackB"></div></div>
+</div>
+<div class="mt-hint">往下滚动试试</div>
+<script>
+  const CONFIG = {
+    textA: "SCROLL FASTER · 滚得越快跑得越快 · ", // 第一排文案
+    textB: "反向那一排 · THE OTHER WAY · ",     // 第二排文案
+    baseSpeed: 60,  // 基础速度（px/秒），0 为只随滚动而动
+    gain: 3,        // 滚动增益：滚动速度放大倍数
+    skew: true,     // 随速倾斜
+  };
+
+  const page = document.getElementById('mtPage');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 每条轨道：文案复制到至少两屏宽，平移一份文案宽度后归零，肉眼无缝
+  function makeTrack(el, text, dir) {
+    el.textContent = '';
+    const probe = document.createElement('span');
+    probe.textContent = text;
+    el.appendChild(probe);
+    const unitW = probe.getBoundingClientRect().width || 1;
+    const copies = Math.ceil(innerWidth / unitW) + 2;
+    for (let i = 1; i < copies; i++) el.appendChild(probe.cloneNode(true));
+    return { el, unitW, dir, x: 0 };
+  }
+  const tracks = [
+    makeTrack(document.getElementById('mtTrackA'), CONFIG.textA, -1),
+    makeTrack(document.getElementById('mtTrackB'), CONFIG.textB, 1),
+  ];
+  if (document.fonts) document.fonts.ready.then(() => {
+    tracks[0] = makeTrack(tracks[0].el, CONFIG.textA, -1);
+    tracks[1] = makeTrack(tracks[1].el, CONFIG.textB, 1);
+  });
+
+  // 滚动速度：用最近一帧的 scrollTop 差值，做一点平滑
+  let lastTop = page.scrollTop, velocity = 0, last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000) || 0.016;
+    last = now;
+    if (!document.hidden && !reduceMotion) {
+      const top = page.scrollTop;
+      const instant = (top - lastTop) / dt; // px/秒，向下为正
+      lastTop = top;
+      velocity += (instant - velocity) * 0.15; // 平滑，松手后慢慢回落
+      for (const t of tracks) {
+        // 基础速度沿各自方向；滚动速度按增益叠加，向下滚时第一排加速、第二排反向
+        const speed = t.dir * CONFIG.baseSpeed + t.dir * velocity * CONFIG.gain * 0.2;
+        t.x = (t.x + speed * dt) % t.unitW;
+        if (t.x > 0) t.x -= t.unitW; // 归一到 [-unitW, 0]
+        const skew = CONFIG.skew ? Math.max(-12, Math.min(12, -velocity * 0.01)) : 0;
+        t.el.style.transform = 'translateX(' + t.x + 'px) skewX(' + skew + 'deg)';
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动上下滚动这张长页，用户一滚就停
+  if (!reduceMotion) {
+    let userTook = false, dir = 1;
+    for (const ev of ['wheel', 'pointerdown', 'keydown', 'touchstart']) {
+      page.addEventListener(ev, () => (userTook = true), { passive: true, once: true });
+    }
+    (function auto() {
+      if (userTook) return;
+      if (!document.hidden) {
+        const max = page.scrollHeight - page.clientHeight;
+        page.scrollTop += dir * 9;
+        if (page.scrollTop >= max - 1) dir = -1;
+        if (page.scrollTop <= 1) dir = 1;
+      }
+      requestAnimationFrame(auto);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

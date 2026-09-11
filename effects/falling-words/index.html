@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文字坠落堆叠</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #ffffff;    /* 强调词颜色（首尾两个词） */
+    --mt-fontSize: 28px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+
+  /* 舞台：文字段落居中排布；掉落时每个词切换为绝对定位由 JS 驱动 */
+  .mt-stage {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 600;
+    color: var(--mt-color);
+    user-select: none;
+  }
+  .mt-para {
+    max-width: min(720px, 86vw);
+    line-height: 1.8;
+    text-align: center;
+  }
+  .mt-para .w {
+    display: inline-block;
+    padding: 0 0.12em;
+    border-radius: 4px;
+    will-change: transform;
+  }
+  .mt-para .w.accent { color: var(--mt-accent); }
+  .mt-hint {
+    position: fixed;
+    left: 50%; bottom: 22px;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.4);
+    font: 13px/1 -apple-system, "PingFang SC", sans-serif;
+    letter-spacing: 0.12em;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  /* 用户开启「减少动态效果」时：不掉落（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-stage { cursor: default; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage">
+  <p class="mt-para" id="mtPara"></p>
+</div>
+<div class="mt-hint" id="mtHint">点击文字</div>
+<script>
+  const CONFIG = {
+    text: "点击 这段 文字 看看 它们 会 怎样 一个一个 掉 下来 然后 堆 在 一起", // 段落文案，按空格分词
+    trigger: "click",  // 触发方式：click 点击 / hover 鼠标移入 / auto 自动
+    gravity: 1400,     // 重力（px/s²）
+    bounce: 0.35,      // 弹性：落地反弹保留的速度比例
+    stagger: 60,       // 掉落错开（毫秒）
+    spin: true,        // 翻滚
+  };
+
+  const stage = document.getElementById('mtStage');
+  const para = document.getElementById('mtPara');
+  const hint = document.getElementById('mtHint');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const words = CONFIG.text.split(/\s+/).filter(Boolean);
+  para.setAttribute('aria-label', CONFIG.text);
+  const hintText = { click: '点击文字', hover: '把鼠标移到文字上', auto: '' }[CONFIG.trigger] || '';
+  hint.textContent = hintText;
+
+  const cells = words.map((w, i) => {
+    const s = document.createElement('span');
+    s.className = 'w' + ((i === 0 || i === words.length - 1) ? ' accent' : '');
+    s.textContent = w;
+    para.appendChild(s);
+    return s;
+  });
+
+  // ---- 简易物理：每个词是一个矩形，只受重力、地面与「已堆好的词」的顶部阻挡 ----
+  let bodies = null, raf = 0, dropping = false;
+  function drop() {
+    if (dropping || reduceMotion) return;
+    dropping = true;
+    hint.style.opacity = '0';
+    const sr = stage.getBoundingClientRect();
+    const floor = sr.height - 12;
+    const now = performance.now();
+    // 记录原位，切换为绝对定位（保持视觉位置不变）
+    bodies = cells.map((el, i) => {
+      const r = el.getBoundingClientRect();
+      return {
+        el, x: r.left - sr.left, y: r.top - sr.top, w: r.width, h: r.height,
+        vx: (Math.random() - 0.5) * 60, vy: 0, rot: 0, vr: CONFIG.spin ? (Math.random() - 0.5) * 6 : 0,
+        start: now + i * CONFIG.stagger, resting: false,
+      };
+    });
+    para.style.visibility = 'hidden';
+    for (const b of bodies) {
+      const ghost = b.el.cloneNode(true);
+      ghost.style.cssText = 'position:absolute;left:0;top:0;margin:0;visibility:visible;';
+      ghost.style.transform = 'translate(' + b.x + 'px,' + b.y + 'px)';
+      stage.appendChild(ghost);
+      b.node = ghost;
+    }
+    let last = now;
+    function step(t) {
+      if (document.hidden) { last = t; raf = requestAnimationFrame(step); return; }
+      const dt = Math.min(0.033, (t - last) / 1000); last = t;
+      let allRest = true;
+      for (const b of bodies) {
+        if (t < b.start || b.resting) { if (!b.resting) allRest = false; continue; }
+        allRest = false;
+        b.vy += CONFIG.gravity * dt;
+        b.y += b.vy * dt;
+        b.x += b.vx * dt;
+        b.rot += b.vr * dt;
+        // 左右墙
+        if (b.x < 0) { b.x = 0; b.vx = Math.abs(b.vx) * 0.5; }
+        if (b.x + b.w > sr.width) { b.x = sr.width - b.w; b.vx = -Math.abs(b.vx) * 0.5; }
+        // 地面或落在已静止的词上（只检查水平重叠的静止词顶部）
+        let ground = floor;
+        for (const o of bodies) {
+          if (o === b || !o.resting) continue;
+          if (b.x < o.x + o.w && b.x + b.w > o.x && o.y >= b.y + b.h - 4) ground = Math.min(ground, o.y);
+        }
+        if (b.y + b.h >= ground) {
+          b.y = ground - b.h;
+          if (Math.abs(b.vy) < 40) { b.vy = 0; b.vx = 0; b.vr = 0; b.resting = true; b.rot = Math.round(b.rot / 0.2) * 0.2 * 0.3; }
+          else { b.vy = -b.vy * CONFIG.bounce; b.vx *= 0.7; b.vr *= 0.6; }
+        }
+        b.node.style.transform = 'translate(' + b.x + 'px,' + b.y + 'px) rotate(' + b.rot + 'rad)';
+      }
+      if (!allRest) raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+  }
+  function reset() {
+    cancelAnimationFrame(raf);
+    if (bodies) for (const b of bodies) b.node.remove();
+    bodies = null;
+    para.style.visibility = '';
+    hint.style.opacity = '';
+    dropping = false;
+  }
+
+  if (CONFIG.trigger === 'click') stage.addEventListener('click', () => (dropping ? reset() : drop()));
+  if (CONFIG.trigger === 'hover') para.addEventListener('pointerenter', drop);
+  if (CONFIG.trigger === 'auto') setTimeout(drop, 600);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动掉落 → 停 2s → 复位 → 再掉，循环
+  if (!reduceMotion) {
+    setTimeout(drop, 800);
+    setInterval(() => {
+      if (document.hidden) return;
+      if (dropping) { reset(); setTimeout(drop, 700); }
+    }, 5200);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

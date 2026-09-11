@@ -1,0 +1,100 @@
+{
+  "slug": "hover-scramble-text",
+  "name": "悬停乱序文字",
+  "category": "text",
+  "sub": "hover",
+  "tags": ["悬停", "乱码", "扰动"],
+  "summary": "鼠标扫过哪里，那一片字就乱成符号再复原",
+  "params": [
+    {
+      "key": "text",
+      "label": "文案",
+      "type": "text",
+      "target": "config",
+      "default": "把鼠标划过这行字，它会被扰动、再自己复原。",
+      "maxLength": 60
+    },
+    {
+      "key": "radius",
+      "label": "扰动半径",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 200,
+      "step": 10,
+      "default": 70,
+      "unit": "px",
+      "help": "鼠标周围多大范围内的字会被打乱"
+    },
+    {
+      "key": "duration",
+      "label": "复原时长",
+      "type": "range",
+      "target": "config",
+      "min": 200,
+      "max": 2000,
+      "step": 100,
+      "default": 800,
+      "displayUnit": " 毫秒",
+      "help": "字被打乱后多久回到原样"
+    },
+    {
+      "key": "speed",
+      "label": "乱字刷新",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 120,
+      "step": 10,
+      "default": 40,
+      "displayUnit": " 毫秒"
+    },
+    {
+      "key": "glyphs",
+      "label": "乱字字符",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "symbol", "label": "符号" },
+        { "value": "latin", "label": "字母数字" },
+        { "value": "block", "label": "方块与线" }
+      ],
+      "default": "symbol"
+    },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "accent",
+      "label": "乱字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 18,
+      "max": 56,
+      "step": 2,
+      "default": 30,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "jetbrains-mono" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "wide",
+      "name": "大范围慢复原",
+      "values": { "radius": 160, "duration": 1600, "glyphs": "block", "accent": "#a3a3a3" }
+    },
+    {
+      "id": "tight",
+      "name": "小范围快闪",
+      "values": { "radius": 30, "duration": 300, "speed": 20, "glyphs": "latin" }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

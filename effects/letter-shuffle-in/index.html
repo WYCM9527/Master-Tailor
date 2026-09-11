@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字符洗牌进场</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色（停定后） */
+    --mt-accent: #8a8b98;    /* 翻动中的字颜色 */
+    --mt-fontSize: 52px;     /* 字号 */
+    --mt-font: "JetBrains Mono", ui-monospace, monospace; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-shuffle {
+    max-width: 92vw;
+    text-align: center;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--mt-color);
+    letter-spacing: 0.04em;
+  }
+  /* 每个字位固定宽度，翻动时字形变化不会让整行抖动 */
+  .mt-shuffle .c {
+    display: inline-block;
+    min-width: 0.62em;
+    text-align: center;
+    white-space: pre;
+    transition: color 0.2s ease;
+  }
+  .mt-shuffle .c.rolling { color: var(--mt-accent); }
+
+  /* 用户开启「减少动态效果」时：直接显示（JS 同步不翻动） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-shuffle .c { transition: none; }
+  }
+</style>
+</head>
+<body>
+<h1 class="mt-shuffle" id="mtShuffle"></h1>
+<script>
+  const CONFIG = {
+    text: "SHUFFLE 洗牌进场", // 文案
+    rounds: 8,     // 翻动次数：每个字位停下前翻过多少个乱字
+    speed: 45,     // 翻动速度（毫秒/次）
+    stagger: 60,   // 相邻错开（毫秒），0 为齐停
+    glyphs: "latin", // 乱字来源：latin 大写字母数字 / symbol 符号 / self 文案自身
+  };
+
+  const POOLS = {
+    latin: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    symbol: "!@#$%&*+=?/<>{}[]|~^",
+  };
+  const host = document.getElementById('mtShuffle');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const chars = Array.from(CONFIG.text);
+  const pool = CONFIG.glyphs === 'self'
+    ? chars.filter(c => c.trim())
+    : Array.from(POOLS[CONFIG.glyphs] || POOLS.latin);
+  host.setAttribute('aria-label', CONFIG.text);
+
+  // 生成字位
+  const cells = chars.map(ch => {
+    const c = document.createElement('span');
+    c.className = 'c';
+    c.textContent = ch;
+    c.setAttribute('aria-hidden', 'true');
+    host.appendChild(c);
+    return c;
+  });
+
+  let timers = [];
+  function play() {
+    timers.forEach(clearTimeout);
+    timers = [];
+    cells.forEach((cell, i) => {
+      const target = chars[i];
+      if (!target.trim()) return; // 空格不翻
+      const start = i * CONFIG.stagger;
+      for (let r = 0; r < CONFIG.rounds; r++) {
+        timers.push(setTimeout(() => {
+          cell.classList.add('rolling');
+          cell.textContent = pool[Math.floor(Math.random() * pool.length)];
+        }, start + r * CONFIG.speed));
+      }
+      timers.push(setTimeout(() => {
+        cell.classList.remove('rolling');
+        cell.textContent = target;
+      }, start + CONFIG.rounds * CONFIG.speed));
+    });
+  }
+
+  if (!reduceMotion) {
+    play();
+    // 循环演示：全部停定后停 2s 再洗一遍；后台时跳过
+    const total = chars.length * CONFIG.stagger + CONFIG.rounds * CONFIG.speed + 2000;
+    setInterval(() => { if (!document.hidden) play(); }, total);
+  }
+</script>
+</body>
+</html>

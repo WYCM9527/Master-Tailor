@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弧线循环文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 56px;     /* 字号 */
+    --mt-font: "Smiley Sans Oblique", "Smiley Sans", -apple-system, "PingFang SC", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  /* SVG 铺满视口，文字沿一条二次贝塞尔弧线排布并平移 */
+  .mt-arc {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    overflow: visible;
+  }
+  .mt-arc text {
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    font-weight: 700;
+    fill: var(--mt-color);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  /* 用户开启「减少动态效果」时：文字静止在弧线上（JS 同步不推进） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-arc { animation: none; }
+  }
+</style>
+</head>
+<body>
+<svg class="mt-arc" id="mtArc" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid meet" role="img">
+  <defs>
+    <path id="mtPath" d="M -200 340 Q 600 20 1400 340" fill="none"/>
+  </defs>
+  <text id="mtText"><textPath id="mtTextPath" href="#mtPath" startOffset="0"></textPath></text>
+</svg>
+<script>
+  const CONFIG = {
+    text: "沿着弧线流动的文字 ✦ ARC LOOP ✦ ", // 文案，首尾相接循环
+    curve: 160,        // 弧线弯度（px）：正值上拱 / 负值下垂 / 0 直线
+    speed: 60,         // 流动速度（px/秒）
+    direction: "left", // 流动方向：left 向左 / right 向右
+    hoverPause: true,  // 悬停暂停
+  };
+
+  const svg = document.getElementById('mtArc');
+  const path = document.getElementById('mtPath');
+  const textPath = document.getElementById('mtTextPath');
+  const textEl = document.getElementById('mtText');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  svg.setAttribute('aria-label', CONFIG.text);
+
+  // 弧线：两端在视口外，控制点高度由弯度决定（上拱为控制点更高）
+  const baseY = 340;
+  path.setAttribute('d', 'M -200 ' + baseY + ' Q 600 ' + (baseY - CONFIG.curve * 2) + ' 1400 ' + baseY);
+  const pathLength = path.getTotalLength();
+
+  // 把文案重复到比路径更长，再多补一段作为循环余量；字体加载或字号调整后重新量一次
+  const unit = CONFIG.text;
+  let unitLength = 1;
+  function measure() {
+    textPath.textContent = unit;
+    unitLength = textEl.getComputedTextLength() || 1;
+    textPath.textContent = unit.repeat(Math.ceil(pathLength / unitLength) + 2);
+  }
+  measure();
+  if (document.fonts) document.fonts.ready.then(measure);
+  setInterval(() => { if (!document.hidden) measure(); }, 1500);
+
+  // 用 startOffset 从 -unitLength 到 0（或反向）循环平移，正好平移一个文案单位后回位，肉眼无缝
+  let offset = 0, paused = false, last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!document.hidden && !paused && !reduceMotion) {
+      const dir = CONFIG.direction === 'left' ? -1 : 1;
+      offset += dir * CONFIG.speed * dt;
+      // 归一到 [-unitLength, 0]
+      offset = ((offset % unitLength) - unitLength) % unitLength;
+      textPath.setAttribute('startOffset', offset);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  if (CONFIG.hoverPause) {
+    svg.addEventListener('pointerenter', () => (paused = true));
+    svg.addEventListener('pointerleave', () => (paused = false));
+  }
+</script>
+</body>
+</html>

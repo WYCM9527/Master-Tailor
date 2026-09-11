@@ -1,0 +1,112 @@
+{
+  "slug": "letters-rise",
+  "name": "逐字弹入",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["进场", "弹跳", "逐字"],
+  "summary": "字符从下方依次弹起落定，带一点过冲的弹簧手感",
+  "params": [
+    {
+      "key": "text",
+      "label": "文案",
+      "type": "text",
+      "target": "config",
+      "default": "Hello，裁缝大师",
+      "maxLength": 40
+    },
+    {
+      "key": "distance",
+      "label": "起跳距离",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.9,
+      "unit": "em",
+      "help": "字从下方多远处弹起，以字高为单位"
+    },
+    {
+      "key": "duration",
+      "label": "单字时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 1.5,
+      "step": 0.1,
+      "default": 0.7,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "stagger",
+      "label": "相邻错开",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 160,
+      "step": 10,
+      "default": 50,
+      "displayUnit": " 毫秒"
+    },
+    {
+      "key": "ease",
+      "label": "弹跳手感",
+      "type": "select",
+      "target": "css",
+      "options": [
+        { "value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "label": "弹簧过冲" },
+        { "value": "cubic-bezier(0.22, 1, 0.36, 1)", "label": "干脆落定" },
+        { "value": "cubic-bezier(0.68, -0.6, 0.32, 1.6)", "label": "夸张回弹" }
+      ],
+      "default": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+    },
+    {
+      "key": "rotate",
+      "label": "带一点旋转",
+      "type": "toggle",
+      "target": "css",
+      "default": true,
+      "help": "弹起时字略微倾斜，落定归正"
+    },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 24,
+      "max": 96,
+      "step": 2,
+      "default": 56,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "bouncy",
+      "name": "夸张回弹",
+      "values": {
+        "ease": "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
+        "distance": 1.4,
+        "duration": 1,
+        "stagger": 70
+      }
+    },
+    {
+      "id": "crisp",
+      "name": "干脆利落",
+      "values": {
+        "ease": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "distance": 0.5,
+        "duration": 0.45,
+        "stagger": 30,
+        "rotate": false
+      }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

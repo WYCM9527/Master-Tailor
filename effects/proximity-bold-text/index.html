@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>靠近加粗文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #a3a3a3;     /* 文字颜色（远离时） */
+    --mt-accent: #ffffff;    /* 提亮颜色（靠近时） */
+    --mt-fontSize: 56px;     /* 字号 */
+    --mt-font: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+
+  .mt-press {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 90vw;
+    padding: 0.4em;
+    font-family: var(--mt-font);
+    font-size: var(--mt-fontSize);
+    line-height: 1.4;
+    color: var(--mt-color);
+    cursor: default;
+    user-select: none;
+  }
+  /* 每个字的放大 / 字重 / 颜色由 JS 逐帧写入变量；用 color-mix 在两色间插值 */
+  .mt-press .c {
+    display: inline-block;
+    white-space: pre;
+    transform: scale(var(--s, 1));
+    font-weight: var(--w, 300);
+    color: color-mix(in srgb, var(--mt-accent) calc(var(--k, 0) * 100%), var(--mt-color));
+    transform-origin: 50% 70%;
+    will-change: transform;
+  }
+
+  /* 用户开启「减少动态效果」时：不随鼠标变化（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-press .c { transform: none !important; font-weight: 500 !important; }
+  }
+</style>
+</head>
+<body>
+<h1 class="mt-press" id="mtPress"></h1>
+<script>
+  const CONFIG = {
+    text: "靠近我 · PRESSURE · 感受重量", // 文案
+    radius: 140,    // 感应半径（px）
+    grow: 1.45,     // 最大放大倍数
+    weight: true,   // 同时变粗
+    lightUp: true,  // 同时提亮
+    damping: 0.18,  // 跟随阻尼（0.05 黏 – 0.5 跟手）
+  };
+
+  const host = document.getElementById('mtPress');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const chars = Array.from(CONFIG.text);
+  host.setAttribute('aria-label', CONFIG.text);
+  const cells = chars.map(ch => {
+    const c = document.createElement('span');
+    c.className = 'c';
+    c.textContent = ch;
+    c.setAttribute('aria-hidden', 'true');
+    host.appendChild(c);
+    return { el: c, k: 0 };
+  });
+
+  // 指针位置（无指针时放到画面外）
+  let px = -9999, py = -9999;
+  host.addEventListener('pointermove', e => { px = e.clientX; py = e.clientY; });
+  host.addEventListener('pointerleave', () => { px = -9999; py = -9999; });
+
+  function frame() {
+    if (!document.hidden && !reduceMotion) {
+      for (const cell of cells) {
+        const r = cell.el.getBoundingClientRect();
+        const d = Math.hypot(r.left + r.width / 2 - px, r.top + r.height / 2 - py);
+        // 目标强度：距离 0 → 1，半径处 → 0，平滑衰减
+        const target = Math.max(0, 1 - d / CONFIG.radius);
+        const eased = target * target * (3 - 2 * target);
+        cell.k += (eased - cell.k) * CONFIG.damping; // 阻尼跟随
+        const k = cell.k;
+        cell.el.style.setProperty('--s', (1 + (CONFIG.grow - 1) * k).toFixed(3));
+        cell.el.style.setProperty('--w', String(Math.round(CONFIG.weight ? 300 + 600 * k : 500)));
+        cell.el.style.setProperty('--k', (CONFIG.lightUp ? k : 0).toFixed(3));
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：一个虚拟指针在文字上来回游走；真实鼠标进入后交还控制
+  if (!reduceMotion) {
+    let t = 0, auto = true;
+    host.addEventListener('pointerenter', () => (auto = false));
+    host.addEventListener('pointerleave', () => (auto = true));
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      const r = host.getBoundingClientRect();
+      t += 0.03;
+      px = r.left + r.width * (0.5 + 0.46 * Math.sin(t));
+      py = r.top + r.height * (0.5 + 0.25 * Math.sin(t * 1.7));
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

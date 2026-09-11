@@ -1,0 +1,90 @@
+{
+  "slug": "sheen-sweep-text",
+  "name": "扫光文字",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["扫光", "金属", "高光"],
+  "summary": "一道亮光周期性地从文字上扫过，像金属字面反光",
+  "params": [
+    {
+      "key": "text",
+      "label": "文案",
+      "type": "text",
+      "target": "config",
+      "default": "Shine on 扫光文字",
+      "maxLength": 40
+    },
+    {
+      "key": "color",
+      "label": "底色",
+      "type": "color",
+      "target": "css",
+      "default": "#6b6b6b",
+      "help": "没被光扫到时的文字颜色"
+    },
+    { "key": "sheen", "label": "光色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "width",
+      "label": "光带宽度",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "default": 25,
+      "unit": "%",
+      "help": "占文字总宽的比例"
+    },
+    {
+      "key": "period",
+      "label": "扫过周期",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 8,
+      "step": 0.5,
+      "default": 3,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "angle",
+      "label": "光带倾角",
+      "type": "range",
+      "target": "css",
+      "min": 60,
+      "max": 120,
+      "step": 5,
+      "default": 100,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 24,
+      "max": 96,
+      "step": 2,
+      "default": 56,
+      "unit": "px"
+    },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "gold",
+      "name": "鎏金",
+      "values": { "color": "#8a6a2a", "sheen": "#ffe9a8", "width": 35, "period": 2.5 }
+    },
+    {
+      "id": "slow",
+      "name": "缓慢窄光",
+      "values": { "width": 12, "period": 6, "angle": 75, "font": "lxgw-wenkai" }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}
