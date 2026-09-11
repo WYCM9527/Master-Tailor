@@ -1,0 +1,101 @@
+{
+  "slug": "soft-aurora-band",
+  "name": "柔光极光带",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["极光", "柔光", "噪声", "WebGL"],
+  "summary": "一条柔软的极光带横贯画面，两层不同颜色的光幕随噪声起伏、色相沿横向缓缓流转，鼠标移动时整条带轻轻偏移",
+  "params": [
+    { "key": "color1", "label": "第一层颜色", "type": "color", "target": "config", "default": "#f7f7f7" },
+    { "key": "color2", "label": "第二层颜色", "type": "color", "target": "config", "default": "#27ff64" },
+    {
+      "key": "speed",
+      "label": "流动速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 0.6
+    },
+    {
+      "key": "scale",
+      "label": "起伏尺度",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 5,
+      "step": 0.1,
+      "default": 1.5
+    },
+    {
+      "key": "brightness",
+      "label": "亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "noiseAmplitude",
+      "label": "起伏幅度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "bandHeight",
+      "label": "带的高度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5,
+      "help": "0 贴底，1 贴顶"
+    },
+    {
+      "key": "bandSpread",
+      "label": "带的厚度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "colorSpeed",
+      "label": "色相流转速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 4,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "mouseInfluence",
+      "label": "鼠标偏移",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.25,
+      "help": "0 关闭鼠标交互"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "violet", "name": "紫粉夜空", "values": { "color1": "#c084fc", "color2": "#f472b6", "bandHeight": 0.65, "bandSpread": 1.6 } },
+    { "id": "thin", "name": "细亮带", "values": { "bandSpread": 2.5, "noiseAmplitude": 0.5, "brightness": 1.8, "scale": 3 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

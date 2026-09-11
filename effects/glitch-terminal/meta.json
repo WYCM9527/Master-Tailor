@@ -1,0 +1,110 @@
+{
+  "slug": "glitch-terminal",
+  "name": "故障终端",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["终端", "故障", "扫描线", "复古", "WebGL"],
+  "summary": "一块老式 CRT 终端屏幕，密密麻麻的点阵字符像雨一样闪烁流动，扫描线滚过、画面偶尔抖动错位，鼠标经过处字符亮起",
+  "params": [
+    { "key": "tint", "label": "屏幕色", "type": "color", "target": "config", "default": "#ffffff" },
+    {
+      "key": "scale",
+      "label": "字符密度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "digitSize",
+      "label": "字符大小",
+      "type": "range",
+      "target": "config",
+      "min": 0.8,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.5
+    },
+    {
+      "key": "timeScale",
+      "label": "速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "scanlineIntensity",
+      "label": "扫描线强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "glitchAmount",
+      "label": "错位幅度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 5,
+      "step": 0.25,
+      "default": 1
+    },
+    {
+      "key": "flickerAmount",
+      "label": "闪烁强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "chromaticAberration",
+      "label": "色差",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 8,
+      "step": 0.5,
+      "default": 0,
+      "unit": "px"
+    },
+    {
+      "key": "curvature",
+      "label": "屏幕弧度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.2
+    },
+    {
+      "key": "mouseStrength",
+      "label": "鼠标点亮",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.2,
+      "help": "0 关闭鼠标交互"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "green", "name": "绿磷光", "values": { "tint": "#39ff88", "chromaticAberration": 2, "scanlineIntensity": 0.5 } },
+    { "id": "amber", "name": "琥珀老屏", "values": { "tint": "#ffb347", "curvature": 0.4, "glitchAmount": 2.5, "digitSize": 2 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

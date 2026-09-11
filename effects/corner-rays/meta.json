@@ -1,0 +1,121 @@
+{
+  "slug": "corner-rays",
+  "name": "角落光束",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["光束", "角落", "体积光", "WebGL"],
+  "summary": "从画面一角斜射进来一束束摇曳的绿色光线，两组光束颜色略有不同、快慢交错，像透过百叶窗的晨光",
+  "params": [
+    {
+      "key": "colors",
+      "label": "两组光色",
+      "type": "colors",
+      "target": "config",
+      "min": 2,
+      "max": 2,
+      "default": ["#27ff64", "#a8ffb6"]
+    },
+    {
+      "key": "origin",
+      "label": "光源角落",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "top-right", "label": "右上" },
+        { "value": "top-left", "label": "左上" },
+        { "value": "bottom-right", "label": "右下" },
+        { "value": "bottom-left", "label": "左下" }
+      ],
+      "default": "top-right"
+    },
+    {
+      "key": "speed",
+      "label": "摇曳速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 8,
+      "step": 0.25,
+      "default": 2.5
+    },
+    {
+      "key": "intensity",
+      "label": "亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 6,
+      "step": 0.2,
+      "default": 2
+    },
+    {
+      "key": "spread",
+      "label": "扇面张角",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 5,
+      "step": 0.25,
+      "default": 2
+    },
+    {
+      "key": "tilt",
+      "label": "整体倾斜",
+      "type": "range",
+      "target": "config",
+      "min": -45,
+      "max": 45,
+      "step": 5,
+      "default": 0,
+      "unit": "°"
+    },
+    {
+      "key": "saturation",
+      "label": "饱和度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.5
+    },
+    {
+      "key": "blend",
+      "label": "两组混合",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.75,
+      "help": "0 只有第一组，1 只有第二组"
+    },
+    {
+      "key": "falloff",
+      "label": "距离衰减",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 4,
+      "step": 0.1,
+      "default": 2
+    },
+    {
+      "key": "opacity",
+      "label": "整体不透明度",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 1
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "gold", "name": "金色晨光", "values": { "colors": ["#ffb347", "#ffe0a3"], "origin": "top-left", "saturation": 1.2, "intensity": 1.6 } },
+    { "id": "blue", "name": "冷蓝底射", "values": { "colors": ["#38bdf8", "#c4b5fd"], "origin": "bottom-right", "spread": 3, "speed": 1 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

@@ -1,0 +1,99 @@
+{
+  "slug": "flame-eye",
+  "name": "烈焰之眼",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["眼睛", "火焰", "噪声", "WebGL"],
+  "summary": "黑暗里一只由火焰构成的巨眼，虹膜像燃烧的环、四周火舌翻卷，细长的竖瞳跟着鼠标转动",
+  "params": [
+    { "key": "eyeColor", "label": "火焰颜色", "type": "color", "target": "config", "default": "#ff6f37" },
+    { "key": "backgroundColor", "label": "背景色", "type": "color", "target": "config", "default": "#000000" },
+    {
+      "key": "intensity",
+      "label": "亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.5
+    },
+    {
+      "key": "pupilSize",
+      "label": "瞳孔大小",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 1.2,
+      "step": 0.05,
+      "default": 0.6
+    },
+    {
+      "key": "irisWidth",
+      "label": "虹膜宽度",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.25
+    },
+    {
+      "key": "glowIntensity",
+      "label": "外围火光",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.35
+    },
+    {
+      "key": "scale",
+      "label": "眼睛大小",
+      "type": "range",
+      "target": "config",
+      "min": 0.4,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.8
+    },
+    {
+      "key": "noiseScale",
+      "label": "火纹细密度",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "pupilFollow",
+      "label": "瞳孔跟随",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "flameSpeed",
+      "label": "火焰速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "green", "name": "幽绿", "values": { "eyeColor": "#5dff7a", "intensity": 1.2, "glowIntensity": 0.5 } },
+    { "id": "big", "name": "巨眼慢火", "values": { "scale": 1.3, "flameSpeed": 0.4, "pupilSize": 0.9 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

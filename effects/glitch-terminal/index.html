@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>故障终端</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（canvas 覆盖前的兜底色） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，字符定格 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    tint: "#ffffff",            // 屏幕色
+    scale: 1,                   // 字符密度
+    digitSize: 1.5,             // 字符大小
+    timeScale: 0.3,             // 速度
+    scanlineIntensity: 0.3,     // 扫描线强度
+    glitchAmount: 1,            // 错位幅度
+    flickerAmount: 1,           // 闪烁强度
+    chromaticAberration: 0,     // 色差（px）
+    curvature: 0.2,             // 屏幕弧度
+    mouseStrength: 0.2,         // 鼠标点亮
+  };
+  const GRID_MUL = [2, 1];      // 字符网格横纵倍数
+  const NOISE_AMP = 1;          // 噪声振幅
+  const RENDER_SCALE = 0.75;    // 渲染分辨率折扣（着色器较重）
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：屏幕先做桶形畸变；每个网格格子由三层旋转 fbm 决定「亮度」，再在格内画 5×5 点阵字形
+  // （亮度越高点亮的点越多）；叠加滚动扫描线、周期性横向错位抖动、九邻域辉光、色差与进场逐格亮起
+  const FS = `
+    precision mediump float;
+    varying vec2 vUv;
+    uniform float uTime;
+    uniform vec2  uRes;
+    uniform float uScale, uDigitSize, uScan, uGlitch, uFlicker, uNoiseAmp, uChroma, uCurv, uMouseK, uLoad;
+    uniform vec2  uGridMul, uMouse;
+    uniform vec3  uTint;
+    float time;
+
+    float hash21(vec2 p) { p = fract(p * 234.56); p += dot(p, p + 34.56); return fract(p.x * p.y); }
+    float noise(vec2 p) { return sin(p.x * 10.0) * sin(p.y * (3.0 + sin(time * 0.090909))) + 0.2; }
+    mat2 rot(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+    // 三层、逐层旋转缩放的分形噪声
+    float fbm(vec2 p) {
+      p *= 1.1;
+      float f = 0.0, amp = 0.5 * uNoiseAmp;
+      f += amp * noise(p); p = rot(time * 0.02) * p * 2.0; amp *= 0.454545;
+      f += amp * noise(p); p = rot(time * 0.02) * p * 2.0; amp *= 0.454545;
+      f += amp * noise(rot(time * 0.08) * p);
+      return f;
+    }
+    float pattern(vec2 p) {
+      vec2 q = vec2(fbm(p + 1.0), fbm(rot(0.1 * time) * p + 1.0));
+      vec2 r = vec2(fbm(rot(0.1) * q), fbm(q));
+      return fbm(p + r);
+    }
+    // 一个格子里的点阵字符
+    float digit(vec2 p) {
+      vec2 grid = uGridMul * 15.0;
+      vec2 s = floor(p * grid) / grid;
+      p = p * grid;
+      float intensity = pattern(s * 0.1) * 1.3 - 0.03;
+      if (uMouseK > 0.0) {
+        float dm = distance(s, uMouse * uScale);
+        float k = exp(-dm * 8.0) * uMouseK * 10.0;
+        intensity += k + sin(dm * 20.0 - uTime * 5.0) * 0.1 * k;   // 点亮 + 涟漪
+      }
+      // 进场：每格随机延迟后淡入
+      float cellRnd = fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453);
+      intensity *= smoothstep(0.0, 1.0, clamp((uLoad - cellRnd * 0.8) / 0.2, 0.0, 1.0));
+      p = fract(p) * uDigitSize;
+      float px5 = p.x * 5.0, py5 = (1.0 - p.y) * 5.0;
+      float x = fract(px5), y = fract(py5);
+      float i = floor(py5) - 2.0, j = floor(px5) - 2.0;
+      float f = (i * i + j * j) * 0.0625;                    // 离格心越远越难点亮
+      float on = step(0.1, intensity - f);
+      float bright = on * (0.2 + y * 0.8) * (0.75 + x * 0.25);
+      return step(0.0, p.x) * step(p.x, 1.0) * step(0.0, p.y) * step(p.y, 1.0) * bright;
+    }
+    float onOff(float a, float b, float c) { return step(c, sin(uTime + a * cos(uTime * b))) * uFlicker; }
+    // 周期性滑过的一条横向错位带
+    float displace(vec2 look) {
+      float y = look.y - mod(uTime * 0.25, 1.0);
+      float win = 1.0 / (1.0 + 50.0 * y * y);
+      return sin(look.y * 20.0 + uTime) * 0.0125 * onOff(4.0, 2.0, 0.8) * (1.0 + cos(uTime * 60.0)) * win;
+    }
+    vec3 shade(vec2 p) {
+      float bar = (step(mod(p.y + time * 20.0, 1.0), 0.2) * 0.4 + 1.0) * uScan;   // 滚动扫描线
+      float d = displace(p);
+      p.x += d + d * (uGlitch - 1.0);
+      float mid = digit(p);
+      const float off = 0.002;   // 九邻域采样做辉光
+      float sum = digit(p + vec2(-off, -off)) + digit(p + vec2(0.0, -off)) + digit(p + vec2(off, -off))
+                + digit(p + vec2(-off, 0.0)) + digit(p) + digit(p + vec2(off, 0.0))
+                + digit(p + vec2(-off, off)) + digit(p + vec2(0.0, off)) + digit(p + vec2(off, off));
+      return vec3(0.9) * mid + sum * 0.1 * bar;
+    }
+    vec2 barrel(vec2 uv) { vec2 c = uv * 2.0 - 1.0; c *= 1.0 + uCurv * dot(c, c); return c * 0.5 + 0.5; }
+
+    void main() {
+      time = uTime * 0.333333;
+      vec2 uv = uCurv != 0.0 ? barrel(vUv) : vUv;
+      vec2 p = uv * uScale;
+      vec3 col = shade(p);
+      if (uChroma != 0.0) {
+        vec2 ca = vec2(uChroma) / uRes;
+        col.r = shade(p + ca).r;
+        col.b = shade(p - ca).b;
+      }
+      gl_FragColor = vec4(col * uTint, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const dpr = Math.min(2, devicePixelRatio || 1) * RENDER_SCALE;
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+  gl.uniform1f(U('uScale'), CONFIG.scale);
+  gl.uniform1f(U('uDigitSize'), CONFIG.digitSize);
+  gl.uniform1f(U('uScan'), CONFIG.scanlineIntensity);
+  gl.uniform1f(U('uGlitch'), CONFIG.glitchAmount);
+  gl.uniform1f(U('uFlicker'), CONFIG.flickerAmount);
+  gl.uniform1f(U('uNoiseAmp'), NOISE_AMP);
+  gl.uniform1f(U('uChroma'), CONFIG.chromaticAberration * dpr);
+  gl.uniform1f(U('uCurv'), CONFIG.curvature);
+  gl.uniform1f(U('uMouseK'), CONFIG.mouseStrength);
+  gl.uniform2f(U('uGridMul'), GRID_MUL[0], GRID_MUL[1]);
+  gl.uniform3fv(U('uTint'), hexRgb(CONFIG.tint));
+  const uTime = U('uTime'), uMouse = U('uMouse'), uLoad = U('uLoad');
+
+  // 鼠标 0–1（y 向上），8% 阻尼跟随
+  const target = { x: 0.5, y: 0.5 }, mouse = { x: 0.5, y: 0.5 };
+  addEventListener('pointermove', (e) => { target.x = e.clientX / innerWidth; target.y = 1 - e.clientY / innerHeight; });
+
+  const start = performance.now();
+  let time = reduceMotion ? 10 : 0, last = start;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt * CONFIG.timeScale;
+    mouse.x += (target.x - mouse.x) * 0.08; mouse.y += (target.y - mouse.y) * 0.08;
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.uniform1f(uLoad, reduceMotion ? 1 : Math.min(1, (now - start) / 2000));   // 2 秒逐格亮起
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

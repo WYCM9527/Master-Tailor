@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>渐变百叶窗</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（canvas 覆盖前的兜底色） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：噪点定格，聚光直接跟随 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    colors: ["#ff9ffc", "#5227ff"],  // 渐变颜色
+    angle: 0,                 // 叶片角度（度）
+    blindCount: 16,           // 叶片数量
+    noise: 0.3,               // 噪点
+    spotlightRadius: 0.5,     // 聚光半径
+    spotlightSoftness: 1,     // 聚光柔度
+    spotlightOpacity: 1,      // 聚光亮度
+    distortAmount: 0,         // 叶片扭曲
+    mirrorGradient: false,    // 渐变镜像
+    shineRight: false,        // 亮边在右
+  };
+  const BLIND_MIN_WIDTH = 60;   // 每片最小宽度（px），窄屏自动减少叶片
+  const MOUSE_DAMPING = 0.15;   // 聚光跟随阻尼
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：颜色 = 聚光（鼠标处的径向亮斑）+ 多段渐变 − 百叶条纹（每片内 0→1 的锯齿），再加噪点
+  const FS = `
+    precision mediump float;
+    varying vec2 vUv;
+    uniform vec2  uRes, uMouse;
+    uniform float uTime, uAngle, uNoise, uCount, uSpotR, uSpotSoft, uSpotA, uMirror, uDistort, uFlip;
+    uniform vec3  uColors[8];
+    uniform int   uColorCount;
+
+    float rand(vec2 co) { return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453); }
+    vec2 rot(vec2 p, float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c) * p; }
+    // 多段线性渐变：WebGL1 数组只能常量下标，用循环比对取色
+    vec3 gradient(float t) {
+      int count = uColorCount < 2 ? 2 : uColorCount;
+      float scaled = clamp(t, 0.0, 1.0) * float(count - 1);
+      float seg = floor(scaled), f = fract(scaled);
+      vec3 a = uColors[0], b = uColors[1];
+      for (int i = 0; i < 8; i++) {
+        if (i < count - 1 && float(i) == seg) { a = uColors[i]; b = uColors[i + 1 > 7 ? 7 : i + 1]; }
+        if (i == count - 1 && seg >= float(i)) { a = uColors[i]; b = uColors[i]; }   // t = 1 时取最后一色
+      }
+      return mix(a, b, f);
+    }
+
+    void main() {
+      // 旋转坐标（保持宽高比）得到叶片方向
+      float aspect = uRes.x / uRes.y;
+      vec2 p = vUv * 2.0 - 1.0; p.x *= aspect;
+      vec2 pr = rot(p, uAngle); pr.x /= aspect;
+      vec2 uv = pr * 0.5 + 0.5;
+      // 可选扭曲：叶片边缘按正弦波动
+      vec2 um = uv;
+      if (uDistort > 0.0) { float w = 0.01 * uDistort; um.x += sin(um.y * 6.0) * w; um.y += cos(um.x * 6.0) * w; }
+      float t = um.x;
+      if (uMirror > 0.5) t = 1.0 - abs(1.0 - 2.0 * fract(t));
+      vec3 base = gradient(t);
+      // 聚光：以鼠标为中心，半径内由亮到暗
+      float d = length(vUv - uMouse) / max(uSpotR, 1e-4);
+      float spot = (1.0 - 2.0 * pow(d, uSpotSoft)) * uSpotA;
+      // 百叶：每片内从 0 到 1 的锯齿，减掉后每片一边亮一边暗
+      float stripe = fract(um.x * max(uCount, 1.0));
+      if (uFlip > 0.5) stripe = 1.0 - stripe;
+      vec3 col = vec3(spot) + base - vec3(stripe);
+      col += (rand(gl_FragCoord.xy + uTime) - 0.5) * uNoise;
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  // 色表最多 8 个，不足补最后一个
+  const stops = CONFIG.colors.slice(0, 8);
+  const arr = new Float32Array(24);
+  for (let i = 0; i < 8; i++) arr.set(hexRgb(stops[Math.min(i, stops.length - 1)]), i * 3);
+  gl.uniform3fv(U('uColors'), arr);
+  gl.uniform1i(U('uColorCount'), Math.max(2, stops.length));
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+    // 窄屏保证每片不小于最小宽度
+    const maxByWidth = Math.max(1, Math.floor(innerWidth / BLIND_MIN_WIDTH));
+    gl.uniform1f(U('uCount'), Math.max(1, Math.min(CONFIG.blindCount, maxByWidth)));
+  }
+  resize(); addEventListener('resize', resize);
+  gl.uniform1f(U('uAngle'), (CONFIG.angle * Math.PI) / 180);
+  gl.uniform1f(U('uNoise'), CONFIG.noise);
+  gl.uniform1f(U('uSpotR'), CONFIG.spotlightRadius);
+  gl.uniform1f(U('uSpotSoft'), CONFIG.spotlightSoftness);
+  gl.uniform1f(U('uSpotA'), CONFIG.spotlightOpacity);
+  gl.uniform1f(U('uMirror'), CONFIG.mirrorGradient ? 1 : 0);
+  gl.uniform1f(U('uDistort'), CONFIG.distortAmount);
+  gl.uniform1f(U('uFlip'), CONFIG.shineRight ? 1 : 0);
+  const uTime = U('uTime'), uMouse = U('uMouse');
+
+  // 聚光跟随鼠标（0–1，y 向上），初始在画面中心
+  const target = { x: 0.5, y: 0.5 }, mouse = { x: 0.5, y: 0.5 };
+  addEventListener('pointermove', (e) => { target.x = e.clientX / innerWidth; target.y = 1 - e.clientY / innerHeight; });
+
+  let time = 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    const k = reduceMotion ? 1 : MOUSE_DAMPING;
+    mouse.x += (target.x - mouse.x) * k; mouse.y += (target.y - mouse.y) * k;
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

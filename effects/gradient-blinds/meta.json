@@ -1,0 +1,99 @@
+{
+  "slug": "gradient-blinds",
+  "name": "渐变百叶窗",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["百叶", "渐变", "聚光", "WebGL"],
+  "summary": "一排百叶窗叶片铺满全屏，每片从亮到暗，底下是横贯画面的渐变；鼠标像一盏聚光灯照亮所在的几片",
+  "params": [
+    {
+      "key": "colors",
+      "label": "渐变颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 2,
+      "max": 8,
+      "default": ["#ff9ffc", "#5227ff"]
+    },
+    {
+      "key": "angle",
+      "label": "叶片角度",
+      "type": "range",
+      "target": "config",
+      "min": -90,
+      "max": 90,
+      "step": 5,
+      "default": 0,
+      "unit": "°"
+    },
+    {
+      "key": "blindCount",
+      "label": "叶片数量",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 60,
+      "step": 1,
+      "default": 16
+    },
+    {
+      "key": "noise",
+      "label": "噪点",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "spotlightRadius",
+      "label": "聚光半径",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.5
+    },
+    {
+      "key": "spotlightSoftness",
+      "label": "聚光柔度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "spotlightOpacity",
+      "label": "聚光亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "distortAmount",
+      "label": "叶片扭曲",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "default": 0
+    },
+    { "key": "mirrorGradient", "label": "渐变镜像", "type": "toggle", "target": "config", "default": false },
+    { "key": "shineRight", "label": "亮边在右", "type": "toggle", "target": "config", "default": false }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "sunset", "name": "日落斜叶", "values": { "colors": ["#ff6a00", "#ff2d95", "#5227ff"], "angle": 30, "blindCount": 24, "mirrorGradient": true } },
+    { "id": "wavy", "name": "扭曲窄叶", "values": { "distortAmount": 6, "blindCount": 40, "noise": 0.1, "spotlightRadius": 0.8 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}
