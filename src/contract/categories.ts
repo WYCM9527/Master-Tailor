@@ -40,7 +40,7 @@ export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
   { id: 'showcase', name: '多卡/图展示', subs: SHOWCASE_SUBS },
   { id: 'transition', name: '页面转场', subs: TRANSITION_SUBS },
   { id: 'loading', name: '加载与进场', subs: TRIGGER_SUBS },
-  { id: 'canvas', name: '光标效果', subs: TRIGGER_SUBS },
+  { id: 'canvas', name: '鼠标交互', subs: TRIGGER_SUBS },
 ];
 
 export function categoryName(id: CategoryId): string {

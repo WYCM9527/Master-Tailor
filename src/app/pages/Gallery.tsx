@@ -144,7 +144,10 @@ export function Gallery() {
 
           {CATEGORIES.map((c) => {
             const isOpen = !collapsed.has(c.id);
-            const subs = c.subs.filter((s) => countIn(c.id, s.id) > 0);
+            const allSubs = c.subs.filter((s) => countIn(c.id, s.id) > 0);
+            // 唯一子类与分类同名时（如「鼠标交互」分类下只有 hover 子类）不渲染子类行——
+            // 点分类与点该子类的筛选结果完全一致，重复一行只添乱
+            const subs = allSubs.length === 1 && allSubs[0].name === c.name ? [] : allSubs;
             return (
               <div className={`side-group${cat === c.id ? ' active' : ''}`} key={c.id}>
                 <div className="side-cat">
@@ -169,7 +172,7 @@ export function Gallery() {
                     {isOpen ? <IconMinus size={12} /> : <IconPlus size={12} />}
                   </button>
                 </div>
-                {isOpen && (
+                {isOpen && subs.length > 0 && (
                   <div className="side-subs">
                     {subs.map((s) => (
                       <button
