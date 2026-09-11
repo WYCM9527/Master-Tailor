@@ -15,6 +15,8 @@ import {
  * 站内图标统一取自字节开源 IconPark（https://iconpark.oceanengine.com/official，Apache-2.0）。
  * 本文件是唯一入口：outline 主题、strokeWidth 4（48 画布，16px 显示时约等于 1.33px）、
  * 方头线帽（square）+ 尖角连接（miter），与 Swiss Grid 的直角线条一致。
+ * 例外：箭头这类「线端汇聚成尖」的图形用平头帽（butt）——方头帽会让横杆从箭尖里凸出一块、
+ * 两翼开口斜着外凸，放大到 72px 时头部明显突兀；平头帽让尖角由 miter 干净收成一点。
  * 新增图标请到 IconPark 官网检索后在此包装，不要手绘 path、不要引入其他图标库；
  * 完整规则见 .cursor/rules/icons.mdc。
  */
@@ -28,14 +30,14 @@ interface IconProps {
 
 type IconParkComponent = (props: Record<string, unknown>) => ReactElement;
 
-function wrap(Comp: IconParkComponent) {
+function wrap(Comp: IconParkComponent, linecap: 'square' | 'butt' = 'square') {
   return function Icon({ size = 16, className, style }: IconProps) {
     return (
       <Comp
         theme="outline"
         size={size}
         strokeWidth={4}
-        strokeLinecap="square"
+        strokeLinecap={linecap}
         strokeLinejoin="miter"
         className={['icon', className].filter(Boolean).join(' ')}
         style={style}
@@ -53,10 +55,10 @@ export const IconPrompt = wrap(FileText as IconParkComponent);
 export const IconCode = wrap(Code as IconParkComponent);
 /** 参数：滑轨（setting-config） */
 export const IconParams = wrap(SettingConfig as IconParkComponent);
-/** 右箭头（arrow-right） */
-export const IconArrowRight = wrap(ArrowRight as IconParkComponent);
-/** 左箭头（arrow-left） */
-export const IconArrowLeft = wrap(ArrowLeft as IconParkComponent);
+/** 右箭头（arrow-right）：平头帽，箭尖干净 */
+export const IconArrowRight = wrap(ArrowRight as IconParkComponent, 'butt');
+/** 左箭头（arrow-left）：平头帽，箭尖干净 */
+export const IconArrowLeft = wrap(ArrowLeft as IconParkComponent, 'butt');
 /** 加号（plus） */
 export const IconPlus = wrap(Plus as IconParkComponent);
 /** 减号（minus） */

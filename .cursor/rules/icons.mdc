@@ -12,6 +12,7 @@ alwaysApply: false
 
 - 主题 `outline`，48 画布 `strokeWidth 4`（16px 显示时约 1.33px）
 - `stroke-linecap: square`、`stroke-linejoin: miter`（直角规格，配合站点 Swiss Grid）
+  - 例外：箭头等「线端汇聚成尖」的图标用 `stroke-linecap: butt`——方头帽会让横杆从箭尖里凸出、两翼开口外凸，大尺寸下头部突兀；平头帽让 miter 尖角干净收成一点
 - 颜色一律 `currentColor`，随所在文字反转；默认显示尺寸 16px
 
 ## 站点侧（src/**）
