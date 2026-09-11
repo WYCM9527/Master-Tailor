@@ -1,7 +1,7 @@
 {
   "slug": "antigravity-particles",
   "name": "反重力粒子",
-  "category": "canvas",
+  "category": "background",
   "sub": "hover",
   "tags": ["粒子", "排斥", "光标"],
   "summary": "满屏细小粒子缓缓上浮，鼠标一到就被推开、绕着走",

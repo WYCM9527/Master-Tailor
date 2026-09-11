@@ -1,7 +1,7 @@
 {
   "slug": "cube-wave-grid",
   "name": "方块波纹网格",
-  "category": "canvas",
+  "category": "background",
   "sub": "hover",
   "tags": ["网格", "3D", "波纹"],
   "summary": "一片立体小方块随鼠标掠过起伏倾斜，像水面被手指划过",

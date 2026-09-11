@@ -1,7 +1,7 @@
 {
   "slug": "metaballs-blob",
   "name": "融球",
-  "category": "canvas",
+  "category": "background",
   "sub": "idle",
   "tags": ["融球", "液态", "有机"],
   "summary": "几团圆球慢慢游动，靠近时像水银一样黏合成一块",

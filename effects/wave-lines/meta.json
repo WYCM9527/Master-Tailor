@@ -1,7 +1,7 @@
 {
   "slug": "wave-lines",
   "name": "波浪流体线条",
-  "category": "canvas",
+  "category": "background",
   "sub": "idle",
   "tags": ["波浪", "线条", "流动"],
   "summary": "多条正弦波线错落起伏，像风吹过的水面",

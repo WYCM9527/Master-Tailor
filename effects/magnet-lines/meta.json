@@ -1,7 +1,7 @@
 {
   "slug": "magnet-lines",
   "name": "磁力线阵",
-  "category": "canvas",
+  "category": "background",
   "sub": "hover",
   "tags": ["磁场", "线条", "光标"],
   "summary": "一片短线像铁屑一样，齐齐转向鼠标所在的方向",
