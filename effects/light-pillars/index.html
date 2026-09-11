@@ -11,7 +11,6 @@
     --mt-spread: 14deg;      /* 光柱张角 */
     --mt-period: 9s;         /* 摇摆周期 */
     --mt-blur: 20px;         /* 边缘柔化 */
-    --mt-color: #ffffff;     /* 光的颜色 */
     --mt-intensity: 0.75;    /* 亮度 */
     --mt-reach: 70%;         /* 照射深度：光在画面多深处衰减到看不见 */
   }
@@ -29,9 +28,10 @@
     top: -20%;
     height: 140%;
     --ax: calc(25% + var(--x) / 2);
-    --c1: color-mix(in srgb, var(--mt-color) calc(var(--mt-intensity) * 100%), transparent);
-    --c2: color-mix(in srgb, var(--mt-color) calc(var(--mt-intensity) * 45%), transparent);
-    --c3: color-mix(in srgb, var(--mt-color) calc(var(--mt-intensity) * 14%), transparent);
+    /* --pc 是这一道射灯自己的颜色，由 JS 按颜色列表轮流写入 */
+    --c1: color-mix(in srgb, var(--pc) calc(var(--mt-intensity) * 100%), transparent);
+    --c2: color-mix(in srgb, var(--pc) calc(var(--mt-intensity) * 45%), transparent);
+    --c3: color-mix(in srgb, var(--pc) calc(var(--mt-intensity) * 14%), transparent);
     /* 两层锥形叠加：里层是光的主体，外层是一圈更宽更淡的光晕 */
     background:
       conic-gradient(from calc(180deg - var(--mt-spread) / 2) at var(--ax) 0,
@@ -73,15 +73,17 @@
   const CONFIG = {
     count: 4,   // 光柱数量
     sway: 6,    // 摇摆幅度（度）
+    colors: ["#ffffff"], // 射灯颜色：按顺序轮流分配给每道光，颗数多于颜色数时从头再来
   };
   const stage = document.getElementById('mtStage');
-  // 光柱顶点在宽度上均匀分布，各自错开相位
+  // 光柱顶点在宽度上均匀分布，各自错开相位，颜色按列表轮流取
   for (let i = 0; i < CONFIG.count; i++) {
     const p = document.createElement('div');
     p.className = 'mt-pillar';
     p.style.setProperty('--x', ((i + 0.5) / CONFIG.count * 100) + '%');
     p.style.setProperty('--sway', CONFIG.sway + 'deg');
     p.style.setProperty('--d', (-i * 1.7) + 's');
+    p.style.setProperty('--pc', CONFIG.colors[i % CONFIG.colors.length]);
     stage.appendChild(p);
   }
   // 纯 CSS 动画：页面切到后台时浏览器自动暂停渲染

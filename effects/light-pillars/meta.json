@@ -76,7 +76,16 @@
       "unit": "%",
       "help": "光在画面多深处衰减到看不见，100 为一直照到底"
     },
-    { "key": "color", "label": "光的颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "colors",
+      "label": "射灯颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "default": ["#ffffff"],
+      "help": "每道射灯按这个顺序轮流取色，只填一个则全部同色"
+    },
     {
       "key": "intensity",
       "label": "亮度",
@@ -106,6 +115,19 @@
       "id": "haze",
       "name": "薄雾细柱",
       "values": { "count": 8, "spread": 6, "sway": 3, "blur": 40, "intensity": 0.35, "reach": 60 }
+    },
+    {
+      "id": "concert",
+      "name": "彩色舞台",
+      "values": {
+        "count": 5,
+        "spread": 18,
+        "sway": 10,
+        "period": 5,
+        "intensity": 0.9,
+        "reach": 100,
+        "colors": ["#ff4d6d", "#ffd166", "#4dff88", "#4db8ff", "#c04dff"]
+      }
     }
   ],
   "thumb": { "mode": "live" },
