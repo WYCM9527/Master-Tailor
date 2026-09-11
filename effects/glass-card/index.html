@@ -3,15 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>玻璃拟态卡片</title>
+<title>悬浮呼吸效果</title>
 <style>
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
-    --mt-bg: #0a0a0f;      /* 页面底色（背景图之外的区域） */
-    --mt-blur: 18px;       /* 磨砂强度：backdrop-filter 模糊半径 */
-    --mt-whiteness: 0.1;   /* 玻璃白度：卡片表面的白色叠加浓度 */
-    --mt-rounded: 22px;    /* 卡片圆角 */
-    --mt-float: 1;         /* 悬浮呼吸：1 开启 / 0 关闭 */
+    --mt-bg: #0a0a0f;         /* 页面底色（背景图之外的区域） */
+    --mt-amplitude: 8px;      /* 浮动幅度：上下浮动的单侧距离，0 为原地呼吸 */
+    --mt-period: 6s;          /* 呼吸周期：最低点升到最高点的时间 */
+    --mt-scaleBreath: 0.02;   /* 起伏胀缩：最高点时放大的比例 */
+    --mt-shadowBreath: 0.7;   /* 投影呼吸：升起时投影拉远、摊开、变淡的程度（0–1） */
+    --mt-blur: 18px;          /* 磨砂强度：backdrop-filter 模糊半径 */
+    --mt-whiteness: 0.1;      /* 玻璃白度：卡片表面的白色叠加浓度 */
+    --mt-rounded: 22px;       /* 卡片圆角 */
   }
 
   html, body { margin: 0; height: 100%; }
@@ -42,21 +45,40 @@
     backdrop-filter: blur(var(--mt-blur)) saturate(1.4);
     background: rgba(255, 255, 255, var(--mt-whiteness));
     border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     color: #fff;
-    /* 悬浮呼吸：极缓慢的上下浮动；关闭时幅度乘 0 相当于静止 */
-    animation: mt-float 6s ease-in-out infinite alternate;
+    /* 静态投影（reduced-motion 时保持）：一层贴地接触影 + 一层熨开的大范围柔影 */
+    box-shadow:
+      0 6px 18px rgba(0, 0, 0, 0.12),
+      0 28px 90px rgba(0, 0, 0, 0.3);
+    /* 悬浮呼吸：位移 + 胀缩 + 投影三者同相往复；alternate 往返，无跳变 */
+    animation: mt-breathe var(--mt-period) ease-in-out infinite alternate;
+    will-change: transform, box-shadow;
   }
-  @keyframes mt-float {
-    from { transform: translateY(calc(6px * var(--mt-float))); }
-    to   { transform: translateY(calc(-6px * var(--mt-float))); }
+  /* 最低点（呼气）：贴近地面，影子近而实；最高点（吸气）：升起放大，影子拉远、摊开、变淡。
+     投影的变化量都乘以「投影呼吸」，0 时两端投影一致。 */
+  @keyframes mt-breathe {
+    from {
+      transform: translateY(var(--mt-amplitude)) scale(1);
+      box-shadow:
+        0 calc(6px - 2px * var(--mt-shadowBreath)) calc(18px - 6px * var(--mt-shadowBreath))
+          rgba(0, 0, 0, calc(0.12 + 0.06 * var(--mt-shadowBreath))),
+        0 calc(28px - 8px * var(--mt-shadowBreath)) calc(90px - 24px * var(--mt-shadowBreath))
+          rgba(0, 0, 0, calc(0.3 + 0.08 * var(--mt-shadowBreath)));
+    }
+    to {
+      transform: translateY(calc(-1 * var(--mt-amplitude))) scale(calc(1 + var(--mt-scaleBreath)));
+      box-shadow:
+        0 calc(6px + 8px * var(--mt-shadowBreath)) calc(18px + 16px * var(--mt-shadowBreath))
+          rgba(0, 0, 0, calc(0.12 - 0.06 * var(--mt-shadowBreath))),
+        0 calc(28px + 26px * var(--mt-shadowBreath)) calc(90px + 60px * var(--mt-shadowBreath))
+          rgba(0, 0, 0, calc(0.3 - 0.14 * var(--mt-shadowBreath)));
+    }
   }
 
   .mt-glass h3 {
     margin: 0 0 10px;
     font-size: 22px;
     letter-spacing: 0.04em;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
   }
   .mt-glass p {
     margin: 0;
@@ -74,7 +96,7 @@
     pointer-events: none;
   }
 
-  /* 用户开启「减少动态效果」时：停止悬浮呼吸 */
+  /* 用户开启「减少动态效果」时：停止呼吸，停在静态投影 */
   @media (prefers-reduced-motion: reduce) {
     .mt-glass { animation: none; }
   }
@@ -83,13 +105,13 @@
 <body>
 <img class="mt-photo" id="mtPhoto" src="/samples/sample-2.webp" alt="" aria-hidden="true">
 <div class="mt-glass">
-  <h3 id="mtTitle">Glass Card</h3>
-  <p>磨砂玻璃透出背后的色彩，模糊而不浑浊。换一张背景图，玻璃的气质也会跟着变。</p>
+  <h3 id="mtTitle">Breathe</h3>
+  <p>卡片像悬在图片上方缓缓呼吸：升起时微微鼓起、投影拉远变淡，落下时收拢、投影贴近变实。</p>
 </div>
 <script>
   const CONFIG = {
     photo: "/samples/sample-2.webp", // 背景图片（替换为你自己的图片路径）
-    title: "Glass Card",            // 卡片标题
+    title: "Breathe",               // 卡片标题
   };
 
   document.getElementById('mtPhoto').src = CONFIG.photo;

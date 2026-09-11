@@ -1,13 +1,75 @@
 {
   "slug": "glass-card",
-  "name": "玻璃拟态卡片",
+  "name": "悬浮呼吸效果",
   "category": "card",
   "sub": "idle",
-  "tags": ["玻璃拟态", "毛玻璃", "悬浮"],
-  "summary": "磨砂玻璃卡片悬浮在图片上，背景透出朦胧色彩",
+  "tags": ["悬浮", "呼吸", "玻璃拟态", "投影"],
+  "summary": "磨砂玻璃卡片在图片上缓缓起伏，投影随之拉远变淡",
   "params": [
-    { "key": "photo", "label": "背景图片", "type": "image", "target": "config", "default": "/samples/sample-2.webp" },
-    { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "Glass Card", "maxLength": 20 },
+    {
+      "key": "photo",
+      "label": "背景图片",
+      "type": "image",
+      "target": "config",
+      "default": "/samples/sample-2.webp"
+    },
+    {
+      "key": "title",
+      "label": "卡片标题",
+      "type": "text",
+      "target": "config",
+      "default": "Breathe",
+      "maxLength": 20
+    },
+    {
+      "key": "amplitude",
+      "label": "浮动幅度",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 1,
+      "default": 8,
+      "unit": "px",
+      "help": "卡片上下浮动的单侧距离，0 为原地呼吸不位移"
+    },
+    {
+      "key": "period",
+      "label": "呼吸周期",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 12,
+      "step": 0.5,
+      "default": 6,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "从最低点升到最高点所用的时间，一呼一吸是它的两倍"
+    },
+    {
+      "key": "scaleBreath",
+      "label": "起伏胀缩",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 0.06,
+      "step": 0.005,
+      "default": 0.02,
+      "unit": "",
+      "help": "升到最高点时卡片放大的比例，0.02 即 2%，像吸气时微微鼓起"
+    },
+    {
+      "key": "shadowBreath",
+      "label": "投影呼吸",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.7,
+      "unit": "",
+      "help": "卡片升起时投影拉远、摊开、变淡的程度，0 为投影不变"
+    },
     {
       "key": "blur",
       "label": "磨砂强度",
@@ -39,20 +101,37 @@
       "step": 2,
       "default": 22,
       "unit": "px"
-    },
-    { "key": "float", "label": "悬浮呼吸", "type": "toggle", "target": "css", "default": true, "help": "卡片缓慢上下浮动" }
+    }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
     {
-      "id": "frosted",
-      "name": "重度磨砂",
-      "values": { "blur": 34, "whiteness": 0.18, "photo": "/samples/sample-1.webp" }
+      "id": "deep",
+      "name": "深呼吸",
+      "values": { "amplitude": 14, "period": 8, "scaleBreath": 0.04, "shadowBreath": 1 }
     },
     {
-      "id": "clear",
-      "name": "轻透静止",
-      "values": { "blur": 8, "whiteness": 0.05, "float": false, "photo": "/samples/sample-3.webp" }
+      "id": "subtle",
+      "name": "微浮",
+      "values": {
+        "amplitude": 4,
+        "period": 4,
+        "scaleBreath": 0.01,
+        "shadowBreath": 0.4,
+        "blur": 10,
+        "whiteness": 0.06,
+        "photo": "/samples/sample-3.webp"
+      }
+    },
+    {
+      "id": "still",
+      "name": "原地呼吸",
+      "values": {
+        "amplitude": 0,
+        "scaleBreath": 0.03,
+        "shadowBreath": 0.8,
+        "photo": "/samples/sample-1.webp"
+      }
     }
   ],
   "thumb": { "mode": "live" },
