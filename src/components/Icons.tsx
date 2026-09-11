@@ -8,6 +8,7 @@ import {
   HamburgerButton,
   Minus,
   Plus,
+  Search,
   SettingConfig,
 } from '@icon-park/react';
 
@@ -65,3 +66,5 @@ export const IconPlus = wrap(Plus as IconParkComponent);
 export const IconMinus = wrap(Minus as IconParkComponent);
 /** 叉：删除 / 关闭（close） */
 export const IconClose = wrap(Close as IconParkComponent);
+/** 搜索：放大镜（search） */
+export const IconSearch = wrap(Search as IconParkComponent);

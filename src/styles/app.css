@@ -182,6 +182,81 @@
 .hdr-brand:hover .mono {
   color: var(--bg);
 }
+/* 通栏搜索格：透明输入框吃满整格，清空按钮通栏融合，补全浮层挂在格子下沿 */
+.hdr-search {
+  position: relative;
+  gap: 12px;
+  padding-right: 0;
+}
+.hdr-search .search-icon {
+  flex: none;
+  color: var(--fg-mute);
+}
+.hdr-search:focus-within .search-icon {
+  color: var(--fg);
+}
+.hdr-search input {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-body);
+  outline: none;
+}
+.hdr-search input::placeholder {
+  color: var(--fg-mute);
+}
+.hdr-search input::-webkit-search-cancel-button {
+  display: none;
+}
+/* 清空按钮：通栏高度，与格子边线融合（同 .blk-actions 的按钮做法） */
+.search-clear {
+  align-self: stretch;
+  min-height: 0;
+  padding: 0 18px;
+  border: 0;
+  border-left: 1px solid var(--bg);
+}
+/* 标签补全浮层：黑底 hairline 描边，1px 线分隔，无圆角 */
+.search-pop {
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  top: 100%;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--line);
+  border: 1px solid var(--line);
+  gap: 1px;
+}
+.search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px var(--pad);
+  border: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--fs-small);
+  cursor: pointer;
+  text-align: left;
+}
+.search-item .count {
+  color: var(--fg-mute);
+}
+.search-item.active {
+  background: var(--fg);
+  color: var(--bg);
+}
+.search-item.active .count {
+  color: var(--bg);
+}
 
 /* ============================================================
    Hero：海报级巨字
@@ -501,6 +576,14 @@
 .empty {
   color: var(--fg-dim);
   min-height: 200px;
+}
+.empty p {
+  margin: 0 0 14px;
+}
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 /* 页面底边收口线（无 footer） */
@@ -1280,7 +1363,7 @@ input[type='color']::-webkit-color-swatch {
   .hdr-brand {
     grid-column: span 3;
   }
-  .hdr-fill {
+  .hdr-search {
     grid-column: span 9;
   }
   .d-lead {
@@ -1317,7 +1400,7 @@ input[type='color']::-webkit-color-swatch {
   .hdr-brand {
     grid-column: span 5;
   }
-  .hdr-fill {
+  .hdr-search {
     grid-column: span 7;
   }
   .step {

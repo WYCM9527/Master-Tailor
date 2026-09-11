@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import type { Effect, EffectState } from '../../contract/types';
 import { bgColor } from '../../contract/types';
 import { categoryName, subDef } from '../../contract/categories';
@@ -28,15 +28,24 @@ export function EffectRoute() {
 function EffectPage({ effect }: { effect: Effect }) {
   const { meta } = effect;
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  // 从效果页跳来时带的筛选（cat/sub/tag/q），返回链接原样恢复
+  const fromSearch = (location.state as { fromSearch?: string } | null)?.fromSearch;
   // URL -> state 只在首次挂载时读取；此后 state 是唯一事实源，反向防抖同步进 URL
   const [state, setState] = useState<EffectState>(() => decodeState(meta, searchParams));
 
   useEffect(() => {
     const t = window.setTimeout(() => {
-      // preventScrollReset：参数同步进 URL 的 replace 不触发 ScrollRestoration 回顶
-      setSearchParams(encodeState(meta, state), { replace: true, preventScrollReset: true });
+      // preventScrollReset：参数同步进 URL 的 replace 不触发 ScrollRestoration 回顶；
+      // state 透传保住跳转时带来的 fromSearch（replace 导航默认会丢弃 location.state）
+      setSearchParams(encodeState(meta, state), {
+        replace: true,
+        preventScrollReset: true,
+        state: location.state,
+      });
     }, 250);
     return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- location.state 只作透传，不触发同步
   }, [state, meta, setSearchParams]);
 
   const bg = bgColor(state.bg);
@@ -177,9 +186,9 @@ function EffectPage({ effect }: { effect: Effect }) {
                 style={{ viewTransitionName: navOpen ? undefined : 'nav-toggle' }}
               />
             </button>
-            {/* 返回时带上分类，让侧边栏停在这个效果所在的位置 */}
+            {/* 返回时恢复来路的筛选（含搜索词）；直达详情页时退回本效果所在分类 */}
             <Link
-              to={`/effects?cat=${meta.category}&sub=${meta.sub}`}
+              to={`/effects${fromSearch ?? `?cat=${meta.category}&sub=${meta.sub}`}`}
               viewTransition
               className="d-back"
               title={`返回 ${categoryName(meta.category)} · ${subName}`}

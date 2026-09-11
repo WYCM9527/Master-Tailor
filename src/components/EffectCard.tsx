@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useViewTransitionState } from 'react-router-dom';
+import { Link, useLocation, useViewTransitionState } from 'react-router-dom';
 import type { Effect } from '../contract/types';
 import { BG_DARK } from '../contract/types';
 import { FONTS_CSS_HREF } from '../contract/fonts';
@@ -31,6 +31,8 @@ export function EffectCard({ effect }: { effect: Effect }) {
   const [scale, setScale] = useState(0);
   const to = `/e/${meta.slug}`;
   const transitioning = useViewTransitionState(to);
+  // 把效果页当前的筛选（cat/sub/tag/q）随跳转带进详情页，返回时原样恢复
+  const { search } = useLocation();
 
   useEffect(() => {
     const el = rootRef.current;
@@ -82,7 +84,14 @@ export function EffectCard({ effect }: { effect: Effect }) {
   };
 
   return (
-    <Link to={to} viewTransition className="cell card" ref={rootRef} onMouseMove={forwardPointer}>
+    <Link
+      to={to}
+      viewTransition
+      state={{ fromSearch: search }}
+      className="cell card"
+      ref={rootRef}
+      onMouseMove={forwardPointer}
+    >
       <div
         ref={previewRef}
         className="card-preview"

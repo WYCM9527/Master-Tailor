@@ -3,6 +3,7 @@ import { useSearchParams, useViewTransitionState } from 'react-router-dom';
 import type { CategoryId } from '../../contract/types';
 import { CATEGORIES, categoryName, categorySubs, subDef } from '../../contract/categories';
 import { EFFECTS } from '../../contract/registry';
+import { isEmptyQuery, matchEffect, parseQuery } from '../../engine/search';
 import { EffectCard } from '../../components/EffectCard';
 import { IconMinus, IconPlus } from '../../components/Icons';
 
@@ -34,6 +35,10 @@ export function Gallery() {
   const sub: string | null =
     cat && subParam && categorySubs(cat).some((s) => s.id === subParam) ? subParam : null;
   const tagParam = searchParams.get('tag');
+  // 顶栏搜索词（TopBar 防抖写入）：普通词模糊匹配 + #标签 精确筛选
+  const qParam = searchParams.get('q') ?? '';
+  const query = useMemo(() => parseQuery(qParam), [qParam]);
+  const searching = !isEmptyQuery(query);
 
   // 折叠状态是纯视图状态，留在组件内；默认全部展开
   const [collapsed, setCollapsed] = useState<ReadonlySet<CategoryId>>(new Set());
@@ -43,7 +48,16 @@ export function Gallery() {
     if (next.cat) params.set('cat', next.cat);
     if (next.cat && next.sub) params.set('sub', next.sub);
     if (next.tag) params.set('tag', next.tag);
+    if (qParam) params.set('q', qParam); // 分类切换不清搜索词
     // preventScrollReset：筛选只换 query，不要被 ScrollRestoration 拉回页顶
+    setSearchParams(params, { replace: true, preventScrollReset: true });
+  };
+
+  /** 改写 q（清空 / 移除某个 #标签），其余筛选保持 */
+  const writeQuery = (nextQ: string, keepFilters = true) => {
+    const params = keepFilters ? new URLSearchParams(searchParams) : new URLSearchParams();
+    if (nextQ.trim()) params.set('q', nextQ);
+    else params.delete('q');
     setSearchParams(params, { replace: true, preventScrollReset: true });
   };
 
@@ -77,14 +91,36 @@ export function Gallery() {
   const tag = tagParam && tags.includes(tagParam) ? tagParam : null;
 
   const filtered = useMemo(
-    () => inSelection.filter((e) => !tag || e.meta.tags.includes(tag)),
-    [inSelection, tag],
+    () =>
+      inSelection.filter((e) => (!tag || e.meta.tags.includes(tag)) && matchEffect(e.meta, query)),
+    [inSelection, tag, query],
   );
+
+  // 搜索词在无分类限制下的命中数：空态「在全部效果中搜索」用
+  const matchesInAll = useMemo(
+    () => (searching ? EFFECTS.filter((e) => matchEffect(e.meta, query)).length : 0),
+    [searching, query],
+  );
+
+  /** 标签按钮：既可能通过 tag 参数选中，也可能通过搜索词里的 #标签 命中 */
+  const tagInQuery = (t: string) => query.tags.includes(t.toLowerCase());
+  /** 从搜索词里移除某个 #标签 token */
+  const removeTagFromQuery = (t: string) => {
+    const next = qParam
+      .split(/\s+/)
+      .filter((tok) => {
+        const m = tok.match(/^[#＃]+(.*)$/);
+        return !(m && m[1].toLowerCase() === t.toLowerCase());
+      })
+      .join(' ');
+    writeQuery(next);
+  };
 
   // 左上角只放当前层级的名字：选了二级就只显示二级
   const heading = !cat ? '全部效果' : sub ? subDef(cat, sub).name : categoryName(cat);
-  const subheading =
-    cat && sub
+  const subheading = searching
+    ? `匹配「${qParam.trim()}」的效果`
+    : cat && sub
       ? subDef(cat, sub).desc
       : cat
         ? '在左侧继续筛选，或直接挑一个'
@@ -168,8 +204,12 @@ export function Gallery() {
                 <button
                   type="button"
                   key={t}
-                  className={`tag${tag === t ? ' active' : ''}`}
-                  onClick={() => select({ cat, sub, tag: tag === t ? null : t })}
+                  className={`tag${tag === t || tagInQuery(t) ? ' active' : ''}`}
+                  onClick={() =>
+                    tagInQuery(t)
+                      ? removeTagFromQuery(t)
+                      : select({ cat, sub, tag: tag === t ? null : t })
+                  }
                 >
                   {t}
                 </button>
@@ -187,6 +227,20 @@ export function Gallery() {
               <div className="cell filler" key={`filler-${i}`} aria-hidden="true" />
             ))}
           </>
+        ) : searching ? (
+          <div className="cell empty">
+            <p>没有匹配「{qParam.trim()}」的效果。</p>
+            <div className="empty-actions">
+              <button type="button" className="btn" onClick={() => writeQuery('')}>
+                清除搜索
+              </button>
+              {cat && matchesInAll > 0 && (
+                <button type="button" className="btn" onClick={() => writeQuery(qParam, false)}>
+                  在全部效果中搜索（{matchesInAll}）
+                </button>
+              )}
+            </div>
+          </div>
         ) : (
           <div className="cell empty">这个分类下还没有效果，换一个看看。</div>
         )}
