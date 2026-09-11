@@ -191,7 +191,9 @@
   min-height: calc(100vh - 1px);
   grid-template-rows: minmax(0, 1fr) auto;
 }
+/* 各格内容按自己的格宽取字号（cqw），尽量填满所在格 */
 .hero-title {
+  container-type: inline-size;
   padding: var(--pad-l);
   display: flex;
   flex-direction: column;
@@ -201,20 +203,22 @@
 /* 小字钉在顶部，巨字与口号沉到底部 */
 .hero-title > .mono {
   margin-bottom: auto;
+  font-size: 13px;
 }
 /* 元数据三格均分整列高度（覆盖 .sub 的 min-content 行高，避免露出灰底） */
 .hero-meta {
   grid-auto-rows: minmax(112px, 1fr);
 }
+/* 四个字撑满格宽：4 × 23cqw − 字距 ≈ 90cqw，刚好留出两侧内边距；矮视口按高度封顶 */
 .hero-title h1 {
-  font-size: var(--fs-display);
+  font-size: min(23cqw, 42vh);
   font-weight: 700;
   line-height: 0.95;
   letter-spacing: -0.03em;
   margin-left: -0.04em;
 }
 .hero-slogan {
-  font-size: clamp(16px, 1.4vw, 20px);
+  font-size: clamp(16px, 2.8cqw, 36px);
   color: var(--fg-dim);
   max-width: 34em;
 }
@@ -224,33 +228,41 @@
   font-weight: 700;
 }
 .hero-meta .cell {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 8px;
   min-height: 112px;
 }
+/* 大数字撑满格：等宽字 4 位（2026）≈ 2.4em ≈ 0.77 格宽；矮视口按高度封顶 */
 .hero-meta .big {
   font-family: var(--font-mono);
-  font-size: 40px;
+  font-size: min(32cqw, 17vh);
   line-height: 1;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
+.hero-meta .mono {
+  font-size: 13px;
+}
+/* 三步：序号钉顶、文字沉底，撑满格高 */
 .step {
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 18px;
-  min-height: 120px;
+  min-height: 150px;
 }
 .step .idx {
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: 34px;
   font-weight: 700;
   line-height: 1;
 }
 .step b {
-  font-size: var(--fs-body);
+  font-size: 20px;
+  line-height: 1.3;
 }
 .step-cta {
   justify-content: space-between;
@@ -262,8 +274,9 @@
     color var(--ease);
 }
 .step-cta b {
-  font-size: var(--fs-h2);
+  font-size: clamp(26px, 3vw, 46px);
   letter-spacing: -0.01em;
+  line-height: 1.1;
 }
 .step-cta:hover {
   background: var(--fg);
@@ -1292,6 +1305,10 @@ input[type='color']::-webkit-color-swatch {
   }
   .hero-meta .cell {
     grid-column: span 4;
+  }
+  /* 窄屏内边距占比变大，巨字略收一档以免溢出格宽 */
+  .hero-title h1 {
+    font-size: min(20cqw, 42vh);
   }
   /* 两列时补空 Cell 的数量不再对得上，改为每个 Cell 自己描线，空位留黑 */
   .main {
