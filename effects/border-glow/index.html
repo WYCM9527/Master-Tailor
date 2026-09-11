@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>边框流光卡片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid; place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #fff;
+  }
+  /* 卡片本体：细白边 + 多层柔影，isolation 让内部的混合模式不外泄 */
+  .mt-card {
+    --angle: 45deg;           /* 鼠标方位角（JS 写入） */
+    --border-o: 0;            /* 边框亮度（JS 写入） */
+    --glow-o: 0;              /* 外光晕亮度（JS 写入） */
+    --fill-o: 0;              /* 内部渐变填充亮度 */
+    --t: 0.75s;               /* 过渡时长：进入快、离开慢 */
+    position: relative;
+    isolation: isolate;
+    width: min(520px, 86vw);
+    padding: 40px 44px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius, 28px);
+    background: var(--card-bg, #060010);
+    transform: translate3d(0, 0, 0.01px);
+    box-shadow: rgba(0,0,0,0.1) 0 1px 2px, rgba(0,0,0,0.1) 0 2px 4px, rgba(0,0,0,0.1) 0 4px 8px,
+                rgba(0,0,0,0.1) 0 8px 16px, rgba(0,0,0,0.1) 0 16px 32px, rgba(0,0,0,0.1) 0 32px 64px;
+  }
+  /* 层 1：网状渐变边框——渐变只画在 border-box 与 padding-box 的差（即 1px 边框）上，
+     再用锥形遮罩只保留指向鼠标的一段 */
+  .mt-border {
+    position: absolute; inset: 0; z-index: -1;
+    border-radius: inherit;
+    border: 1px solid transparent;
+    background: var(--border-bg);
+    opacity: var(--border-o);
+    -webkit-mask-image: conic-gradient(from var(--angle) at center, black var(--cone), transparent calc(var(--cone) + 15%), transparent calc(100% - var(--cone) - 15%), black calc(100% - var(--cone)));
+    mask-image: conic-gradient(from var(--angle) at center, black var(--cone), transparent calc(var(--cone) + 15%), transparent calc(100% - var(--cone) - 15%), black calc(100% - var(--cone)));
+    transition: opacity var(--t) ease-in-out;
+  }
+  /* 层 2：同一套网状渐变做卡内柔光填充，soft-light 混合，多重遮罩只留靠边的一圈 */
+  .mt-fill {
+    position: absolute; inset: 0; z-index: -1;
+    border-radius: inherit;
+    border: 1px solid transparent;
+    background: var(--fill-bg);
+    opacity: var(--fill-o);
+    mix-blend-mode: soft-light;
+    -webkit-mask-image:
+      linear-gradient(to bottom, black, black),
+      radial-gradient(ellipse at 50% 50%, black 40%, transparent 65%),
+      radial-gradient(ellipse at 66% 66%, black 5%, transparent 40%),
+      radial-gradient(ellipse at 33% 33%, black 5%, transparent 40%),
+      radial-gradient(ellipse at 66% 33%, black 5%, transparent 40%),
+      radial-gradient(ellipse at 33% 66%, black 5%, transparent 40%),
+      conic-gradient(from var(--angle) at center, transparent 5%, black 15%, black 85%, transparent 95%);
+    -webkit-mask-composite: source-out, source-over, source-over, source-over, source-over, source-over;
+    mask-image:
+      linear-gradient(to bottom, black, black),
+      radial-gradient(ellipse at 50% 50%, black 40%, transparent 65%),
+      radial-gradient(ellipse at 66% 66%, black 5%, transparent 40%),
+      radial-gradient(ellipse at 33% 33%, black 5%, transparent 40%),
+      radial-gradient(ellipse at 66% 33%, black 5%, transparent 40%),
+      radial-gradient(ellipse at 33% 66%, black 5%, transparent 40%),
+      conic-gradient(from var(--angle) at center, transparent 5%, black 15%, black 85%, transparent 95%);
+    mask-composite: subtract, add, add, add, add, add;
+    transition: opacity var(--t) ease-in-out;
+  }
+  /* 层 3：外光晕——向外扩一圈的容器，内部一个同形状元素堆多层 box-shadow，锥形遮罩只留鼠标方向 */
+  .mt-glow {
+    position: absolute; inset: calc(-1 * var(--glow-r, 40px)); z-index: 1;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: var(--glow-o);
+    mix-blend-mode: plus-lighter;
+    -webkit-mask-image: conic-gradient(from var(--angle) at center, black 2.5%, transparent 10%, transparent 90%, black 97.5%);
+    mask-image: conic-gradient(from var(--angle) at center, black 2.5%, transparent 10%, transparent 90%, black 97.5%);
+    transition: opacity var(--t) ease-in-out;
+  }
+  .mt-glow > span {
+    position: absolute; inset: var(--glow-r, 40px);
+    border-radius: inherit;
+    box-shadow: var(--glow-shadow);
+  }
+  .mt-content { position: relative; z-index: 1; }
+  .mt-content h3 { margin: 0 0 14px; font-size: 24px; font-weight: 700; letter-spacing: 0.01em; }
+  .mt-content p { margin: 0; font-size: 15px; line-height: 1.75; color: rgba(255, 255, 255, 0.62); }
+
+  /* 用户开启「减少动态效果」时：不做自动扫圈、亮度直接切换（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) { .mt-border, .mt-fill, .mt-glow { transition: none; } }
+</style>
+</head>
+<body>
+<article class="mt-card" id="mtCard">
+  <div class="mt-border"></div>
+  <div class="mt-fill"></div>
+  <span class="mt-glow" aria-hidden="true"><span></span></span>
+  <div class="mt-content"><h3 id="mtTitle"></h3><p id="mtDesc"></p></div>
+</article>
+<script>
+  const CONFIG = {
+    title: "边框会追着你的鼠标发光",                                        // 卡片标题
+    desc: "把鼠标移到卡片边缘附近，越靠边越亮；离开后光慢慢熄灭。",           // 卡片描述
+    colors: ["#c084fc", "#f472b6", "#38bdf8"],  // 边框渐变色
+    glowColor: "#f2dfb3",                       // 外光晕颜色
+    backgroundColor: "#060010",                 // 卡片底色
+    borderRadius: 28,                           // 圆角（px）
+    glowRadius: 40,                             // 光晕外扩（px）
+    coneSpread: 25,                             // 亮段宽度（%）
+    edgeSensitivity: 30,                        // 起亮距离
+    animated: true,                             // 无鼠标时自动扫一圈
+  };
+
+  const card = document.getElementById('mtCard');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  document.getElementById('mtDesc').textContent = CONFIG.desc;
+
+  // 网状渐变：7 个径向色斑 + 底色，铺在 border-box（边框层）或 padding-box（填充层）
+  const POS = ['80% 55%', '69% 34%', '8% 6%', '41% 38%', '86% 85%', '82% 18%', '51% 4%'];
+  const MAP = [0, 1, 2, 0, 1, 2, 1];
+  const mesh = POS.map((p, i) => `radial-gradient(at ${p}, ${CONFIG.colors[Math.min(MAP[i], CONFIG.colors.length - 1)]} 0px, transparent 50%)`);
+  mesh.push(`linear-gradient(${CONFIG.colors[0]} 0 100%)`);
+  card.style.setProperty('--border-bg', [`linear-gradient(${CONFIG.backgroundColor} 0 100%) padding-box`, 'linear-gradient(rgb(255 255 255 / 0%) 0% 100%) border-box', ...mesh.map(g => `${g} border-box`)].join(', '));
+  card.style.setProperty('--fill-bg', mesh.map(g => `${g} padding-box`).join(', '));
+  card.style.setProperty('--card-bg', CONFIG.backgroundColor);
+  card.style.setProperty('--radius', CONFIG.borderRadius + 'px');
+  card.style.setProperty('--glow-r', CONFIG.glowRadius + 'px');
+  card.style.setProperty('--cone', CONFIG.coneSpread + '%');
+
+  // 外光晕：以 hsl 表达光色，13 层 box-shadow（6 层内 6 层外 + 1 层内描边）由近到远、由亮到淡
+  function hexHsl(hex) {
+    const n = parseInt(hex.replace('#', ''), 16);
+    const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+    let h = 0, s = 0;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      h *= 60;
+    }
+    return `${h.toFixed(0)}deg ${(s * 100).toFixed(0)}% ${(l * 100).toFixed(0)}%`;
+  }
+  const base = hexHsl(CONFIG.glowColor);
+  const layers = [[0,1,100,true],[1,0,60,true],[3,0,50,true],[6,0,40,true],[15,0,30,true],[25,2,20,true],[50,2,10,true],
+                  [1,0,60,false],[3,0,50,false],[6,0,40,false],[15,0,30,false],[25,2,20,false],[50,2,10,false]];
+  card.style.setProperty('--glow-shadow', layers.map(([blur, spread, a, inset]) => `${inset ? 'inset ' : ''}0 0 ${blur}px ${spread}px hsl(${base} / ${a}%)`).join(', '));
+
+  // 鼠标 → 方位角（12 点钟为 0°）与「靠边程度」（中心 0 → 边缘 1）
+  let hovered = false, sweeping = false, angle = 45, proximity = 0, userTook = false;
+  card.addEventListener('pointermove', (e) => {
+    const r = card.getBoundingClientRect();
+    const x = e.clientX - r.left - r.width / 2, y = e.clientY - r.top - r.height / 2;
+    const kx = x !== 0 ? (r.width / 2) / Math.abs(x) : Infinity, ky = y !== 0 ? (r.height / 2) / Math.abs(y) : Infinity;
+    proximity = Math.min(Math.max(1 / Math.min(kx, ky), 0), 1);
+    let deg = Math.atan2(y, x) * 180 / Math.PI + 90; if (deg < 0) deg += 360;
+    angle = deg;
+    render();
+  });
+  card.addEventListener('pointerenter', () => { hovered = true; userTook = true; render(); });
+  card.addEventListener('pointerleave', () => { hovered = false; render(); });
+
+  function render() {
+    const visible = hovered || sweeping;
+    const colorSens = CONFIG.edgeSensitivity + 20;
+    const borderO = visible ? Math.max(0, (proximity * 100 - colorSens) / (100 - colorSens)) : 0;
+    const glowO = visible ? Math.max(0, (proximity * 100 - CONFIG.edgeSensitivity) / (100 - CONFIG.edgeSensitivity)) : 0;
+    card.style.setProperty('--angle', angle.toFixed(2) + 'deg');
+    card.style.setProperty('--border-o', borderO.toFixed(3));
+    card.style.setProperty('--fill-o', (borderO * 0.5).toFixed(3));
+    card.style.setProperty('--glow-o', glowO.toFixed(3));
+    card.style.setProperty('--t', visible ? '0.25s' : '0.75s');   // 进入快亮、离开慢熄
+  }
+  render();
+
+  /* @mt:thumb-start */
+  // 自动扫一圈：亮起 → 光绕卡片转一圈（先加速后减速）→ 熄灭，循环；真实鼠标进入后交还控制
+  if (CONFIG.animated && !reduceMotion) {
+    const easeOut = t => 1 - Math.pow(1 - t, 3), easeIn = t => t * t * t;
+    function sweep() {
+      if (userTook) return;
+      sweeping = true;
+      const t0 = performance.now();
+      (function tick(now) {
+        if (userTook) { sweeping = false; render(); return; }
+        const t = (now - t0) / 1000;
+        proximity = t < 0.5 ? easeOut(t / 0.5) : t > 2.5 ? Math.max(0, 1 - easeIn((t - 2.5) / 1.5)) : 1;
+        const a = t < 1.5 ? easeIn(t / 1.5) * 0.5 : 0.5 + easeOut(Math.min(1, (t - 1.5) / 2.25)) * 0.5;
+        angle = 110 + 355 * a;
+        render();
+        if (t < 4) requestAnimationFrame(tick);
+        else { sweeping = false; render(); setTimeout(sweep, 1200); }
+      })(t0);
+    }
+    setTimeout(sweep, 600);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

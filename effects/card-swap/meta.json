@@ -1,0 +1,98 @@
+{
+  "slug": "card-swap",
+  "name": "卡片轮换叠",
+  "category": "showcase",
+  "sub": "carousel",
+  "tags": ["卡片", "叠放", "轮换", "3D"],
+  "summary": "三张卡片斜着阶梯叠放，最前面那张定时坠落、绕到最后一格弹回来，后面的依次补位",
+  "params": [
+    {
+      "key": "slides",
+      "label": "卡片图片",
+      "type": "images",
+      "target": "config",
+      "min": 2,
+      "max": 5,
+      "captions": true,
+      "default": [
+        { "src": "/samples/sample-2.webp", "caption": "可靠" },
+        { "src": "/samples/sample-5.webp", "caption": "可定制" },
+        { "src": "/samples/sample-7.webp", "caption": "顺滑" }
+      ]
+    },
+    {
+      "key": "cardDistance",
+      "label": "横向阶梯距",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 120,
+      "step": 5,
+      "default": 60,
+      "unit": "px"
+    },
+    {
+      "key": "verticalDistance",
+      "label": "纵向阶梯距",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 140,
+      "step": 5,
+      "default": 70,
+      "unit": "px"
+    },
+    {
+      "key": "delay",
+      "label": "轮换间隔",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 10,
+      "step": 0.5,
+      "default": 5,
+      "unit": "s"
+    },
+    {
+      "key": "skew",
+      "label": "斜切角度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 15,
+      "step": 1,
+      "default": 6,
+      "unit": "°"
+    },
+    {
+      "key": "easing",
+      "label": "动作手感",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "elastic", "label": "弹性（慢而有弹）" },
+        { "value": "smooth", "label": "平滑（快而利落）" }
+      ],
+      "default": "elastic"
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "config",
+      "min": 300,
+      "max": 640,
+      "step": 20,
+      "default": 500,
+      "unit": "px"
+    },
+    { "key": "pauseOnHover", "label": "悬停暂停", "type": "toggle", "target": "config", "default": false }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "snappy", "name": "利落快换", "values": { "easing": "smooth", "delay": 3, "skew": 3 } },
+    { "id": "steep", "name": "陡阶梯", "values": { "cardDistance": 100, "verticalDistance": 110, "cardWidth": 420 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

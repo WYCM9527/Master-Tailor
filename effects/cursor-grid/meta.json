@@ -1,0 +1,109 @@
+{
+  "slug": "cursor-grid",
+  "name": "光标格纹",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["光标", "网格", "格子", "点击"],
+  "summary": "鼠标走到哪里，哪里的方格描边亮起来再慢慢熄灭，像在暗处摸出一片格纹；点一下荡出一圈方格波",
+  "params": [
+    {
+      "key": "cellSize",
+      "label": "格子大小",
+      "type": "range",
+      "target": "config",
+      "min": 30,
+      "max": 140,
+      "step": 5,
+      "default": 70,
+      "unit": "px"
+    },
+    { "key": "color", "label": "格纹颜色", "type": "color", "target": "config", "default": "#d946ef" },
+    {
+      "key": "radius",
+      "label": "点亮半径",
+      "type": "range",
+      "target": "config",
+      "min": 60,
+      "max": 320,
+      "step": 10,
+      "default": 140,
+      "unit": "px"
+    },
+    {
+      "key": "falloff",
+      "label": "亮度衰减",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "smooth", "label": "平滑" },
+        { "value": "linear", "label": "线性" },
+        { "value": "sharp", "label": "只亮中心" }
+      ],
+      "default": "smooth"
+    },
+    {
+      "key": "holdTime",
+      "label": "停留时间",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2000,
+      "step": 100,
+      "default": 400,
+      "displayUnit": " 毫秒",
+      "help": "鼠标离开后格子保持亮多久再开始熄灭"
+    },
+    {
+      "key": "fadeDuration",
+      "label": "熄灭时长",
+      "type": "range",
+      "target": "config",
+      "min": 200,
+      "max": 3000,
+      "step": 100,
+      "default": 800,
+      "displayUnit": " 毫秒"
+    },
+    {
+      "key": "lineWidth",
+      "label": "描边粗细",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.2,
+      "unit": "px"
+    },
+    {
+      "key": "fillOpacity",
+      "label": "格子填充",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0,
+      "help": "0 只描边，越大格子内部越实"
+    },
+    {
+      "key": "gridOpacity",
+      "label": "底网可见度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.02,
+      "default": 0,
+      "help": "0 时平时完全看不见网格"
+    },
+    { "key": "clickPulse", "label": "点击方格波", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "cyan", "name": "青色实格", "values": { "color": "#22d3ee", "fillOpacity": 0.25, "gridOpacity": 0.06, "cellSize": 50 } },
+    { "id": "slow", "name": "长余辉", "values": { "holdTime": 1200, "fadeDuration": 2500, "radius": 220, "falloff": "linear" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

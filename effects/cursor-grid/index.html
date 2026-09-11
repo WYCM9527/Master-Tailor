@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光标格纹</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; cursor: crosshair; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .mt-hint {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    color: rgba(255,255,255,0.3); font: 14px/1 -apple-system, "PingFang SC", sans-serif; letter-spacing: 0.14em;
+    pointer-events: none;
+  }
+  /* 用户开启「减少动态效果」时：格子直接亮直接灭，不做淡出（JS 同步处理） */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<div class="mt-hint">在这里移动、点击鼠标</div>
+<script>
+  const CONFIG = {
+    cellSize: 70,         // 格子大小（px）
+    color: "#d946ef",     // 格纹颜色
+    radius: 140,          // 点亮半径（px）
+    falloff: "smooth",    // 亮度衰减：smooth / linear / sharp
+    holdTime: 400,        // 停留时间（ms）
+    fadeDuration: 800,    // 熄灭时长（ms）
+    lineWidth: 1.2,       // 描边粗细（px）
+    fillOpacity: 0,       // 格子填充
+    gridOpacity: 0,       // 底网可见度
+    clickPulse: true,     // 点击方格波
+  };
+  const PULSE_SPEED = 600;   // 方格波扩散速度（px/s）
+
+  const canvas = document.getElementById('mtCanvas');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const FALLOFF = { linear: t => t, smooth: t => t * t * (3 - 2 * t), sharp: t => t * t * t };
+  const ease = FALLOFF[CONFIG.falloff] || FALLOFF.linear;
+  const [cr, cg, cb] = [1, 3, 5].map((i) => parseInt(CONFIG.color.slice(i, i + 2), 16));
+
+  // 网格：格子铺满并居中；每格记一个亮度 alpha 与最后被点亮的时刻
+  let W = 0, H = 0, cols = 0, rows = 0, offX = 0, offY = 0, alphas, touched;
+  function resize() {
+    W = innerWidth; H = innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cols = Math.ceil(W / CONFIG.cellSize) + 1;
+    rows = Math.ceil(H / CONFIG.cellSize) + 1;
+    offX = (W - cols * CONFIG.cellSize) / 2;
+    offY = (H - rows * CONFIG.cellSize) / 2;
+    alphas = new Float32Array(cols * rows);
+    touched = new Float64Array(cols * rows);
+  }
+  resize(); addEventListener('resize', resize);
+  const center = (i) => [offX + (i % cols) * CONFIG.cellSize + CONFIG.cellSize / 2, offY + Math.floor(i / cols) * CONFIG.cellSize + CONFIG.cellSize / 2];
+
+  /* 点亮：半径内的格子按「1 − 距离/半径」过衰减曲线得到亮度，只会变亮不会变暗，并刷新时刻 */
+  function energize(x, y) {
+    const r = CONFIG.radius, now = performance.now();
+    const c0 = Math.max(0, Math.floor((x - r - offX) / CONFIG.cellSize)), c1 = Math.min(cols - 1, Math.floor((x + r - offX) / CONFIG.cellSize));
+    const r0 = Math.max(0, Math.floor((y - r - offY) / CONFIG.cellSize)), r1 = Math.min(rows - 1, Math.floor((y + r - offY) / CONFIG.cellSize));
+    for (let ry = r0; ry <= r1; ry++) for (let cx = c0; cx <= c1; cx++) {
+      const i = ry * cols + cx;
+      const [px, py] = center(i);
+      const dist = Math.hypot(px - x, py - y);
+      if (dist > r) continue;
+      const level = ease(1 - dist / r);
+      if (level > alphas[i]) alphas[i] = level;
+      if (level > 0) touched[i] = now;
+    }
+  }
+  addEventListener('pointermove', (e) => energize(e.clientX, e.clientY));
+
+  // 点击方格波：一圈以 PULSE_SPEED 扩散的环，经过的格子被点亮到满
+  const pulses = [];
+  if (CONFIG.clickPulse) addEventListener('click', (e) => pulses.push({ x: e.clientX, y: e.clientY, t0: performance.now() }));
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }        // 切后台暂停
+    const dt = Math.min(50, now - last);
+    last = now;
+    ctx.clearRect(0, 0, W, H);
+
+    // 可选的静态底网
+    if (CONFIG.gridOpacity > 0) {
+      ctx.strokeStyle = `rgba(${cr}, ${cg}, ${cb}, ${CONFIG.gridOpacity})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let c = 0; c <= cols; c++) { const x = Math.round(offX + c * CONFIG.cellSize) + 0.5; ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+      for (let r = 0; r <= rows; r++) { const y = Math.round(offY + r * CONFIG.cellSize) + 0.5; ctx.moveTo(0, y); ctx.lineTo(W, y); }
+      ctx.stroke();
+    }
+
+    // 方格波：环带宽一格，扫过的格子点满
+    for (let p = pulses.length - 1; p >= 0; p--) {
+      const pulse = pulses[p];
+      const ringR = ((now - pulse.t0) / 1000) * PULSE_SPEED;
+      if (ringR > Math.hypot(W, H)) { pulses.splice(p, 1); continue; }
+      const band = CONFIG.cellSize;
+      for (let i = 0; i < alphas.length; i++) {
+        const [px, py] = center(i);
+        if (Math.abs(Math.hypot(px - pulse.x, py - pulse.y) - ringR) < band / 2 && alphas[i] < 1) { alphas[i] = 1; touched[i] = now; }
+      }
+    }
+
+    // 逐格绘制：停留时间过后按熄灭时长线性衰减；描边用「中心亮、四角淡」的径向渐变
+    const fadeStep = dt / Math.max(CONFIG.fadeDuration, 16);
+    const half = CONFIG.cellSize / 2;
+    for (let i = 0; i < alphas.length; i++) {
+      let a = alphas[i];
+      if (a <= 0) continue;
+      if (now - touched[i] > CONFIG.holdTime) {
+        a = reduceMotion ? 0 : Math.max(0, a - fadeStep);
+        alphas[i] = a;
+        if (a <= 0) continue;
+      }
+      const [px, py] = center(i);
+      const grad = ctx.createRadialGradient(px, py, half * 0.1, px, py, CONFIG.cellSize);
+      grad.addColorStop(0, `rgba(${cr}, ${cg}, ${cb}, ${a})`);
+      grad.addColorStop(1, `rgba(${cr}, ${cg}, ${cb}, 0)`);
+      ctx.beginPath();
+      ctx.rect(px - half + 0.5, py - half + 0.5, CONFIG.cellSize - 1, CONFIG.cellSize - 1);
+      if (CONFIG.fillOpacity > 0) { ctx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${a * CONFIG.fillOpacity})`; ctx.fill(); }
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = CONFIG.lineWidth;
+      ctx.stroke();
+    }
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针画 8 字并隔几秒点一下；真实鼠标进入后交还
+  if (!reduceMotion) {
+    let t = 0, auto = true, lastPulse = 0;
+    addEventListener('pointerenter', () => { auto = false; });
+    setInterval(() => {
+      if (document.hidden || !auto) return;
+      t += 0.035;
+      energize(W * (0.5 + 0.36 * Math.sin(t)), H * (0.5 + 0.28 * Math.sin(t * 2)));
+      if (CONFIG.clickPulse && performance.now() - lastPulse > 4000) { lastPulse = performance.now(); pulses.push({ x: W * (0.3 + 0.4 * Math.random()), y: H * (0.3 + 0.4 * Math.random()), t0: lastPulse }); }
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

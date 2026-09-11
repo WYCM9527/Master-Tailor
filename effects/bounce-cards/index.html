@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弹跳卡片扇</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;            /* 页面底色 */
+    --mt-borderColor: #ffffff;   /* 卡边颜色 */
+    --mt-borderWidth: 8px;       /* 卡边粗细 */
+    --mt-radius: 30px;           /* 圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); display: grid; place-items: center; overflow: hidden; }
+  .mt-stage { position: relative; display: flex; align-items: center; justify-content: center; }
+  /* 每张卡：正方形、白边、圆角、柔影；transform 由 JS 写（基础扇形 / 让位 / 转正），
+     进场用带过冲的贝塞尔模拟弹性缩放 */
+  .mt-card {
+    position: absolute;
+    aspect-ratio: 1;
+    border: var(--mt-borderWidth) solid var(--mt-borderColor);
+    border-radius: var(--mt-radius);
+    overflow: hidden;
+    box-sizing: border-box;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transform: var(--tf) scale(var(--s, 1));
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform;
+  }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* 进场：从 0 弹到 1，elastic 感用 linear() 采样曲线（不支持时退化为过冲贝塞尔） */
+  .mt-card.enter { animation: mt-pop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-timing-function: var(--elastic, cubic-bezier(0.34, 1.56, 0.64, 1)); }
+  @keyframes mt-pop { from { transform: var(--tf) scale(0); } to { transform: var(--tf) scale(1); } }
+
+  /* 用户开启「减少动态效果」时：直接呈现 */
+  @media (prefers-reduced-motion: reduce) { .mt-card { transition: none; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage"></div>
+<script>
+  const CONFIG = {
+    slides: [{ src: '/samples/sample-1.webp', caption: '' }], // 卡片图片
+    cardSize: 200,       // 卡片边长（px）
+    spread: 85,          // 扇形间距（px）
+    maxRotate: 10,       // 最大倾角（度）
+    pushDistance: 160,   // 让开距离（px）
+    stagger: 0.06,       // 进场错开（s）
+    enableHover: true,   // 悬停让位
+  };
+
+  const stage = document.getElementById('mtStage');
+  let userTook = false;   // 真实鼠标碰过卡片后，自动演示交还控制
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const n = CONFIG.slides.length;
+  stage.style.width = `${CONFIG.cardSize + CONFIG.spread * (n - 1) + CONFIG.pushDistance * 2}px`;
+  stage.style.height = `${CONFIG.cardSize * 1.4}px`;
+
+  // elastic.out(1, 0.8) 用 CSS linear() 采样 40 个点，浏览器不支持时自动回退到过冲贝塞尔
+  const elastic = (t) => t >= 1 ? 1 : Math.pow(2, -10 * t) * Math.sin(((t - 0.8 / 4) * 2 * Math.PI) / 0.8) + 1;
+  const samples = Array.from({ length: 41 }, (_, i) => elastic(i / 40).toFixed(4));
+  if (CSS.supports && CSS.supports('animation-timing-function', 'linear(0, 1)')) stage.style.setProperty('--elastic', `linear(${samples.join(', ')})`);
+
+  // 每张卡的基础姿态：以中间为 0，左右各按间距错开，倾角从 +max 到 −max 再略回正（扑克扇）
+  const mid = (n - 1) / 2;
+  const cards = CONFIG.slides.map((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'mt-card';
+    el.style.width = `${CONFIG.cardSize}px`;
+    el.innerHTML = `<img src="${s.src}" alt="">`;
+    const offset = (i - mid) * CONFIG.spread;
+    const rot = -(i - mid) / Math.max(1, mid) * CONFIG.maxRotate * (i === n - 1 ? -0.2 : 1);
+    const base = { rot, x: offset };
+    el.style.setProperty('--tf', `rotate(${rot}deg) translate(${offset}px)`);
+    el.style.zIndex = i;
+    stage.appendChild(el);
+    return { el, base };
+  });
+  const setPose = (c, rot, x) => c.el.style.setProperty('--tf', `rotate(${rot}deg) translate(${x}px)`);
+
+  // 悬停：本卡转正（保留位移），其余按在左/右向外推开，离得越远晚一点动
+  function push(hoverIdx) {
+    if (!CONFIG.enableHover) return;
+    cards.forEach((c, i) => {
+      if (i === hoverIdx) { c.el.style.transitionDelay = '0s'; setPose(c, 0, c.base.x); return; }
+      const dir = i < hoverIdx ? -1 : 1;
+      c.el.style.transitionDelay = `${Math.abs(hoverIdx - i) * 0.05}s`;
+      setPose(c, c.base.rot, c.base.x + dir * CONFIG.pushDistance);
+    });
+  }
+  function reset() { cards.forEach((c) => { c.el.style.transitionDelay = '0s'; setPose(c, c.base.rot, c.base.x); }); }
+  cards.forEach((c, i) => {
+    c.el.addEventListener('mouseenter', () => { userTook = true; push(i); });
+    c.el.addEventListener('mouseleave', reset);
+  });
+
+  // 进场：延迟 0.5s 后按序弹出
+  function enter() {
+    cards.forEach((c, i) => {
+      c.el.classList.remove('enter');
+      void c.el.offsetWidth;
+      c.el.style.animationDelay = `${0.5 + i * CONFIG.stagger}s`;
+      c.el.classList.add('enter');
+    });
+  }
+  enter();
+
+  /* @mt:thumb-start */
+  // 自动演示：轮流「悬停」每张卡；真实鼠标进入后交还控制
+  if (!reduceMotion) {
+    let i = 0;
+    setInterval(() => {
+      if (document.hidden || userTook) return;
+      if (i % (n + 1) === n) reset(); else push(i % (n + 1));
+      i++;
+    }, 1400);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

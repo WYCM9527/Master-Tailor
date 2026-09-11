@@ -1,0 +1,82 @@
+{
+  "slug": "border-glow",
+  "name": "边框流光卡片",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["卡片", "边框", "流光", "鼠标跟随"],
+  "summary": "鼠标越靠近卡片边缘，指向鼠标那一段边框就亮起彩色渐变和外溢的光晕，像手电筒从外面照进来",
+  "params": [
+    { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "边框会追着你的鼠标发光", "maxLength": 24 },
+    {
+      "key": "desc",
+      "label": "卡片描述",
+      "type": "text",
+      "target": "config",
+      "default": "把鼠标移到卡片边缘附近，越靠边越亮；离开后光慢慢熄灭。",
+      "maxLength": 60
+    },
+    {
+      "key": "colors",
+      "label": "边框渐变色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 5,
+      "default": ["#c084fc", "#f472b6", "#38bdf8"]
+    },
+    { "key": "glowColor", "label": "外光晕颜色", "type": "color", "target": "config", "default": "#f2dfb3" },
+    { "key": "backgroundColor", "label": "卡片底色", "type": "color", "target": "config", "default": "#060010" },
+    {
+      "key": "borderRadius",
+      "label": "圆角",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 48,
+      "step": 2,
+      "default": 28,
+      "unit": "px"
+    },
+    {
+      "key": "glowRadius",
+      "label": "光晕外扩",
+      "type": "range",
+      "target": "config",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "default": 40,
+      "unit": "px"
+    },
+    {
+      "key": "coneSpread",
+      "label": "亮段宽度",
+      "type": "range",
+      "target": "config",
+      "min": 5,
+      "max": 45,
+      "step": 5,
+      "default": 25,
+      "help": "边框上亮起那一段占整圈的比例"
+    },
+    {
+      "key": "edgeSensitivity",
+      "label": "起亮距离",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 70,
+      "step": 5,
+      "default": 30,
+      "help": "越大越要贴近边缘才亮"
+    },
+    { "key": "animated", "label": "无鼠标时自动扫一圈", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "cyan", "name": "青绿冷光", "values": { "colors": ["#22d3ee", "#34d399"], "glowColor": "#a5f3fc", "backgroundColor": "#020a10" } },
+    { "id": "wide", "name": "宽亮段", "values": { "coneSpread": 40, "glowRadius": 70, "edgeSensitivity": 10 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

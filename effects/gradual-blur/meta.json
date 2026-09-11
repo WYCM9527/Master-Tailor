@@ -1,0 +1,104 @@
+{
+  "slug": "gradual-blur",
+  "name": "边缘渐进模糊",
+  "category": "background",
+  "sub": "scroll",
+  "tags": ["模糊", "遮罩", "边缘", "滚动"],
+  "summary": "内容滚到容器边缘时被一层层越来越糊的玻璃渐渐吞掉，像画面在边缘化开",
+  "params": [
+    {
+      "key": "position",
+      "label": "模糊位置",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "bottom", "label": "底部" },
+        { "value": "top", "label": "顶部" },
+        { "value": "both", "label": "上下都有" },
+        { "value": "left", "label": "左侧" },
+        { "value": "right", "label": "右侧" }
+      ],
+      "default": "bottom"
+    },
+    {
+      "key": "strength",
+      "label": "模糊强度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 6,
+      "step": 0.5,
+      "default": 2
+    },
+    {
+      "key": "size",
+      "label": "模糊带宽度",
+      "type": "range",
+      "target": "config",
+      "min": 40,
+      "max": 240,
+      "step": 8,
+      "default": 96,
+      "unit": "px"
+    },
+    {
+      "key": "divCount",
+      "label": "分层数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 5,
+      "help": "层越多过渡越细腻"
+    },
+    { "key": "exponential", "label": "指数递增", "type": "toggle", "target": "config", "default": false, "help": "开启后越靠边模糊得越猛" },
+    {
+      "key": "curve",
+      "label": "过渡曲线",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "linear", "label": "线性" },
+        { "value": "bezier", "label": "贝塞尔" },
+        { "value": "ease-in", "label": "先慢后快" },
+        { "value": "ease-out", "label": "先快后慢" },
+        { "value": "ease-in-out", "label": "两头慢" }
+      ],
+      "default": "linear"
+    },
+    {
+      "key": "opacity",
+      "label": "模糊层不透明度",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 1,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "slides",
+      "label": "内容图片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "夜枭小憩" },
+        { "src": "/samples/sample-2.webp", "caption": "海边老爷车" },
+        { "src": "/samples/sample-3.webp", "caption": "日落海滩" },
+        { "src": "/samples/sample-5.webp", "caption": "蓝天夹竹桃" },
+        { "src": "/samples/sample-7.webp", "caption": "几何屋檐" }
+      ]
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "intense", "name": "猛烈上下", "values": { "position": "both", "strength": 4, "divCount": 8, "exponential": true, "size": 160 } },
+    { "id": "subtle", "name": "轻微底部", "values": { "strength": 1, "divCount": 3, "size": 64, "opacity": 0.8 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

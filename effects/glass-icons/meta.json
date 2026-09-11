@@ -1,0 +1,66 @@
+{
+  "slug": "glass-icons",
+  "name": "玻璃图标",
+  "category": "button",
+  "sub": "hover",
+  "tags": ["图标", "玻璃", "3D", "悬停"],
+  "summary": "一排磨砂玻璃图标，每块下面压着一张彩色卡片；悬停时玻璃向你浮起、卡片向后翘起、名字从下方浮出",
+  "params": [
+    {
+      "key": "labels",
+      "label": "图标名称",
+      "type": "text",
+      "target": "config",
+      "default": "文件｜书籍｜收藏｜云端｜音乐｜设置",
+      "help": "用「｜」分隔"
+    },
+    {
+      "key": "icons",
+      "label": "图标符号",
+      "type": "text",
+      "target": "config",
+      "default": "▤｜▣｜♥｜☁｜♪｜⚙",
+      "help": "与名称一一对应，用「｜」分隔，可用 emoji 或符号"
+    },
+    {
+      "key": "colors",
+      "label": "卡片颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "default": ["#1a6dff", "#a21aff", "#ff1a2e", "#3d1aff", "#ffa61a", "#0fcc1f"]
+    },
+    {
+      "key": "size",
+      "label": "图标尺寸",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 28,
+      "step": 1,
+      "default": 16,
+      "unit": "px",
+      "help": "基准字号，整体等比缩放"
+    },
+    {
+      "key": "columns",
+      "label": "每行几个",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 6,
+      "step": 1,
+      "default": 3
+    },
+    { "key": "textColor", "label": "文字颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "autoDemo", "label": "自动轮流悬停", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "row", "name": "一排六个", "values": { "columns": 6, "size": 14 } },
+    { "id": "mono", "name": "单色磨砂", "values": { "colors": ["#3a3a3a"], "size": 20 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

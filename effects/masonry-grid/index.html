@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>瀑布流进场</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); display: grid; place-items: center; overflow: hidden; }
+  .mt-wall { position: relative; width: min(1100px, 92vw); }
+  /* 每块砖：绝对定位，位置/尺寸由 JS 按瀑布流算好写入；位移与模糊做进场过渡 */
+  .mt-brick {
+    position: absolute;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 10px 50px -10px rgba(0, 0, 0, 0.2);
+    will-change: transform, filter, opacity;
+    transform: translate(var(--x), var(--y)) scale(var(--s, 1));
+    transition:
+      transform var(--dur, 0.6s) cubic-bezier(0.22, 1, 0.36, 1) var(--delay, 0s),
+      filter var(--dur, 0.6s) cubic-bezier(0.22, 1, 0.36, 1) var(--delay, 0s),
+      opacity var(--dur, 0.6s) cubic-bezier(0.22, 1, 0.36, 1) var(--delay, 0s);
+  }
+  .mt-brick.no-anim { transition: none; }
+  .mt-brick.out { opacity: 0; }
+  .mt-brick.out.blur { filter: blur(10px); }
+  /* 悬停：缩放走单独的短过渡 */
+  .mt-brick.settled { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+  .mt-brick img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* 可选染色：一层随机色叠在图上，悬停淡入 */
+  .mt-brick .tint { position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .mt-brick:hover .tint { opacity: 0.3; }
+
+  /* 用户开启「减少动态效果」时：直接呈现 */
+  @media (prefers-reduced-motion: reduce) { .mt-brick { transition: none !important; filter: none !important; } }
+</style>
+</head>
+<body>
+<div class="mt-wall" id="mtWall"></div>
+<script>
+  const CONFIG = {
+    slides: [{ src: '/samples/sample-1.webp', caption: '' }], // 图片
+    columns: 4,             // 列数
+    animateFrom: "bottom",  // 飞入方向
+    duration: 0.6,          // 飞入时长（s）
+    stagger: 0.05,          // 相邻错开（s）
+    blurToFocus: true,      // 由模糊到清晰
+    hoverScale: 0.95,       // 悬停缩放
+    colorShift: false,      // 悬停染色
+    loop: true,             // 循环重播进场
+  };
+
+  const wall = document.getElementById('mtWall');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const GAP = 16;
+  // 每块砖的高度：按序号取一组固定的高矮，砖墙才有瀑布流的参差感
+  const HEIGHTS = [200, 300, 240, 180, 320, 260, 210, 280];
+
+  const bricks = CONFIG.slides.map((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'mt-brick out' + (CONFIG.blurToFocus ? ' blur' : '');
+    el.innerHTML = `<img alt="">${CONFIG.colorShift ? '<div class="tint"></div>' : ''}`;
+    el.querySelector('img').src = s.src;
+    if (CONFIG.colorShift) el.querySelector('.tint').style.background = `hsl(${(i * 67) % 360} 80% 55%)`;
+    el.addEventListener('mouseenter', () => { if (el.classList.contains('settled')) el.style.setProperty('--s', CONFIG.hoverScale); });
+    el.addEventListener('mouseleave', () => el.style.setProperty('--s', 1));
+    wall.appendChild(el);
+    return { el, h: HEIGHTS[i % HEIGHTS.length] };
+  });
+
+  /* 瀑布流布局：每块砖放进当前最矮的一列 */
+  let layout = [];
+  function computeLayout() {
+    const width = wall.clientWidth;
+    const colW = (width - GAP * (CONFIG.columns - 1)) / CONFIG.columns;
+    const heights = new Array(CONFIG.columns).fill(0);
+    layout = bricks.map((b) => {
+      const col = heights.indexOf(Math.min(...heights));
+      const x = col * (colW + GAP), y = heights[col];
+      heights[col] += b.h + GAP;
+      return { x, y, w: colW, h: b.h };
+    });
+    wall.style.height = `${Math.max(...heights) - GAP}px`;
+    bricks.forEach((b, i) => { b.el.style.width = `${layout[i].w}px`; b.el.style.height = `${layout[i].h}px`; });
+  }
+  /* 起点：按方向放到画面外 / 中心 */
+  function startPos(item) {
+    const rect = wall.getBoundingClientRect();
+    let dir = CONFIG.animateFrom;
+    if (dir === 'random') dir = ['top', 'bottom', 'left', 'right'][Math.floor(Math.random() * 4)];
+    switch (dir) {
+      case 'top': return { x: item.x, y: -rect.top - 200 };
+      case 'bottom': return { x: item.x, y: innerHeight - rect.top + 200 };
+      case 'left': return { x: -rect.left - 200, y: item.y };
+      case 'right': return { x: innerWidth - rect.left + 200, y: item.y };
+      case 'center': return { x: rect.width / 2 - item.w / 2, y: rect.height / 2 - item.h / 2 };
+      default: return { x: item.x, y: item.y + 100 };
+    }
+  }
+  const setPos = (el, p) => { el.style.setProperty('--x', `${p.x}px`); el.style.setProperty('--y', `${p.y}px`); };
+
+  /* 进场：先无过渡摆到起点（透明 + 模糊），回流后按序过渡到目标位 */
+  function enter() {
+    computeLayout();
+    bricks.forEach((b, i) => {
+      b.el.classList.remove('settled');
+      b.el.classList.add('no-anim', 'out');
+      if (CONFIG.blurToFocus) b.el.classList.add('blur');
+      setPos(b.el, startPos(layout[i]));
+    });
+    void wall.offsetWidth;
+    requestAnimationFrame(() => {
+      bricks.forEach((b, i) => {
+        b.el.classList.remove('no-anim');
+        b.el.style.setProperty('--dur', `${CONFIG.duration}s`);
+        b.el.style.setProperty('--delay', `${i * CONFIG.stagger}s`);
+        b.el.classList.remove('out', 'blur');
+        setPos(b.el, layout[i]);
+      });
+      // 全部落定后切到悬停模式（缩放走短过渡）
+      setTimeout(() => bricks.forEach((b) => { b.el.style.setProperty('--delay', '0s'); b.el.classList.add('settled'); }),
+        (CONFIG.duration + bricks.length * CONFIG.stagger) * 1000 + 50);
+    });
+  }
+  enter();
+  // 窗口变化：重算布局，砖块滑到新位置
+  addEventListener('resize', () => { computeLayout(); bricks.forEach((b, i) => setPos(b.el, layout[i])); });
+
+  /* @mt:thumb-start */
+  // 循环重播进场，让缩略图与详情页一直有动作
+  if (CONFIG.loop && !reduceMotion) {
+    setInterval(() => { if (!document.hidden) enter(); }, Math.max(4000, (CONFIG.duration + bricks.length * CONFIG.stagger) * 1000 + 3000));
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+{
+  "slug": "masonry-grid",
+  "name": "瀑布流进场",
+  "category": "showcase",
+  "sub": "stack-scroll",
+  "tags": ["瀑布流", "网格", "进场", "悬停"],
+  "summary": "高矮不一的图片卡按瀑布流排好位置，从画面外一张接一张飞进来、由模糊到清晰落定；悬停轻微缩小",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "columns",
+      "label": "列数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "key": "animateFrom",
+      "label": "飞入方向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "bottom", "label": "从下方" },
+        { "value": "top", "label": "从上方" },
+        { "value": "left", "label": "从左侧" },
+        { "value": "right", "label": "从右侧" },
+        { "value": "center", "label": "从中心散开" },
+        { "value": "random", "label": "四面随机" }
+      ],
+      "default": "bottom"
+    },
+    {
+      "key": "duration",
+      "label": "飞入时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 1.5,
+      "step": 0.1,
+      "default": 0.6,
+      "unit": "s"
+    },
+    {
+      "key": "stagger",
+      "label": "相邻错开",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "default": 0.05,
+      "unit": "s"
+    },
+    { "key": "blurToFocus", "label": "由模糊到清晰", "type": "toggle", "target": "config", "default": true },
+    {
+      "key": "hoverScale",
+      "label": "悬停缩放",
+      "type": "range",
+      "target": "config",
+      "min": 0.85,
+      "max": 1.1,
+      "step": 0.01,
+      "default": 0.95,
+      "help": "1 为不缩放"
+    },
+    { "key": "colorShift", "label": "悬停染色", "type": "toggle", "target": "config", "default": false },
+    { "key": "loop", "label": "循环重播进场", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "burst", "name": "中心散开", "values": { "animateFrom": "center", "duration": 0.9, "stagger": 0.03 } },
+    { "id": "chaos", "name": "四面飞入", "values": { "animateFrom": "random", "colorShift": true, "hoverScale": 1.04 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

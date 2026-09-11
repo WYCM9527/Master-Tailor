@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡片轮换叠</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid; place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #fff;
+  }
+  /* 舞台：带透视，卡片按 x/y/z 三轴阶梯排布 */
+  .mt-stage {
+    position: relative;
+    perspective: 900px;
+    transform-style: preserve-3d;
+  }
+  .mt-card {
+    position: absolute; left: 50%; top: 50%;
+    border-radius: 12px;
+    border: 1px solid #fff;
+    background: #000;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform;
+    /* 姿态：先居中，再走阶梯位移，最后斜切；变量由 JS 写入 */
+    transform: translate(-50%, -50%) translate3d(var(--x, 0px), var(--y, 0px), var(--z, 0px)) skewY(var(--skew, 6deg));
+    transition: transform var(--dur, 2s) var(--ease, linear) var(--delay, 0s);
+  }
+  .mt-card.no-anim { transition: none; }
+  .mt-card header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #fff;
+    font-size: 14px; font-weight: 600;
+  }
+  .mt-card header i { width: 10px; height: 10px; border-radius: 50%; background: #fff; display: inline-block; }
+  .mt-card img { display: block; width: 100%; height: calc(100% - 46px); object-fit: cover; }
+
+  /* 用户开启「减少动态效果」时：直接切换位置 */
+  @media (prefers-reduced-motion: reduce) { .mt-card { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage" role="region" aria-roledescription="carousel" aria-label="卡片轮换" tabindex="0"></div>
+<script>
+  const CONFIG = {
+    slides: [{ src: '/samples/sample-2.webp', caption: '可靠' }], // 卡片图片与标题
+    cardDistance: 60,       // 横向阶梯距（px）
+    verticalDistance: 70,   // 纵向阶梯距（px）
+    delay: 5,               // 轮换间隔（s）
+    skew: 6,                // 斜切角度（度）
+    easing: "elastic",      // 动作手感：elastic / smooth
+    cardWidth: 500,         // 卡片宽度（px）
+    pauseOnHover: false,    // 悬停暂停
+  };
+
+  const stage = document.getElementById('mtStage');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const W = CONFIG.cardWidth, H = Math.round(W * 0.8);
+  const n = CONFIG.slides.length;
+  stage.style.width = `${W + CONFIG.cardDistance * (n - 1) + 40}px`;
+  stage.style.height = `${H + CONFIG.verticalDistance * (n - 1) + 40}px`;
+
+  // 弹性 / 平滑两套时长与缓动：elastic.out(0.6, 0.9) 用 linear() 采样，不支持时退化为过冲贝塞尔
+  const elasticFn = (t) => t >= 1 ? 1 : Math.pow(2, -10 * t) * Math.sin(((t - 0.9 / 4) * 2 * Math.PI) / 0.9) * 0.6 + 1;
+  const supportsLinear = CSS.supports && CSS.supports('transition-timing-function', 'linear(0, 1)');
+  const elasticEase = supportsLinear ? `linear(${Array.from({ length: 41 }, (_, i) => elasticFn(i / 40).toFixed(4)).join(', ')})` : 'cubic-bezier(0.34, 1.4, 0.64, 1)';
+  const cfg = CONFIG.easing === 'elastic'
+    ? { ease: elasticEase, dur: 2, promoteOverlap: 0.9, returnDelay: 0.05 }
+    : { ease: 'cubic-bezier(0.45, 0, 0.55, 1)', dur: 0.8, promoteOverlap: 0.45, returnDelay: 0.2 };
+
+  // 第 i 格的位置：向右下阶梯、向后退，越后越小 z-index
+  const slot = (i) => ({ x: i * CONFIG.cardDistance, y: -i * CONFIG.verticalDistance, z: -i * CONFIG.cardDistance * 1.5, zIndex: n - i });
+  function place(el, s, animate, dur, delay) {
+    el.classList.toggle('no-anim', !animate);
+    el.style.setProperty('--dur', `${dur ?? cfg.dur}s`);
+    el.style.setProperty('--ease', cfg.ease);
+    el.style.setProperty('--delay', `${delay ?? 0}s`);
+    el.style.setProperty('--x', `${s.x}px`); el.style.setProperty('--y', `${s.y}px`); el.style.setProperty('--z', `${s.z}px`);
+    el.style.zIndex = s.zIndex;
+    if (!animate) void el.offsetWidth;   // 无动画摆位后强制回流，下一步再开过渡
+  }
+
+  const cards = CONFIG.slides.map((s, i) => {
+    const el = document.createElement('article');
+    el.className = 'mt-card';
+    el.style.width = `${W}px`; el.style.height = `${H}px`;
+    el.style.setProperty('--skew', `${CONFIG.skew}deg`);
+    el.innerHTML = `<header><i></i><span></span></header><img alt="">`;
+    el.querySelector('span').textContent = s.caption || `卡片 ${i + 1}`;
+    el.querySelector('img').src = s.src;
+    stage.appendChild(el);
+    place(el, slot(i), false);
+    return el;
+  });
+
+  let order = cards.map((_, i) => i), swapping = false;
+  /* 一次轮换：前卡坠落 → 后卡依次前移一格 → 前卡从下方绕到最后一格弹回 */
+  function swap() {
+    if (swapping || n < 2) return;
+    swapping = true;
+    const [front, ...rest] = order;
+    const elFront = cards[front];
+    const cur = slot(0);
+    // 1. 坠落：y 加 500
+    place(elFront, { ...cur, y: cur.y + 500, zIndex: cur.zIndex }, !reduceMotion);
+    // 2. 补位：在坠落进行到 (1−overlap) 时开始，每张再错开 0.15s
+    const promoteAt = cfg.dur * (1 - cfg.promoteOverlap) * 1000;
+    setTimeout(() => {
+      rest.forEach((idx, i) => place(cards[idx], slot(i), !reduceMotion, cfg.dur, i * 0.15));
+      // 3. 回归：略晚一点把前卡压到最底层，从当前位置过渡到最后一格
+      setTimeout(() => {
+        const back = slot(n - 1);
+        place(elFront, back, !reduceMotion, cfg.dur, 0);
+        setTimeout(() => { order = [...rest, front]; swapping = false; }, cfg.dur * 1000 + 50);
+      }, cfg.dur * cfg.returnDelay * 1000);
+    }, promoteAt);
+  }
+
+  // 定时轮换；可选悬停暂停；点卡片 / 按 → 空格 立刻换一张（重置计时）
+  let timer = setInterval(swap, CONFIG.delay * 1000);
+  const restart = () => { clearInterval(timer); timer = setInterval(swap, CONFIG.delay * 1000); };
+  stage.addEventListener('pointerdown', () => { swap(); restart(); });
+  stage.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); swap(); restart(); }
+  });
+  if (CONFIG.pauseOnHover) {
+    stage.addEventListener('pointerenter', () => clearInterval(timer));
+    stage.addEventListener('pointerleave', restart);
+  }
+</script>
+</body>
+</html>

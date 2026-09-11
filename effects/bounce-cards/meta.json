@@ -1,0 +1,113 @@
+{
+  "slug": "bounce-cards",
+  "name": "弹跳卡片扇",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["卡片", "扇形", "弹性", "悬停"],
+  "summary": "五张白边方卡像扑克一样扇形叠放，弹跳着进场；悬停哪张它就转正，其余向两侧让开",
+  "params": [
+    {
+      "key": "slides",
+      "label": "卡片图片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 7,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "cardSize",
+      "label": "卡片边长",
+      "type": "range",
+      "target": "config",
+      "min": 120,
+      "max": 320,
+      "step": 10,
+      "default": 200,
+      "unit": "px"
+    },
+    {
+      "key": "spread",
+      "label": "扇形间距",
+      "type": "range",
+      "target": "config",
+      "min": 40,
+      "max": 160,
+      "step": 5,
+      "default": 85,
+      "unit": "px",
+      "help": "相邻卡片横向错开的距离"
+    },
+    {
+      "key": "maxRotate",
+      "label": "最大倾角",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 25,
+      "step": 1,
+      "default": 10,
+      "unit": "°"
+    },
+    {
+      "key": "pushDistance",
+      "label": "让开距离",
+      "type": "range",
+      "target": "config",
+      "min": 60,
+      "max": 300,
+      "step": 10,
+      "default": 160,
+      "unit": "px"
+    },
+    { "key": "borderColor", "label": "卡边颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "borderWidth",
+      "label": "卡边粗细",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 16,
+      "step": 1,
+      "default": 8,
+      "unit": "px"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "default": 30,
+      "unit": "px"
+    },
+    {
+      "key": "stagger",
+      "label": "进场错开",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.02,
+      "default": 0.06,
+      "unit": "s"
+    },
+    { "key": "enableHover", "label": "悬停让位", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "tight", "name": "紧密小卡", "values": { "cardSize": 150, "spread": 55, "maxRotate": 14, "pushDistance": 110, "borderWidth": 5 } },
+    { "id": "flat", "name": "平铺无边", "values": { "maxRotate": 0, "borderWidth": 0, "radius": 12, "spread": 120 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}
