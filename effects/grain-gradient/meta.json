@@ -4,10 +4,18 @@
   "category": "background",
   "sub": "idle",
   "tags": ["渐变", "噪点", "胶片感"],
-  "summary": "双色渐变叠加细腻胶片噪点，安静高级的氛围底",
+  "summary": "多色渐变叠加细腻胶片噪点，安静高级的氛围底",
   "params": [
-    { "key": "colorA", "label": "起始色", "type": "color", "target": "css", "default": "#1b1035" },
-    { "key": "colorB", "label": "结束色", "type": "color", "target": "css", "default": "#0b3441" },
+    {
+      "key": "colors",
+      "label": "渐变颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 2,
+      "max": 8,
+      "default": ["#1b1035", "#0b3441"],
+      "help": "按顺序从一端过渡到另一端，颜色越多过渡越丰富"
+    },
     {
       "key": "angle",
       "label": "渐变角度",
@@ -44,12 +52,21 @@
     {
       "id": "amber-night",
       "name": "琥珀夜",
-      "values": { "colorA": "#2a1c02", "colorB": "#3d0f22", "grain": 0.18, "angle": 160 }
+      "values": { "colors": ["#2a1c02", "#3d0f22"], "grain": 0.18, "angle": 160 }
     },
     {
       "id": "mist",
       "name": "青雾",
-      "values": { "colorA": "#0e2a2f", "colorB": "#25123d", "grain": 0.08, "breathe": false }
+      "values": { "colors": ["#0e2a2f", "#25123d"], "grain": 0.08, "breathe": false }
+    },
+    {
+      "id": "dusk",
+      "name": "暮色四段",
+      "values": {
+        "colors": ["#0b1a3a", "#3a1a4a", "#6b2a3a", "#2a1c02"],
+        "angle": 180,
+        "grain": 0.14
+      }
     }
   ],
   "thumb": { "mode": "live" },

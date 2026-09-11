@@ -8,8 +8,6 @@
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;       /* 页面底色（渐变铺满时基本被盖住） */
-    --mt-colorA: #1b1035;   /* 渐变起始色 */
-    --mt-colorB: #0b3441;   /* 渐变结束色 */
     --mt-angle: 135deg;     /* 渐变角度 */
     --mt-grain: 0.12;       /* 噪点浓度（0 为无噪点） */
   }
@@ -20,7 +18,8 @@
   .mt-gradient {
     position: fixed;
     inset: 0;
-    background: linear-gradient(var(--mt-angle), var(--mt-colorA), var(--mt-colorB));
+    /* 渐变的颜色段由 JS 按「渐变颜色」列表拼成 linear-gradient 写入，角度仍引用变量 */
+    background: #1b1035;
   }
   /* 「呼吸变化」开启时由 JS 加上 .breathe：色相极缓慢流转 */
   .mt-gradient.breathe {
@@ -50,10 +49,13 @@
 <div class="mt-grain" aria-hidden="true"></div>
 <script>
   const CONFIG = {
+    colors: ["#1b1035", "#0b3441"], // 渐变颜色：按顺序从一端过渡到另一端，可增删（2–8 色）
     breathe: true, // 呼吸变化：开启后渐变色相极缓慢地流转
   };
 
   const gradient = document.getElementById('mtGradient');
+  // 颜色均匀分布在渐变线上；角度引用 CSS 变量，调角度时无需重建
+  gradient.style.background = 'linear-gradient(var(--mt-angle), ' + CONFIG.colors.join(', ') + ')';
   if (CONFIG.breathe) gradient.classList.add('breathe');
 
   // 页面切到后台时暂停呼吸动画，避免空耗性能
