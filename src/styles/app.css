@@ -517,7 +517,7 @@
 }
 
 /* ============================================================
-   怎么用（内联区块）
+   区块标题条（分类索引）：左大标题、右等宽小字
    ============================================================ */
 .howto-head {
   display: flex;
@@ -531,28 +531,7 @@
   letter-spacing: -0.02em;
   line-height: 1;
 }
-.howto-step {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 160px;
-}
-.howto-step .idx {
-  font-family: var(--font-mono);
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1;
-}
-.howto-step p {
-  color: var(--fg-dim);
-  font-size: var(--fs-small);
-}
-.howto-step b {
-  display: block;
-  color: var(--fg);
-  font-size: var(--fs-body);
-  margin-bottom: 4px;
-}
+
 /* 页面底边收口线（无 footer） */
 .page-end {
   border-top: 1px solid var(--line);
@@ -1347,9 +1326,6 @@ input[type='color']::-webkit-color-swatch {
     position: static;
     max-height: none;
   }
-  .howto-step {
-    grid-column: span 4;
-  }
 }
 
 @media (max-width: 767px) {
@@ -1391,10 +1367,6 @@ input[type='color']::-webkit-color-swatch {
   .modal {
     width: calc(100vw - 16px);
     max-height: calc(100vh - 16px);
-  }
-  .howto-step {
-    grid-column: span 12;
-    min-height: 0;
   }
   .prompt-text {
     max-height: 400px;

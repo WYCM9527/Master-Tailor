@@ -3,7 +3,6 @@ import { IconArrowRight } from '../../components/Icons';
 import type { CategoryId } from '../../contract/types';
 import { CATEGORIES } from '../../contract/categories';
 import { EFFECTS } from '../../contract/registry';
-import { HowToSection } from '../../components/HowToSection';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
@@ -23,7 +22,6 @@ let lastEffectsEntry: string | null = null;
  *   Hero 行（巨字 8 栏 + 元数据 4 栏）
  *   三步 Cell + 「浏览全部效果」大入口 Cell
  *   分类索引 Cell（每格进入效果页对应分类）
- *   怎么用
  * 效果网格本身在 /effects（Gallery）。
  */
 export function Home() {
@@ -130,8 +128,6 @@ export function Home() {
           );
         })}
       </section>
-
-      <HowToSection />
     </>
   );
 }
