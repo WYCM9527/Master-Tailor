@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>磁流体涌动</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（流体以外透出它） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，流体定格 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    colors: ["#27ff64", "#7cff67", "#a8ffb6"],  // 流体颜色
+    flowDirection: "down",   // 流向：down / up / left / right
+    speed: 0.5,              // 流速
+    scale: 1.6,              // 尺度
+    turbulence: 1,           // 扰动
+    fluidity: 0.1,           // 融合柔度
+    rimWidth: 0.2,           // 团块宽度
+    sharpness: 2.5,          // 锐度
+    shimmer: 1.5,            // 闪烁
+    mouseStrength: 1,        // 鼠标让开
+  };
+  const GLOW = 2, MOUSE_RADIUS = 0.35, MOUSE_DAMP = 0.15;
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: true, premultipliedAlpha: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：两层「山峰噪声」（多次错位叠加的正弦插值值噪声）分别被扰动噪声推歪、沿相反方向流动，
+  // 再用平滑最小值融合；取其等值带（≈0.4 附近）作为发光的流体团块，减去一层闪烁噪声后提幂；颜色按两层差值取色表
+  const FS = `
+    precision highp float;
+    uniform vec2  uRes, uMouse, uFlow;
+    uniform float uTime, uSpeed, uScale, uTurb, uFluid, uRim, uSharp, uShimmer, uGlow, uMouseK, uMouseR;
+    uniform int   uColorCount;
+    uniform vec3  uColors[8];
+    #define PI 3.14159265
+
+    vec3 palette(float h) {
+      int idx = int(floor(clamp(h, 0.0, 0.999999) * float(uColorCount)));
+      vec3 c = uColors[0];
+      for (int i = 0; i < 8; i++) if (i == idx) c = uColors[i];
+      return c;
+    }
+    float hash(vec3 p3) { p3 = fract(p3 * 0.1031); p3 += dot(p3, p3.zyx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+    float smin(float a, float b, float k) { return -k * log2(exp2(-a / k) + exp2(-b / k)); }
+    float sinlerp(float a, float b, float w) { return mix(a, b, (sin(w * PI - PI / 2.0) + 1.0) / 2.0); }
+    // 正弦插值的值噪声
+    float vn(vec2 p, float s, float seed) {
+      vec2 c = floor(p / s), r = mod(p, s);
+      float g1 = hash(vec3(c, seed)), g2 = hash(vec3(c.x + 1.0, c.y, seed)), g3 = hash(vec3(c.x + 1.0, c.y + 1.0, seed)), g4 = hash(vec3(c.x, c.y + 1.0, seed));
+      return sinlerp(sinlerp(g1, g2, r.x / s), sinlerp(g4, g3, r.x / s), r.y / s);
+    }
+    // 五次错位叠加，做出山峰状起伏
+    float dbn(vec2 p, float s, float seed) {
+      float o = s / 2.0;
+      return (2.0 * vn(p, s, seed) + 1.5 * vn(p + vec2(o, o), s, seed + 0.1) + 1.25 * vn(p + vec2(-o, o), s, seed + 0.2) + 1.125 * vn(p + vec2(o, -o), s, seed + 0.3) + vn(p + vec2(-o, -o), s, seed + 0.4)) / 7.0;
+    }
+
+    void main() {
+      float ref = 700.0 / max(uScale, 0.05);
+      vec2 p = gl_FragCoord.xy / uRes.y * ref;
+      float spd = 200.0 * uSpeed, t = uTime;
+      vec2 dir = uFlow, perp = vec2(-dir.y, dir.x);
+      // 两层扰动沿垂直于流向的方向错开
+      float d1 = vn(p + perp * (t * spd), 60.0, 10.0) * 50.0 * uTurb;
+      float d2 = vn(p - perp * (t * spd), 120.0, 15.0) * 100.0 * uTurb;
+      float peaks = dbn(p + d1 + dir * (t * spd * 0.5), 40.0, 1.0);
+      float peaks2 = dbn(p + d2 - dir * (t * spd * 0.5), 40.0, 0.0);
+      float m = smin(peaks, peaks2, max(uFluid, 0.001));
+      // 鼠标：附近流体暗下去
+      float mGlow = 0.0;
+      if (uMouseK > 0.0) {
+        vec2 mp = uMouse / uRes.y * ref;
+        float md = length(p - mp) / ref, rr = max(uMouseR, 0.02);
+        mGlow = exp(-md * md / (rr * rr)) * uMouseK;
+      }
+      // 等值带 → 流体团块
+      float band = (uRim - abs((m - 0.4) * 2.0)) * 5.0;
+      float ltn = clamp(band - vn(p + dir * (t * spd * 0.5), 60.0, 12.0) * uShimmer, 0.0, 1.0);
+      ltn = pow(ltn, uSharp) * uGlow * clamp(1.0 - mGlow, 0.0, 1.0);
+      vec3 col = palette(clamp(0.5 + (peaks - peaks2) * 0.8, 0.0, 1.0)) * ltn;
+      gl_FragColor = vec4(col, clamp(max(col.r, max(col.g, col.b)), 0.0, 1.0));
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+  const stops = CONFIG.colors.slice(0, 8);
+  const arr = new Float32Array(24);
+  for (let i = 0; i < 8; i++) arr.set(hexRgb(stops[Math.min(i, stops.length - 1)]), i * 3);
+  gl.uniform3fv(U('uColors'), arr);
+  gl.uniform1i(U('uColorCount'), stops.length);
+  const FLOW = { down: [0, -1], up: [0, 1], left: [-1, 0], right: [1, 0] };
+  gl.uniform2fv(U('uFlow'), FLOW[CONFIG.flowDirection] || FLOW.down);
+  gl.uniform1f(U('uSpeed'), CONFIG.speed);
+  gl.uniform1f(U('uScale'), CONFIG.scale);
+  gl.uniform1f(U('uTurb'), CONFIG.turbulence);
+  gl.uniform1f(U('uFluid'), CONFIG.fluidity);
+  gl.uniform1f(U('uRim'), CONFIG.rimWidth);
+  gl.uniform1f(U('uSharp'), CONFIG.sharpness);
+  gl.uniform1f(U('uShimmer'), CONFIG.shimmer);
+  gl.uniform1f(U('uGlow'), GLOW);
+  gl.uniform1f(U('uMouseK'), CONFIG.mouseStrength);
+  gl.uniform1f(U('uMouseR'), MOUSE_RADIUS);
+  const uTime = U('uTime'), uMouse = U('uMouse');
+
+  // 鼠标像素坐标（y 向上），阻尼跟随
+  const target = { x: -9999, y: -9999 }, mouse = { x: -9999, y: -9999 };
+  addEventListener('pointermove', (e) => { target.x = e.clientX; target.y = innerHeight - e.clientY; if (mouse.x < -999) { mouse.x = target.x; mouse.y = target.y; } });
+
+  let time = reduceMotion ? 3 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    mouse.x += (target.x - mouse.x) * MOUSE_DAMP; mouse.y += (target.y - mouse.y) * MOUSE_DAMP;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mouse.x * dpr, mouse.y * dpr);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  gl.clearColor(0, 0, 0, 0);
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

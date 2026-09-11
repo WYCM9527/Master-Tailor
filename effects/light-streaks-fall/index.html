@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光瀑流星</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（canvas 覆盖前的兜底色） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，光线定格 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    colors: ["#a8ffb6", "#27ff64", "#7cff67"],  // 光线颜色
+    backgroundColor: "#0a4a2a",  // 底光颜色
+    speed: 0.5,            // 下落速度
+    streakCount: 2,        // 光线层数
+    streakWidth: 1,        // 光线粗细
+    streakLength: 1,       // 尾迹长度
+    density: 0.6,          // 密度
+    glow: 1,               // 辉光
+    zoom: 3,               // 镜头远近
+    mouseStrength: 0.5,    // 鼠标光晕
+  };
+  const TWINKLE = 1, BG_GLOW = 0.5, MOUSE_RADIUS = 1, MOUSE_DAMP = 0.15, RENDER_SCALE = 0.7;
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：先用一段光线步进把屏幕像素映射到一个巨大圆筒内壁的柱面坐标（高度, 角度），
+  // 再在柱面上铺一张按角度分格的网格，每格一条向下坠落的光线（尾部指数拖影），层间错位；
+  // 加中央底光与鼠标光晕，最后 tanh 压亮做辉光
+  const FS = `
+    precision highp float;
+    uniform vec2  uRes, uMouse;
+    uniform float uTime, uSpeed, uWidth, uLength, uGlow, uDensity, uTwinkle, uZoom, uBgGlow, uMouseK, uMouseR;
+    uniform int   uStreaks, uColorCount;
+    uniform vec3  uColors[8], uBg, uMouseColor;
+    const float TAU = 6.28318530718;
+
+    vec3 palette(float h) {
+      int idx = int(floor(clamp(h, 0.0, 0.999999) * float(uColorCount)));
+      vec3 c = uColors[0];
+      for (int i = 0; i < 8; i++) if (i == idx) c = uColors[i];
+      return c;
+    }
+    vec3 tanhv(vec3 x) { vec3 e = exp(-2.0 * x); return (1.0 - e) / (1.0 + e); }
+    // 屏幕像素 → 柱面坐标（x = 高度方向，y = 角度）
+    vec2 cyl(vec2 frag) {
+      vec2 P = (frag + frag - uRes) / uRes.x;
+      float z = 0.0, d = 1e3;
+      vec4 O = vec4(0.0);
+      for (int k = 0; k < 39; k++) {
+        if (d <= 1e-4) break;
+        O = z * normalize(vec4(P, uZoom, 0.0)) - vec4(0.0, 4.0, 1.0, 0.0) / 4.5;
+        d = 1.0 - sqrt(length(O * O));
+        z += d;
+      }
+      return vec2(O.x, atan(O.z, O.y));
+    }
+
+    void main() {
+      vec2 frag = gl_FragCoord.xy;
+      vec2 uv0 = (frag + frag - uRes) / uRes.x;
+      float T = 0.1 * uTime * uSpeed + 9.0;
+      float rings = max(1.0, floor(TAU * max(uDensity, 0.05) + 0.5));
+      vec2 Y = vec2(5e-3, TAU / rings);                       // 网格步长（高度, 角度）
+
+      // 柱面坐标及其屏幕导数（用于抗锯齿宽度）
+      vec2 c0 = cyl(frag), dCx = cyl(frag + vec2(1.0, 0.0)) - c0, dCy = cyl(frag + vec2(0.0, 1.0)) - c0;
+      dCx.y -= TAU * floor(dCx.y / TAU + 0.5);
+      dCy.y -= TAU * floor(dCy.y / TAU + 0.5);
+      vec2 fw = abs(dCx) + abs(dCy);
+      vec2 C = c0;
+
+      // 中央底光 + 鼠标光晕
+      vec2 P = vec2(2.0, 1.0) * uv0 - (uRes / uRes.x) * vec2(0.0, 1.0);
+      vec3 O = uBg * 90.0 * uBgGlow / (1e3 * dot(P, P) + 6.0);
+      float mGlow = 0.0;
+      if (uMouseK > 0.0) {
+        vec2 mN = (uMouse + uMouse - uRes) / uRes.x;
+        float md = length(uv0 - mN);
+        mGlow = exp(-md * md / max(uMouseR * uMouseR, 1e-4)) * uMouseK;
+        O += uMouseColor * mGlow * 0.25;
+      }
+
+      float zr = 5e-4 * uWidth;
+      vec2 rr = vec2(max(length(fw), 1e-5));
+      float tail = 19.0 / max(uLength, 0.05);
+      for (int m = 0; m < 8; m++) {
+        if (m >= uStreaks) break;
+        float jf = float(m) + 1.0;
+        float ic = fract(sin(dot(vec2(jf, floor(C.x / Y.x + 0.5)), vec2(7.0, 11.0)) * 73.0));   // 每格随机
+        vec2 Pp = C - (T + T * ic) * vec2(0.0, 1.0);               // 沿角度方向以随机速度滑落
+        Pp -= floor(Pp / Y + 0.5) * Y;
+        float h = fract(8663.0 * ic);
+        vec3 col = palette(h);
+        float weight = mix(1.5, 1.0 + sin(T + 7.0 * h + 4.0), uTwinkle) * (1.0 + mGlow * 2.0);
+        vec2 inner = vec2(length(max(Pp, vec2(-1.0, 0.0))), length(Pp) - zr) - zr;
+        vec2 sm = vec2(1.0) - smoothstep(-rr, rr, inner);
+        O += dot(sm, vec2(exp(tail * Pp.y), 3.0)) * col * weight;   // 尾迹指数衰减 + 亮头
+        C.x += Y.x / 8.0;                                          // 层间错位
+      }
+      vec3 colr = sqrt(tanhv(max(O * uGlow - vec3(0.04, 0.08, 0.02), 0.0)));
+      gl_FragColor = vec4(colr, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const dpr = Math.min(2, devicePixelRatio || 1) * RENDER_SCALE;
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+  const stops = CONFIG.colors.slice(0, 8);
+  const arr = new Float32Array(24);
+  for (let i = 0; i < 8; i++) arr.set(hexRgb(stops[Math.min(i, stops.length - 1)]), i * 3);
+  gl.uniform3fv(U('uColors'), arr);
+  gl.uniform1i(U('uColorCount'), stops.length);
+  const avg = stops.map(hexRgb).reduce((a, c) => a.map((v, i) => v + c[i] / stops.length), [0, 0, 0]);
+  gl.uniform3fv(U('uMouseColor'), avg);
+  gl.uniform3fv(U('uBg'), hexRgb(CONFIG.backgroundColor));
+  gl.uniform1f(U('uSpeed'), CONFIG.speed);
+  gl.uniform1i(U('uStreaks'), Math.max(1, Math.min(8, CONFIG.streakCount)));
+  gl.uniform1f(U('uWidth'), CONFIG.streakWidth);
+  gl.uniform1f(U('uLength'), CONFIG.streakLength);
+  gl.uniform1f(U('uGlow'), CONFIG.glow);
+  gl.uniform1f(U('uDensity'), CONFIG.density);
+  gl.uniform1f(U('uTwinkle'), TWINKLE);
+  gl.uniform1f(U('uZoom'), CONFIG.zoom);
+  gl.uniform1f(U('uBgGlow'), BG_GLOW);
+  gl.uniform1f(U('uMouseK'), CONFIG.mouseStrength);
+  gl.uniform1f(U('uMouseR'), MOUSE_RADIUS);
+  const uTime = U('uTime'), uMouse = U('uMouse');
+
+  // 鼠标像素坐标（y 向上，乘渲染缩放），阻尼跟随
+  const target = { x: innerWidth / 2, y: innerHeight / 2 }, mouse = { ...target };
+  addEventListener('pointermove', (e) => { target.x = e.clientX; target.y = innerHeight - e.clientY; });
+
+  let time = reduceMotion ? 5 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    mouse.x += (target.x - mouse.x) * MOUSE_DAMP; mouse.y += (target.y - mouse.y) * MOUSE_DAMP;
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mouse.x * dpr, mouse.y * dpr);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

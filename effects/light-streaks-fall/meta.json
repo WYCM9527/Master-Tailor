@@ -1,0 +1,108 @@
+{
+  "slug": "light-streaks-fall",
+  "name": "光瀑流星",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["流星", "光线", "下落", "WebGL"],
+  "summary": "无数细长的绿色光线沿着一个看不见的巨大圆筒内壁向下坠落、拖着尾迹闪烁，像置身光的瀑布中；鼠标处泛起光晕",
+  "params": [
+    {
+      "key": "colors",
+      "label": "光线颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "default": ["#a8ffb6", "#27ff64", "#7cff67"]
+    },
+    { "key": "backgroundColor", "label": "底光颜色", "type": "color", "target": "config", "default": "#0a4a2a" },
+    {
+      "key": "speed",
+      "label": "下落速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 0.5
+    },
+    {
+      "key": "streakCount",
+      "label": "光线层数",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "key": "streakWidth",
+      "label": "光线粗细",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 4,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "streakLength",
+      "label": "尾迹长度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 4,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "density",
+      "label": "密度",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.6
+    },
+    {
+      "key": "glow",
+      "label": "辉光",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "zoom",
+      "label": "镜头远近",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "step": 0.5,
+      "default": 3
+    },
+    {
+      "key": "mouseStrength",
+      "label": "鼠标光晕",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.5,
+      "help": "0 关闭鼠标交互"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "blue", "name": "蓝色星雨", "values": { "colors": ["#7dd3fc", "#38bdf8", "#c4b5fd"], "backgroundColor": "#0a1a4a", "streakCount": 4, "density": 1 } },
+    { "id": "gold", "name": "金色慢落", "values": { "colors": ["#ffe0a3", "#ffb347"], "backgroundColor": "#3a2a05", "speed": 0.2, "streakLength": 2 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

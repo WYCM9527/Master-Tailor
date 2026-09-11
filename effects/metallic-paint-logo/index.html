@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>金属漆标识</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（形状以外透出它） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); display: grid; place-items: center; overflow: hidden; }
+  /* 正方形画布，边长取视口短边的 80% */
+  canvas { width: min(80vmin, 900px); height: min(80vmin, 900px); display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，漆面定格 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    source: "text",            // 形状来源：text / image
+    text: "金属",              // 文字
+    photo: "/samples/sample-1.webp", // 图片（透明底 / 白底 Logo）
+    lightColor: "#ffffff",     // 亮部颜色
+    darkColor: "#000000",      // 暗部颜色
+    tintColor: "#feb3ff",      // 染色
+    scale: 4,                  // 条纹密度
+    speed: 0.3,                // 流动速度
+    liquid: 0.75,              // 液态感
+    chromaticSpread: 2,        // 彩虹色散
+  };
+  // 固定参数：随机种子、折射、模糊、亮度、对比、角度、菲涅尔、条纹锐度、波幅、噪声尺度、扭曲、轮廓
+  const SEED = 42, REFRACTION = 0.01, BLUR = 0.015, BRIGHTNESS = 2, CONTRAST = 0.5, ANGLE = 0, FRESNEL = 1, SHARPNESS = 1, WAVE = 1, NOISE_SCALE = 0.5, DISTORTION = 1, CONTOUR = 0.2;
+  const SHAPE_SIZE = 600, POISSON_ITERS = 160;
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: true });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `#version 300 es
+    in vec2 aPos;
+    out vec2 vP;
+    void main() { vP = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：从「深度纹理」读形状（alpha）与到边缘的深度（红通道，边缘 1 → 内部 0）；
+  // 用多层伪噪声 + 时间生成一条沿对角流动的相位 fl，把相位喂进「金属渐变」mG（一组由亮到暗再到亮的台阶），
+  // 三个通道相位略错开形成彩虹色散；深度让边缘更厚更亮；最后对比、染色、乘形状
+  const FS = `#version 300 es
+    precision highp float;
+    in vec2 vP;
+    out vec4 oC;
+    uniform sampler2D uTex;
+    uniform float uTime, uRatio, uImgRatio, uSeed, uScale, uRefract, uBlur, uLiquid, uBright, uContrast, uAngle, uFresnel, uSharp, uWave, uNoise, uChroma, uDistort, uContour;
+    uniform vec3 uLight, uDark, uTint;
+    vec3 sC, sM;
+
+    // 三分量伪噪声（多项式插值）
+    vec3 pW(vec3 v) {
+      vec3 i = floor(v), f = fract(v), s = sign(fract(v * 0.5) - 0.5), h = fract(sM * i + i.yzx), c = f * (f - 1.0);
+      return s * c * ((h * 16.0 - 4.0) * c - 1.0);
+    }
+    vec3 aF(vec3 b, vec3 c) { return pW(b + c.zxy - pW(b.zxy + c.yzx) + pW(b.yzx + c.xyz)); }
+    vec3 lM(vec3 s, vec3 p) { return (p + aF(s, p)) * 0.5; }
+    // 图片 cover 采样坐标
+    vec2 fA() {
+      vec2 c = vP - 0.5;
+      c.x *= uRatio > uImgRatio ? uRatio / uImgRatio : 1.0;
+      c.y *= uRatio > uImgRatio ? 1.0 : uImgRatio / uRatio;
+      return vec2(c.x + 0.5, 0.5 - c.y);
+    }
+    vec2 rot(vec2 p, float r) { float c = cos(r), s = sin(r); return vec2(p.x * c + p.y * s, p.y * c - p.x * s); }
+    float bM(vec2 c, float t) { vec2 l = smoothstep(vec2(0.0), vec2(t), c), u = smoothstep(vec2(0.0), vec2(t), 1.0 - c); return l.x * l.y * u.x * u.y; }
+    // 金属渐变：相位 t 走过几段亮/暗台阶
+    float mG(float hi, float lo, float t, float sh, float cv) {
+      sh *= (2.0 - uSharp);
+      float ci = smoothstep(0.15, 0.85, cv), r = lo;
+      float e1 = 0.08 / uScale;
+      r = mix(r, hi, smoothstep(0.0, sh * 1.5, t));
+      r = mix(r, lo, smoothstep(e1 - sh, e1 + sh, t));
+      float e2 = e1 + 0.05 / uScale * (1.0 - ci * 0.35);
+      r = mix(r, hi, smoothstep(e2 - sh, e2 + sh, t));
+      float e3 = e2 + 0.025 / uScale * (1.0 - ci * 0.45);
+      r = mix(r, lo, smoothstep(e3 - sh, e3 + sh, t));
+      float e4 = e1 + 0.1 / uScale;
+      r = mix(r, hi, smoothstep(e4 - sh, e4 + sh, t));
+      float rm = 1.0 - e4, gT = clamp((t - e4) / rm, 0.0, 1.0);
+      r = mix(r, mix(hi, lo, smoothstep(0.0, 1.0, gT)), smoothstep(e4 - sh * 0.5, e4 + sh * 0.5, t));
+      return r;
+    }
+
+    void main() {
+      sC = fract(vec3(0.7548, 0.5698, 0.4154) * (uSeed + 17.31)) + 0.5;
+      sM = fract(sC.zxy - sC.yzx * 1.618);
+      vec2 sc = vec2(vP.x * uRatio, 1.0 - vP.y);
+      sc = clamp(rot(sc - 0.5, uAngle * 3.14159 / 180.0) + 0.5, 0.0, 1.0);
+      float sl = sc.x - sc.y, an = uTime * 0.001;
+      vec2 iC = fA();
+      vec4 tex = texture(uTex, iC);
+      float dp = tex.r, shapeMask = tex.a;
+      vec3 hi = uLight * uBright, lo = uDark * (2.0 - uBright);
+      lo.b += smoothstep(0.6, 1.4, sc.x + sc.y) * 0.08;
+      // 一个偏心的「曲率」场，模拟漆面整体的受光
+      vec2 fC = sc - 0.5;
+      float rd = length(fC + vec2(0.0, sl * 0.15));
+      vec2 ag = rot(fC, (0.22 - sl * 0.18) * 3.14159);
+      float cv = (1.0 - pow(rd * 1.65, 1.15)) * pow(sc.y, 0.35);
+      float vs = shapeMask * bM(iC, 0.01);
+      float fr = pow(1.0 - cv, uFresnel) * 0.3;
+      vs = min(vs + fr * vs, 1.0);
+      // 随时间缓慢演化的噪声相位
+      float mT = an * 0.0625;
+      vec3 wO = vec3(-1.05, 1.35, 1.55);
+      vec3 wA = aF(vec3(31.0, 73.0, 56.0), mT + wO) * 0.22 * uWave;
+      vec3 wB = aF(vec3(24.0, 64.0, 42.0), mT - wO.yzx) * 0.22 * uWave;
+      vec2 nC = sc * 45.0 * uNoise;
+      nC += aF(sC.zxy, an * 0.17 * sC.yzx - sc.yxy * 0.35).xy * 18.0 * uWave;
+      vec3 tC = vec3(0.00041, 0.00053, 0.00076) * mT + wB * nC.x + wA * nC.y;
+      tC = lM(sC, tC); tC = lM(sC + 1.618, tC);
+      float tb = (sin(tC.x * 3.14159) * 0.5 + 0.5) * 2.0 - 1.0;
+      float noiseVal = pW(vec3(sc * 8.0 + an, an * 0.5)).x;
+      float edgeFactor = smoothstep(0.0, 0.5, dp) * smoothstep(1.0, 0.5, dp);
+      float lD = dp + (1.0 - dp) * uLiquid * tb + noiseVal * uDistort * 0.15 * edgeFactor;
+      float rB = clamp(1.0 - cv, 0.0, 1.0);
+      // 主相位：沿对角流动，被深度、液态与噪声推挤
+      float fl = ag.x + sl + noiseVal * sl * uDistort * edgeFactor;
+      fl *= mix(1.0, 1.0 - dp * 0.5, uContour);
+      fl -= dp * uContour * 0.8;
+      float eI = smoothstep(0.0, 1.0, lD) * smoothstep(1.0, 0.0, lD);
+      fl -= tb * sl * 1.8 * eI;
+      float cA = cv * clamp(pow(sc.y, 0.12), 0.25, 1.0);
+      fl *= 0.12 + (1.05 - lD) * cA;
+      fl *= smoothstep(1.0, 0.65, lD);
+      float vA1 = smoothstep(0.08, 0.18, sc.y) * smoothstep(0.38, 0.18, sc.y);
+      float vA2 = smoothstep(0.08, 0.18, 1.0 - sc.y) * smoothstep(0.38, 0.18, 1.0 - sc.y);
+      fl += vA1 * 0.16 + vA2 * 0.025;
+      fl *= 0.45 + pow(sc.y, 2.0) * 0.55;
+      fl *= uScale;
+      fl -= an;
+      // 红 / 蓝通道的相位偏移 → 色散
+      float rO = rB + cv * tb * 0.025;
+      rO += smoothstep(-0.12, 0.18, sc.y) * smoothstep(0.48, 0.08, sc.y) * smoothstep(0.35, 0.55, cv) * smoothstep(0.95, 0.35, cv) * 4.5;
+      rO -= sl;
+      float bO = rB * 1.25;
+      bO += smoothstep(-0.02, 0.35, sc.y) * smoothstep(0.75, 0.08, sc.y) * smoothstep(0.35, 0.55, cv) * smoothstep(0.75, 0.35, cv) * 0.9;
+      bO -= lD * 0.18;
+      rO *= uRefract * uChroma; bO *= uRefract * uChroma;
+      float sf = uBlur;
+      float rC = mG(hi.r, lo.r, fract(fl + rO), sf + 0.018 + uRefract * cv * 0.025, cv);
+      float gC = mG(hi.g, lo.g, fract(fl), sf + 0.008 / max(0.01, 1.0 - sl), cv);
+      float bC = mG(hi.b, lo.b, fract(fl - bO), sf + 0.008, cv);
+      vec3 col = clamp((vec3(rC, gC, bC) - 0.5) * uContrast + 0.5, 0.0, 1.0);
+      col = clamp(mix(col, 1.0 - min(vec3(1.0), (1.0 - col) / max(uTint, vec3(0.001))), length(uTint - 1.0) * 0.5), 0.0, 1.0);
+      oC = vec4(col * vs, vs);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const side = Math.round(1000 * Math.min(2, devicePixelRatio || 1) * 0.6);
+  canvas.width = side; canvas.height = side;
+  gl.viewport(0, 0, side, side);
+  gl.uniform1f(U('uRatio'), 1);
+  gl.uniform1f(U('uSeed'), SEED); gl.uniform1f(U('uScale'), CONFIG.scale); gl.uniform1f(U('uRefract'), REFRACTION); gl.uniform1f(U('uBlur'), BLUR);
+  gl.uniform1f(U('uLiquid'), CONFIG.liquid); gl.uniform1f(U('uBright'), BRIGHTNESS); gl.uniform1f(U('uContrast'), CONTRAST); gl.uniform1f(U('uAngle'), ANGLE);
+  gl.uniform1f(U('uFresnel'), FRESNEL); gl.uniform1f(U('uSharp'), SHARPNESS); gl.uniform1f(U('uWave'), WAVE); gl.uniform1f(U('uNoise'), NOISE_SCALE);
+  gl.uniform1f(U('uChroma'), CONFIG.chromaticSpread); gl.uniform1f(U('uDistort'), DISTORTION); gl.uniform1f(U('uContour'), CONTOUR);
+  gl.uniform3fv(U('uLight'), hexRgb(CONFIG.lightColor)); gl.uniform3fv(U('uDark'), hexRgb(CONFIG.darkColor)); gl.uniform3fv(U('uTint'), hexRgb(CONFIG.tintColor));
+  const uTime = U('uTime');
+
+  /* 形状 → 深度纹理：把形状（alpha）当作区域，在区域内解泊松方程（边界 0，内部源 0.01，SOR 超松弛 1.85），
+     解出的值越靠内越大；写入红通道 1 − depth²（边缘 1 → 内部 0），alpha 保留形状 */
+  function makeDepth(srcCanvas) {
+    const w = srcCanvas.width, h = srcCanvas.height, ctx = srcCanvas.getContext('2d');
+    const data = ctx.getImageData(0, 0, w, h).data, size = w * h;
+    const alpha = new Float32Array(size), shape = new Uint8Array(size), boundary = new Uint8Array(size);
+    for (let i = 0; i < size; i++) {
+      const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2], a = data[i * 4 + 3];
+      const isBg = (r > 250 && g > 250 && b > 250 && a === 255) || a < 5;   // 白底或透明都算背景
+      alpha[i] = isBg ? 0 : a / 255; shape[i] = alpha[i] > 0.1 ? 1 : 0;
+    }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (shape[i] && (x === 0 || x === w - 1 || y === 0 || y === h - 1 || !shape[i - 1] || !shape[i + 1] || !shape[i - w] || !shape[i + w])) boundary[i] = 1;
+    }
+    const u = new Float32Array(size), C = 0.01, omega = 1.85;
+    for (let it = 0; it < POISSON_ITERS; it++) for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      if (!shape[i] || boundary[i]) continue;
+      const sum = (shape[i + 1] ? u[i + 1] : 0) + (shape[i - 1] ? u[i - 1] : 0) + (shape[i + w] ? u[i + w] : 0) + (shape[i - w] ? u[i - w] : 0);
+      u[i] = omega * ((C + sum) / 4) + (1 - omega) * u[i];
+    }
+    let max = 0; for (let i = 0; i < size; i++) if (u[i] > max) max = u[i];
+    if (!max) max = 1;
+    const out = ctx.createImageData(w, h);
+    for (let i = 0; i < size; i++) {
+      const d = u[i] / max, gray = Math.round(255 * (1 - d * d));
+      out.data[i * 4] = out.data[i * 4 + 1] = out.data[i * 4 + 2] = gray; out.data[i * 4 + 3] = Math.round(alpha[i] * 255);
+    }
+    return out;
+  }
+  function upload(imgData) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, imgData);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.uniform1i(U('uTex'), 0);
+    gl.uniform1f(U('uImgRatio'), imgData.width / imgData.height);
+    ready = true;
+  }
+
+  // 形状来源：文字（渲染到离屏画布）或图片（缩放到 500–1000 之间）
+  let ready = false;
+  const off = document.createElement('canvas');
+  if (CONFIG.source === 'image') {
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      let w = img.naturalWidth, h = img.naturalHeight;
+      const s = Math.max(w, h) > 1000 ? 1000 / Math.max(w, h) : Math.min(w, h) < 500 ? 500 / Math.min(w, h) : 1;
+      off.width = Math.round(w * s); off.height = Math.round(h * s);
+      off.getContext('2d').drawImage(img, 0, 0, off.width, off.height);
+      upload(makeDepth(off));
+    };
+    img.src = CONFIG.photo;
+  } else {
+    off.width = off.height = SHAPE_SIZE;
+    const c = off.getContext('2d');
+    const txt = CONFIG.text.trim() || '金属';
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#000';
+    let fs = SHAPE_SIZE * 0.6;
+    c.font = `900 ${fs}px -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif`;
+    const maxW = SHAPE_SIZE * 0.86;
+    if (c.measureText(txt).width > maxW) { fs *= maxW / c.measureText(txt).width; c.font = `900 ${fs}px -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif`; }
+    c.fillText(txt, SHAPE_SIZE / 2, SHAPE_SIZE / 2);
+    upload(makeDepth(off));
+  }
+
+  let time = reduceMotion ? 20000 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(50, now - last);
+    last = now;
+    if (!reduceMotion) time += dt * CONFIG.speed;
+    gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+    if (!ready) return;
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

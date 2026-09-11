@@ -1,0 +1,73 @@
+{
+  "slug": "metallic-paint-logo",
+  "name": "金属漆标识",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["金属", "液态", "标识", "文字", "WebGL2"],
+  "summary": "把一段文字（或透明底 Logo 图）变成一块液态金属漆：表面流动着彩虹色的珠光条纹，边缘更厚更亮，像刚喷完还没干的车漆",
+  "params": [
+    {
+      "key": "source",
+      "label": "形状来源",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "text", "label": "文字" },
+        { "value": "image", "label": "透明底图片" }
+      ],
+      "default": "text"
+    },
+    { "key": "text", "label": "文字", "type": "text", "target": "config", "default": "金属", "maxLength": 6 },
+    { "key": "photo", "label": "图片（透明底 / 白底 Logo）", "type": "image", "target": "config", "default": "/samples/sample-1.webp" },
+    { "key": "lightColor", "label": "亮部颜色", "type": "color", "target": "config", "default": "#ffffff" },
+    { "key": "darkColor", "label": "暗部颜色", "type": "color", "target": "config", "default": "#000000" },
+    { "key": "tintColor", "label": "染色", "type": "color", "target": "config", "default": "#feb3ff" },
+    {
+      "key": "scale",
+      "label": "条纹密度",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "default": 4
+    },
+    {
+      "key": "speed",
+      "label": "流动速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "liquid",
+      "label": "液态感",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.75
+    },
+    {
+      "key": "chromaticSpread",
+      "label": "彩虹色散",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "default": 2
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "gold", "name": "熔金", "values": { "lightColor": "#fff2c0", "darkColor": "#3a2200", "tintColor": "#ffd166", "chromaticSpread": 1, "text": "GOLD" } },
+    { "id": "chrome", "name": "冷镀铬", "values": { "tintColor": "#ffffff", "scale": 6, "liquid": 0.4, "text": "MT" } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

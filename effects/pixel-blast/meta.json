@@ -1,0 +1,103 @@
+{
+  "slug": "pixel-blast",
+  "name": "像素抖动场",
+  "category": "background",
+  "sub": "click",
+  "tags": ["像素", "抖动", "涟漪", "WebGL2"],
+  "summary": "整屏细小的像素方块按有序抖动（Bayer）的密度呈现一团缓慢翻涌的噪声云，点一下从点击处荡出一圈像素涟漪",
+  "params": [
+    {
+      "key": "variant",
+      "label": "像素形状",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "square", "label": "方块" },
+        { "value": "circle", "label": "圆点" },
+        { "value": "triangle", "label": "三角" },
+        { "value": "diamond", "label": "菱形" }
+      ],
+      "default": "square"
+    },
+    { "key": "color", "label": "颜色", "type": "color", "target": "config", "default": "#b19eef" },
+    {
+      "key": "pixelSize",
+      "label": "像素大小",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 12,
+      "step": 1,
+      "default": 3,
+      "unit": "px"
+    },
+    {
+      "key": "patternScale",
+      "label": "云团尺度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 6,
+      "step": 0.5,
+      "default": 2
+    },
+    {
+      "key": "patternDensity",
+      "label": "密度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "speed",
+      "label": "翻涌速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.5
+    },
+    { "key": "enableRipples", "label": "点击涟漪", "type": "toggle", "target": "config", "default": true },
+    {
+      "key": "rippleThickness",
+      "label": "涟漪厚度",
+      "type": "range",
+      "target": "config",
+      "min": 0.02,
+      "max": 0.4,
+      "step": 0.02,
+      "default": 0.1
+    },
+    {
+      "key": "rippleSpeed",
+      "label": "涟漪速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "key": "edgeFade",
+      "label": "边缘渐隐",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dots", "name": "青色圆点", "values": { "variant": "circle", "color": "#22d3ee", "pixelSize": 5, "patternDensity": 1.3 } },
+    { "id": "tri", "name": "大三角", "values": { "variant": "triangle", "pixelSize": 8, "patternScale": 3, "speed": 1 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

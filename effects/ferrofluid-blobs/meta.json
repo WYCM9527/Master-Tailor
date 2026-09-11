@@ -1,0 +1,176 @@
+{
+  "slug": "ferrofluid-blobs",
+  "name": "磁流体涌动",
+  "category": "background",
+  "sub": "hover",
+  "tags": [
+    "磁流体",
+    "光斑",
+    "噪声",
+    "WebGL"
+  ],
+  "summary": "深色底上散布着发光的绿色磁流体团块，像被磁场拉扯的液体不断变形、流淌、边缘闪烁；鼠标靠近处暗下去让开",
+  "params": [
+    {
+      "key": "colors",
+      "label": "流体颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "default": [
+        "#27ff64",
+        "#7cff67",
+        "#a8ffb6"
+      ]
+    },
+    {
+      "key": "flowDirection",
+      "label": "流向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "down",
+          "label": "向下"
+        },
+        {
+          "value": "up",
+          "label": "向上"
+        },
+        {
+          "value": "left",
+          "label": "向左"
+        },
+        {
+          "value": "right",
+          "label": "向右"
+        }
+      ],
+      "default": "down"
+    },
+    {
+      "key": "speed",
+      "label": "流速",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.5
+    },
+    {
+      "key": "scale",
+      "label": "尺度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.6
+    },
+    {
+      "key": "turbulence",
+      "label": "扰动",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "fluidity",
+      "label": "融合柔度",
+      "type": "range",
+      "target": "config",
+      "min": 0.01,
+      "max": 0.5,
+      "step": 0.01,
+      "default": 0.1,
+      "help": "两层脉络相遇处融合得多柔"
+    },
+    {
+      "key": "rimWidth",
+      "label": "团块宽度",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.2
+    },
+    {
+      "key": "sharpness",
+      "label": "锐度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 6,
+      "step": 0.5,
+      "default": 2.5
+    },
+    {
+      "key": "shimmer",
+      "label": "闪烁",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.5
+    },
+    {
+      "key": "mouseStrength",
+      "label": "鼠标让开",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1,
+      "help": "0 关闭鼠标交互"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "magma",
+      "name": "熔岩",
+      "values": {
+        "colors": [
+          "#ff6a00",
+          "#ffb347",
+          "#ff2d55"
+        ],
+        "flowDirection": "up",
+        "speed": 0.3,
+        "rimWidth": 0.3
+      }
+    },
+    {
+      "id": "ice",
+      "name": "冰纹",
+      "values": {
+        "colors": [
+          "#7dd3fc",
+          "#e0f2fe"
+        ],
+        "flowDirection": "right",
+        "sharpness": 4,
+        "shimmer": 2.5,
+        "scale": 2.4
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "slug": "ghost-smoke-cursor",
+  "name": "幽灵烟雾光标",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["光标", "烟雾", "拖尾", "WebGL"],
+  "summary": "鼠标拖着一团淡绿色的幽灵烟雾游走，烟雾随分形噪声翻卷、越靠后越淡，停手后带惯性滑行再慢慢散尽",
+  "params": [
+    { "key": "color", "label": "烟雾颜色", "type": "color", "target": "config", "default": "#a0ffbc" },
+    {
+      "key": "trailLength",
+      "label": "拖尾长度",
+      "type": "range",
+      "target": "config",
+      "min": 5,
+      "max": 60,
+      "step": 5,
+      "default": 30,
+      "help": "越长越重，性能敏感时调小"
+    },
+    {
+      "key": "inertia",
+      "label": "惯性",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.95,
+      "step": 0.05,
+      "default": 0.5,
+      "help": "停手后每帧保留的速度比例"
+    },
+    {
+      "key": "brightness",
+      "label": "亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "grainIntensity",
+      "label": "颗粒",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.05
+    },
+    {
+      "key": "edgeIntensity",
+      "label": "边缘压暗",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0
+    },
+    {
+      "key": "fadeDelay",
+      "label": "停手多久开始散",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3000,
+      "step": 100,
+      "default": 1000,
+      "displayUnit": " 毫秒"
+    },
+    {
+      "key": "fadeDuration",
+      "label": "散尽时长",
+      "type": "range",
+      "target": "config",
+      "min": 200,
+      "max": 4000,
+      "step": 100,
+      "default": 1500,
+      "displayUnit": " 毫秒"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "violet", "name": "紫雾长尾", "values": { "color": "#c4b5fd", "trailLength": 50, "inertia": 0.8 } },
+    { "id": "ember", "name": "橙火短尾", "values": { "color": "#ffb347", "trailLength": 12, "brightness": 1.6, "grainIntensity": 0.1 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

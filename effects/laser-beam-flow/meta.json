@@ -1,0 +1,108 @@
+{
+  "slug": "laser-beam-flow",
+  "name": "激光流束",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["激光", "光束", "雾气", "WebGL2"],
+  "summary": "一道绿色激光从上方垂直射下，落点炸开成横向的光晕，束身有光流脉动、细小光丝顺着束向上窜，脚下弥漫的雾随鼠标左右偏斜",
+  "params": [
+    { "key": "color", "label": "激光颜色", "type": "color", "target": "config", "default": "#a0ffbc" },
+    {
+      "key": "horizontalBeamOffset",
+      "label": "横向位置",
+      "type": "range",
+      "target": "config",
+      "min": -0.5,
+      "max": 0.5,
+      "step": 0.05,
+      "default": 0.1
+    },
+    {
+      "key": "verticalBeamOffset",
+      "label": "纵向位置",
+      "type": "range",
+      "target": "config",
+      "min": -0.5,
+      "max": 0.5,
+      "step": 0.05,
+      "default": 0
+    },
+    {
+      "key": "flowSpeed",
+      "label": "光流速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "default": 0.35
+    },
+    {
+      "key": "flowStrength",
+      "label": "光流强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.25
+    },
+    {
+      "key": "verticalSizing",
+      "label": "束长",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 4,
+      "step": 0.1,
+      "default": 2
+    },
+    {
+      "key": "horizontalSizing",
+      "label": "落点光晕宽",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 2,
+      "step": 0.05,
+      "default": 0.5
+    },
+    {
+      "key": "wispIntensity",
+      "label": "光丝亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 15,
+      "step": 0.5,
+      "default": 5
+    },
+    {
+      "key": "fogIntensity",
+      "label": "雾气",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.45
+    },
+    {
+      "key": "mouseTiltStrength",
+      "label": "雾随鼠标偏斜",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.1,
+      "step": 0.005,
+      "default": 0.01
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "red", "name": "红色警戒", "values": { "color": "#ff4d6d", "horizontalBeamOffset": 0, "fogIntensity": 0.7, "wispIntensity": 8 } },
+    { "id": "thin", "name": "细长冷光", "values": { "color": "#7dd3fc", "verticalSizing": 3.2, "horizontalSizing": 0.3, "flowSpeed": 0.8 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}
