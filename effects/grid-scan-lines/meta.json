@@ -2,97 +2,103 @@
   "slug": "grid-scan-lines",
   "name": "扫描线网格",
   "category": "background",
-  "sub": "idle",
-  "tags": ["网格", "扫描", "科技"],
-  "summary": "带透视的地面网格向你涌来，一道扫描线周期性从上往下刷过",
+  "sub": "hover",
+  "tags": ["网格", "隧道", "扫描", "WebGL", "科技感"],
+  "summary": "一条四壁都是网格的透视隧道，一道绿光沿深度往返扫描，鼠标一动整条隧道跟着转视角",
   "params": [
+    { "key": "linesColor", "label": "网格线颜色", "type": "color", "target": "config", "default": "#2c3d32" },
+    { "key": "scanColor", "label": "扫描光颜色", "type": "color", "target": "config", "default": "#48ff28" },
     {
-      "key": "cell",
-      "label": "网格间距",
+      "key": "gridScale",
+      "label": "网格密度",
       "type": "range",
-      "target": "css",
-      "min": 30,
-      "max": 120,
-      "step": 10,
-      "default": 60,
+      "target": "config",
+      "min": 0.04,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.1,
+      "help": "越小格子越密"
+    },
+    {
+      "key": "lineThickness",
+      "label": "线粗",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 4,
+      "step": 0.5,
+      "default": 1,
       "unit": "px"
     },
     {
-      "key": "speed",
-      "label": "网格流速",
+      "key": "lineStyle",
+      "label": "线型",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "solid", "label": "实线" },
+        { "value": "dashed", "label": "虚线" },
+        { "value": "dotted", "label": "点线" }
+      ],
+      "default": "solid"
+    },
+    {
+      "key": "lineJitter",
+      "label": "线条抖动",
       "type": "range",
-      "target": "css",
-      "min": 1,
-      "max": 10,
-      "step": 0.5,
-      "default": 3,
-      "unit": "s",
-      "displayUnit": " 秒/格"
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.1
     },
     {
-      "key": "tilt",
-      "label": "地面倾角",
+      "key": "scanDirection",
+      "label": "扫描方向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "pingpong", "label": "往返" },
+        { "value": "forward", "label": "由近及远" },
+        { "value": "backward", "label": "由远及近" }
+      ],
+      "default": "pingpong"
+    },
+    {
+      "key": "scanOpacity",
+      "label": "扫描亮度",
       "type": "range",
-      "target": "css",
-      "min": 40,
-      "max": 80,
-      "step": 5,
-      "default": 65,
-      "unit": "deg",
-      "displayUnit": "°"
+      "target": "config",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.4
     },
     {
-      "key": "scanPeriod",
-      "label": "扫描线周期",
+      "key": "scanGlow",
+      "label": "扫描带宽度",
       "type": "range",
-      "target": "css",
-      "min": 2,
-      "max": 12,
-      "step": 0.5,
-      "default": 5,
-      "unit": "s",
-      "displayUnit": " 秒"
+      "target": "config",
+      "min": 0.1,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.5
     },
     {
-      "key": "line",
-      "label": "网格线颜色",
-      "type": "color",
-      "target": "css",
-      "default": "#3a3a3a"
-    },
-    {
-      "key": "scan",
-      "label": "扫描线颜色",
-      "type": "color",
-      "target": "css",
-      "default": "#ffffff"
-    },
-    {
-      "key": "horizonGlow",
-      "label": "地平线光晕",
-      "type": "toggle",
-      "target": "css",
-      "default": true
+      "key": "noise",
+      "label": "噪点",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.1,
+      "step": 0.005,
+      "default": 0.01
     }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "fast",
-      "name": "疾驰",
-      "values": { "speed": 1, "cell": 40, "scanPeriod": 2.5, "tilt": 75 }
-    },
-    {
-      "id": "calm",
-      "name": "静谧",
-      "values": {
-        "speed": 8,
-        "cell": 100,
-        "scanPeriod": 10,
-        "line": "#1c1c1c",
-        "horizonGlow": false
-      }
-    }
+    { "id": "cyan", "name": "青色虚线", "values": { "linesColor": "#1f3a44", "scanColor": "#3ddcff", "lineStyle": "dashed", "scanGlow": 0.8 } },
+    { "id": "dense", "name": "密网快扫", "values": { "gridScale": 0.06, "lineJitter": 0.3, "scanDirection": "forward", "scanOpacity": 0.7 } }
   ],
   "thumb": { "mode": "live" },
   "source": { "kind": "visual-inspiration" }

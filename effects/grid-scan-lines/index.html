@@ -7,71 +7,254 @@
 <style>
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
-    --mt-bg: #0a0a0f;        /* 页面底色 */
-    --mt-cell: 60px;         /* 网格间距 */
-    --mt-speed: 3s;          /* 网格流速（滚过一格的时间） */
-    --mt-tilt: 65deg;        /* 地面倾角 */
-    --mt-scanPeriod: 5s;     /* 扫描线周期 */
-    --mt-line: #3a3a3a;      /* 网格线颜色 */
-    --mt-scan: #ffffff;      /* 扫描线颜色 */
-    --mt-horizonGlow: 1;     /* 地平线光晕：1 开 / 0 关 */
+    --mt-bg: #000000;        /* 页面底色（隧道在纯黑里最深邃） */
   }
   html, body { margin: 0; height: 100%; }
-  body { background: var(--mt-bg); overflow: hidden; }
-  /* 地面：一张很大的网格平面，绕 X 轴倾斜成透视地面，背景位置向下滚动形成「涌来」 */
-  .mt-scene {
-    position: fixed; inset: 0;
-    perspective: 500px;
-    perspective-origin: 50% 35%;
-    overflow: hidden;
-  }
-  .mt-floor {
-    position: absolute;
-    left: -50%; right: -50%;
-    top: 40%; bottom: -60%;
-    background-image:
-      linear-gradient(to right, var(--mt-line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--mt-line) 1px, transparent 1px);
-    background-size: var(--mt-cell) var(--mt-cell);
-    transform-origin: 50% 0;
-    transform: rotateX(var(--mt-tilt));
-    animation: mt-flow var(--mt-speed) linear infinite;
-  }
-  @keyframes mt-flow { to { background-position: 0 var(--mt-cell); } }
-  /* 地平线光晕：让远处的网格隐入雾中 */
-  .mt-horizon {
-    position: absolute; left: 0; right: 0; top: 30%;
-    height: 30%;
-    background: linear-gradient(to bottom, var(--mt-bg) 0%, color-mix(in srgb, var(--mt-scan) 12%, var(--mt-bg)) 45%, transparent 100%);
-    opacity: var(--mt-horizonGlow);
-    pointer-events: none;
-  }
-  /* 扫描线：一条亮线带拖尾，从顶部刷到底部 */
-  .mt-scan {
-    position: absolute; left: 0; right: 0;
-    height: 120px;
-    background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--mt-scan) 35%, transparent) 85%, var(--mt-scan) 100%);
-    animation: mt-scan var(--mt-scanPeriod) cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    mix-blend-mode: screen;
-  }
-  @keyframes mt-scan { from { top: -120px; } to { top: 100%; } }
-
-  /* 用户开启「减少动态效果」时：网格静止、无扫描线 */
-  @media (prefers-reduced-motion: reduce) {
-    .mt-floor { animation: none; }
-    .mt-scan { display: none; }
-  }
+  body { background: var(--mt-bg); overflow: hidden; cursor: crosshair; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态隧道 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
 </style>
 </head>
 <body>
-<div class="mt-scene" aria-hidden="true">
-  <div class="mt-floor"></div>
-  <div class="mt-horizon"></div>
-  <div class="mt-scan"></div>
-</div>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
 <script>
-  // 本效果全部由 CSS 驱动（所有参数都是 :root 变量，调参即热更新）；
-  // 纯 CSS 动画：页面切到后台时浏览器自动暂停渲染。
+  const CONFIG = {
+    linesColor: "#2c3d32",     // 网格线颜色
+    scanColor: "#48ff28",      // 扫描光颜色
+    gridScale: 0.1,            // 网格密度（格子边长）
+    lineThickness: 1,          // 线粗（px）
+    lineStyle: "solid",        // 线型：solid / dashed / dotted
+    lineJitter: 0.1,           // 线条抖动
+    scanDirection: "pingpong", // 扫描方向：pingpong / forward / backward
+    scanOpacity: 0.4,          // 扫描亮度
+    scanGlow: 0.5,             // 扫描带宽度
+    noise: 0.01,               // 噪点
+  };
+  const SCAN_DURATION = 2.0, SCAN_DELAY = 2.0, SCAN_SOFTNESS = 2.0, PHASE_TAPER = 0.9, SENSITIVITY = 0.55;
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl2');   // 线的抗锯齿要用 fwidth，走 GLSL ES 3.0
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `#version 300 es
+    precision highp float;
+    in vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：从原点向 z 方向发射视线，求与四壁（地/天 y=±0.2，左右墙 x=±0.5）最近的交点，
+  // 在交点所在的壁面上画网格；扫描带按深度 z 做高斯亮带；鼠标通过 skew 偏移视线方向
+  const FS = `#version 300 es
+    precision highp float;
+    uniform vec3  uRes;          // 分辨率
+    uniform float uTime;         // 时间（秒）
+    uniform vec2  uSkew;         // 视线偏移（鼠标视角）
+    uniform float uThick;        // 线粗（px）
+    uniform vec3  uLinesColor;   // 网格线颜色
+    uniform vec3  uScanColor;    // 扫描光颜色
+    uniform float uGridScale;    // 格子边长
+    uniform float uLineStyle;    // 0 实线 / 1 虚线 / 2 点线
+    uniform float uJitter;       // 抖动
+    uniform float uScanOpacity;  // 扫描亮度
+    uniform float uScanDir;      // 0 由近及远 / 1 由远及近 / 2 往返
+    uniform float uNoise;        // 噪点
+    uniform float uScanGlow;     // 扫描带宽度
+    uniform float uSoftness;     // 扫描带柔度
+    uniform float uTaper;        // 相位两端渐隐宽度
+    uniform float uDur;          // 一次扫描时长
+    uniform float uDelay;        // 两次扫描间隔
+    uniform float uScanStarts[8];// 点击追加的扫描起始时间
+    uniform float uScanCount;    // 追加扫描数
+    out vec4 fragColor;
+
+    float smoother01(float a, float b, float x) {
+      float t = clamp((x - a) / max(1e-5, b - a), 0.0, 1.0);
+      return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+    }
+    /* 网格线掩码：到最近格线的距离 → 按像素宽度 smoothstep；虚线 / 点线再乘一层节律掩码 */
+    float gridMask(vec2 uv, float halfPx) {
+      vec2 f = fract(uv);
+      vec2 a = min(f, 1.0 - f);
+      vec2 w = fwidth(uv);
+      vec2 t = halfPx * w;
+      float lx = 1.0 - smoothstep(t.x, t.x + w.x, a.x);
+      float ly = 1.0 - smoothstep(t.y, t.y + w.y, a.y);
+      if (uLineStyle > 0.5) {
+        if (uLineStyle < 1.5) {
+          lx *= step(fract(uv.y * 4.0), 0.5);
+          ly *= step(fract(uv.x * 4.0), 0.5);
+        } else {
+          float cy = abs(fract(uv.y * 6.0) - 0.5), cx = abs(fract(uv.x * 6.0) - 0.5);
+          lx *= 1.0 - smoothstep(0.18, 0.18 + fwidth(uv.y * 6.0), cy);
+          ly *= 1.0 - smoothstep(0.18, 0.18 + fwidth(uv.x * 6.0), cx);
+        }
+      }
+      return max(lx, ly);
+    }
+    /* 一道扫描带：相位 → 深度 z，按到 z 的距离做高斯亮带 + 2σ 光晕，两端渐隐 */
+    vec2 scanBand(float phase, float hz, float sigma) {
+      float scanZ = phase * 2.0;
+      float dz = abs(hz - scanZ);
+      float window = smoother01(0.0, uTaper, phase) * (1.0 - smoother01(1.0 - uTaper, 1.0, phase));
+      float band = exp(-0.5 * dz * dz / (sigma * sigma)) * window;
+      float aura = exp(-0.5 * dz * dz / (4.0 * sigma * sigma)) * 0.25 * window;
+      return vec2(band, aura) * clamp(uScanOpacity, 0.0, 1.0);
+    }
+    float shapePhase(float p) {
+      if (uScanDir > 0.5 && uScanDir < 1.5) return 1.0 - p;
+      return p;
+    }
+
+    void main() {
+      vec2 p = (2.0 * gl_FragCoord.xy - uRes.xy) / uRes.y;
+      vec3 ro = vec3(0.0);
+      vec3 rd = normalize(vec3(p, 2.0));
+      vec2 skew = clamp(uSkew, vec2(-0.7), vec2(0.7));
+      rd.xy += skew * rd.z;                                   // 鼠标视角：整体偏转视线
+
+      /* 与四壁求交，取最近的正向交点 */
+      float minT = 1e20, hitIsY = 1.0;
+      vec2 gridUV = vec2(0.0);
+      for (int i = 0; i < 4; i++) {
+        float isY = float(i < 2);
+        float pos = mix(-0.2, 0.2, float(i)) * isY + mix(-0.5, 0.5, float(i - 2)) * (1.0 - isY);
+        float den = isY * rd.y + (1.0 - isY) * rd.x;
+        float t = pos / den;
+        vec3 h = ro + rd * t;
+        h.xy += skew * 0.15 * smoothstep(0.0, 3.0, h.z);      // 远处随视角再偏一点，更有纵深
+        bool use = t > 0.0 && t < minT;
+        gridUV = use ? mix(h.zy, h.xz, isY) / uGridScale : gridUV;
+        minT = use ? t : minT;
+        hitIsY = use ? isY : hitIsY;
+      }
+      vec3 hit = ro + rd * minT;
+      float dist = length(hit);
+
+      /* 主网格（带抖动）+ 壁面交接处的第二套网格（只在边缘一小段可见，让棱线更实） */
+      float halfPx = max(0.0, uThick) * 0.5;
+      float jit = clamp(uJitter, 0.0, 1.0);
+      vec2 g1 = gridUV + vec2(sin(gridUV.y * 2.7 + uTime * 1.8), cos(gridUV.x * 2.3 - uTime * 1.6)) * 0.15 * jit;
+      float primary = gridMask(g1, halfPx);
+      vec2 g2 = (hitIsY > 0.5 ? hit.xz : hit.zy) / uGridScale;
+      g2 += vec2(cos(g2.y * 2.1 - uTime * 1.4), sin(g2.x * 2.5 + uTime * 1.7)) * 0.15 * jit;
+      float alt = gridMask(g2, halfPx);
+      float edgeDist = mix(min(abs(hit.y + 0.2), abs(hit.y - 0.2)), min(abs(hit.x + 0.5), abs(hit.x - 0.5)), hitIsY);
+      alt *= 1.0 - smoothstep(uGridScale * 0.5, uGridScale * 2.0, edgeDist);
+      float lineMask = max(primary, alt);
+      float fade = exp(-dist * 2.0);                          // 远处网格淡出
+
+      /* 周期扫描 + 点击追加的扫描 */
+      float sigma = max(0.001, 0.18 * max(0.1, uScanGlow) * uSoftness);
+      float cycle = uDur + uDelay;
+      float tCycle = mod(uTime, cycle);
+      float phase = shapePhase(clamp((tCycle - uDelay) / uDur, 0.0, 1.0));
+      if (uScanDir > 1.5) {
+        float t2 = mod(max(0.0, uTime - uDelay), 2.0 * uDur);
+        phase = (t2 < uDur) ? (t2 / uDur) : (1.0 - (t2 - uDur) / uDur);
+      }
+      vec2 scan = scanBand(phase, hit.z, sigma);
+      for (int i = 0; i < 8; i++) {
+        if (float(i) >= uScanCount) break;
+        float ph = clamp((uTime - uScanStarts[i]) / uDur, 0.0, 1.0);
+        if (uScanDir > 1.5) ph = ph < 0.5 ? ph * 2.0 : 1.0 - (ph - 0.5) * 2.0;
+        else ph = shapePhase(ph);
+        scan += scanBand(ph, hit.z, sigma);
+      }
+
+      vec3 color = uLinesColor * lineMask * fade + uScanColor * scan.x + uScanColor * scan.y;
+      float n = fract(sin(dot(gl_FragCoord.xy + vec2(uTime * 123.4), vec2(12.9898, 78.233))) * 43758.5453123);
+      color += (n - 0.5) * uNoise;                            // 胶片噪点
+      fragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  function hexRgb(hex) {
+    const h = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  }
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform3f(U('uRes'), canvas.width, canvas.height, canvas.width / canvas.height);
+  }
+
+  gl.uniform1f(U('uThick'), CONFIG.lineThickness * dpr);
+  gl.uniform3fv(U('uLinesColor'), hexRgb(CONFIG.linesColor));
+  gl.uniform3fv(U('uScanColor'), hexRgb(CONFIG.scanColor));
+  gl.uniform1f(U('uGridScale'), CONFIG.gridScale);
+  gl.uniform1f(U('uLineStyle'), CONFIG.lineStyle === 'dashed' ? 1 : CONFIG.lineStyle === 'dotted' ? 2 : 0);
+  gl.uniform1f(U('uJitter'), CONFIG.lineJitter);
+  gl.uniform1f(U('uScanOpacity'), CONFIG.scanOpacity);
+  gl.uniform1f(U('uScanDir'), CONFIG.scanDirection === 'backward' ? 1 : CONFIG.scanDirection === 'pingpong' ? 2 : 0);
+  gl.uniform1f(U('uNoise'), CONFIG.noise);
+  gl.uniform1f(U('uScanGlow'), CONFIG.scanGlow);
+  gl.uniform1f(U('uSoftness'), SCAN_SOFTNESS);
+  gl.uniform1f(U('uTaper'), Math.min(0.49, PHASE_TAPER));
+  gl.uniform1f(U('uDur'), SCAN_DURATION);
+  gl.uniform1f(U('uDelay'), SCAN_DELAY);
+  const uTime = U('uTime'), uSkew = U('uSkew'), uScanStarts = U('uScanStarts[0]'), uScanCount = U('uScanCount');
+  resize(); addEventListener('resize', resize);
+
+  // 鼠标视角：归一化 (-1..1) 目标，临界阻尼平滑（时间常数随敏感度 0.45→0.12s）；离开后回正
+  let lookTX = 0, lookTY = 0, lookX = 0, lookY = 0, leaveTimer = 0;
+  const skewScale = 0.06 + (0.2 - 0.06) * SENSITIVITY;
+  const yBoost = 1.2 + (1.6 - 1.2) * SENSITIVITY;
+  const smoothTime = 0.45 + (0.12 - 0.45) * SENSITIVITY;
+  addEventListener('pointermove', (e) => {
+    clearTimeout(leaveTimer);
+    lookTX = (e.clientX / innerWidth) * 2 - 1;
+    lookTY = -((e.clientY / innerHeight) * 2 - 1);
+  });
+  addEventListener('pointerleave', () => { leaveTimer = setTimeout(() => { lookTX = 0; lookTY = 0; }, 600); });
+
+  // 点击追加一道扫描（最多同时 8 道）
+  const scanStarts = new Float32Array(8);
+  let scanCount = 0, time = reduceMotion ? 3 : 0;
+  addEventListener('click', () => {
+    if (scanCount < 8) scanStarts[scanCount++] = time;
+    else { scanStarts.copyWithin(0, 1); scanStarts[7] = time; }
+  });
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    // 指数趋近 ≈ smoothDamp 的手感
+    const k = 1 - Math.exp(-dt / smoothTime);
+    lookX += (lookTX - lookX) * k; lookY += (lookTY - lookY) * k;
+    // 清理已经扫完的追加扫描
+    while (scanCount > 0 && time - scanStarts[0] > SCAN_DURATION * 2) { scanStarts.copyWithin(0, 1); scanCount--; }
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uSkew, lookX * skewScale, -lookY * yBoost * skewScale);
+    gl.uniform1fv(uScanStarts, scanStarts);
+    gl.uniform1f(uScanCount, scanCount);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
 </script>
 </body>
 </html>

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扭转光柱</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（光柱在纯黑上最透亮） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; mix-blend-mode: screen; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态光柱 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    topColor: "#5227ff",     // 顶部颜色
+    bottomColor: "#ff9ffc",  // 底部颜色
+    intensity: 1,            // 整体亮度
+    rotationSpeed: 0.3,      // 旋转与涌动速度
+    glow: 0.005,             // 发光量
+    pillarWidth: 3,          // 柱体粗细
+    pillarHeight: 0.4,       // 光丝拉伸
+    noise: 0.5,              // 颗粒
+    tilt: 0,                 // 整体倾斜（度）
+    interactive: false,      // 鼠标控制旋转
+  };
+  const ITERATIONS = 60, WAVE_ITERATIONS = 3, STEP_MULT = 1.1;   // 中高画质：60 步行进、3 层扭曲
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl2');   // tanh 需要 GLSL ES 3.0
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `#version 300 es
+    precision highp float;
+    in vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：从相机向前做光线步进；每一步把采样点绕 y 旋转（整体自转）、
+  // 沿 y 加时间（向上涌动）、做几层「旋转 + 余弦位移」的域扭曲，
+  // 再用 |cos(x,z)| 造出一束束平行光丝，并与一个圆柱边界平滑相交 —— 光丝被拧成一根柱
+  const FS = `#version 300 es
+    precision highp float;
+    uniform float uTime;         // 累计时间（已乘速度）
+    uniform vec2  uRes;          // 分辨率
+    uniform vec3  uTop;          // 顶部色
+    uniform vec3  uBottom;       // 底部色
+    uniform float uIntensity;    // 整体亮度
+    uniform float uGlow;         // 发光量
+    uniform float uWidth;        // 柱体粗细
+    uniform float uHeight;       // 光丝拉伸
+    uniform float uNoise;        // 颗粒
+    uniform float uRotCos;       // 整体自转（预算 cos/sin）
+    uniform float uRotSin;
+    uniform float uTiltCos;      // 整体倾斜
+    uniform float uTiltSin;
+    out vec4 fragColor;
+
+    const float EPS = 0.001;
+    float noise(vec2 c) { vec2 r = 2.718281828 * sin(2.718281828 * c); return fract(r.x * r.y * (1.0 + c.x)); }
+
+    void main() {
+      vec2 uv = (gl_FragCoord.xy * 2.0 - uRes) / uRes.y;
+      uv = vec2(uv.x * uTiltCos - uv.y * uTiltSin, uv.x * uTiltSin + uv.y * uTiltCos);   // 整体倾斜
+
+      vec3 origin = vec3(0.0, 0.0, -10.0);
+      vec3 dir = normalize(vec3(uv, 1.0));
+      float depth = 0.1;
+      vec3 color = vec3(0.0);
+      const float WAVE_C = 0.921061, WAVE_S = 0.389418;   // cos/sin(0.4)：每层扭曲的固定旋转
+
+      for (int i = 0; i < ${ITERATIONS}; i++) {
+        vec3 pos = origin + dir * depth;
+        /* 整体绕 y 自转 */
+        vec3 rp = vec3(pos.x * uRotCos - pos.z * uRotSin, pos.y, pos.x * uRotSin + pos.z * uRotCos);
+
+        /* 域扭曲：先纵向压缩（光丝被拉长），沿 y 加时间（向上流），再叠几层旋转 + 余弦位移 */
+        vec3 d = rp;
+        d.y *= uHeight;
+        d += vec3(0.0, uTime, 0.0);
+        float freq = 1.0, amp = 1.0;
+        for (int j = 0; j < ${WAVE_ITERATIONS}; j++) {
+          d = vec3(d.x * WAVE_C - d.z * WAVE_S, d.y, d.x * WAVE_S + d.z * WAVE_C);
+          d += cos(d.zxy * freq - uTime * float(j) * 2.0) * amp;
+          freq *= 2.0; amp *= 0.5;
+        }
+
+        /* 光丝场：cos 的模长在格点处趋零 → 一束束平行的亮丝 */
+        float field = length(cos(d.xz)) - 0.2;
+        /* 与圆柱边界平滑相交（多项式 smooth-min），光丝只留在柱内 */
+        float radial = length(rp.xz) - uWidth;
+        float k = 4.0;
+        float h = max(k - abs(-radial + field), 0.0);
+        field = -(min(-radial, -field) - h * h * 0.25 / k);
+        field = abs(field) * 0.15 + 0.01;
+
+        /* 颜色按高度从底色到顶色，按 1/距离累加 */
+        vec3 grad = mix(uBottom, uTop, smoothstep(15.0, -15.0, pos.y));
+        color += grad / field;
+
+        if (field < EPS || depth > 50.0) break;
+        depth += field * ${STEP_MULT.toFixed(1)};
+      }
+
+      color = tanh(color * uGlow / (uWidth / 3.0));   // 发光量压缩，粗细归一
+      color -= noise(gl_FragCoord.xy) / 15.0 * uNoise;  // 织物般的暗颗粒
+      fragColor = vec4(color * uIntensity, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  function hexRgb(hex) {
+    const h = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  }
+
+  // 光线步进偏重：渲染分辨率打 0.75 折再拉伸
+  const dpr = Math.min(1.5, devicePixelRatio || 1) * 0.75;
+  function resize() {
+    canvas.width = Math.max(1, Math.floor(innerWidth * dpr));
+    canvas.height = Math.max(1, Math.floor(innerHeight * dpr));
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+
+  gl.uniform3fv(U('uTop'), hexRgb(CONFIG.topColor));
+  gl.uniform3fv(U('uBottom'), hexRgb(CONFIG.bottomColor));
+  gl.uniform1f(U('uIntensity'), CONFIG.intensity);
+  gl.uniform1f(U('uGlow'), CONFIG.glow);
+  gl.uniform1f(U('uWidth'), CONFIG.pillarWidth);
+  gl.uniform1f(U('uHeight'), CONFIG.pillarHeight);
+  gl.uniform1f(U('uNoise'), CONFIG.noise);
+  const tilt = (CONFIG.tilt * Math.PI) / 180;
+  gl.uniform1f(U('uTiltCos'), Math.cos(tilt));
+  gl.uniform1f(U('uTiltSin'), Math.sin(tilt));
+  const uTime = U('uTime'), uRotCos = U('uRotCos'), uRotSin = U('uRotSin');
+  resize(); addEventListener('resize', resize);
+
+  // 鼠标控制旋转：横向位置 → 自转角
+  let mouseX = null;
+  if (CONFIG.interactive) addEventListener('pointermove', (e) => { mouseX = e.clientX / innerWidth; });
+
+  let time = reduceMotion ? 6 : 0;   // 减少动态：定格一帧光柱
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt * CONFIG.rotationSpeed;   // 时间本身乘速度：涌动与自转一起变快
+    const rot = mouseX !== null ? mouseX * Math.PI * 2 : time * 0.3;
+    gl.uniform1f(uTime, time);
+    gl.uniform1f(uRotCos, Math.cos(rot));
+    gl.uniform1f(uRotSin, Math.sin(rot));
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

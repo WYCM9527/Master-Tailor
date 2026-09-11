@@ -2,80 +2,99 @@
   "slug": "radar-sweep",
   "name": "雷达扫描",
   "category": "background",
-  "sub": "idle",
-  "tags": ["雷达", "扫描", "科技"],
-  "summary": "一道扫描扇面绕着圆心转，扫到的光点亮起再慢慢淡去",
+  "sub": "hover",
+  "tags": ["雷达", "扫描", "WebGL", "着色器", "鼠标交互"],
+  "summary": "一圈圈同心环不断向外扩散，辐条放射，一道柔光束绕着圆心旋转，鼠标一动整盘轻轻视差",
   "params": [
+    { "key": "color", "label": "雷达颜色", "type": "color", "target": "config", "default": "#27ff64" },
     {
-      "key": "period",
-      "label": "转一圈用时",
-      "type": "range",
-      "target": "css",
-      "min": 1,
-      "max": 10,
-      "step": 0.5,
-      "default": 4,
-      "unit": "s",
-      "displayUnit": " 秒"
-    },
-    {
-      "key": "rings",
-      "label": "同心圈数",
-      "type": "range",
-      "target": "config",
-      "min": 2,
-      "max": 8,
-      "step": 1,
-      "default": 4
-    },
-    {
-      "key": "blips",
-      "label": "目标点数",
+      "key": "speed",
+      "label": "圆环外扩速度",
       "type": "range",
       "target": "config",
       "min": 0,
-      "max": 20,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "scale",
+      "label": "盘面缩放",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.5,
+      "help": "越小盘面越大"
+    },
+    {
+      "key": "ringCount",
+      "label": "圆环数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 30,
       "step": 1,
-      "default": 7
+      "default": 10
+    },
+    {
+      "key": "spokeCount",
+      "label": "辐条数",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 36,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "key": "ringThickness",
+      "label": "圆环粗细",
+      "type": "range",
+      "target": "config",
+      "min": 0.01,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.05
+    },
+    {
+      "key": "sweepSpeed",
+      "label": "光束转速",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 4,
+      "step": 0.1,
+      "default": 1
     },
     {
       "key": "sweepWidth",
-      "label": "扇面宽度",
+      "label": "光束收窄",
       "type": "range",
-      "target": "css",
-      "min": 20,
-      "max": 120,
-      "step": 10,
-      "default": 60,
-      "unit": "deg",
-      "displayUnit": "°"
+      "target": "config",
+      "min": 0.5,
+      "max": 12,
+      "step": 0.5,
+      "default": 2,
+      "help": "越大光束越窄越锐"
     },
-    { "key": "color", "label": "雷达颜色", "type": "color", "target": "css", "default": "#ffffff" },
     {
-      "key": "size",
-      "label": "雷达直径",
+      "key": "falloff",
+      "label": "边缘衰减",
       "type": "range",
-      "target": "css",
-      "min": 40,
-      "max": 100,
-      "step": 5,
-      "default": 80,
-      "unit": "vmin"
+      "target": "config",
+      "min": 0.5,
+      "max": 6,
+      "step": 0.5,
+      "default": 2
     },
-    { "key": "grid", "label": "十字刻度线", "type": "toggle", "target": "css", "default": true }
+    { "key": "mouse", "label": "鼠标视差", "type": "toggle", "target": "config", "default": true }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "green",
-      "name": "军绿",
-      "values": { "color": "#4ade80", "period": 3, "blips": 12, "sweepWidth": 40 }
-    },
-    {
-      "id": "slow",
-      "name": "慢扫大扇",
-      "values": { "period": 8, "sweepWidth": 120, "rings": 6, "grid": false }
-    }
+    { "id": "amber", "name": "琥珀细环", "values": { "color": "#ffb340", "ringCount": 18, "ringThickness": 0.03, "sweepWidth": 6 } },
+    { "id": "big", "name": "满屏大盘", "values": { "scale": 0.32, "spokeCount": 16, "falloff": 1 } }
   ],
   "thumb": { "mode": "live" },
   "source": { "kind": "visual-inspiration" }

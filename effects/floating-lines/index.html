@@ -11,83 +11,197 @@
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; }
-  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-
-  /* 用户开启「减少动态效果」时：线条静止平直（JS 同步处理） */
-  @media (prefers-reduced-motion: reduce) {
-    canvas { opacity: 0.8; }
-  }
+  /* 辉光用 screen 混合叠在底色上，线条只会把底色照亮不会压暗 */
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; mix-blend-mode: screen; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态线束 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
 </style>
 </head>
 <body>
 <canvas id="mtCanvas" aria-hidden="true"></canvas>
 <script>
   const CONFIG = {
-    count: 18,         // 线条数量
-    amplitude: 22,     // 起伏幅度（px）
-    speed: 1,          // 流动速度倍率
-    dent: 60,          // 鼠标凹陷深度（px）
-    thickness: 1,      // 线粗
-    color: "#ffffff",  // 线条颜色
-    fadeEdges: true,   // 两端渐隐
+    lineCount: 8,                                   // 每束线数
+    lineDistance: 8,                                // 线间距
+    colors: ["#a7ef9e", "#747d67", "#6a6a6a"],      // 线色渐变
+    waves: "all",                                   // 线束组合：all / middle / outer
+    speed: 1,                                       // 漂浮速度
+    interactive: true,                              // 鼠标弯曲
+    bendRadius: 8,                                  // 弯曲范围
+    bendStrength: -2,                               // 弯曲力度
+    parallax: true,                                 // 鼠标视差
   };
 
   const canvas = document.getElementById('mtCanvas');
-  const ctx = canvas.getContext('2d');
+  const gl = canvas.getContext('webgl', { antialias: false });
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：三束线，每条线是 1/|距离| 型的辉光曲线；
+  // 每束先按 rotate·log(|uv|+1) 旋绕（离中心越远转得越多 → 螺旋感），再叠正弦漂浮；
+  // 鼠标附近用高斯权重把线的 y 往鼠标方向拉，形成弯曲
+  const FS = `
+    precision highp float;
+    uniform float uTime;         // 时间（秒）
+    uniform vec3  uRes;          // 分辨率
+    uniform float uSpeed;        // 漂浮速度
+    uniform float uEnableTop;    // 三束开关
+    uniform float uEnableMid;
+    uniform float uEnableBot;
+    uniform float uCount;        // 每束线数
+    uniform float uDist;         // 线间距
+    uniform vec2  uMouse;        // 鼠标（像素，GL 坐标）
+    uniform float uInteractive;  // 鼠标弯曲开关
+    uniform float uBendRadius;   // 弯曲范围（高斯系数）
+    uniform float uBendStrength; // 弯曲力度
+    uniform float uBendInf;      // 鼠标在场的影响度（进入 1 / 离开 0，阻尼）
+    uniform vec2  uParallax;     // 视差偏移
+    uniform vec3  uGrad[8];      // 线色渐变色表
+    uniform float uGradN;        // 色数
+
+    const int MAX_LINES = 16;
+    mat2 rot(float r) { return mat2(cos(r), sin(r), -sin(r), cos(r)); }
+
+    /* 第 t（0–1）条线的颜色：在色表上线性插值，整体压半亮 */
+    vec3 lineColor(float t) {
+      if (uGradN <= 1.5) return uGrad[0] * 0.5;
+      float s = clamp(t, 0.0, 0.9999) * (uGradN - 1.0);
+      float f = fract(s);
+      vec3 c1 = uGrad[0], c2 = uGrad[0];
+      for (int k = 0; k < 8; k++) {
+        if (float(k) == floor(s)) c1 = uGrad[k];
+        if (float(k) == floor(s) + 1.0) c2 = uGrad[k];
+      }
+      return mix(c1, c2, f) * 0.5;
+    }
+
+    /* 一条线的亮度：正弦漂浮 + 鼠标弯曲后，到线的距离取倒数得辉光 */
+    float wave(vec2 uv, float offset, vec2 screenUv, vec2 mouseUv) {
+      float time = uTime * uSpeed;
+      float amp = sin(offset + time * 0.2) * 0.3;               // 振幅自己也在慢慢呼吸
+      float y = sin(uv.x + offset + time * 0.1) * amp;
+      if (uInteractive > 0.5) {
+        vec2 d = screenUv - mouseUv;
+        float influence = exp(-dot(d, d) * uBendRadius);        // 高斯权重
+        y += (mouseUv.y - screenUv.y) * influence * uBendStrength * uBendInf;
+      }
+      float m = uv.y - y;
+      return 0.0175 / max(abs(m) + 0.01, 1e-3) + 0.01;          // 1/d 辉光
+    }
+
+    /* 一束线：旋绕后逐条叠加，x 方向按线间距错开、相位按序号错开 */
+    vec3 bundle(vec2 baseUv, vec2 mouseUv, vec3 pos, float phase0, float phaseStep, float flipX, float gain) {
+      vec3 col = vec3(0.0);
+      float angle = pos.z * log(length(baseUv) + 1.0);
+      vec2 ruv = baseUv * rot(angle);
+      ruv.x *= flipX;
+      for (int i = 0; i < MAX_LINES; i++) {
+        if (float(i) >= uCount) break;
+        float fi = float(i);
+        float t = fi / max(uCount - 1.0, 1.0);
+        col += lineColor(t) * wave(ruv + vec2(uDist * fi + pos.x, pos.y), phase0 + phaseStep * fi, baseUv, mouseUv) * gain;
+      }
+      return col;
+    }
+
+    void main() {
+      vec2 baseUv = (2.0 * gl_FragCoord.xy - uRes.xy) / uRes.y;   // 短边归一居中
+      baseUv.y *= -1.0;
+      baseUv += uParallax;
+      vec2 mouseUv = (2.0 * uMouse - uRes.xy) / uRes.y;
+      mouseUv.y *= -1.0;
+
+      vec3 col = vec3(0.0);
+      /* 三束的位置 (x 偏移, y 偏移, 旋绕系数) 与权重：下束淡、中束主、上束更淡且左右镜像 */
+      if (uEnableBot > 0.5) col += bundle(baseUv, mouseUv, vec3(2.0, -0.7, -1.0), 1.5, 0.2, 1.0, 0.2);
+      if (uEnableMid > 0.5) col += bundle(baseUv, mouseUv, vec3(5.0, 0.0, 0.2), 2.0, 0.15, 1.0, 1.0);
+      if (uEnableTop > 0.5) col += bundle(baseUv, mouseUv, vec3(10.0, 0.5, -0.4), 1.0, 0.2, -1.0, 0.1);
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  function hexRgb(hex) {
+    const h = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  }
+  // 色表塞满 8 槽（不足的重复末色）
+  const grad = [];
+  for (let i = 0; i < 8; i++) grad.push(...hexRgb(CONFIG.colors[Math.min(i, CONFIG.colors.length - 1)]));
+
   const dpr = Math.min(2, devicePixelRatio || 1);
-  let W = 0, H = 0;
-  function resize() { W = innerWidth; H = innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  function resize() {
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform3f(U('uRes'), canvas.width, canvas.height, canvas.width / canvas.height);
+  }
+
+  gl.uniform1f(U('uSpeed'), CONFIG.speed);
+  gl.uniform1f(U('uEnableTop'), CONFIG.waves !== 'middle' ? 1 : 0);
+  gl.uniform1f(U('uEnableMid'), CONFIG.waves !== 'outer' ? 1 : 0);
+  gl.uniform1f(U('uEnableBot'), CONFIG.waves !== 'middle' ? 1 : 0);
+  gl.uniform1f(U('uCount'), CONFIG.lineCount);
+  gl.uniform1f(U('uDist'), CONFIG.lineDistance);
+  gl.uniform1f(U('uInteractive'), CONFIG.interactive ? 1 : 0);
+  gl.uniform1f(U('uBendRadius'), CONFIG.bendRadius);
+  gl.uniform1f(U('uBendStrength'), CONFIG.bendStrength);
+  gl.uniform3fv(U('uGrad[0]'), new Float32Array(grad));
+  gl.uniform1f(U('uGradN'), CONFIG.colors.length);
+  const uTime = U('uTime'), uMouse = U('uMouse'), uBendInf = U('uBendInf'), uParallax = U('uParallax');
   resize(); addEventListener('resize', resize);
 
-  let mx = -9999, my = -9999, sx = -9999, sy = -9999, auto = true;
-  addEventListener('pointermove', e => { auto = false; mx = e.clientX; my = e.clientY; });
-  document.documentElement.addEventListener('pointerleave', () => { auto = true; mx = -9999; my = -9999; });
-
-  let t = 0;
-  function frame() {
-    if (!document.hidden) {
-      if (!reduceMotion) t += 0.016 * CONFIG.speed;
-      // 鼠标位置平滑，凹陷跟着慢慢走
-      sx += (mx - sx) * 0.12; sy += (my - sy) * 0.12;
-      ctx.clearRect(0, 0, W, H);
-      ctx.lineWidth = CONFIG.thickness;
-      const step = 8;
-      for (let i = 0; i < CONFIG.count; i++) {
-        const baseY = H * (i + 1) / (CONFIG.count + 1);
-        const phase = i * 0.6;
-        // 两端渐隐：用横向渐变作描边色
-        if (CONFIG.fadeEdges) {
-          const g = ctx.createLinearGradient(0, 0, W, 0);
-          g.addColorStop(0, 'transparent'); g.addColorStop(0.15, CONFIG.color); g.addColorStop(0.85, CONFIG.color); g.addColorStop(1, 'transparent');
-          ctx.strokeStyle = g;
-        } else ctx.strokeStyle = CONFIG.color;
-        ctx.globalAlpha = 0.35 + 0.5 * (i / CONFIG.count);
-        ctx.beginPath();
-        for (let x = 0; x <= W; x += step) {
-          // 两个不同频率的正弦叠加做起伏；鼠标附近按高斯凹陷向下压
-          let y = baseY + Math.sin(x * 0.006 + t + phase) * CONFIG.amplitude * 0.6 + Math.sin(x * 0.013 - t * 0.7 + phase) * CONFIG.amplitude * 0.4;
-          if (!reduceMotion) {
-            const dx = x - sx, dy = baseY - sy;
-            y += Math.exp(-(dx * dx + dy * dy) / (2 * 120 * 120)) * CONFIG.dent * (dy < 0 ? -1 : 1) * Math.min(1, Math.abs(dy) / 60);
-          }
-          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
+  // 鼠标：目标值 + 5% 阻尼；影响度进入 1 离开 0；视差 = 相对中心偏移 × 0.2
+  let tmx = -1000, tmy = -1000, mx = -1000, my = -1000;
+  let tInf = 0, inf = 0, tpx = 0, tpy = 0, ppx = 0, ppy = 0;
+  addEventListener('pointermove', (e) => {
+    tmx = e.clientX * dpr; tmy = (innerHeight - e.clientY) * dpr;
+    tInf = 1;
+    if (CONFIG.parallax) {
+      tpx = ((e.clientX - innerWidth / 2) / innerWidth) * 0.2;
+      tpy = (-(e.clientY - innerHeight / 2) / innerHeight) * 0.2;
     }
+  });
+  addEventListener('pointerleave', () => { tInf = 0; tpx = 0; tpy = 0; });
+
+  let time = reduceMotion ? 12 : 0;   // 减少动态：定格一帧线束
+  let last = performance.now();
+  function frame(now) {
     requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    mx += (tmx - mx) * 0.05; my += (tmy - my) * 0.05;
+    inf += (tInf - inf) * 0.05;
+    ppx += (tpx - ppx) * 0.05; ppy += (tpy - ppy) * 0.05;
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mx, my);
+    gl.uniform1f(uBendInf, inf);
+    gl.uniform2f(uParallax, ppx, ppy);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
   requestAnimationFrame(frame);
-
-  /* @mt:thumb-start */
-  // 缩略图演示：虚拟指针在画面上游走；真实鼠标一动就交还
-  if (!reduceMotion) {
-    let k = 0;
-    setInterval(() => { if (document.hidden || !auto) return; k += 0.025; mx = W / 2 + Math.sin(k) * W * 0.35; my = H / 2 + Math.sin(k * 1.7) * H * 0.3; }, 30);
-  }
-  /* @mt:thumb-end */
 </script>
 </body>
 </html>
