@@ -1,0 +1,138 @@
+{
+  "slug": "magic-rings",
+  "name": "魔法光环",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": [
+    "光环",
+    "圆环",
+    "魔法",
+    "WebGL"
+  ],
+  "summary": "一组荧绿到青色的发光圆环从中心一圈圈扩散、渐隐、再生，像脚下的魔法阵；悬停放大，点击炸开强光",
+  "params": [
+    {
+      "key": "color",
+      "label": "内环颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#7cff67"
+    },
+    {
+      "key": "colorTwo",
+      "label": "外环颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#42fcff"
+    },
+    {
+      "key": "speed",
+      "label": "扩散速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "ringCount",
+      "label": "环数",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "attenuation",
+      "label": "辉光收拢",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 30,
+      "step": 1,
+      "default": 10,
+      "help": "越大环越锐、光晕越窄"
+    },
+    {
+      "key": "lineThickness",
+      "label": "线宽",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 6,
+      "step": 0.5,
+      "default": 2
+    },
+    {
+      "key": "baseRadius",
+      "label": "起始半径",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.35
+    },
+    {
+      "key": "radiusStep",
+      "label": "环间距",
+      "type": "range",
+      "target": "config",
+      "min": 0.02,
+      "max": 0.2,
+      "step": 0.01,
+      "default": 0.1
+    },
+    {
+      "key": "followMouse",
+      "label": "跟随鼠标",
+      "type": "toggle",
+      "target": "config",
+      "default": false
+    },
+    {
+      "key": "clickBurst",
+      "label": "点击爆发",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "pink",
+      "name": "粉紫追随",
+      "values": {
+        "color": "#ff7ad9",
+        "colorTwo": "#8b5cf6",
+        "followMouse": true,
+        "ringCount": 8
+      }
+    },
+    {
+      "id": "sharp",
+      "name": "细锐十环",
+      "values": {
+        "ringCount": 10,
+        "attenuation": 22,
+        "lineThickness": 1,
+        "radiusStep": 0.06,
+        "speed": 1.6
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
+}

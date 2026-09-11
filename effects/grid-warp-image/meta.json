@@ -1,0 +1,61 @@
+{
+  "slug": "grid-warp-image",
+  "name": "网格扭曲图",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["图片", "扭曲", "网格", "鼠标跟随", "WebGL2"],
+  "summary": "一张铺满的图片被切成看不见的格子，鼠标划过时经过的格子被朝运动方向拖歪，像玻璃后的图被手指推皱，随后慢慢回弹",
+  "params": [
+    { "key": "photo", "label": "图片", "type": "image", "target": "config", "default": "/samples/sample-3.webp" },
+    {
+      "key": "grid",
+      "label": "格子数",
+      "type": "range",
+      "target": "config",
+      "min": 5,
+      "max": 40,
+      "step": 1,
+      "default": 15,
+      "help": "每边多少格，越多扭曲越细腻"
+    },
+    {
+      "key": "radius",
+      "label": "影响半径",
+      "type": "range",
+      "target": "config",
+      "min": 0.03,
+      "max": 0.4,
+      "step": 0.01,
+      "default": 0.1,
+      "help": "相对画面的比例"
+    },
+    {
+      "key": "strength",
+      "label": "拖歪强度",
+      "type": "range",
+      "target": "config",
+      "min": 0.02,
+      "max": 0.6,
+      "step": 0.01,
+      "default": 0.15
+    },
+    {
+      "key": "relaxation",
+      "label": "回弹保留",
+      "type": "range",
+      "target": "config",
+      "min": 0.7,
+      "max": 0.98,
+      "step": 0.01,
+      "default": 0.9,
+      "help": "每帧保留的扭曲比例，越大回弹越慢"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "fine", "name": "细腻慢回", "values": { "grid": 30, "radius": 0.15, "strength": 0.1, "relaxation": 0.95 } },
+    { "id": "coarse", "name": "粗格猛推", "values": { "grid": 8, "radius": 0.25, "strength": 0.4, "relaxation": 0.85 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

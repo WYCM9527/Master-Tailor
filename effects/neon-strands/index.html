@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>霓光丝带</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（丝带以外透出它） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，丝带定格 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    colors: ["#ff4242", "#7c3aed", "#06b6d4", "#eab308"], // 丝带颜色
+    count: 3,          // 丝带数量
+    speed: 0.5,        // 流动速度
+    amplitude: 1,      // 起伏幅度
+    waviness: 1,       // 波浪密度
+    thickness: 0.7,    // 粗细
+    glow: 2.6,         // 辉光
+    taper: 3,          // 两端收细
+    intensity: 0.6,    // 亮度
+    scale: 1.5,        // 画面缩放
+  };
+  const SPREAD = 1, HUE_SHIFT = 0, SATURATION = 1.5, OPACITY = 1;   // 相位散开 / 色相偏移 / 饱和度 / 不透明度
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: true });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `#version 300 es
+    in vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：每条丝带是一条双正弦叠加的曲线，亮度按到曲线距离的倒数平方衰减（线芯亮、外圈晕开），
+  // 横向包络 cos^taper 让两端收细；颜色沿 x 与时间从色表循环取；最后指数映射做辉光、调饱和度
+  const FS = `#version 300 es
+    precision highp float;
+    out vec4 fragColor;
+    uniform float uTime;
+    uniform vec2  uRes;
+    uniform vec3  uColors[8];
+    uniform int   uColorCount, uCount;
+    uniform float uSpeed, uAmp, uWav, uThick, uGlow, uTaper, uSpread, uHue, uIntensity, uOpacity, uScale, uSat;
+    const float PI = 3.14159265;
+
+    vec3 spectrum(float t) { return 0.5 + 0.5 * cos(2.0 * PI * (t + vec3(0.0, 0.33, 0.67))); }
+    vec3 palette(float t) {
+      t = fract(t);
+      float s = t * float(uColorCount);
+      int i = int(floor(s)), j = i + 1;
+      if (j >= uColorCount) j = 0;
+      return mix(uColors[i], uColors[j], fract(s));
+    }
+    vec3 strandColor(float t) { return uColorCount > 0 ? palette(t) : spectrum(t); }
+
+    void main() {
+      vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y / max(uScale, 0.0001);
+      float e = 0.06 + uIntensity * 0.94;
+      float env = pow(max(cos(uv.x * PI * 1.3), 0.0), uTaper);   // 横向包络：中间 1，两端 0
+      vec3 col = vec3(0.0);
+      for (int i = 0; i < 8; i++) {
+        if (i >= uCount) break;
+        float fi = float(i);
+        float ph = fi * 1.7 * uSpread, freq = (2.0 + fi * 0.35) * uWav, spd = 1.4 + fi * 1.2;
+        float tt = uTime * uSpeed;
+        float w = sin(uv.x * freq + tt * spd + ph) * 0.60 + sin(uv.x * freq * 1.1 - tt * spd * 0.7 + ph * 1.7) * 0.40;
+        float y = w * (0.1 + 0.02 * e) * env * uAmp;
+        float d = abs(uv.y - y);
+        float thick = (0.001 + 0.05 * e) * (0.35 + env) * uThick;
+        float g = thick / (d + thick * 0.45);
+        g *= g;
+        float h = fi / float(uCount) + uv.x * 0.30 + uTime * 0.04 + uHue;
+        col += strandColor(h) * g * env;
+      }
+      col *= 0.45 + 0.7 * e;
+      col = 1.0 - exp(-col * uGlow);
+      float gray = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      col = max(mix(vec3(gray), col, uSat), 0.0);
+      float lum = max(max(col.r, col.g), col.b);
+      fragColor = vec4(col * uOpacity, clamp(lum, 0.0, 1.0) * uOpacity);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+  const stops = CONFIG.colors.slice(0, 8);
+  const arr = new Float32Array(24);
+  stops.forEach((c, i) => arr.set(hexRgb(c), i * 3));
+  gl.uniform3fv(U('uColors'), arr);
+  gl.uniform1i(U('uColorCount'), stops.length);
+  gl.uniform1i(U('uCount'), Math.max(1, Math.min(8, CONFIG.count)));
+  gl.uniform1f(U('uSpeed'), CONFIG.speed);
+  gl.uniform1f(U('uAmp'), CONFIG.amplitude);
+  gl.uniform1f(U('uWav'), CONFIG.waviness);
+  gl.uniform1f(U('uThick'), CONFIG.thickness);
+  gl.uniform1f(U('uGlow'), CONFIG.glow);
+  gl.uniform1f(U('uTaper'), CONFIG.taper);
+  gl.uniform1f(U('uSpread'), SPREAD);
+  gl.uniform1f(U('uHue'), HUE_SHIFT);
+  gl.uniform1f(U('uIntensity'), CONFIG.intensity);
+  gl.uniform1f(U('uOpacity'), OPACITY);
+  gl.uniform1f(U('uScale'), CONFIG.scale);
+  gl.uniform1f(U('uSat'), SATURATION);
+  const uTime = U('uTime');
+
+  let time = reduceMotion ? 2 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  gl.clearColor(0, 0, 0, 0);
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

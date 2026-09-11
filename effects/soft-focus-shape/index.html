@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>形状柔焦</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（形状以外透出它） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：鼠标直接跟随，不做阻尼 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    variation: "0",      // 形状："0" 圆角方框 / "1" 实心圆 / "2" 圆环 / "3" 三角形
+    color: "#ffffff",    // 形状颜色
+    shapeSize: 1.2,      // 方框大小
+    roundness: 0.4,      // 圆角
+    borderSize: 0.05,    // 线宽
+    circleSize: 0.3,     // 化开范围
+    circleEdge: 0.5,     // 范围过渡
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `#version 300 es
+    in vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：形状用有符号距离场（SDF）描述；描边 / 填充的「边缘柔度」不是常数，
+  // 而是以鼠标为中心的一个软圆（近处 1、远处 0）——鼠标附近边缘化开变糊，远处边缘锐利
+  const FS = `#version 300 es
+    precision highp float;
+    out vec4 fragColor;
+    uniform vec2  uRes, uMouse;
+    uniform float uSize, uRound, uBorder, uCircle, uEdge;
+    uniform vec3  uColor;
+    uniform int   uVar;
+    #define PI 3.1415926535897932384626433832795
+    #define TWO_PI 6.2831853071795864769252867665590
+
+    // 归一化到以中心为原点、短边为 1 的正方形坐标
+    vec2 coord(vec2 p) {
+      p /= uRes;
+      if (uRes.x > uRes.y) { p.x *= uRes.x / uRes.y; p.x += (uRes.y - uRes.x) / uRes.y / 2.0; }
+      else { p.y *= uRes.y / uRes.x; p.y += (uRes.x - uRes.y) / uRes.x / 2.0; }
+      p -= 0.5;
+      p *= vec2(-1.0, 1.0);
+      return p;
+    }
+    float sdRoundRect(vec2 p, vec2 b, float r) { vec2 d = abs(p - 0.5) * 4.2 - b + vec2(r); return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)) - r; }
+    float sdCircle(vec2 st, vec2 c) { return length(st - c) * 2.0; }
+    float sdPoly(vec2 p, float w, int sides) {
+      float a = atan(p.x, p.y) + PI, r = TWO_PI / float(sides);
+      return cos(floor(0.5 + a / r) * r - a) * length(p) * 2.0 - w;
+    }
+    float fill(float x, float size, float edge) { return 1.0 - smoothstep(size - edge, size + edge, x); }
+    // 抗锯齿描边：edge 越大边越糊
+    float strokeAA(float x, float size, float w, float edge) {
+      float aw = length(vec2(dFdx(x), dFdy(x))) * 0.70710678;
+      float d = smoothstep(size - edge - aw, size + edge + aw, x + w * 0.5) - smoothstep(size - edge - aw, size + edge + aw, x - w * 0.5);
+      return clamp(d, 0.0, 1.0);
+    }
+
+    void main() {
+      vec2 st = coord(gl_FragCoord.xy) + 0.5;
+      vec2 pm = coord(uMouse) * vec2(1.0, -1.0) + 0.5;
+      // 以鼠标为中心的软圆：这里的值当作「边缘柔度」——靠近鼠标 → 1（糊）、远离 → 0（锐）
+      float focus = fill(sdCircle(st, pm), uCircle, uEdge);
+      float sdf;
+      if (uVar == 0) { sdf = sdRoundRect(st, vec2(uSize), uRound); sdf = strokeAA(sdf, 0.0, uBorder, focus) * 4.0; }
+      else if (uVar == 1) { sdf = sdCircle(st, vec2(0.5)); sdf = fill(sdf, 0.6, focus) * 1.2; }
+      else if (uVar == 2) { sdf = sdCircle(st, vec2(0.5)); sdf = strokeAA(sdf, 0.58, 0.02, focus) * 4.0; }
+      else { sdf = sdPoly(st - vec2(0.5, 0.45), 0.3, 3); sdf = fill(sdf, 0.05, focus) * 1.4; }
+      fragColor = vec4(uColor, clamp(sdf, 0.0, 1.0));
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+  gl.uniform1i(U('uVar'), Number(CONFIG.variation) || 0);
+  gl.uniform1f(U('uSize'), CONFIG.shapeSize);
+  gl.uniform1f(U('uRound'), CONFIG.roundness);
+  gl.uniform1f(U('uBorder'), CONFIG.borderSize);
+  gl.uniform1f(U('uCircle'), CONFIG.circleSize);
+  gl.uniform1f(U('uEdge'), CONFIG.circleEdge);
+  gl.uniform3fv(U('uColor'), hexRgb(CONFIG.color));
+  const uMouse = U('uMouse');
+
+  // 鼠标像素坐标（乘 dpr），阻尼跟随（damp 系数 8）
+  const target = { x: innerWidth * 0.5, y: innerHeight * 0.5 }, mouse = { x: target.x, y: target.y };
+  let userTook = false;
+  addEventListener('pointermove', (e) => { target.x = e.clientX; target.y = e.clientY; userTook = true; });
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    const k = reduceMotion ? 1 : 1 - Math.exp(-8 * dt);
+    mouse.x += (target.x - mouse.x) * k; mouse.y += (target.y - mouse.y) * k;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform2f(uMouse, mouse.x * dpr, mouse.y * dpr);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  gl.clearColor(0, 0, 0, 0);
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟鼠标沿形状边缘绕圈；真实鼠标动过后交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || userTook) return;
+      t += 0.02;
+      const r = Math.min(innerWidth, innerHeight) * 0.3;
+      target.x = innerWidth / 2 + Math.cos(t) * r; target.y = innerHeight / 2 + Math.sin(t) * r;
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+{
+  "slug": "soft-focus-shape",
+  "name": "形状柔焦",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": [
+    "形状",
+    "模糊",
+    "柔焦",
+    "鼠标跟随",
+    "WebGL2"
+  ],
+  "summary": "画面中央一个白色几何形状，鼠标碰到哪一段边线，那一段就像被指尖抹过一样化开变糊，鼠标走开又恢复锐利",
+  "params": [
+    {
+      "key": "variation",
+      "label": "形状",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "0",
+          "label": "圆角方框"
+        },
+        {
+          "value": "1",
+          "label": "实心圆"
+        },
+        {
+          "value": "2",
+          "label": "圆环"
+        },
+        {
+          "value": "3",
+          "label": "三角形"
+        }
+      ],
+      "default": "0"
+    },
+    {
+      "key": "color",
+      "label": "形状颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#ffffff"
+    },
+    {
+      "key": "shapeSize",
+      "label": "方框大小",
+      "type": "range",
+      "target": "config",
+      "min": 0.4,
+      "max": 2.4,
+      "step": 0.1,
+      "default": 1.2
+    },
+    {
+      "key": "roundness",
+      "label": "圆角",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.4
+    },
+    {
+      "key": "borderSize",
+      "label": "线宽",
+      "type": "range",
+      "target": "config",
+      "min": 0.01,
+      "max": 0.2,
+      "step": 0.01,
+      "default": 0.05
+    },
+    {
+      "key": "circleSize",
+      "label": "化开范围",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.3,
+      "help": "鼠标周围多大范围内边线会化开"
+    },
+    {
+      "key": "circleEdge",
+      "label": "范围过渡",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "ring",
+      "name": "细圆环",
+      "values": {
+        "variation": "2",
+        "circleSize": 0.2,
+        "circleEdge": 0.3
+      }
+    },
+    {
+      "id": "tri",
+      "name": "青色三角",
+      "values": {
+        "variation": "3",
+        "color": "#22d3ee",
+        "circleSize": 0.5
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
+}

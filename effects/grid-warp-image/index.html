@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网格扭曲图</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（图片加载前的兜底色） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：不做初始随机扭曲，鼠标推动仍生效 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-3.webp",  // 图片
+    grid: 15,            // 格子数
+    radius: 0.1,         // 影响半径
+    strength: 0.15,      // 拖歪强度
+    relaxation: 0.9,     // 回弹保留
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl2', { antialias: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `#version 300 es
+    in vec2 aPos;
+    out vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：从一张 N×N 的「偏移量纹理」（最近邻采样，所以是一格一格的）取偏移，
+  // 用它把图片采样坐标推歪；图片按 cover 铺满
+  const FS = `#version 300 es
+    precision highp float;
+    in vec2 vUv;
+    out vec4 fragColor;
+    uniform sampler2D uOffsets, uImage;
+    uniform vec2 uRes, uImgSize;
+    void main() {
+      vec2 off = texture(uOffsets, vUv).rg;
+      vec2 uv = vUv - 0.02 * off;
+      // cover：按画面与图片的宽高比裁切居中
+      float ra = uRes.x / uRes.y, ia = uImgSize.x / uImgSize.y;
+      vec2 s = ra > ia ? vec2(1.0, ia / ra) : vec2(ra / ia, 1.0);
+      vec2 cuv = (uv - 0.5) * s + 0.5;
+      cuv.y = 1.0 - cuv.y;
+      fragColor = texture(uImage, cuv);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  // 偏移量纹理：N×N，RG 两通道浮点；初始随机（减少动态时为 0），最近邻采样保持格感
+  const N = CONFIG.grid;
+  const data = new Float32Array(N * N * 4);
+  if (!reduceMotion) for (let i = 0; i < N * N; i++) { data[i * 4] = Math.random() * 255 - 125; data[i * 4 + 1] = Math.random() * 255 - 125; }
+  const offTex = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, offTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, N, N, 0, gl.RGBA, gl.FLOAT, data);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.uniform1i(U('uOffsets'), 0);
+
+  // 图片纹理
+  const imgTex = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, imgTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([10, 10, 15, 255]));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.uniform1i(U('uImage'), 1);
+  gl.uniform2f(U('uImgSize'), 1, 1);
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, imgTex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.uniform2f(U('uImgSize'), img.naturalWidth, img.naturalHeight);
+  };
+  img.src = CONFIG.photo;
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+
+  // 鼠标：0–1（y 向上）与每帧速度
+  const m = { x: 0, y: 0, px: 0, py: 0, vx: 0, vy: 0 };
+  let userTook = false;
+  function setMouse(x, y) { m.vx = x - m.px; m.vy = y - m.py; m.x = x; m.y = y; m.px = x; m.py = y; }
+  addEventListener('pointermove', (e) => { userTook = true; setMouse(e.clientX / innerWidth, 1 - e.clientY / innerHeight); });
+  document.addEventListener('mouseleave', () => { m.x = m.y = m.px = m.py = 0; m.vx = m.vy = 0; });
+
+  function frame() {
+    requestAnimationFrame(frame);
+    if (document.hidden) return;
+    // 每帧：全部偏移按「回弹保留」衰减；鼠标半径内的格子按速度与距离权重加偏移
+    for (let i = 0; i < N * N; i++) { data[i * 4] *= CONFIG.relaxation; data[i * 4 + 1] *= CONFIG.relaxation; }
+    const gx = N * m.x, gy = N * m.y, maxD = N * CONFIG.radius;
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+      const d2 = (gx - i) ** 2 + (gy - j) ** 2;
+      if (d2 < maxD * maxD) {
+        const k = 4 * (i + N * j), power = Math.min(maxD / Math.sqrt(d2), 10);
+        data[k] += CONFIG.strength * 100 * m.vx * power;
+        data[k + 1] -= CONFIG.strength * 100 * m.vy * power;
+      }
+    }
+    // 注意：鼠标停下后最后的速度会持续施加，与回弹达成平衡——图在鼠标停留处保持一块「被压住」的皱褶
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, offTex);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, N, N, gl.RGBA, gl.FLOAT, data);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟鼠标画 8 字推图；真实鼠标动过后交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => { if (document.hidden || userTook) return; t += 0.04; setMouse(0.5 + 0.35 * Math.sin(t), 0.5 + 0.3 * Math.sin(t * 2)); }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

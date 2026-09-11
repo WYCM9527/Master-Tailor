@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>彩色弯带</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（色带以外透出它） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，色带定格 */
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    colors: ["#ff5c7a", "#5227ff", "#22d3ee"], // 色带颜色
+    useColors: false,      // 使用色表
+    rotation: 90,          // 角度（度）
+    speed: 0.2,            // 流速
+    autoRotate: 0,         // 自转速度（度/秒）
+    scale: 1,              // 尺度
+    frequency: 1,          // 弯折频率
+    warpStrength: 1,       // 扭曲强度
+    bandWidth: 6,          // 带宽
+    mouseInfluence: 1,     // 鼠标牵引
+  };
+  const PARALLAX = 0.5, NOISE = 0.15, ITERATIONS = 1, INTENSITY = 1.5;   // 视差 / 噪点 / 迭代 / 亮度
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: true, premultipliedAlpha: true });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：坐标经旋转、鱼眼式压缩与鼠标牵引后，每条色带 = 一个正弦扭曲场 r 与坐标 s 的距离 m，
+  // 用 1 − exp(−带宽 / exp(带宽 × m)) 变成一条柔边亮带；多条带（色表或 RGB 三通道）叠加
+  const FS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform vec2  uRes, uRot, uPointer;
+    uniform float uTime, uSpeed, uScale, uFreq, uWarp, uMouseK, uParallax, uNoise, uIntensity, uBand;
+    uniform int   uColorCount, uIterations;
+    uniform vec3  uColors[8];
+
+    // 一条带：s 处的距离场 → 带亮度
+    float bandAt(vec2 s, float t, float idx) {
+      vec2 r = sin(1.5 * (s.yx * uFreq) + 2.0 * cos(s * uFreq));
+      float m0 = length(r + sin(5.0 * r.y * uFreq - 3.0 * t + idx) / 4.0);
+      float kBelow = clamp(uWarp, 0.0, 1.0), kMix = pow(kBelow, 0.3), gain = 1.0 + max(uWarp - 1.0, 0.0);
+      vec2 warped = s + (r - s) * kBelow * gain;
+      float m1 = length(warped + sin(5.0 * warped.y * uFreq - 3.0 * t + idx) / 4.0);
+      float m = mix(m0, m1, kMix);
+      return 1.0 - exp(-uBand / exp(uBand * m));
+    }
+
+    void main() {
+      float t = uTime * uSpeed;
+      vec2 p = vUv * 2.0 - 1.0;
+      p += uPointer * uParallax * 0.1;                                   // 视差
+      vec2 rp = vec2(p.x * uRot.x - p.y * uRot.y, p.x * uRot.y + p.y * uRot.x);
+      vec2 q = vec2(rp.x * (uRes.x / uRes.y), rp.y) / max(uScale, 0.0001);
+      q /= 0.5 + 0.2 * dot(q, q);                                        // 鱼眼式压缩
+      q += 0.2 * cos(t) - 7.56;
+      q += (uPointer - rp) * uMouseK * 0.2;                              // 鼠标牵引
+      for (int j = 0; j < 5; j++) {
+        if (j >= uIterations - 1) break;
+        vec2 rr = sin(1.5 * (q.yx * uFreq) + 2.0 * cos(q * uFreq));
+        q += (rr - q) * 0.15;
+      }
+      vec3 col = vec3(0.0);
+      float a = 0.0;
+      if (uColorCount > 0) {
+        vec2 s = q;
+        for (int i = 0; i < 8; i++) {
+          if (i >= uColorCount) break;
+          s -= 0.01;
+          float w = bandAt(s, t, float(i));
+          col += uColors[i] * w;
+          a = max(a, w);
+        }
+        col = clamp(col, 0.0, 1.0);
+      } else {
+        vec2 s = q;
+        for (int k = 0; k < 3; k++) { s -= 0.01; col[k] = bandAt(s, t, float(k)); }
+        a = max(max(col.r, col.g), col.b);
+      }
+      col *= uIntensity;
+      if (uNoise > 0.0001) {
+        float n = fract(sin(dot(gl_FragCoord.xy + vec2(uTime), vec2(12.9898, 78.233))) * 43758.5453123);
+        col = clamp(col + (n - 0.5) * uNoise, 0.0, 1.0);
+      }
+      gl_FragColor = vec4(col * a, a);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+  const stops = CONFIG.useColors ? CONFIG.colors.slice(0, 8) : [];
+  const arr = new Float32Array(24);
+  stops.forEach((c, i) => arr.set(hexRgb(c), i * 3));
+  gl.uniform3fv(U('uColors'), arr);
+  gl.uniform1i(U('uColorCount'), stops.length);
+  gl.uniform1i(U('uIterations'), ITERATIONS);
+  gl.uniform1f(U('uSpeed'), CONFIG.speed);
+  gl.uniform1f(U('uScale'), CONFIG.scale);
+  gl.uniform1f(U('uFreq'), CONFIG.frequency);
+  gl.uniform1f(U('uWarp'), CONFIG.warpStrength);
+  gl.uniform1f(U('uMouseK'), CONFIG.mouseInfluence);
+  gl.uniform1f(U('uParallax'), PARALLAX);
+  gl.uniform1f(U('uNoise'), NOISE);
+  gl.uniform1f(U('uIntensity'), INTENSITY);
+  gl.uniform1f(U('uBand'), CONFIG.bandWidth);
+  const uTime = U('uTime'), uRot = U('uRot'), uPointer = U('uPointer');
+
+  // 鼠标 NDC（−1…1，y 向上），以 8/s 的速率平滑
+  const target = { x: 0, y: 0 }, cur = { x: 0, y: 0 };
+  addEventListener('pointermove', (e) => { target.x = (e.clientX / innerWidth) * 2 - 1; target.y = -((e.clientY / innerHeight) * 2 - 1); });
+  document.addEventListener('mouseleave', () => { target.x = 0; target.y = 0; });
+
+  let time = reduceMotion ? 3 : 0, elapsed = 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) { time += dt; elapsed += dt; }
+    const deg = (CONFIG.rotation % 360) + CONFIG.autoRotate * elapsed;
+    const rad = (deg * Math.PI) / 180;
+    const amt = Math.min(1, dt * 8);
+    cur.x += (target.x - cur.x) * amt; cur.y += (target.y - cur.y) * amt;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uRot, Math.cos(rad), Math.sin(rad));
+    gl.uniform2f(uPointer, cur.x, cur.y);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  gl.clearColor(0, 0, 0, 0);
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

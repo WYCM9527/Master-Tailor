@@ -1,0 +1,110 @@
+{
+  "slug": "color-bends",
+  "name": "彩色弯带",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["色带", "弯曲", "流动", "WebGL"],
+  "summary": "几条宽阔柔软的彩色光带在画面里弯折流动，像被风吹起的绸缎相互穿插；鼠标靠近处色带被牵着弯过来",
+  "params": [
+    {
+      "key": "colors",
+      "label": "色带颜色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "default": ["#ff5c7a", "#5227ff", "#22d3ee"]
+    },
+    { "key": "useColors", "label": "使用色表", "type": "toggle", "target": "config", "default": false, "help": "关闭时用红绿蓝三原色通道" },
+    {
+      "key": "rotation",
+      "label": "角度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 360,
+      "step": 5,
+      "default": 90,
+      "unit": "°"
+    },
+    {
+      "key": "speed",
+      "label": "流速",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.2
+    },
+    {
+      "key": "autoRotate",
+      "label": "自转速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 0,
+      "unit": "°/s"
+    },
+    {
+      "key": "scale",
+      "label": "尺度",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "frequency",
+      "label": "弯折频率",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "warpStrength",
+      "label": "扭曲强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "bandWidth",
+      "label": "带宽",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 20,
+      "step": 0.5,
+      "default": 6,
+      "help": "越大色带越窄越锐"
+    },
+    {
+      "key": "mouseInfluence",
+      "label": "鼠标牵引",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "palette", "name": "自定色三带", "values": { "useColors": true, "rotation": 45, "bandWidth": 4 } },
+    { "id": "spin", "name": "缓慢自转", "values": { "autoRotate": 6, "frequency": 1.6, "warpStrength": 1.8 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}
