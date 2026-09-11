@@ -83,7 +83,7 @@
       "target": "config",
       "min": 1,
       "max": 8,
-      "default": ["#ffffff"],
+      "default": ["#ffffff", "#4db8ff", "#c04dff"],
       "help": "每道射灯按这个顺序轮流取色，只填一个则全部同色"
     },
     {
