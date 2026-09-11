@@ -1,0 +1,79 @@
+{
+  "slug": "shape-grid",
+  "name": "流动形状格纹",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["网格", "格纹", "六边形", "滚动", "悬停"],
+  "summary": "一整面方格 / 六边形 / 圆 / 三角组成的格纹匀速向一侧流动，鼠标划过的格子被填色并留下一串渐淡的尾迹",
+  "params": [
+    {
+      "key": "shape",
+      "label": "形状",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "square", "label": "方格" },
+        { "value": "hexagon", "label": "六边形" },
+        { "value": "circle", "label": "圆" },
+        { "value": "triangle", "label": "三角" }
+      ],
+      "default": "square"
+    },
+    {
+      "key": "direction",
+      "label": "流动方向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "right", "label": "向右" },
+        { "value": "left", "label": "向左" },
+        { "value": "up", "label": "向上" },
+        { "value": "down", "label": "向下" },
+        { "value": "diagonal", "label": "斜向" }
+      ],
+      "default": "right"
+    },
+    {
+      "key": "speed",
+      "label": "流速",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 4,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "size",
+      "label": "格子大小",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 100,
+      "step": 5,
+      "default": 40,
+      "unit": "px"
+    },
+    { "key": "borderColor", "label": "线条颜色", "type": "color", "target": "config", "default": "#999999" },
+    { "key": "hoverFillColor", "label": "悬停填色", "type": "color", "target": "config", "default": "#222222" },
+    {
+      "key": "trail",
+      "label": "尾迹长度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 8,
+      "help": "0 只填当前格"
+    },
+    { "key": "vignette", "label": "中央暗角", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "hex", "name": "六边蜂巢", "values": { "shape": "hexagon", "direction": "diagonal", "size": 30, "borderColor": "#6b7280", "hoverFillColor": "#5227ff" } },
+    { "id": "dots", "name": "圆点上浮", "values": { "shape": "circle", "direction": "up", "speed": 0.6, "borderColor": "#444444", "hoverFillColor": "#ffffff", "trail": 15 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

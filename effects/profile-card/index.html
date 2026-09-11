@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全息名片</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid; place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #fff;
+  }
+  /* 外层：透视 + 全部鼠标变量（JS 每帧写入） */
+  .mt-wrap {
+    --px: 50%;  --py: 50%;          /* 鼠标在卡内的百分比位置 */
+    --bx: 50%;  --by: 50%;          /* 背景纹理位移（35%–65%） */
+    --from-center: 0; --from-top: 0.5; --from-left: 0.5;
+    --rx: 0deg; --ry: 0deg;         /* 卡片倾斜角 */
+    --active: 0;                    /* 悬停态 0/1 */
+    --glow: rgba(125, 190, 255, 0.67);
+    --radius: 30px;
+    --c1: hsl(2, 100%, 73%); --c2: hsl(53, 100%, 69%); --c3: hsl(93, 100%, 69%);
+    --c4: hsl(176, 100%, 76%); --c5: hsl(228, 100%, 74%); --c6: hsl(283, 100%, 73%);
+    position: relative;
+    perspective: 500px;
+    transform: translate3d(0, 0, 0.1px);
+    touch-action: none;
+  }
+  /* 卡后光晕：跟着鼠标的径向光，大模糊 */
+  .mt-behind {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(circle at var(--px) var(--py), var(--glow) 0%, transparent 50%);
+    filter: blur(50px) saturate(1.1);
+    opacity: calc(0.8 * var(--active));
+    transition: opacity 200ms ease;
+  }
+  .mt-shell { position: relative; z-index: 1; }
+  .mt-card {
+    height: 80svh; max-height: 540px; aspect-ratio: 0.718;
+    display: grid;
+    position: relative;
+    border-radius: var(--radius);
+    background: rgba(0, 0, 0, 0.9);
+    overflow: hidden;
+    backface-visibility: hidden;
+    box-shadow: rgba(0, 0, 0, 0.8) calc(var(--from-left) * 10px - 3px) calc(var(--from-top) * 20px - 6px) 20px -5px;
+    transform: translateZ(0) rotateX(var(--ry)) rotateY(var(--rx));
+    transition: transform 1s ease;
+  }
+  .mt-shell.active .mt-card { transition: none; }
+  .mt-shell.entering .mt-card { transition: transform 180ms ease-out; }
+  .mt-card > * { grid-area: 1 / -1; border-radius: var(--radius); pointer-events: none; }
+  /* 层 1：内部渐变底 */
+  .mt-inside { position: absolute; inset: 0; background: linear-gradient(145deg, #60496e8c 0%, #71c4ff44 100%), rgba(0, 0, 0, 0.9); }
+  /* 层 2：全息层——六色横向彩带 × 斜向金属细纹 × 鼠标处的暗晕，color-dodge 叠加；用蜂窝纹样做遮罩 */
+  .mt-shine, .mt-shine::before, .mt-shine::after {
+    --space: 5%; --angle: -45deg;
+    position: absolute; inset: 0;
+    transform: translate3d(0, 0, 1px);
+    overflow: hidden;
+    border-radius: var(--radius);
+    background-image:
+      repeating-linear-gradient(0deg, var(--c1) calc(var(--space) * 1), var(--c2) calc(var(--space) * 2), var(--c3) calc(var(--space) * 3), var(--c4) calc(var(--space) * 4), var(--c5) calc(var(--space) * 5), var(--c6) calc(var(--space) * 6), var(--c1) calc(var(--space) * 7)),
+      repeating-linear-gradient(var(--angle), #0e152e 0%, hsl(180, 10%, 60%) 3.8%, hsl(180, 29%, 66%) 4.5%, hsl(180, 10%, 60%) 5.2%, #0e152e 10%, #0e152e 12%),
+      radial-gradient(farthest-corner circle at var(--px) var(--py), hsla(0, 0%, 0%, 0.1) 12%, hsla(0, 0%, 0%, 0.15) 20%, hsla(0, 0%, 0%, 0.25) 120%);
+    background-position: 0 var(--by), var(--bx) var(--by), center;
+    background-blend-mode: color, hard-light;
+    background-size: 500% 500%, 300% 300%, 200% 200%;
+    background-repeat: repeat;
+  }
+  .mt-shine {
+    z-index: 3;
+    mix-blend-mode: color-dodge;
+    filter: brightness(0.66) contrast(1.33) saturate(0.33) opacity(0.5);
+    transition: filter 0.8s ease;
+    -webkit-mask-image: var(--pattern); mask-image: var(--pattern);
+    -webkit-mask-size: 42px 75px; mask-size: 42px 75px;
+    -webkit-mask-repeat: repeat; mask-repeat: repeat;
+    -webkit-mask-position: calc(var(--bx) * 2) calc(var(--by) * 2); mask-position: calc(var(--bx) * 2) calc(var(--by) * 2);
+    animation: mt-holo 18s linear infinite;
+  }
+  .mt-shine::before, .mt-shine::after { content: ""; opacity: 0; transition: opacity 0.8s ease; }
+  .mt-shell.active .mt-shine { filter: brightness(0.85) contrast(1.5) saturate(0.5); animation-play-state: paused; }
+  .mt-shell.active .mt-shine::before, .mt-shell.active .mt-shine::after { opacity: 1; }
+  /* 悬停时叠加：斜向彩虹 + 鼠标处灰亮斑（luminosity），以及一层 difference 的细纹 */
+  .mt-shine::before {
+    background-image:
+      linear-gradient(45deg, var(--c4), var(--c5), var(--c6), var(--c1), var(--c2), var(--c3)),
+      radial-gradient(circle at var(--px) var(--py), hsl(0, 0%, 70%) 0%, hsla(0, 0%, 30%, 0.2) 90%);
+    background-size: 250% 250%, 100% 100%;
+    background-position: var(--px) var(--py), center;
+    background-blend-mode: color-dodge;
+    filter: brightness(calc(2 - var(--from-center))) contrast(calc(var(--from-center) + 2)) saturate(calc(0.5 + var(--from-center)));
+    mix-blend-mode: luminosity;
+  }
+  .mt-shine::after {
+    background-position: 0 var(--by), calc(var(--bx) * 0.4) calc(var(--by) * 0.5), center;
+    background-size: 200% 300%, 700% 700%, 100% 100%;
+    mix-blend-mode: difference;
+    filter: brightness(0.8) contrast(1.5);
+  }
+  @keyframes mt-holo { from { background-position: 0 var(--by), 0 0, center; } to { background-position: 0 var(--by), 90% 90%, center; } }
+  /* 层 3：高光——鼠标处淡紫亮斑，overlay */
+  .mt-glare {
+    position: absolute; inset: 0; z-index: 4;
+    transform: translate3d(0, 0, 1.1px);
+    background: radial-gradient(farthest-corner circle at var(--px) var(--py), hsl(248, 25%, 80%) 12%, hsla(207, 40%, 30%, 0.8) 90%);
+    mix-blend-mode: overlay;
+    filter: brightness(0.8) contrast(1.2);
+  }
+  /* 层 4：人像——luminosity 混合让照片吃进底下的全息色，随鼠标微微移动 */
+  .mt-avatar {
+    position: absolute; inset: 0; z-index: 2;
+    mix-blend-mode: luminosity;
+    overflow: hidden;
+  }
+  .mt-avatar img {
+    position: absolute; left: 50%; bottom: -1px; width: 100%; height: 100%;
+    object-fit: cover;
+    transform-origin: 50% 100%;
+    transform: translateX(calc(-50% + (var(--from-left) - 0.5) * 6px)) scaleY(calc(1 + (var(--from-top) - 0.5) * 0.02)) scaleX(calc(1 + (var(--from-left) - 0.5) * 0.01));
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 28%, #000 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 28%, #000 100%);
+    transition: transform 120ms ease-out;
+  }
+  /* 层 5：姓名 / 头衔——渐变文字，随鼠标反向微移 */
+  .mt-details {
+    position: absolute; left: 0; right: 0; top: 3em; z-index: 5;
+    text-align: center;
+    transform: translate3d(calc(var(--from-left) * -6px + 3px), calc(var(--from-top) * -6px + 3px), 0.1px);
+    mix-blend-mode: luminosity;
+  }
+  .mt-details h3 { margin: 0; font-weight: 600; font-size: min(5svh, 3em); background: linear-gradient(to bottom, #fff, #6f6fbe); background-size: 1em 1.5em; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .mt-details p { margin: 0 auto; position: relative; top: -12px; width: min-content; white-space: nowrap; font-weight: 600; font-size: 16px; background: linear-gradient(to bottom, #fff, #4a4ac0); background-size: 1em 1.5em; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  /* 层 6：底部信息条——毛玻璃药丸，小头像 + 账号状态 + 按钮 */
+  .mt-user {
+    --inset: 20px;
+    position: absolute; left: var(--inset); right: var(--inset); bottom: var(--inset); z-index: 6;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: calc(max(0px, var(--radius) - var(--inset) + 6px));
+    pointer-events: auto;
+  }
+  .mt-user .who { display: flex; align-items: center; gap: 12px; }
+  .mt-user .mini { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); flex: none; }
+  .mt-user .mini img { width: 100%; height: 100%; object-fit: cover; }
+  .mt-user .txt { display: flex; flex-direction: column; gap: 6px; }
+  .mt-user .handle { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.9); line-height: 1; }
+  .mt-user .status { font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1; }
+  .mt-user button {
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 16px;
+    font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.9);
+    background: transparent; cursor: pointer; backdrop-filter: blur(10px);
+    transition: all 0.2s ease; pointer-events: auto;
+  }
+  .mt-user button:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-1px); }
+
+  /* 用户开启「减少动态效果」时：不倾斜、全息层静止 */
+  @media (prefers-reduced-motion: reduce) { .mt-card { transform: none !important; transition: none; } .mt-shine { animation: none; } }
+</style>
+</head>
+<body>
+<div class="mt-wrap" id="mtWrap">
+  <div class="mt-behind"></div>
+  <div class="mt-shell" id="mtShell">
+    <section class="mt-card">
+      <div class="mt-inside"></div>
+      <div class="mt-shine"></div>
+      <div class="mt-glare"></div>
+      <div class="mt-avatar"><img id="mtPhoto" alt=""></div>
+      <div class="mt-details"><h3 id="mtName"></h3><p id="mtTitle"></p></div>
+      <div class="mt-user" id="mtUser">
+        <div class="who"><div class="mini"><img id="mtMini" alt=""></div><div class="txt"><div class="handle" id="mtHandle"></div><div class="status" id="mtStatus"></div></div></div>
+        <button type="button" id="mtContact"></button>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-1.webp",  // 头像 / 人像
+    name: "林小夜",                   // 姓名
+    title: "视觉设计师",               // 头衔
+    handle: "xiaoye",                 // 账号
+    status: "在线",                   // 状态
+    contactText: "联系",              // 按钮文字
+    glowColor: "#7dbeff",             // 背后光晕色
+    tiltStrength: 1,                  // 倾斜幅度
+    showUserInfo: true,               // 显示底部信息条
+    autoDemo: true,                   // 自动游走演示
+  };
+
+  const wrap = document.getElementById('mtWrap'), shell = document.getElementById('mtShell');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let userTook = false;   // 真实鼠标进过卡片后，自动演示交还控制
+  document.getElementById('mtPhoto').src = CONFIG.photo;
+  document.getElementById('mtMini').src = CONFIG.photo;
+  document.getElementById('mtName').textContent = CONFIG.name;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  document.getElementById('mtHandle').textContent = '@' + CONFIG.handle;
+  document.getElementById('mtStatus').textContent = CONFIG.status;
+  document.getElementById('mtContact').textContent = CONFIG.contactText;
+  document.getElementById('mtContact').setAttribute('aria-label', `联系 ${CONFIG.name}`);
+  if (!CONFIG.showUserInfo) document.getElementById('mtUser').remove();
+  const g = parseInt(CONFIG.glowColor.slice(1), 16);
+  wrap.style.setProperty('--glow', `rgba(${g >> 16 & 255}, ${g >> 8 & 255}, ${g & 255}, 0.67)`);
+
+  // 全息层遮罩：一张内联 SVG 蜂窝纹样（亮度遮罩），让彩带带上颗粒质感
+  const hex = `<svg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'><rect width='56' height='100' fill='%23fff' fill-opacity='.45'/><g fill='none' stroke='%23fff' stroke-width='8'><path d='M28 0 L56 16 L56 50 L28 66 L0 50 L0 16 Z'/><path d='M28 66 L56 82 L56 116 M28 66 L0 82 L0 116'/></g></svg>`;
+  wrap.style.setProperty('--pattern', `url("data:image/svg+xml,${encodeURIComponent(hex)}")`);
+
+  /* 倾斜引擎：目标点以时间常数 0.14s（进场首 1.2s 用 0.6s）指数趋近，再换算成全部 CSS 变量 */
+  const clamp = (v, a = 0, b = 100) => Math.min(Math.max(v, a), b);
+  const adjust = (v, fMin, fMax, tMin, tMax) => tMin + ((tMax - tMin) * (v - fMin)) / (fMax - fMin);
+  let cur = { x: 0, y: 0 }, target = { x: 0, y: 0 }, lastTs = 0, initialUntil = 0;
+  function setVars(x, y) {
+    const w = shell.clientWidth || 1, h = shell.clientHeight || 1;
+    const px = clamp((100 / w) * x), py = clamp((100 / h) * y);
+    const cx = px - 50, cy = py - 50;
+    wrap.style.setProperty('--px', `${px}%`); wrap.style.setProperty('--py', `${py}%`);
+    wrap.style.setProperty('--bx', `${adjust(px, 0, 100, 35, 65)}%`); wrap.style.setProperty('--by', `${adjust(py, 0, 100, 35, 65)}%`);
+    wrap.style.setProperty('--from-center', clamp(Math.hypot(cy, cx) / 50, 0, 1));
+    wrap.style.setProperty('--from-top', py / 100); wrap.style.setProperty('--from-left', px / 100);
+    wrap.style.setProperty('--rx', `${(-(cx / 5) * CONFIG.tiltStrength).toFixed(3)}deg`);
+    wrap.style.setProperty('--ry', `${((cy / 4) * CONFIG.tiltStrength).toFixed(3)}deg`);
+  }
+  function frame(ts) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { lastTs = ts; return; }
+    const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0;
+    lastTs = ts;
+    const k = reduceMotion ? 1 : 1 - Math.exp(-dt / (ts < initialUntil ? 0.6 : 0.14));
+    cur.x += (target.x - cur.x) * k; cur.y += (target.y - cur.y) * k;
+    setVars(cur.x, cur.y);
+  }
+  requestAnimationFrame(frame);
+  const toCenter = () => { target = { x: shell.clientWidth / 2, y: shell.clientHeight / 2 }; };
+  const setActive = (on) => { shell.classList.toggle('active', on); wrap.style.setProperty('--active', on ? 1 : 0); };
+
+  // 进场：从右上角开始缓缓摆正
+  cur = { x: shell.clientWidth - 70, y: 60 }; toCenter(); initialUntil = performance.now() + 1200;
+
+  let enterTimer = 0;
+  shell.addEventListener('pointerenter', () => {
+    userTook = true; setActive(true);
+    shell.classList.add('entering'); clearTimeout(enterTimer); enterTimer = setTimeout(() => shell.classList.remove('entering'), 180);
+  });
+  shell.addEventListener('pointermove', (e) => { const r = shell.getBoundingClientRect(); target = { x: e.clientX - r.left, y: e.clientY - r.top }; });
+  shell.addEventListener('pointerleave', () => { toCenter(); setTimeout(() => setActive(false), 400); });
+
+  /* @mt:thumb-start */
+  // 自动演示：一个虚拟指针在卡面上慢慢游走，全息层保持激活；真实鼠标进入后交还
+  if (CONFIG.autoDemo && !reduceMotion) {
+    let t = 0;
+    setTimeout(() => {
+      if (userTook) return;
+      setActive(true);
+      setInterval(() => {
+        if (document.hidden || userTook) return;
+        t += 0.02;
+        target = { x: shell.clientWidth * (0.5 + 0.4 * Math.sin(t)), y: shell.clientHeight * (0.5 + 0.35 * Math.sin(t * 1.7 + 1)) };
+      }, 30);
+    }, 1400);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

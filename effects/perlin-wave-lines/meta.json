@@ -1,0 +1,106 @@
+{
+  "slug": "perlin-wave-lines",
+  "name": "波动线阵",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["线条", "噪声", "波动", "鼠标推开"],
+  "summary": "一整面细密的竖线被看不见的风吹得缓缓起伏，鼠标划过时线条像水草一样被推开再弹回",
+  "params": [
+    { "key": "lineColor", "label": "线条颜色", "type": "color", "target": "config", "default": "#ffffff" },
+    {
+      "key": "xGap",
+      "label": "线间距",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 30,
+      "step": 1,
+      "default": 10,
+      "unit": "px"
+    },
+    {
+      "key": "yGap",
+      "label": "节点间距",
+      "type": "range",
+      "target": "config",
+      "min": 12,
+      "max": 64,
+      "step": 4,
+      "default": 32,
+      "unit": "px",
+      "help": "每根线上控制点的纵向间隔"
+    },
+    {
+      "key": "waveAmpX",
+      "label": "横向摆幅",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 80,
+      "step": 2,
+      "default": 32,
+      "unit": "px"
+    },
+    {
+      "key": "waveAmpY",
+      "label": "纵向摆幅",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 60,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "key": "waveSpeed",
+      "label": "波动速度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.05,
+      "step": 0.0025,
+      "default": 0.0125
+    },
+    {
+      "key": "friction",
+      "label": "回弹阻尼",
+      "type": "range",
+      "target": "config",
+      "min": 0.85,
+      "max": 0.98,
+      "step": 0.005,
+      "default": 0.925,
+      "help": "越小回弹越快停"
+    },
+    {
+      "key": "tension",
+      "label": "回弹拉力",
+      "type": "range",
+      "target": "config",
+      "min": 0.001,
+      "max": 0.02,
+      "step": 0.001,
+      "default": 0.005
+    },
+    {
+      "key": "maxCursorMove",
+      "label": "最大推开",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 250,
+      "step": 10,
+      "default": 100,
+      "unit": "px"
+    },
+    { "key": "showCursor", "label": "显示光标点", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "calm", "name": "微风", "values": { "waveAmpX": 12, "waveAmpY": 6, "waveSpeed": 0.005, "xGap": 14 } },
+    { "id": "storm", "name": "狂风", "values": { "waveAmpX": 70, "waveAmpY": 40, "waveSpeed": 0.03, "maxCursorMove": 220, "lineColor": "#7dd3fc" } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>流动形状格纹</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    shape: "square",          // 形状：square / hexagon / circle / triangle
+    direction: "right",       // 流动方向：right / left / up / down / diagonal
+    speed: 1,                 // 流速
+    size: 40,                 // 格子大小（px）
+    borderColor: "#999999",   // 线条颜色
+    hoverFillColor: "#222222",// 悬停填色
+    trail: 8,                 // 尾迹长度
+    vignette: true,           // 中央暗角
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let userTook = false;   // 真实鼠标动过后，自动演示交还控制
+  const S = CONFIG.size;
+  const isHex = CONFIG.shape === 'hexagon', isTri = CONFIG.shape === 'triangle', isCircle = CONFIG.shape === 'circle';
+  const hexH = S * 1.5, hexV = S * Math.sqrt(3);   // 六边形的列距与行距
+
+  let W = 0, H = 0;
+  function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+  resize(); addEventListener('resize', resize);
+
+  // 网格整体偏移（流动）、当前悬停格、尾迹格队列、每格当前透明度（渐入渐出）
+  const offset = { x: 0, y: 0 };
+  let hovered = null;
+  const trailCells = [];
+  const opacities = new Map();
+
+  function drawHex(cx, cy, s) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) { const a = (Math.PI / 3) * i; const x = cx + s * Math.cos(a), y = cy + s * Math.sin(a); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.closePath();
+  }
+  function drawTri(cx, cy, s, flip) {
+    const h = (s * Math.sqrt(3)) / 2;
+    ctx.beginPath();
+    if (flip) { ctx.moveTo(cx, cy + h / 2); ctx.lineTo(cx - s / 2, cy - h / 2); ctx.lineTo(cx + s / 2, cy - h / 2); }
+    else { ctx.moveTo(cx, cy - h / 2); ctx.lineTo(cx - s / 2, cy + h / 2); ctx.lineTo(cx + s / 2, cy + h / 2); }
+    ctx.closePath();
+  }
+  const mod = (a, b) => ((a % b) + b) % b;
+
+  /* 每个形状家族：遍历屏幕上（多一圈）的格子，算出中心与「格子键」，填色 + 描边 */
+  function forEachCell(fn) {
+    if (isHex) {
+      const colShift = Math.floor(offset.x / hexH), ox = mod(offset.x, hexH), oy = mod(offset.y, hexV);
+      const cols = Math.ceil(W / hexH) + 3, rows = Math.ceil(H / hexV) + 3;
+      for (let c = -1; c < cols; c++) for (let r = -1; r < rows; r++) {
+        const cx = c * hexH + ox, cy = r * hexV + ((c + colShift) % 2 !== 0 ? hexV / 2 : 0) + oy;
+        fn(cx, cy, `${c - colShift},${r - Math.floor(offset.y / hexV)}`, () => drawHex(cx, cy, S));
+      }
+    } else if (isTri) {
+      const rowShift = Math.floor(offset.y / S), ox = mod(offset.x, S), oy = mod(offset.y, S);
+      const cols = Math.ceil(W / (S / 2)) + 4, rows = Math.ceil(H / S) + 4;
+      for (let c = -2; c < cols; c++) for (let r = -2; r < rows; r++) {
+        const cx = c * (S / 2) + ox, cy = r * S + S / 2 + oy;
+        const flip = (c + r + rowShift) % 2 !== 0;
+        fn(cx, cy, `${c - Math.floor(offset.x / S) * 2},${r - rowShift}`, () => drawTri(cx, cy, S, flip));
+      }
+    } else {
+      const ox = mod(offset.x, S), oy = mod(offset.y, S);
+      const cols = Math.ceil(W / S) + 3, rows = Math.ceil(H / S) + 3;
+      for (let c = -1; c < cols; c++) for (let r = -1; r < rows; r++) {
+        const x = c * S + ox, y = r * S + oy, cx = x + S / 2, cy = y + S / 2;
+        const key = `${c - Math.floor(offset.x / S)},${r - Math.floor(offset.y / S)}`;
+        fn(cx, cy, key, () => { ctx.beginPath(); if (isCircle) ctx.arc(cx, cy, S / 2 - 1, 0, Math.PI * 2); else ctx.rect(x, y, S, S); });
+      }
+    }
+  }
+
+  // 鼠标 → 所在格：用同一套遍历找最近中心
+  let mouse = null;
+  addEventListener('pointermove', (e) => { mouse = { x: e.clientX, y: e.clientY }; userTook = true; });
+  addEventListener('pointerleave', () => { mouse = null; hovered = null; });
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    last = now;
+    ctx.clearRect(0, 0, W, H);
+
+    // 悬停格：离鼠标最近的格心
+    if (mouse) {
+      let best = null, bd = Infinity;
+      forEachCell((cx, cy, key) => { const d = Math.hypot(cx - mouse.x, cy - mouse.y); if (d < bd) { bd = d; best = key; } });
+      if (best && best !== hovered) {
+        hovered = best;
+        if (CONFIG.trail > 0) { trailCells.unshift(best); if (trailCells.length > CONFIG.trail) trailCells.pop(); }
+      }
+    }
+    // 目标透明度：当前格 1，尾迹按新旧递减；所有格以 15% 速率趋近目标
+    const targets = new Map();
+    if (hovered) targets.set(hovered, 1);
+    trailCells.forEach((k, i) => { if (!targets.has(k)) targets.set(k, (trailCells.length - i) / (trailCells.length + 1)); });
+    for (const k of targets.keys()) if (!opacities.has(k)) opacities.set(k, 0);
+    for (const [k, o] of opacities) {
+      const next = o + ((targets.get(k) || 0) - o) * (reduceMotion ? 1 : 0.15);
+      if (next < 0.01 && !targets.has(k)) opacities.delete(k); else opacities.set(k, next);
+    }
+
+    // 画格：先填（按透明度）再描边
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = CONFIG.borderColor;
+    forEachCell((cx, cy, key, path) => {
+      const a = opacities.get(key);
+      path();
+      if (a) { ctx.globalAlpha = a; ctx.fillStyle = CONFIG.hoverFillColor; ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.stroke();
+    });
+
+    // 中央暗角：透明 → 页面底色
+    if (CONFIG.vignette) {
+      const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.hypot(W, H) / 2);
+      g.addColorStop(0, 'rgba(0,0,0,0)');
+      g.addColorStop(1, getComputedStyle(document.documentElement).getPropertyValue('--mt-bg').trim() || '#0a0a0f');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    }
+
+    // 流动：按方向推进偏移（减少动态时静止）
+    if (!reduceMotion) {
+      const v = Math.max(CONFIG.speed, 0.1);
+      const wrapX = isHex ? hexH * 2 : S * 2, wrapY = isHex ? hexV : S * 2;
+      switch (CONFIG.direction) {
+        case 'right': offset.x = mod(offset.x - v, wrapX); break;
+        case 'left': offset.x = mod(offset.x + v, wrapX); break;
+        case 'up': offset.y = mod(offset.y + v, wrapY); break;
+        case 'down': offset.y = mod(offset.y - v, wrapY); break;
+        case 'diagonal': offset.x = mod(offset.x - v, wrapX); offset.y = mod(offset.y - v, wrapY); break;
+      }
+    }
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 自动演示：虚拟鼠标画 8 字划过格纹；真实鼠标动过后交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => {
+      if (document.hidden || userTook) return;
+      t += 0.03;
+      mouse = { x: W * (0.5 + 0.35 * Math.sin(t)), y: H * (0.5 + 0.3 * Math.sin(t * 2)) };
+    }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

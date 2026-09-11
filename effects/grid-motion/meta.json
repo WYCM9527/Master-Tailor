@@ -1,0 +1,89 @@
+{
+  "slug": "grid-motion",
+  "name": "斜向图墙",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["图墙", "网格", "视差", "鼠标跟随"],
+  "summary": "一面倾斜 15° 的巨大图墙铺满全屏，鼠标左右移动时各行以不同惯性反向滑动，像在推一面会呼吸的墙",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": true,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "words",
+      "label": "文字块",
+      "type": "text",
+      "target": "config",
+      "default": "设计｜动效｜灵感｜排版｜色彩｜网格｜节奏｜留白",
+      "help": "与图片交错出现，用「｜」分隔"
+    },
+    {
+      "key": "rotate",
+      "label": "倾斜角度",
+      "type": "range",
+      "target": "css",
+      "min": -30,
+      "max": 30,
+      "step": 1,
+      "default": -15,
+      "unit": "deg"
+    },
+    {
+      "key": "maxMove",
+      "label": "最大滑动",
+      "type": "range",
+      "target": "config",
+      "min": 100,
+      "max": 600,
+      "step": 20,
+      "default": 300,
+      "unit": "px"
+    },
+    {
+      "key": "baseDuration",
+      "label": "跟随迟滞",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.8,
+      "unit": "s"
+    },
+    { "key": "gradientColor", "label": "暗角颜色", "type": "color", "target": "config", "default": "#222222" },
+    { "key": "cellBg", "label": "格子底色", "type": "color", "target": "css", "default": "#111111" },
+    {
+      "key": "rows",
+      "label": "行数",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 6,
+      "step": 1,
+      "default": 4
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "steep", "name": "陡斜快滑", "values": { "rotate": -25, "maxMove": 500, "baseDuration": 0.4 } },
+    { "id": "flat", "name": "水平墙", "values": { "rotate": 0, "rows": 3 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

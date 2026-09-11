@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轨道图片环</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid; place-items: center;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #fff;
+  }
+  /* 设计稿坐标系 1400×1400，按容器宽度整体缩放，轨道在任何尺寸下比例一致 */
+  .mt-orbit { position: relative; width: min(1400px, 92vw); aspect-ratio: 1; }
+  .mt-design { position: absolute; left: 50%; top: 50%; width: 1400px; height: 1400px; transform-origin: center; }
+  .mt-tilt { position: relative; width: 100%; height: 100%; transform-origin: center; }
+  .mt-tilt svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  /* 每张图沿 offset-path 匀速运行；用负的 animation-delay 把它们均匀撒在轨道上 */
+  .mt-item {
+    position: absolute; left: 0; top: 0;
+    offset-rotate: 0deg;
+    offset-anchor: center center;
+    animation: mt-orbit var(--dur, 40s) linear infinite;
+    animation-direction: var(--dir, normal);
+    will-change: offset-distance;
+    user-select: none;
+  }
+  @keyframes mt-orbit { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+  .mt-item img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+  .mt-center {
+    position: absolute; inset: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(32px, 6vw, 88px); font-weight: 800; letter-spacing: 0.1em;
+    pointer-events: none;
+  }
+
+  /* 用户开启「减少动态效果」时：图片静止在各自位置 */
+  @media (prefers-reduced-motion: reduce) { .mt-item { animation-play-state: paused; } }
+</style>
+</head>
+<body>
+<div class="mt-orbit" id="mtOrbit" role="region" aria-roledescription="carousel" aria-label="环绕图片，点击或按空格暂停" tabindex="0">
+  <div class="mt-design" id="mtDesign">
+    <div class="mt-tilt" id="mtTilt">
+      <svg viewBox="0 0 1400 1400" id="mtSvg"><path id="mtPath" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2"/></svg>
+    </div>
+  </div>
+  <div class="mt-center" id="mtCenter"></div>
+</div>
+<script>
+  const CONFIG = {
+    slides: [{ src: '/samples/sample-1.webp', caption: '' }], // 图片
+    shape: "ellipse",      // 轨道形状：ellipse / circle / star / heart / infinity / wave / triangle
+    radiusX: 700,          // 横向半径（px）
+    radiusY: 170,          // 纵向半径（px）
+    rotation: -8,          // 轨道倾斜（度）
+    duration: 40,          // 绕一圈时长（s）
+    itemSize: 64,          // 图片尺寸（px）
+    reverse: false,        // 反向
+    showPath: false,       // 显示轨道线
+    centerText: "环绕",     // 中央文字
+  };
+  const BASE = 1400, cx = BASE / 2, cy = BASE / 2;
+
+  const orbit = document.getElementById('mtOrbit'), design = document.getElementById('mtDesign'), tilt = document.getElementById('mtTilt');
+  document.getElementById('mtCenter').textContent = CONFIG.centerText;
+  tilt.style.transform = `rotate(${CONFIG.rotation}deg)`;
+
+  /* 各形状的 SVG 路径（设计稿坐标） */
+  const r = CONFIG.radiusX / 2;
+  function star(outerR, innerR, points) {
+    let d = '';
+    for (let i = 0; i < points * 2; i++) {
+      const rr = i % 2 === 0 ? outerR : innerR, a = (i * Math.PI) / points - Math.PI / 2;
+      d += `${i ? ' L' : 'M'} ${cx + rr * Math.cos(a)} ${cy + rr * Math.sin(a)}`;
+    }
+    return d + ' Z';
+  }
+  function wave(w, amp, waves) {
+    const segs = waves * 20, hw = w / 2, pts = [];
+    for (let i = 0; i <= segs; i++) pts.push(`${i ? 'L' : 'M'} ${cx - hw + (w * i) / segs} ${cy + Math.sin((i / segs) * waves * 2 * Math.PI) * amp}`);
+    for (let i = segs; i >= 0; i--) pts.push(`L ${cx - hw + (w * i) / segs} ${cy - Math.sin((i / segs) * waves * 2 * Math.PI) * amp}`);
+    return pts.join(' ') + ' Z';
+  }
+  const PATHS = {
+    ellipse: () => { const rx = CONFIG.radiusX, ry = CONFIG.radiusY; return `M ${cx - rx} ${cy} A ${rx} ${ry} 0 1 0 ${cx + rx} ${cy} A ${rx} ${ry} 0 1 0 ${cx - rx} ${cy}`; },
+    circle: () => `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy}`,
+    star: () => star(r, r * 0.5, 5),
+    heart: () => { const s = (r * 2) / 30; return `M ${cx} ${cy + 12 * s} C ${cx - 20 * s} ${cy - 5 * s}, ${cx - 12 * s} ${cy - 18 * s}, ${cx} ${cy - 8 * s} C ${cx + 12 * s} ${cy - 18 * s}, ${cx + 20 * s} ${cy - 5 * s}, ${cx} ${cy + 12 * s}`; },
+    infinity: () => { const hw = CONFIG.radiusX, hh = CONFIG.radiusY; return `M ${cx} ${cy} C ${cx + hw * 0.5} ${cy - hh}, ${cx + hw} ${cy - hh}, ${cx + hw} ${cy} C ${cx + hw} ${cy + hh}, ${cx + hw * 0.5} ${cy + hh}, ${cx} ${cy} C ${cx - hw * 0.5} ${cy + hh}, ${cx - hw} ${cy + hh}, ${cx - hw} ${cy} C ${cx - hw} ${cy - hh}, ${cx - hw * 0.5} ${cy - hh}, ${cx} ${cy}`; },
+    wave: () => wave(CONFIG.radiusX * 2, CONFIG.radiusY, 3),
+    triangle: () => { const size = r * 2, h = (size * Math.sqrt(3)) / 2, hs = size / 2; return `M ${cx} ${cy - h / 1.5} L ${cx + hs} ${cy + h / 3} L ${cx - hs} ${cy + h / 3} Z`; },
+  };
+  const path = (PATHS[CONFIG.shape] || PATHS.ellipse)();
+  const pathEl = document.getElementById('mtPath');
+  pathEl.setAttribute('d', path);
+  if (!CONFIG.showPath) pathEl.style.display = 'none';
+
+  // 图片：均匀分布在轨道上（第 i 张延迟 −i/n 圈），图片内部反向旋转以抵消轨道倾斜、保持正立
+  const n = CONFIG.slides.length;
+  CONFIG.slides.forEach((s, i) => {
+    const item = document.createElement('div');
+    item.className = 'mt-item';
+    item.style.width = item.style.height = `${CONFIG.itemSize}px`;
+    item.style.offsetPath = `path('${path}')`;
+    item.style.setProperty('--dur', `${CONFIG.duration}s`);
+    item.style.setProperty('--dir', CONFIG.reverse ? 'reverse' : 'normal');
+    item.style.animationDelay = `${-(i / n) * CONFIG.duration}s`;
+    item.innerHTML = `<div style="transform: rotate(${-CONFIG.rotation}deg); width:100%; height:100%"><img alt="" draggable="false"></div>`;
+    item.querySelector('img').src = s.src;
+    tilt.appendChild(item);
+  });
+
+  // 设计稿按容器宽度缩放
+  function fit() { design.style.transform = `translate(-50%, -50%) scale(${orbit.clientWidth / BASE})`; }
+  fit(); addEventListener('resize', fit);
+  // 暂停 / 继续：点击、空格、Enter；切到后台自动暂停
+  let paused = false;
+  const items = [...document.querySelectorAll('.mt-item')];
+  const applyState = () => items.forEach(el => (el.style.animationPlayState = paused || document.hidden ? 'paused' : 'running'));
+  orbit.addEventListener('pointerdown', () => { paused = !paused; applyState(); });
+  orbit.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); paused = !paused; applyState(); } });
+  document.addEventListener('visibilitychange', applyState);
+</script>
+</body>
+</html>

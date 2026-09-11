@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>波动线阵</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  .mt-stage { position: fixed; inset: 0; --x: -10px; --y: 0px; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 跟随鼠标的小圆点（缓动跟随，比鼠标慢半步） */
+  .mt-dot {
+    position: absolute; left: 0; top: 0;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--dot, #fff);
+    transform: translate3d(calc(var(--x) - 50%), calc(var(--y) - 50%), 0);
+    will-change: transform;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage">
+  <canvas id="mtCanvas" aria-hidden="true"></canvas>
+  <div class="mt-dot" id="mtDot"></div>
+</div>
+<script>
+  const CONFIG = {
+    lineColor: "#ffffff",   // 线条颜色
+    xGap: 10,               // 线间距（px）
+    yGap: 32,               // 节点间距（px）
+    waveAmpX: 32,           // 横向摆幅（px）
+    waveAmpY: 16,           // 纵向摆幅（px）
+    waveSpeed: 0.0125,      // 波动速度
+    friction: 0.925,        // 回弹阻尼
+    tension: 0.005,         // 回弹拉力
+    maxCursorMove: 100,     // 最大推开（px）
+    showCursor: true,       // 显示光标点
+  };
+
+  const stage = document.getElementById('mtStage');
+  const canvas = document.getElementById('mtCanvas');
+  const ctx = canvas.getContext('2d');
+  const dot = document.getElementById('mtDot');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let userTook = false;   // 真实鼠标动过后，自动演示交还控制
+  dot.style.setProperty('--dot', CONFIG.lineColor);
+  if (!CONFIG.showCursor) dot.style.display = 'none';
+
+  /* 经典 2D Perlin 噪声（自实现）：置换表 + 8 方向梯度 + 平滑插值 */
+  const GRAD = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+  const perm = new Uint8Array(512);
+  (function seedNoise(seed) {
+    const p = Array.from({ length: 256 }, (_, i) => i);
+    let s = seed;
+    for (let i = 255; i > 0; i--) { s = (s * 16807 + 0) % 2147483647; const j = s % (i + 1); [p[i], p[j]] = [p[j], p[i]]; }
+    for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
+  })(Math.floor(Math.random() * 65536) + 1);
+  const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
+  const lerp = (a, b, t) => a + (b - a) * t;
+  function perlin2(x, y) {
+    const X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
+    x -= Math.floor(x); y -= Math.floor(y);
+    const g = (i, j, dx, dy) => { const v = GRAD[perm[i + perm[j]] & 7]; return v[0] * dx + v[1] * dy; };
+    const u = fade(x), v = fade(y);
+    return lerp(lerp(g(X, Y, x, y), g(X + 1, Y, x - 1, y), u), lerp(g(X, Y + 1, x, y - 1), g(X + 1, Y + 1, x - 1, y - 1), u), v);
+  }
+
+  // 线阵：比屏幕略大一圈，每根线由若干控制点组成；每点有波动位移与光标位移两部分
+  let W = 0, H = 0, lines = [];
+  function setLines() {
+    W = canvas.width = innerWidth; H = canvas.height = innerHeight;
+    lines = [];
+    const oW = W + 200, oH = H + 30;
+    const totalLines = Math.ceil(oW / CONFIG.xGap), totalPoints = Math.ceil(oH / CONFIG.yGap);
+    const xStart = (W - CONFIG.xGap * totalLines) / 2, yStart = (H - CONFIG.yGap * totalPoints) / 2;
+    for (let i = 0; i <= totalLines; i++) {
+      const pts = [];
+      for (let j = 0; j <= totalPoints; j++) pts.push({ x: xStart + CONFIG.xGap * i, y: yStart + CONFIG.yGap * j, wx: 0, wy: 0, cx: 0, cy: 0, vx: 0, vy: 0 });
+      lines.push(pts);
+    }
+  }
+  setLines(); addEventListener('resize', setLines);
+
+  // 鼠标：位置平滑跟随，速度也平滑；a 是运动方向角
+  const mouse = { x: -10, y: 0, lx: 0, ly: 0, sx: 0, sy: 0, v: 0, vs: 0, a: 0, set: false };
+  function updateMouse(x, y) {
+    mouse.x = x; mouse.y = y;
+    if (!mouse.set) { mouse.sx = x; mouse.sy = y; mouse.lx = x; mouse.ly = y; mouse.set = true; }
+  }
+  addEventListener('pointermove', (e) => { userTook = true; updateMouse(e.clientX, e.clientY); });
+
+  function movePoints(time) {
+    const { waveAmpX, waveAmpY, friction, tension, maxCursorMove } = CONFIG;
+    const sx = CONFIG.waveSpeed, sy = CONFIG.waveSpeed * 0.4;
+    for (const pts of lines) for (const p of pts) {
+      // 波动：噪声值 ×12 当作角度，cos/sin 分给横纵两向
+      const move = perlin2((p.x + time * sx) * 0.002, (p.y + time * sy) * 0.0015) * 12;
+      p.wx = reduceMotion ? 0 : Math.cos(move) * waveAmpX;
+      p.wy = reduceMotion ? 0 : Math.sin(move) * waveAmpY;
+      // 光标：在 175px（或鼠标速度）范围内沿鼠标运动方向推一把
+      const dx = p.x - mouse.sx, dy = p.y - mouse.sy, dist = Math.hypot(dx, dy);
+      const l = Math.max(175, mouse.vs);
+      if (dist < l) {
+        const s = 1 - dist / l, f = Math.cos(dist * 0.001) * s;
+        p.vx += Math.cos(mouse.a) * f * l * mouse.vs * 0.00065;
+        p.vy += Math.sin(mouse.a) * f * l * mouse.vs * 0.00065;
+      }
+      // 弹簧回位 + 阻尼 + 位移上限
+      p.vx += (0 - p.cx) * tension; p.vy += (0 - p.cy) * tension;
+      p.vx *= friction; p.vy *= friction;
+      p.cx = Math.max(-maxCursorMove, Math.min(maxCursorMove, p.cx + p.vx * 2));
+      p.cy = Math.max(-maxCursorMove, Math.min(maxCursorMove, p.cy + p.vy * 2));
+    }
+  }
+  function drawLines() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.beginPath();
+    ctx.strokeStyle = CONFIG.lineColor;
+    ctx.lineWidth = 1;
+    for (const pts of lines) {
+      ctx.moveTo(pts[0].x + pts[0].wx, pts[0].y + pts[0].wy);          // 首点不受光标影响
+      for (let i = 1; i < pts.length; i++) {
+        const p = pts[i], last = i === pts.length - 1;
+        ctx.lineTo(p.x + p.wx + (last ? 0 : p.cx), p.y + p.wy + (last ? 0 : p.cy));   // 末点也不受光标影响，线头线尾固定
+      }
+    }
+    ctx.stroke();
+  }
+
+  function tick(t) {
+    requestAnimationFrame(tick);
+    if (document.hidden) return;
+    mouse.sx += (mouse.x - mouse.sx) * 0.1;
+    mouse.sy += (mouse.y - mouse.sy) * 0.1;
+    const dx = mouse.x - mouse.lx, dy = mouse.y - mouse.ly, d = Math.hypot(dx, dy);
+    mouse.v = d; mouse.vs += (d - mouse.vs) * 0.1; mouse.vs = Math.min(100, mouse.vs);
+    mouse.lx = mouse.x; mouse.ly = mouse.y; mouse.a = Math.atan2(dy, dx);
+    stage.style.setProperty('--x', `${mouse.sx}px`); stage.style.setProperty('--y', `${mouse.sy}px`);
+    movePoints(t);
+    drawLines();
+  }
+  requestAnimationFrame(tick);
+
+  /* @mt:thumb-start */
+  // 自动演示：虚拟鼠标画大 8 字推开线条；真实鼠标动过后交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => { if (document.hidden || userTook) return; t += 0.03; updateMouse(W * (0.5 + 0.35 * Math.sin(t)), H * (0.5 + 0.3 * Math.sin(t * 2))); }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

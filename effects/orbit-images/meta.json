@@ -1,0 +1,111 @@
+{
+  "slug": "orbit-images",
+  "name": "轨道图片环",
+  "category": "showcase",
+  "sub": "carousel",
+  "tags": ["图片", "轨道", "环绕", "路径动画"],
+  "summary": "一圈小图沿着椭圆、星形、心形或无穷符号的轨道匀速环绕中央文字，像行星绕日",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片",
+      "type": "images",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "shape",
+      "label": "轨道形状",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "ellipse", "label": "椭圆" },
+        { "value": "circle", "label": "圆" },
+        { "value": "star", "label": "星形" },
+        { "value": "heart", "label": "心形" },
+        { "value": "infinity", "label": "无穷符号" },
+        { "value": "wave", "label": "波浪" },
+        { "value": "triangle", "label": "三角" }
+      ],
+      "default": "ellipse"
+    },
+    {
+      "key": "radiusX",
+      "label": "横向半径",
+      "type": "range",
+      "target": "config",
+      "min": 200,
+      "max": 700,
+      "step": 20,
+      "default": 700,
+      "unit": "px"
+    },
+    {
+      "key": "radiusY",
+      "label": "纵向半径",
+      "type": "range",
+      "target": "config",
+      "min": 60,
+      "max": 500,
+      "step": 10,
+      "default": 170,
+      "unit": "px",
+      "help": "圆 / 星 / 心 / 三角用横向半径的一半"
+    },
+    {
+      "key": "rotation",
+      "label": "轨道倾斜",
+      "type": "range",
+      "target": "config",
+      "min": -45,
+      "max": 45,
+      "step": 1,
+      "default": -8,
+      "unit": "°"
+    },
+    {
+      "key": "duration",
+      "label": "绕一圈时长",
+      "type": "range",
+      "target": "config",
+      "min": 8,
+      "max": 90,
+      "step": 2,
+      "default": 40,
+      "unit": "s"
+    },
+    {
+      "key": "itemSize",
+      "label": "图片尺寸",
+      "type": "range",
+      "target": "config",
+      "min": 32,
+      "max": 140,
+      "step": 4,
+      "default": 64,
+      "unit": "px"
+    },
+    { "key": "reverse", "label": "反向", "type": "toggle", "target": "config", "default": false },
+    { "key": "showPath", "label": "显示轨道线", "type": "toggle", "target": "config", "default": false },
+    { "key": "centerText", "label": "中央文字", "type": "text", "target": "config", "default": "环绕", "maxLength": 10 }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "heart", "name": "心形轨道", "values": { "shape": "heart", "radiusX": 600, "rotation": 0, "showPath": true, "duration": 24 } },
+    { "id": "infinity", "name": "无穷符号", "values": { "shape": "infinity", "radiusX": 640, "radiusY": 220, "rotation": 0, "itemSize": 56 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

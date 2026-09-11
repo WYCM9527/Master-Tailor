@@ -1,0 +1,36 @@
+{
+  "slug": "profile-card",
+  "name": "全息名片",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["卡片", "全息", "3D 倾斜", "名片", "鼠标跟随"],
+  "summary": "一张像稀有卡牌的个人名片，随鼠标 3D 倾斜，表面流过彩虹全息条纹与高光，卡后透出一团跟着鼠标走的光晕",
+  "params": [
+    { "key": "photo", "label": "头像 / 人像", "type": "image", "target": "config", "default": "/samples/sample-1.webp" },
+    { "key": "name", "label": "姓名", "type": "text", "target": "config", "default": "林小夜", "maxLength": 12 },
+    { "key": "title", "label": "头衔", "type": "text", "target": "config", "default": "视觉设计师", "maxLength": 16 },
+    { "key": "handle", "label": "账号", "type": "text", "target": "config", "default": "xiaoye", "maxLength": 16 },
+    { "key": "status", "label": "状态", "type": "text", "target": "config", "default": "在线", "maxLength": 8 },
+    { "key": "contactText", "label": "按钮文字", "type": "text", "target": "config", "default": "联系", "maxLength": 6 },
+    { "key": "glowColor", "label": "背后光晕色", "type": "color", "target": "config", "default": "#7dbeff" },
+    {
+      "key": "tiltStrength",
+      "label": "倾斜幅度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    { "key": "showUserInfo", "label": "显示底部信息条", "type": "toggle", "target": "config", "default": true },
+    { "key": "autoDemo", "label": "自动游走演示", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "pink", "name": "粉紫光晕", "values": { "glowColor": "#ff8ad8", "photo": "/samples/sample-5.webp" } },
+    { "id": "minimal", "name": "无信息条", "values": { "showUserInfo": false, "tiltStrength": 1.5 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

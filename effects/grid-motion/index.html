@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>斜向图墙</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-rotate: -15deg;       /* 倾斜角度 */
+    --mt-cellBg: #111111;      /* 格子底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #fff;
+  }
+  /* 舞台：铺满并居中；墙面比视口大一半（150vw × 150vh）再旋转，转完四角不露底 */
+  .mt-stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .mt-wall {
+    position: relative; z-index: 2; flex: none;
+    width: 150vw; height: 150vh;
+    display: grid; grid-template-columns: 1fr; gap: 16px;
+    transform: rotate(var(--mt-rotate));
+    transform-origin: center;
+  }
+  .mt-row { display: flex; gap: 16px; will-change: transform; }
+  .mt-cell { position: relative; flex: none; height: 250px; min-width: 300px; }
+  .mt-cell > div {
+    position: relative; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--mt-cellBg);
+    border-radius: 10px; overflow: hidden;
+    font-size: 1.5rem; font-weight: 600; letter-spacing: 0.1em;
+  }
+  .mt-cell img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .mt-cell span { position: relative; z-index: 2; padding: 16px; text-align: center; }
+  /* 中央径向暗角 + 细噪点，压住四周 */
+  .mt-vignette { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+  .mt-noise {
+    position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 250px;
+  }
+
+  /* 用户开启「减少动态效果」时：墙不跟随鼠标（JS 同步处理） */
+</style>
+</head>
+<body>
+<div class="mt-stage">
+  <div class="mt-wall" id="mtWall"></div>
+  <div class="mt-vignette" id="mtVignette"></div>
+  <div class="mt-noise"></div>
+</div>
+<script>
+  const CONFIG = {
+    slides: [{ src: '/samples/sample-1.webp', caption: '' }], // 图片
+    words: "设计｜动效｜灵感｜排版｜色彩｜网格｜节奏｜留白", // 文字块
+    maxMove: 300,          // 最大滑动（px）
+    baseDuration: 0.8,     // 跟随迟滞（s）
+    gradientColor: "#222222", // 暗角颜色
+    rows: 4,               // 行数
+  };
+  const COLS = 7;                           // 每行格子数
+  const INERTIA = [0.6, 0.4, 0.3, 0.2];     // 各行额外迟滞：每行手感不同才有「惯性」
+
+  const wall = document.getElementById('mtWall');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let userTook = false;   // 真实鼠标动过后，自动演示交还控制
+  document.getElementById('mtVignette').style.background = `radial-gradient(circle, transparent 0%, ${CONFIG.gradientColor} 100%)`;
+
+  // 内容池：图片与文字交错，铺满 rows × COLS 个格子
+  const words = CONFIG.words.split('｜').map(s => s.trim()).filter(Boolean);
+  const pool = [];
+  for (let i = 0; i < CONFIG.rows * COLS; i++) {
+    pool.push(i % 2 === 0 ? { img: CONFIG.slides[(i / 2) % CONFIG.slides.length] } : { text: words[((i - 1) / 2) % words.length] });
+  }
+  const rows = Array.from({ length: CONFIG.rows }, (_, r) => {
+    const row = document.createElement('div');
+    row.className = 'mt-row';
+    for (let c = 0; c < COLS; c++) {
+      const item = pool[r * COLS + c];
+      const cell = document.createElement('div');
+      cell.className = 'mt-cell';
+      cell.innerHTML = item.img ? `<div><img alt=""><span></span></div>` : `<div><span></span></div>`;
+      if (item.img) { cell.querySelector('img').src = item.img.src; cell.querySelector('span').textContent = item.img.caption || ''; }
+      else cell.querySelector('span').textContent = item.text;
+      row.appendChild(cell);
+    }
+    wall.appendChild(row);
+    return { el: row, x: 0, target: 0 };
+  });
+
+  // 鼠标横向位置 → 每行目标位移（相邻行方向相反），每行按自己的时间常数指数趋近
+  let mouseX = innerWidth / 2, last = performance.now();
+  addEventListener('pointermove', (e) => { mouseX = e.clientX; userTook = true; });
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    rows.forEach((r, i) => {
+      const dir = i % 2 === 0 ? 1 : -1;
+      r.target = reduceMotion ? 0 : ((mouseX / innerWidth) * CONFIG.maxMove - CONFIG.maxMove / 2) * dir;
+      const tau = CONFIG.baseDuration + INERTIA[i % INERTIA.length];
+      r.x += (r.target - r.x) * (1 - Math.exp(-dt / (tau * 0.35)));
+      r.el.style.transform = `translate3d(${r.x.toFixed(2)}px, 0, 0)`;
+    });
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 自动演示：虚拟鼠标左右慢慢摆；真实鼠标动过后交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => { if (document.hidden || userTook) return; t += 0.02; mouseX = innerWidth * (0.5 + 0.5 * Math.sin(t)); }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
