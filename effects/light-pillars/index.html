@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光柱背景</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-width: 120px;       /* 光柱宽度 */
+    --mt-period: 9s;         /* 摇摆周期 */
+    --mt-blur: 24px;         /* 边缘柔化 */
+    --mt-color: #ffffff;     /* 光的颜色 */
+    --mt-intensity: 0.5;     /* 亮度 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  .mt-stage { position: fixed; inset: -20% 0; overflow: hidden; }
+  /* 光柱：上宽下窄的锥形，用渐变让顶部亮、底部隐入；绕顶部摇摆 */
+  .mt-pillar {
+    position: absolute;
+    top: 0;
+    left: var(--x);
+    width: var(--mt-width);
+    height: 100%;
+    margin-left: calc(var(--mt-width) / -2);
+    background: linear-gradient(to bottom,
+      color-mix(in srgb, var(--mt-color) calc(var(--mt-intensity) * 100%), transparent) 0%,
+      color-mix(in srgb, var(--mt-color) calc(var(--mt-intensity) * 40%), transparent) 55%,
+      transparent 100%);
+    clip-path: polygon(45% 0, 55% 0, 100% 100%, 0 100%);
+    filter: blur(var(--mt-blur));
+    transform-origin: 50% 0;
+    animation: mt-sway var(--mt-period) ease-in-out infinite alternate, mt-breathe calc(var(--mt-period) * 0.7) ease-in-out infinite alternate;
+    animation-delay: var(--d), calc(var(--d) * 0.6);
+    mix-blend-mode: screen;
+  }
+  @keyframes mt-sway {
+    from { transform: rotate(calc(var(--sway) * -1)); }
+    to   { transform: rotate(var(--sway)); }
+  }
+  @keyframes mt-breathe { from { opacity: 0.7; } to { opacity: 1; } }
+
+  /* 用户开启「减少动态效果」时：光柱静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-pillar { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    count: 4,   // 光柱数量
+    sway: 8,    // 摇摆幅度（度）
+  };
+  const stage = document.getElementById('mtStage');
+  // 光柱在宽度上均匀分布，各自错开相位
+  for (let i = 0; i < CONFIG.count; i++) {
+    const p = document.createElement('div');
+    p.className = 'mt-pillar';
+    p.style.setProperty('--x', ((i + 0.5) / CONFIG.count * 100) + '%');
+    p.style.setProperty('--sway', CONFIG.sway + 'deg');
+    p.style.setProperty('--d', (-i * 1.7) + 's');
+    stage.appendChild(p);
+  }
+  // 纯 CSS 动画：页面切到后台时浏览器自动暂停渲染
+</script>
+</body>
+</html>

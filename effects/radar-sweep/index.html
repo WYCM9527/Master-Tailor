@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雷达扫描</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-period: 4s;         /* 转一圈用时 */
+    --mt-sweepWidth: 60deg;  /* 扇面宽度 */
+    --mt-color: #ffffff;     /* 雷达颜色 */
+    --mt-size: 80vmin;       /* 雷达直径 */
+    --mt-grid: 1;            /* 十字刻度线：1 显示 / 0 隐藏 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--mt-bg);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .mt-radar {
+    position: relative;
+    width: var(--mt-size);
+    height: var(--mt-size);
+    border-radius: 50%;
+    overflow: hidden;
+  }
+  /* 同心圈由 JS 生成；十字线用两条伪元素 */
+  .mt-ring {
+    position: absolute;
+    left: 50%; top: 50%;
+    border: 1px solid color-mix(in srgb, var(--mt-color) 22%, transparent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .mt-radar::before, .mt-radar::after {
+    content: '';
+    position: absolute;
+    background: color-mix(in srgb, var(--mt-color) 18%, transparent);
+    opacity: var(--mt-grid);
+  }
+  .mt-radar::before { left: 50%; top: 0; width: 1px; height: 100%; }
+  .mt-radar::after { top: 50%; left: 0; height: 1px; width: 100%; }
+  /* 扫描扇面：锥形渐变从透明到雷达色，只占扇面宽度，整体旋转 */
+  .mt-sweep {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0deg, transparent calc(360deg - var(--mt-sweepWidth)),
+      color-mix(in srgb, var(--mt-color) 45%, transparent) 360deg);
+    animation: mt-sweep var(--mt-period) linear infinite;
+  }
+  @keyframes mt-sweep { to { transform: rotate(360deg); } }
+  /* 目标点：被扇面扫到时亮起，随后按转一圈的时间淡出 */
+  .mt-blip {
+    position: absolute;
+    width: 6px; height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    background: var(--mt-color);
+    box-shadow: 0 0 10px var(--mt-color);
+    opacity: 0;
+    animation: mt-blip var(--mt-period) linear infinite;
+    animation-delay: var(--d);
+  }
+  @keyframes mt-blip {
+    0% { opacity: 1; transform: scale(1.6); }
+    60% { opacity: 0.15; transform: scale(1); }
+    100% { opacity: 0; }
+  }
+
+  /* 用户开启「减少动态效果」时：扇面静止、目标点常亮 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-sweep { animation: none; }
+    .mt-blip { animation: none; opacity: 0.6; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-radar" id="mtRadar" role="img" aria-label="雷达扫描">
+  <div class="mt-sweep" aria-hidden="true"></div>
+</div>
+<script>
+  const CONFIG = {
+    rings: 4,   // 同心圈数
+    blips: 7,   // 目标点数
+  };
+
+  const radar = document.getElementById('mtRadar');
+  const period = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-period')) || 4;
+
+  // 同心圈：等距
+  for (let i = 1; i <= CONFIG.rings; i++) {
+    const r = document.createElement('div');
+    r.className = 'mt-ring';
+    const pct = (i / CONFIG.rings) * 100;
+    r.style.width = pct + '%'; r.style.height = pct + '%';
+    radar.appendChild(r);
+  }
+  // 目标点：随机极坐标；扇面转到该角度时正好亮起，所以延迟 = 角度占一圈的比例 × 周期
+  for (let i = 0; i < CONFIG.blips; i++) {
+    const a = Math.random() * Math.PI * 2, d = 0.15 + Math.random() * 0.8;
+    const b = document.createElement('div');
+    b.className = 'mt-blip';
+    b.style.left = (50 + Math.cos(a) * d * 50) + '%';
+    b.style.top = (50 + Math.sin(a) * d * 50) + '%';
+    // 扇面亮边在 conic 的 360° 处（即正上方顺时针转），角度 a 以右为 0 逆时针 → 换算成顺时针从上起算
+    const deg = ((a * 180 / Math.PI) + 90 + 360) % 360;
+    b.style.setProperty('--d', (deg / 360 * period) + 's');
+    radar.appendChild(b);
+  }
+</script>
+</body>
+</html>

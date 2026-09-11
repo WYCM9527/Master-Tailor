@@ -1,0 +1,94 @@
+{
+  "slug": "dot-field-wave",
+  "name": "点场波纹",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["点阵", "波纹", "呼吸"],
+  "summary": "满屏小圆点随一道道看不见的波起伏，明暗和大小一起呼吸",
+  "params": [
+    {
+      "key": "spacing",
+      "label": "点间距",
+      "type": "range",
+      "target": "config",
+      "min": 14,
+      "max": 60,
+      "step": 2,
+      "default": 28,
+      "unit": "px"
+    },
+    {
+      "key": "dotSize",
+      "label": "点最大直径",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 14,
+      "step": 1,
+      "default": 6,
+      "unit": "px"
+    },
+    {
+      "key": "waveLength",
+      "label": "波长",
+      "type": "range",
+      "target": "config",
+      "min": 100,
+      "max": 800,
+      "step": 20,
+      "default": 320,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "波速",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "mode",
+      "label": "波形",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "ripple", "label": "中心涟漪" },
+        { "value": "diagonal", "label": "斜向推进" },
+        { "value": "noise", "label": "随机起伏" }
+      ],
+      "default": "ripple"
+    },
+    {
+      "key": "color",
+      "label": "点的颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#ffffff"
+    },
+    {
+      "key": "mouse",
+      "label": "鼠标激起涟漪",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "fine",
+      "name": "细密斜波",
+      "values": { "spacing": 16, "dotSize": 3, "mode": "diagonal", "waveLength": 500, "speed": 0.6 }
+    },
+    {
+      "id": "bold",
+      "name": "大点乱涌",
+      "values": { "spacing": 48, "dotSize": 14, "mode": "noise", "speed": 1.6 }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

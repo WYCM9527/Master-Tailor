@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>球池背景</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  /* 用户开启「减少动态效果」时：球静止堆在底部（JS 同步处理） */
+  @media (prefers-reduced-motion: reduce) {
+    canvas { opacity: 0.9; }
+  }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    count: 45,       // 球数
+    size: 56,        // 球平均直径（px）
+    gravity: 900,    // 重力（px/s²），0 为失重
+    bounce: 0.5,     // 弹性
+    repel: 1.2,      // 鼠标推力
+    colors: ["#ffffff", "#a3a3a3", "#3a3a3a"], // 球的颜色，轮流分配
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  let W = 0, H = 0;
+  function resize() { W = innerWidth; H = innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  resize(); addEventListener('resize', resize);
+
+  const balls = Array.from({ length: CONFIG.count }, (_, i) => {
+    const r = CONFIG.size * (0.6 + Math.random() * 0.8) / 2;
+    return { x: Math.random() * W, y: Math.random() * H * 0.6, vx: (Math.random() - 0.5) * 200, vy: 0, r, m: r * r, c: CONFIG.colors[i % CONFIG.colors.length] };
+  });
+
+  let mx = -9999, my = -9999, auto = true;
+  addEventListener('pointermove', e => { auto = false; mx = e.clientX; my = e.clientY; });
+  document.documentElement.addEventListener('pointerleave', () => { auto = true; mx = -9999; my = -9999; });
+
+  let last = performance.now();
+  function step(dt) {
+    for (const b of balls) {
+      b.vy += CONFIG.gravity * dt;
+      // 鼠标推开：半径 160 内施加推力
+      const dx = b.x - mx, dy = b.y - my, d = Math.hypot(dx, dy);
+      if (d < 160 && d > 0.01) { const f = (1 - d / 160) * CONFIG.repel * 2600 * dt; b.vx += dx / d * f; b.vy += dy / d * f; }
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      // 墙与地面
+      if (b.x < b.r) { b.x = b.r; b.vx = -b.vx * CONFIG.bounce; }
+      if (b.x > W - b.r) { b.x = W - b.r; b.vx = -b.vx * CONFIG.bounce; }
+      if (b.y > H - b.r) { b.y = H - b.r; b.vy = -b.vy * CONFIG.bounce; b.vx *= 0.98; }
+      if (b.y < b.r) { b.y = b.r; b.vy = -b.vy * CONFIG.bounce; }
+      if (CONFIG.gravity === 0) { b.vx *= 0.999; b.vy *= 0.999; }
+    }
+    // 球与球：简单弹性分离（按质量分配位移与速度）
+    for (let i = 0; i < balls.length; i++) for (let j = i + 1; j < balls.length; j++) {
+      const a = balls[i], b = balls[j];
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = a.r + b.r;
+      if (d < min && d > 0.001) {
+        const nx = dx / d, ny = dy / d, overlap = min - d, tm = a.m + b.m;
+        a.x -= nx * overlap * (b.m / tm); a.y -= ny * overlap * (b.m / tm);
+        b.x += nx * overlap * (a.m / tm); b.y += ny * overlap * (a.m / tm);
+        const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+        if (rv < 0) {
+          const imp = -(1 + CONFIG.bounce) * rv / (1 / a.m + 1 / b.m);
+          a.vx -= imp / a.m * nx; a.vy -= imp / a.m * ny; b.vx += imp / b.m * nx; b.vy += imp / b.m * ny;
+        }
+      }
+    }
+  }
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000); last = now;
+    if (!document.hidden) {
+      if (!reduceMotion) step(dt);
+      ctx.clearRect(0, 0, W, H);
+      for (const b of balls) { ctx.fillStyle = b.c; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟指针在池底扫来扫去搅动球；真实鼠标一动就交还
+  if (!reduceMotion) {
+    let t = 0;
+    setInterval(() => { if (document.hidden || !auto) return; t += 0.03; mx = W / 2 + Math.sin(t) * W * 0.4; my = H * 0.75 + Math.sin(t * 2.1) * H * 0.15; }, 30);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

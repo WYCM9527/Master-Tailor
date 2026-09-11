@@ -1,0 +1,82 @@
+{
+  "slug": "radar-sweep",
+  "name": "雷达扫描",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["雷达", "扫描", "科技"],
+  "summary": "一道扫描扇面绕着圆心转，扫到的光点亮起再慢慢淡去",
+  "params": [
+    {
+      "key": "period",
+      "label": "转一圈用时",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "default": 4,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "rings",
+      "label": "同心圈数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "default": 4
+    },
+    {
+      "key": "blips",
+      "label": "目标点数",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 7
+    },
+    {
+      "key": "sweepWidth",
+      "label": "扇面宽度",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 120,
+      "step": 10,
+      "default": 60,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    { "key": "color", "label": "雷达颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "size",
+      "label": "雷达直径",
+      "type": "range",
+      "target": "css",
+      "min": 40,
+      "max": 100,
+      "step": 5,
+      "default": 80,
+      "unit": "vmin"
+    },
+    { "key": "grid", "label": "十字刻度线", "type": "toggle", "target": "css", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "green",
+      "name": "军绿",
+      "values": { "color": "#4ade80", "period": 3, "blips": 12, "sweepWidth": 40 }
+    },
+    {
+      "id": "slow",
+      "name": "慢扫大扇",
+      "values": { "period": 8, "sweepWidth": 120, "rings": 6, "grid": false }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

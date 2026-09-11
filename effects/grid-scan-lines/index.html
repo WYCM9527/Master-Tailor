@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扫描线网格</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-cell: 60px;         /* 网格间距 */
+    --mt-speed: 3s;          /* 网格流速（滚过一格的时间） */
+    --mt-tilt: 65deg;        /* 地面倾角 */
+    --mt-scanPeriod: 5s;     /* 扫描线周期 */
+    --mt-line: #3a3a3a;      /* 网格线颜色 */
+    --mt-scan: #ffffff;      /* 扫描线颜色 */
+    --mt-horizonGlow: 1;     /* 地平线光晕：1 开 / 0 关 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  /* 地面：一张很大的网格平面，绕 X 轴倾斜成透视地面，背景位置向下滚动形成「涌来」 */
+  .mt-scene {
+    position: fixed; inset: 0;
+    perspective: 500px;
+    perspective-origin: 50% 35%;
+    overflow: hidden;
+  }
+  .mt-floor {
+    position: absolute;
+    left: -50%; right: -50%;
+    top: 40%; bottom: -60%;
+    background-image:
+      linear-gradient(to right, var(--mt-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--mt-line) 1px, transparent 1px);
+    background-size: var(--mt-cell) var(--mt-cell);
+    transform-origin: 50% 0;
+    transform: rotateX(var(--mt-tilt));
+    animation: mt-flow var(--mt-speed) linear infinite;
+  }
+  @keyframes mt-flow { to { background-position: 0 var(--mt-cell); } }
+  /* 地平线光晕：让远处的网格隐入雾中 */
+  .mt-horizon {
+    position: absolute; left: 0; right: 0; top: 30%;
+    height: 30%;
+    background: linear-gradient(to bottom, var(--mt-bg) 0%, color-mix(in srgb, var(--mt-scan) 12%, var(--mt-bg)) 45%, transparent 100%);
+    opacity: var(--mt-horizonGlow);
+    pointer-events: none;
+  }
+  /* 扫描线：一条亮线带拖尾，从顶部刷到底部 */
+  .mt-scan {
+    position: absolute; left: 0; right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--mt-scan) 35%, transparent) 85%, var(--mt-scan) 100%);
+    animation: mt-scan var(--mt-scanPeriod) cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    mix-blend-mode: screen;
+  }
+  @keyframes mt-scan { from { top: -120px; } to { top: 100%; } }
+
+  /* 用户开启「减少动态效果」时：网格静止、无扫描线 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-floor { animation: none; }
+    .mt-scan { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-scene" aria-hidden="true">
+  <div class="mt-floor"></div>
+  <div class="mt-horizon"></div>
+  <div class="mt-scan"></div>
+</div>
+<script>
+  // 本效果全部由 CSS 驱动（所有参数都是 :root 变量，调参即热更新）；
+  // 纯 CSS 动画：页面切到后台时浏览器自动暂停渲染。
+</script>
+</body>
+</html>

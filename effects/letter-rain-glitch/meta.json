@@ -1,0 +1,83 @@
+{
+  "slug": "letter-rain-glitch",
+  "name": "字母故障矩阵",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["字母", "故障", "矩阵"],
+  "summary": "满屏字符格不停随机换字、闪色，像一块出了故障的终端屏",
+  "params": [
+    {
+      "key": "cell",
+      "label": "字格大小",
+      "type": "range",
+      "target": "config",
+      "min": 12,
+      "max": 32,
+      "step": 2,
+      "default": 18,
+      "unit": "px"
+    },
+    {
+      "key": "rate",
+      "label": "换字频率",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 20,
+      "step": 0.5,
+      "default": 5,
+      "displayUnit": " %/帧",
+      "help": "每帧有多少比例的字格换成新字"
+    },
+    {
+      "key": "colors",
+      "label": "字符颜色池",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 6,
+      "default": ["#ffffff", "#a3a3a3", "#3a3a3a"]
+    },
+    {
+      "key": "glyphs",
+      "label": "字符集",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "latin", "label": "字母数字" },
+        { "value": "binary", "label": "0 和 1" },
+        { "value": "kana", "label": "假名与符号" }
+      ],
+      "default": "latin"
+    },
+    { "key": "vignette", "label": "四周压暗", "type": "toggle", "target": "css", "default": true },
+    {
+      "key": "smooth",
+      "label": "换字时渐变",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "关闭则字格硬切，更像故障"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "matrix",
+      "name": "绿色矩阵",
+      "values": {
+        "colors": ["#4ade80", "#166534", "#0f2f1c"],
+        "glyphs": "kana",
+        "rate": 8,
+        "smooth": false
+      }
+    },
+    {
+      "id": "calm",
+      "name": "细字慢闪",
+      "values": { "cell": 12, "rate": 1.5, "colors": ["#6b6b6b", "#3a3a3a"] }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

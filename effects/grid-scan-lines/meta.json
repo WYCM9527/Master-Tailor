@@ -1,0 +1,99 @@
+{
+  "slug": "grid-scan-lines",
+  "name": "扫描线网格",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["网格", "扫描", "科技"],
+  "summary": "带透视的地面网格向你涌来，一道扫描线周期性从上往下刷过",
+  "params": [
+    {
+      "key": "cell",
+      "label": "网格间距",
+      "type": "range",
+      "target": "css",
+      "min": 30,
+      "max": 120,
+      "step": 10,
+      "default": 60,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "网格流速",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "default": 3,
+      "unit": "s",
+      "displayUnit": " 秒/格"
+    },
+    {
+      "key": "tilt",
+      "label": "地面倾角",
+      "type": "range",
+      "target": "css",
+      "min": 40,
+      "max": 80,
+      "step": 5,
+      "default": 65,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "scanPeriod",
+      "label": "扫描线周期",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 12,
+      "step": 0.5,
+      "default": 5,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "line",
+      "label": "网格线颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#3a3a3a"
+    },
+    {
+      "key": "scan",
+      "label": "扫描线颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "horizonGlow",
+      "label": "地平线光晕",
+      "type": "toggle",
+      "target": "css",
+      "default": true
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "fast",
+      "name": "疾驰",
+      "values": { "speed": 1, "cell": 40, "scanPeriod": 2.5, "tilt": 75 }
+    },
+    {
+      "id": "calm",
+      "name": "静谧",
+      "values": {
+        "speed": 8,
+        "cell": 100,
+        "scanPeriod": 10,
+        "line": "#1c1c1c",
+        "horizonGlow": false
+      }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

@@ -1,0 +1,98 @@
+{
+  "slug": "floating-lines",
+  "name": "浮线背景",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["线条", "波浪", "光标"],
+  "summary": "多条细线如水面般起伏漂浮，鼠标压过去会被推出一个凹陷",
+  "params": [
+    {
+      "key": "count",
+      "label": "线条数量",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 40,
+      "step": 2,
+      "default": 18
+    },
+    {
+      "key": "amplitude",
+      "label": "起伏幅度",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 60,
+      "step": 2,
+      "default": 22,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "流动速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "dent",
+      "label": "鼠标凹陷深度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "default": 60,
+      "unit": "px"
+    },
+    {
+      "key": "thickness",
+      "label": "线粗",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.5,
+      "default": 1
+    },
+    {
+      "key": "color",
+      "label": "线条颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#ffffff"
+    },
+    {
+      "key": "fadeEdges",
+      "label": "两端渐隐",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "sea",
+      "name": "海面",
+      "values": { "count": 34, "amplitude": 34, "speed": 0.7, "dent": 90 }
+    },
+    {
+      "id": "strings",
+      "name": "琴弦",
+      "values": {
+        "count": 8,
+        "amplitude": 8,
+        "thickness": 2,
+        "speed": 1.8,
+        "dent": 40,
+        "fadeEdges": false
+      }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration" }
+}

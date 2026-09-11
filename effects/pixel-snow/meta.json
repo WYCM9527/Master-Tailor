@@ -1,0 +1,76 @@
+{
+  "slug": "pixel-snow",
+  "name": "像素雪",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["下雪", "像素", "复古"],
+  "summary": "一格一格的方块雪花按像素网格飘落，像 8 位游戏里的冬天",
+  "params": [
+    {
+      "key": "cell",
+      "label": "像素大小",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 16,
+      "step": 1,
+      "default": 6,
+      "unit": "px"
+    },
+    {
+      "key": "density",
+      "label": "雪量",
+      "type": "range",
+      "target": "config",
+      "min": 20,
+      "max": 400,
+      "step": 20,
+      "default": 160,
+      "help": "同屏雪花数量"
+    },
+    {
+      "key": "speed",
+      "label": "下落速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "wind",
+      "label": "风",
+      "type": "range",
+      "target": "config",
+      "min": -2,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.4,
+      "help": "负值往左吹，正值往右吹"
+    },
+    { "key": "pile", "label": "底部积雪", "type": "toggle", "target": "config", "default": true },
+    {
+      "key": "color",
+      "label": "雪的颜色",
+      "type": "color",
+      "target": "config",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "blizzard",
+      "name": "暴风雪",
+      "values": { "density": 400, "speed": 2.4, "wind": 1.6, "cell": 4 }
+    },
+    {
+      "id": "chunky",
+      "name": "大块慢雪",
+      "values": { "cell": 14, "density": 60, "speed": 0.5, "wind": 0 }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}
