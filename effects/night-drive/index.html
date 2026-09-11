@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>夜路飞驰</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（夜空纯黑） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; cursor: pointer; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧定格车流 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    leftColors: ["#d856bf", "#6750a2", "#c247ac"], // 同向车灯色（奔向远方）
+    rightColors: ["#03b3c3", "#0e5ea5", "#324555"], // 对向车灯色（迎面而来）
+    speed: 1,          // 车速
+    density: 1,        // 车流密度
+    bend: 1,           // 公路蜿蜒
+    pressBoost: true,  // 按住加速
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：程序化透视公路——
+  // 屏幕纵坐标反算地面距离 z，再算世界坐标 (wx, wz)；
+  // 车灯 = 沿 wz 周期重复的光条（横向高斯 × 纵向软条），左右两路各取一张颜色表
+  const FS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform vec2  uRes;         // 分辨率
+    uniform float uDistL;       // 同向行驶里程（远去）
+    uniform float uDistR;       // 对向行驶里程（驶来）
+    uniform float uTime;        // 时间（秒）
+    uniform float uDensity;     // 车流密度
+    uniform float uBend;        // 公路蜿蜒
+    uniform float uStretch;     // 灯条拉伸（加速时变长）
+    uniform float uZoom;        // 视野拉伸（加速时前冲感）
+    uniform vec3  uLeft[5];     // 同向车灯色表
+    uniform vec3  uRight[5];    // 对向车灯色表
+    uniform float uLeftN;       // 同向色数
+    uniform float uRightN;      // 对向色数
+
+    float hash11(float p) {
+      p = fract(p * 0.1031);
+      p *= p + 33.33;
+      p *= p + p;
+      return fract(p);
+    }
+    /* 按序号从色表取色（WebGL1 数组只能常量下标，用循环匹配） */
+    vec3 pickL(float i) {
+      vec3 c = uLeft[0];
+      for (int k = 0; k < 5; k++) { if (float(k) == i) c = uLeft[k]; }
+      return c;
+    }
+    vec3 pickR(float i) {
+      vec3 c = uRight[0];
+      for (int k = 0; k < 5; k++) { if (float(k) == i) c = uRight[k]; }
+      return c;
+    }
+
+    /* 一条车道的灯流：沿 wz 每 gap 一对灯，hash 抖动横向位置与明暗 */
+    vec3 laneLights(float wx, float wz, float laneX, float seed, float away, float fog) {
+      vec3 acc = vec3(0.0);
+      float gap = 14.0 / uDensity;                     // 灯对间距
+      float id = floor(wz / gap + seed * 61.7);
+      float fr = fract(wz / gap + seed * 61.7);
+      float h = hash11(id + seed * 97.3);
+      /* 部分格子没车：密度参数间接控制路上有多少灯 */
+      if (h < 0.35) return acc;
+      float jitter = (hash11(id * 3.7 + seed) - 0.5) * 1.2;   // 车在车道内的横向游移
+      float colIdx = floor(hash11(id * 7.9 + seed) * (away > 0.5 ? uLeftN : uRightN));
+      vec3 col = away > 0.5 ? pickL(colIdx) : pickR(colIdx);
+      /* 一对车灯：左右各一盏，间距 0.55 */
+      for (int s = -1; s <= 1; s += 2) {
+        float lx = laneX + jitter + float(s) * 0.55;
+        float dx = abs(wx - lx);
+        /* 灯条：纵向被 uStretch 拉长（速度感），横向双层高斯（亮心 + 光晕） */
+        float len = 0.22 * uStretch;
+        float body = smoothstep(len, len * 0.2, abs(fr - 0.5));
+        float core = exp(-dx * dx * 90.0);
+        float glow = exp(-dx * dx * 6.0) * 0.35;
+        acc += col * (core + glow) * body * fog * 1.6;
+      }
+      return acc;
+    }
+
+    void main() {
+      /* 居中坐标，uZoom 拉近视野制造前冲感 */
+      vec2 p = (vUv * 2.0 - 1.0);
+      p.x *= uRes.x / uRes.y;
+      p /= uZoom;
+
+      /* 地平线随时间轻微起伏（远山起伏感），路面只画地平线以下 */
+      float horizon = 0.12 + 0.03 * uBend * sin(uTime * 0.23);
+      vec3 col = vec3(0.0);
+
+      if (p.y < horizon) {
+        float depth = horizon - p.y;                   // 越小越远
+        float z = 1.4 / depth;                          // 反算地面距离
+        float fog = exp(-z * 0.022);                    // 距离雾：远处灯变暗
+        /* 公路蜿蜒：路心随 z 左右摆（两个不同频率的 sin 叠加更自然） */
+        float bendX = uBend * (0.9 * sin(z * 0.06 + uTime * 0.4) + 0.5 * sin(z * 0.11 - uTime * 0.23));
+        float wx = p.x * z - bendX;                     // 世界横坐标（已回正蜿蜒）
+
+        /* 路面与隔离带的微弱可见性：路比夜面稍亮一线 */
+        float onRoad = smoothstep(6.4, 6.0, abs(wx));
+        col += vec3(0.016, 0.016, 0.02) * onRoad * fog;
+        /* 路肩白线与中央隔离带暗缝 */
+        float shoulder = smoothstep(0.12, 0.02, abs(abs(wx) - 5.6));
+        col += vec3(0.05, 0.05, 0.06) * shoulder * fog;
+        float island = smoothstep(0.5, 0.2, abs(wx));
+        col -= vec3(0.01) * island * fog;
+
+        /* 左半路：同向车流（尾灯远去）三条车道 */
+        float wzL = z + uDistL;
+        col += laneLights(wx, wzL, -1.6, 1.0, 1.0, fog);
+        col += laneLights(wx, wzL, -3.2, 2.0, 1.0, fog);
+        col += laneLights(wx, wzL, -4.6, 3.0, 1.0, fog);
+        /* 右半路：对向车流（大灯驶来） */
+        float wzR = z - uDistR;
+        col += laneLights(wx, wzR, 1.6, 4.0, 0.0, fog);
+        col += laneLights(wx, wzR, 3.2, 5.0, 0.0, fog);
+        col += laneLights(wx, wzR, 4.6, 6.0, 0.0, fog);
+
+        /* 路侧灯杆：等距的青色小竖光，远处密近处疏 */
+        float stickGap = 26.0;
+        float sid = fract((z + uDistL * 0.5) / stickGap);
+        float sx = smoothstep(0.1, 0.02, abs(abs(wx) - 7.2));
+        float spike = smoothstep(0.06, 0.0, abs(sid - 0.5) * stickGap * 0.1);
+        col += vec3(0.01, 0.7, 0.76) * sx * spike * fog * 0.8;
+      }
+
+      /* 地平线辉光：路的尽头一线微光 */
+      float glowLine = exp(-abs(p.y - horizon) * 26.0);
+      col += vec3(0.05, 0.045, 0.07) * glowLine;
+
+      /* tanh 型压缩：多灯叠加不过曝 */
+      col = col / (1.0 + col);
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  function hexRgb(hex) {
+    const h = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  }
+  // 色表塞满 5 个槽位（不足的重复最后一色），WebGL1 uniform 数组定长
+  function fillColors(list) {
+    const out = [];
+    for (let i = 0; i < 5; i++) out.push(...hexRgb(list[Math.min(i, list.length - 1)]));
+    return new Float32Array(out);
+  }
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+
+  gl.uniform3fv(U('uLeft[0]'), fillColors(CONFIG.leftColors));
+  gl.uniform3fv(U('uRight[0]'), fillColors(CONFIG.rightColors));
+  gl.uniform1f(U('uLeftN'), CONFIG.leftColors.length);
+  gl.uniform1f(U('uRightN'), CONFIG.rightColors.length);
+  gl.uniform1f(U('uDensity'), CONFIG.density);
+  gl.uniform1f(U('uBend'), CONFIG.bend);
+  const uDistL = U('uDistL'), uDistR = U('uDistR'), uTime = U('uTime');
+  const uStretch = U('uStretch'), uZoom = U('uZoom');
+  resize(); addEventListener('resize', resize);
+
+  // 按住加速：目标倍速 2×，松开回 1×；速度与视野都用 4% 平滑趋近
+  let boostTarget = 1, boost = 1;
+  if (CONFIG.pressBoost) {
+    addEventListener('pointerdown', () => { boostTarget = 2; });
+    addEventListener('pointerup', () => { boostTarget = 1; });
+    addEventListener('pointerleave', () => { boostTarget = 1; });
+  }
+
+  let distL = 0, distR = 0;           // 双向里程分开积累（速度不同）
+  let time = 0;
+  let last = performance.now();
+  if (reduceMotion) { time = 3; distL = 40; distR = 60; }   // 减少动态：定格一帧车流
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    boost += 0.04 * (boostTarget - boost);
+    if (!reduceMotion) {
+      time += dt;
+      distL += dt * 22 * CONFIG.speed * boost;      // 同向：相对速度慢
+      distR += dt * 42 * CONFIG.speed * boost;      // 对向：相对速度快
+    }
+    gl.uniform1f(uTime, time);
+    gl.uniform1f(uDistL, distL);
+    gl.uniform1f(uDistR, distR);
+    gl.uniform1f(uStretch, 1 + (boost - 1) * 2.2);  // 加速时灯条拉长
+    gl.uniform1f(uZoom, 1 + (boost - 1) * 0.25);    // 加速时视野前冲
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

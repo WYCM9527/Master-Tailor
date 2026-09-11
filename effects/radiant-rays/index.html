@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>放射光芒</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（体积光在纯黑上最通透） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态光芒 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    origin: "top-center",  // 光源方位：top-center / top-left / top-right / left / right / bottom-center
+    color: "#ffffff",      // 光芒颜色
+    speed: 1,              // 流转速度
+    spread: 1,             // 张开角度
+    reach: 2,              // 照射距离
+    pulsating: false,      // 呼吸明暗
+    distortion: 0,         // 光束扭曲
+    noise: 0.1,            // 颗粒感
+    followMouse: true,     // 跟随鼠标
+    mouseInfluence: 0.1,   // 跟随强度
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：以「像素方向与光轴夹角的余弦」为骨架的体积光——
+  // 夹角的幂次控制张开角度，两组不同种子的 sin/cos 流转叠出光束明暗，
+  // 距离衰减 + 纵向亮度渐变 + 颗粒噪声收尾
+  const FS = `
+    precision highp float;
+    uniform float uTime;      // 时间（秒）
+    uniform vec2  uRes;       // 分辨率
+    uniform vec2  uRayPos;    // 光源位置（像素，可在画面外）
+    uniform vec2  uRayDir;    // 光轴方向（单位向量）
+    uniform vec3  uColor;     // 光芒颜色
+    uniform float uSpeed;     // 流转速度
+    uniform float uSpread;    // 张开角度
+    uniform float uReach;     // 照射距离（相对画面宽度）
+    uniform float uPulse;     // 呼吸开关
+    uniform float uDistort;   // 光束扭曲
+    uniform float uNoise;     // 颗粒感
+    uniform vec2  uMouse;     // 鼠标（0–1，已平滑）
+    uniform float uMouseInf;  // 跟随强度
+
+    float noise(vec2 st) {
+      return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+    }
+
+    /* 单组光束场：一个种子对一套明暗流转节奏 */
+    float rayStrength(vec2 source, vec2 dir, vec2 coord, float seedA, float seedB, float speed) {
+      vec2 toCoord = coord - source;
+      vec2 dirNorm = normalize(toCoord);
+      float cosAngle = dot(dirNorm, dir);
+      /* 扭曲：夹角随时间和距离波动，光束边缘出现波浪 */
+      float distorted = cosAngle + uDistort * sin(uTime * 2.0 + length(toCoord) * 0.01) * 0.2;
+      /* 张开角度：幂次越大光越窄（1/spread 作指数） */
+      float spreadFactor = pow(max(distorted, 0.0), 1.0 / max(uSpread, 0.001));
+
+      float dist = length(toCoord);
+      float maxDist = uRes.x * uReach;
+      float lengthFalloff = clamp((maxDist - dist) / maxDist, 0.0, 1.0);   // 到达距离衰减
+      float fadeFalloff = clamp((uRes.x - dist) / uRes.x, 0.5, 1.0);       // 近处再压一层
+      float pulse = uPulse > 0.5 ? (0.8 + 0.2 * sin(uTime * speed * 3.0)) : 1.0;
+
+      /* 两套 sin/cos 以夹角为相位流转：光束的「转动感」来源 */
+      float baseStrength = clamp(
+        (0.45 + 0.15 * sin(distorted * seedA + uTime * speed)) +
+        (0.3 + 0.2 * cos(-distorted * seedB + uTime * speed)),
+        0.0, 1.0
+      );
+      return baseStrength * lengthFalloff * fadeFalloff * spreadFactor * pulse;
+    }
+
+    void main() {
+      /* y 翻转成「屏幕坐标」（光源锚点按屏幕方位给出） */
+      vec2 coord = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
+
+      /* 鼠标把光轴往指针方向拧 */
+      vec2 finalDir = uRayDir;
+      if (uMouseInf > 0.0) {
+        vec2 mouseScreen = uMouse * uRes;
+        vec2 mouseDir = normalize(mouseScreen - uRayPos);
+        finalDir = normalize(mix(uRayDir, mouseDir, uMouseInf));
+      }
+
+      /* 两组种子光束叠加：节奏错开，明暗更丰富 */
+      float r1 = rayStrength(uRayPos, finalDir, coord, 36.2214, 21.11349, 1.5 * uSpeed);
+      float r2 = rayStrength(uRayPos, finalDir, coord, 22.3991, 18.0234, 1.1 * uSpeed);
+      vec4 rays = vec4(1.0) * (r1 * 0.5 + r2 * 0.4);
+
+      /* 颗粒：低频噪声轻轻乘进亮度 */
+      if (uNoise > 0.0) {
+        float n = noise(coord * 0.01 + uTime * 0.1);
+        rays.rgb *= (1.0 - uNoise + uNoise * n);
+      }
+
+      /* 纵向亮度渐变：越靠屏幕上方越亮，模拟光从上洒下 */
+      float brightness = 1.0 - (coord.y / uRes.y);
+      rays.x *= 0.1 + brightness * 0.8;
+      rays.y *= 0.3 + brightness * 0.6;
+      rays.z *= 0.5 + brightness * 0.5;
+
+      rays.rgb *= uColor;
+      gl_FragColor = vec4(rays.rgb, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  function hexRgb(hex) {
+    const h = hex.replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  }
+  // 方位 → 光源锚点（画面外 20%）与光轴方向
+  function anchorAndDir(origin, w, h) {
+    const off = 0.2;
+    switch (origin) {
+      case 'top-left': return { a: [0, -off * h], d: [0, 1] };
+      case 'top-right': return { a: [w, -off * h], d: [0, 1] };
+      case 'left': return { a: [-off * w, 0.5 * h], d: [1, 0] };
+      case 'right': return { a: [(1 + off) * w, 0.5 * h], d: [-1, 0] };
+      case 'bottom-center': return { a: [0.5 * w, (1 + off) * h], d: [0, -1] };
+      default: return { a: [0.5 * w, -off * h], d: [0, 1] };   // top-center
+    }
+  }
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+    const { a, d } = anchorAndDir(CONFIG.origin, canvas.width, canvas.height);
+    gl.uniform2f(U('uRayPos'), a[0], a[1]);
+    gl.uniform2f(U('uRayDir'), d[0], d[1]);
+  }
+
+  gl.uniform3fv(U('uColor'), hexRgb(CONFIG.color));
+  gl.uniform1f(U('uSpeed'), CONFIG.speed);
+  gl.uniform1f(U('uSpread'), CONFIG.spread);
+  gl.uniform1f(U('uReach'), CONFIG.reach);
+  gl.uniform1f(U('uPulse'), CONFIG.pulsating ? 1 : 0);
+  gl.uniform1f(U('uDistort'), CONFIG.distortion);
+  gl.uniform1f(U('uNoise'), CONFIG.noise);
+  gl.uniform1f(U('uMouseInf'), CONFIG.followMouse ? CONFIG.mouseInfluence : 0);
+  const uTime = U('uTime'), uMouse = U('uMouse');
+  resize(); addEventListener('resize', resize);
+
+  // 鼠标高平滑（8%/帧）：光轴慢慢转过去，像有重量的探照灯
+  let tmx = 0.5, tmy = 0.5, mx = 0.5, my = 0.5;
+  if (CONFIG.followMouse) {
+    addEventListener('pointermove', (e) => {
+      tmx = e.clientX / innerWidth;
+      tmy = e.clientY / innerHeight;   // 屏幕坐标系（不翻转，shader 里已翻）
+    });
+  }
+
+  let time = reduceMotion ? 5 : 0;   // 减少动态：定格一帧光芒
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    mx += 0.08 * (tmx - mx);
+    my += 0.08 * (tmy - my);
+    gl.uniform1f(uTime, time);
+    gl.uniform2f(uMouse, mx, my);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

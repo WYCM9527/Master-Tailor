@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>闪电风暴</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（闪电在纯黑上最亮） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧定格闪电 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    hue: 230,       // 闪电色相（度）
+    xOffset: 0,     // 水平位置
+    speed: 1,       // 抖动速度
+    intensity: 1,   // 亮度
+    size: 1,        // 扭曲尺度
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：把「到中轴线的距离」用 10 层旋转 fbm 噪声扭成闪电路径，
+  // 亮度 = 常数 / 距离（中轴处爆亮），再乘一个每帧随机的闪烁系数
+  const FS = `
+    precision mediump float;
+    uniform vec2  uRes;        // 分辨率
+    uniform float uTime;       // 时间（秒）
+    uniform float uHue;        // 色相（度）
+    uniform float uXOffset;    // 水平位置
+    uniform float uSpeed;      // 抖动速度
+    uniform float uIntensity;  // 亮度
+    uniform float uSize;       // 扭曲尺度
+
+    #define OCTAVES 10
+
+    /* hsv → rgb：色相参数直接可调 */
+    vec3 hsv2rgb(vec3 c) {
+      vec3 rgb = clamp(abs(mod(c.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+      return c.z * mix(vec3(1.0), rgb, c.y);
+    }
+    /* 一维哈希：驱动整体闪烁 */
+    float hash11(float p) {
+      p = fract(p * 0.1031);
+      p *= p + 33.33;
+      p *= p + p;
+      return fract(p);
+    }
+    /* 二维哈希：值噪声的格点随机数 */
+    float hash12(vec2 p) {
+      vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+      p3 += dot(p3, p3.yzx + 33.33);
+      return fract((p3.x + p3.y) * p3.z);
+    }
+    mat2 rot2(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+
+    /* 值噪声：四角哈希 + smoothstep 双线性插值 */
+    float noise(vec2 p) {
+      vec2 ip = floor(p), fp = fract(p);
+      float a = hash12(ip);
+      float b = hash12(ip + vec2(1.0, 0.0));
+      float c = hash12(ip + vec2(0.0, 1.0));
+      float d = hash12(ip + vec2(1.0, 1.0));
+      vec2 t = smoothstep(0.0, 1.0, fp);
+      return mix(mix(a, b, t.x), mix(c, d, t.x), t.y);
+    }
+    /* fbm：每层旋转 0.45 弧度再倍频，闪电的分叉感来自这次旋转 */
+    float fbm(vec2 p) {
+      float value = 0.0;
+      float amp = 0.5;
+      for (int i = 0; i < OCTAVES; ++i) {
+        value += amp * noise(p);
+        p *= rot2(0.45);
+        p *= 2.0;
+        amp *= 0.5;
+      }
+      return value;
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / uRes;
+      uv = 2.0 * uv - 1.0;               // 居中 -1..1
+      uv.x *= uRes.x / uRes.y;           // 等比
+      uv.x += uXOffset;                  // 闪电整体左右挪
+
+      /* 关键一步：用 fbm 把坐标整体扭一遍，原本笔直的中轴线就成了闪电的锯齿路径 */
+      uv += 2.0 * fbm(uv * uSize + 0.8 * uTime * uSpeed) - 1.0;
+
+      float dist = abs(uv.x);            // 到（被扭弯的）中轴的距离
+      vec3 base = hsv2rgb(vec3(uHue / 360.0, 0.7, 0.8));
+      /* 1/dist 造出电弧的锐利亮心；hash 闪烁让亮度每帧跳动 */
+      vec3 col = base * pow(mix(0.0, 0.07, hash11(uTime * uSpeed)) / dist, 1.0) * uIntensity;
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+  }
+
+  gl.uniform1f(U('uHue'), CONFIG.hue);
+  gl.uniform1f(U('uXOffset'), CONFIG.xOffset);
+  gl.uniform1f(U('uSpeed'), CONFIG.speed);
+  gl.uniform1f(U('uIntensity'), CONFIG.intensity);
+  gl.uniform1f(U('uSize'), CONFIG.size);
+  const uTime = U('uTime');
+  resize(); addEventListener('resize', resize);
+
+  let time = reduceMotion ? 2.3 : 0;   // 减少动态：定格一帧闪电
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

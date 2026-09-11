@@ -1,0 +1,71 @@
+{
+  "slug": "lightning-storm",
+  "name": "闪电风暴",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["闪电", "电流", "WebGL", "着色器", "氛围"],
+  "summary": "一道竖贯全屏的闪电不停抖动分叉，光晕忽明忽暗",
+  "params": [
+    {
+      "key": "hue",
+      "label": "闪电色相",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 360,
+      "step": 10,
+      "default": 230,
+      "unit": "°",
+      "help": "230 是电蓝，280 偏紫，40 偏金"
+    },
+    {
+      "key": "xOffset",
+      "label": "水平位置",
+      "type": "range",
+      "target": "config",
+      "min": -0.8,
+      "max": 0.8,
+      "step": 0.1,
+      "default": 0,
+      "help": "负值靠左，正值靠右"
+    },
+    {
+      "key": "speed",
+      "label": "抖动速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "intensity",
+      "label": "亮度",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "size",
+      "label": "扭曲尺度",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "help": "越大分叉越碎"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "violet", "name": "紫电", "values": { "hue": 285, "intensity": 1.5 } },
+    { "id": "gold", "name": "金蛇", "values": { "hue": 40, "speed": 1.6, "size": 1.6 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

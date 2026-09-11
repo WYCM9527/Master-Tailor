@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深空星河</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（深空纯黑） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态星空 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    density: 1,          // 星星密度
+    hueShift: 140,       // 色相偏移（度）
+    saturation: 0,       // 星色饱和
+    glow: 0.3,           // 光芒强度
+    twinkle: 0.3,        // 闪烁强度
+    speed: 1,            // 时间速度
+    rotationSpeed: 0.1,  // 旋转速度
+    mouseRepel: true,    // 鼠标推开星星
+    repelStrength: 2,    // 推开力度
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：星空 = 4 层不同深度的「星层」叠加；
+  // 每层把平面切成网格，每格用哈希决定一颗星的位置 / 大小 / 颜色 / 闪烁节拍，
+  // 星星本体 = 1/d 亮心 + 两组正交的十字光芒
+  const FS = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform float uTime;       // 时间（秒）
+    uniform vec3  uRes;        // 分辨率
+    uniform float uStarSpeed;  // 星层漂移相位（慢）
+    uniform float uDensity;    // 星星密度
+    uniform float uHueShift;   // 色相偏移
+    uniform float uSpeed;      // 时间速度
+    uniform vec2  uMouse;      // 鼠标（0–1，已平滑）
+    uniform float uGlow;       // 光芒强度
+    uniform float uSat;        // 星色饱和
+    uniform float uMouseRepel; // 鼠标排斥开关
+    uniform float uTwinkle;    // 闪烁强度
+    uniform float uRotSpeed;   // 旋转速度
+    uniform float uRepel;      // 推开力度
+    uniform float uMouseActive;// 鼠标活跃度（进入 1 / 离开渐回 0）
+
+    #define LAYERS 4.0
+    #define CUTOFF 0.2
+    #define MAT45 mat2(0.7071, -0.7071, 0.7071, 0.7071)
+    #define PERIOD 3.0
+
+    float hash21(vec2 p) {
+      p = fract(p * vec2(123.34, 456.21));
+      p += dot(p, p + 45.32);
+      return fract(p.x * p.y);
+    }
+    /* 三角波（0–1 折返）：闪光节拍用 */
+    float tri(float x) { return abs(fract(x) * 2.0 - 1.0); }
+    float tris(float x) { float t = fract(x); return 1.0 - smoothstep(0.0, 1.0, abs(2.0 * t - 1.0)); }
+    float trisn(float x) { float t = fract(x); return 2.0 * (1.0 - smoothstep(0.0, 1.0, abs(2.0 * t - 1.0))) - 1.0; }
+
+    vec3 hsv2rgb(vec3 c) {
+      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+    }
+
+    /* 一颗星：1/d 亮心 + 正十字光芒 + 45° 斜十字弱光芒，距离衰减收边 */
+    float star(vec2 uv, float flare) {
+      float d = length(uv);
+      float m = (0.05 * uGlow) / d;
+      float rays = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+      m += rays * flare * uGlow;
+      uv *= MAT45;
+      rays = smoothstep(0.0, 1.0, 1.0 - abs(uv.x * uv.y * 1000.0));
+      m += rays * 0.3 * flare * uGlow;
+      m *= smoothstep(1.0, 0.2, d);
+      return m;
+    }
+
+    /* 一层星：网格化，取本格与 8 邻格的星（星可以越过格线） */
+    vec3 starLayer(vec2 uv) {
+      vec3 col = vec3(0.0);
+      vec2 gv = fract(uv) - 0.5;
+      vec2 id = floor(uv);
+      for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+          vec2 offset = vec2(float(x), float(y));
+          vec2 si = id + offset;
+          float seed = hash21(si);
+          float size = fract(seed * 345.32);
+          float gloss = tri(uStarSpeed / (PERIOD * seed + 1.0));   // 周期性「爆闪」节拍
+          float flareSize = smoothstep(0.9, 1.0, size) * gloss;    // 只有大星才带光芒
+
+          /* 每颗星的底色：红蓝随机、绿取两者较小值（银河系配色），再过色相偏移 */
+          float red = smoothstep(CUTOFF, 1.0, hash21(si + 1.0)) + CUTOFF;
+          float blu = smoothstep(CUTOFF, 1.0, hash21(si + 3.0)) + CUTOFF;
+          float grn = min(red, blu) * seed;
+          vec3 base = vec3(red, grn, blu);
+          float hue = atan(base.g - base.r, base.b - base.r) / 6.2832 + 0.5;
+          hue = fract(hue + uHueShift / 360.0);
+          float sat = length(base - vec3(dot(base, vec3(0.299, 0.587, 0.114)))) * uSat;
+          float val = max(max(base.r, base.g), base.b);
+          base = hsv2rgb(vec3(hue, sat, val));
+
+          /* 星在格内缓慢游移（三角波路径） */
+          vec2 pad = vec2(
+            tris(seed * 34.0 + uTime * uSpeed / 10.0),
+            tris(seed * 38.0 + uTime * uSpeed / 30.0)
+          ) - 0.5;
+
+          float s = star(gv - offset - pad, flareSize);
+          /* 闪烁：三角波在 1 附近抖动，强度由参数控制 */
+          float twinkle = trisn(uTime * uSpeed + seed * 6.2831) * 0.5 + 1.0;
+          s *= mix(1.0, twinkle, uTwinkle);
+          col += s * size * base;
+        }
+      }
+      return col;
+    }
+
+    void main() {
+      /* 以画面中心为焦点的等比坐标 */
+      vec2 focal = 0.5 * uRes.xy;
+      vec2 uv = (vUv * uRes.xy - focal) / uRes.y;
+
+      /* 鼠标排斥：把采样坐标从鼠标位置往外推，星星看起来绕开指针 */
+      if (uMouseRepel > 0.5) {
+        vec2 mUV = (uMouse * uRes.xy - focal) / uRes.y;
+        float mDist = length(uv - mUV);
+        vec2 repel = normalize(uv - mUV) * (uRepel / (mDist + 0.1));
+        uv += repel * 0.05 * uMouseActive;
+      } else {
+        uv += (uMouse - vec2(0.5)) * 0.1 * uMouseActive;   // 关排斥时改为轻微视差
+      }
+
+      /* 整体自转 */
+      float ang = uTime * uRotSpeed;
+      uv = mat2(cos(ang), -sin(ang), sin(ang), cos(ang)) * uv;
+
+      /* 4 层深度：每层缩放/透明度随深度插值，层间用大偏移去相关 */
+      vec3 col = vec3(0.0);
+      for (float i = 0.0; i < 1.0; i += 1.0 / LAYERS) {
+        float depth = fract(i + uStarSpeed * uSpeed);
+        float scale = mix(20.0 * uDensity, 0.5 * uDensity, depth);
+        float fade = depth * smoothstep(1.0, 0.9, depth);
+        col += starLayer(uv * scale + i * 453.32) * fade;
+      }
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform3f(U('uRes'), canvas.width, canvas.height, canvas.width / canvas.height);
+  }
+
+  gl.uniform1f(U('uDensity'), CONFIG.density);
+  gl.uniform1f(U('uHueShift'), CONFIG.hueShift);
+  gl.uniform1f(U('uSpeed'), CONFIG.speed);
+  gl.uniform1f(U('uGlow'), CONFIG.glow);
+  gl.uniform1f(U('uSat'), CONFIG.saturation);
+  gl.uniform1f(U('uMouseRepel'), CONFIG.mouseRepel ? 1 : 0);
+  gl.uniform1f(U('uTwinkle'), CONFIG.twinkle);
+  gl.uniform1f(U('uRotSpeed'), CONFIG.rotationSpeed);
+  gl.uniform1f(U('uRepel'), CONFIG.repelStrength);
+  const uTime = U('uTime'), uStarSpeed = U('uStarSpeed'), uMouse = U('uMouse'), uMouseActive = U('uMouseActive');
+  resize(); addEventListener('resize', resize);
+
+  // 鼠标：位置与「活跃度」都做 5% 平滑，离开时星星缓缓回位
+  let tmx = 0.5, tmy = 0.5, mx = 0.5, my = 0.5;
+  let tAct = 0, act = 0;
+  addEventListener('pointermove', (e) => {
+    tmx = e.clientX / innerWidth;
+    tmy = 1 - e.clientY / innerHeight;
+    tAct = 1;
+  });
+  addEventListener('pointerleave', () => { tAct = 0; });
+
+  let time = reduceMotion ? 20 : 0;   // 减少动态：定格一帧星空
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+    mx += 0.05 * (tmx - mx);
+    my += 0.05 * (tmy - my);
+    act += 0.05 * (tAct - act);
+    gl.uniform1f(uTime, time);
+    gl.uniform1f(uStarSpeed, (time * 0.5) / 10);   // 星层深度漂移：很慢的推进
+    gl.uniform2f(uMouse, mx, my);
+    gl.uniform1f(uMouseActive, act);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

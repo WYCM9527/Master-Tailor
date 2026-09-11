@@ -1,0 +1,71 @@
+{
+  "slug": "night-drive",
+  "name": "夜路飞驰",
+  "category": "background",
+  "sub": "click",
+  "tags": ["公路", "车灯", "速度感", "WebGL", "着色器"],
+  "summary": "深夜高速的车灯流：对向灯流迎面而来，同向灯流奔向远方，按住画面加速",
+  "params": [
+    {
+      "key": "leftColors",
+      "label": "同向车灯色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 5,
+      "default": ["#d856bf", "#6750a2", "#c247ac"]
+    },
+    {
+      "key": "rightColors",
+      "label": "对向车灯色",
+      "type": "colors",
+      "target": "config",
+      "min": 1,
+      "max": 5,
+      "default": ["#03b3c3", "#0e5ea5", "#324555"]
+    },
+    {
+      "key": "speed",
+      "label": "车速",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "density",
+      "label": "车流密度",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "bend",
+      "label": "公路蜿蜒",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1,
+      "help": "远处路面左右起伏的幅度"
+    },
+    { "key": "pressBoost", "label": "按住加速", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "classic",
+      "name": "红白车流",
+      "values": { "leftColors": ["#ff3b30", "#ff6b52"], "rightColors": ["#fff7e0", "#ffe9b0"], "bend": 0.4 }
+    },
+    { "id": "rush", "name": "赶路", "values": { "speed": 2, "density": 1.6 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration" }
+}

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>彩虹棱镜</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色（棱镜光谱在纯黑上最纯净） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，保留一帧静态棱镜 */
+  @media (prefers-reduced-motion: reduce) { canvas { opacity: 0.9; } }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    animation: "rotate",  // 动画方式：rotate 光谱流动 / 3drotate 立体自转 / hover 跟随鼠标倾斜
+    height: 3.5,          // 棱锥高度
+    baseWidth: 5.5,       // 锥底宽度
+    scale: 3.6,           // 画面缩放
+    glow: 1,              // 发光强度
+    colorFreq: 1,         // 光谱密度
+    hueShift: 0,          // 色相旋转（弧度）
+    timeScale: 0.5,       // 时间速度
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const VS = `
+    attribute vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元着色器：对一座「上尖下宽的四棱锥」做 100 步体积行进，
+  // 每步按 sin 相位往四个通道累加光谱色，距表面越近贡献越大 → 彩虹在棱面上流动
+  const FS = `
+    precision highp float;
+    uniform vec2  uRes;         // 分辨率
+    uniform float uTime;        // 时间（秒）
+    uniform float uHeight;      // 棱锥高度
+    uniform float uBaseHalf;    // 锥底半宽
+    uniform mat3  uRot;         // 世界旋转（JS 算好传入）
+    uniform int   uWobble;      // 1 = 底部拧动（rotate 模式）
+    uniform float uGlow;        // 发光强度
+    uniform float uSat;         // 饱和度
+    uniform float uHueShift;    // 色相旋转（弧度）
+    uniform float uColorFreq;   // 光谱密度
+    uniform float uCenterShift; // 棱锥重心下移量
+    uniform float uInvBaseHalf; // 1/锥底半宽（SDF 预除）
+    uniform float uInvHeight;   // 1/高度
+    uniform float uMinAxis;     // min(半宽, 高)：SDF 距离回正
+    uniform float uPxScale;     // 像素 → 世界比例
+    uniform float uTimeScale;   // 时间速度
+
+    /* tanh 的 WebGL1 手写版：压缩累加光强 */
+    vec4 tanh4(vec4 x) {
+      vec4 e2x = exp(2.0 * x);
+      return (e2x - 1.0) / (e2x + 1.0);
+    }
+    float rand(vec2 co) {
+      return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453123);
+    }
+    /* 各向异性八面体 SDF 的上半 = 四棱锥（预除宽高做归一） */
+    float sdPyramid(vec3 p) {
+      vec3 q = vec3(abs(p.x) * uInvBaseHalf, abs(p.y) * uInvHeight, abs(p.z) * uInvBaseHalf);
+      float oct = (q.x + q.y + q.z - 1.0) * uMinAxis * 0.5773502691896258;
+      return max(oct, -p.y);   // 切掉下半，留上尖锥体
+    }
+    /* YIQ 色相旋转矩阵：整体转光谱相位 */
+    mat3 hueRotation(float a) {
+      float c = cos(a), s = sin(a);
+      mat3 W = mat3(0.299, 0.587, 0.114, 0.299, 0.587, 0.114, 0.299, 0.587, 0.114);
+      mat3 U = mat3(0.701, -0.587, -0.114, -0.299, 0.413, -0.114, -0.300, -0.588, 0.886);
+      mat3 V = mat3(0.168, -0.331, 0.500, 0.328, 0.035, -0.500, -0.497, 0.296, 0.201);
+      return W + U * c + V * s;
+    }
+
+    void main() {
+      vec2 f = (gl_FragCoord.xy - 0.5 * uRes) * uPxScale;   // 屏幕像素 → 世界坐标
+
+      float z = 5.0;         // 从相机前 5 个单位开始走
+      float d = 0.0;
+      vec3 p;
+      vec4 o = vec4(0.0);
+
+      /* rotate 模式：底面随时间「拧动」（xz 平面的时间矩阵） */
+      mat2 wob = mat2(1.0, 0.0, 0.0, 1.0);
+      if (uWobble == 1) {
+        float t = uTime * uTimeScale;
+        wob = mat2(cos(t), cos(t + 33.0), cos(t + 11.0), cos(t));
+      }
+
+      /* 100 步体积行进：步长 = 0.1 + 0.2|SDF|——永远走不进表面，
+         始终在表面附近徘徊采样，光才有「体积雾」质感 */
+      for (int i = 0; i < 100; i++) {
+        p = vec3(f, z);
+        p.xz = wob * p.xz;
+        p = uRot * p;
+        vec3 q = p;
+        q.y += uCenterShift;                       // 把锥体重心挪到画面中央
+        d = 0.1 + 0.2 * abs(sdPyramid(q));
+        z -= d;
+        /* 光谱累加：以 (p.y + z) 为相位、四通道错开 0/1/2/3，彩虹沿高度展开 */
+        o += (sin((p.y + z) * uColorFreq + vec4(0.0, 1.0, 2.0, 3.0)) + 1.0) / d;
+      }
+
+      /* o² 强化对比再 tanh 压缩：亮棱清晰、黑场干净 */
+      o = tanh4(o * o * uGlow / 1e5);
+
+      vec3 col = o.rgb;
+      float n = rand(gl_FragCoord.xy + vec2(uTime));
+      col += (n - 0.5) * 0.5;                      // 半强度噪点：打散色带断层
+      col = clamp(col, 0.0, 1.0);
+
+      float L = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      col = clamp(mix(vec3(L), col, uSat), 0.0, 1.0);   // 饱和度微调
+      if (abs(uHueShift) > 0.0001) col = clamp(hueRotation(uHueShift) * col, 0.0, 1.0);
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+
+  const H = CONFIG.height, BH = CONFIG.baseWidth * 0.5;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  function resize() {
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
+    gl.uniform1f(U('uPxScale'), 1 / (canvas.height * 0.1 * CONFIG.scale));
+  }
+
+  gl.uniform1f(U('uHeight'), H);
+  gl.uniform1f(U('uBaseHalf'), BH);
+  gl.uniform1f(U('uGlow'), CONFIG.glow);
+  gl.uniform1f(U('uSat'), 1.5);                 // 黑场上饱和一点更透
+  gl.uniform1f(U('uHueShift'), CONFIG.hueShift);
+  gl.uniform1f(U('uColorFreq'), CONFIG.colorFreq);
+  gl.uniform1f(U('uCenterShift'), H * 0.25);
+  gl.uniform1f(U('uInvBaseHalf'), 1 / BH);
+  gl.uniform1f(U('uInvHeight'), 1 / H);
+  gl.uniform1f(U('uMinAxis'), Math.min(BH, H));
+  gl.uniform1f(U('uTimeScale'), CONFIG.timeScale);
+  gl.uniform1i(U('uWobble'), CONFIG.animation === 'rotate' ? 1 : 0);
+  const uTime = U('uTime'), uRot = U('uRot');
+  resize(); addEventListener('resize', resize);
+
+  // 欧拉角 → 旋转矩阵（列主序传给 GL）
+  const rotBuf = new Float32Array(9);
+  function setEuler(yaw, pitch, roll) {
+    const cy = Math.cos(yaw), sy = Math.sin(yaw);
+    const cx = Math.cos(pitch), sx = Math.sin(pitch);
+    const cz = Math.cos(roll), sz = Math.sin(roll);
+    rotBuf[0] = cy * cz + sy * sx * sz; rotBuf[1] = cx * sz; rotBuf[2] = -sy * cz + cy * sx * sz;
+    rotBuf[3] = -cy * sz + sy * sx * cz; rotBuf[4] = cx * cz; rotBuf[5] = sy * sz + cy * sx * cz;
+    rotBuf[6] = sy * cx; rotBuf[7] = -sx; rotBuf[8] = cy * cx;
+    return rotBuf;
+  }
+
+  // hover 模式：指针位置 → 目标偏航/俯仰，惯性趋近
+  const pointer = { x: 0, y: 0, inside: false };
+  if (CONFIG.animation === 'hover') {
+    addEventListener('pointermove', (e) => {
+      pointer.x = Math.max(-1, Math.min(1, (e.clientX - innerWidth / 2) / (innerWidth / 2)));
+      pointer.y = Math.max(-1, Math.min(1, (e.clientY - innerHeight / 2) / (innerHeight / 2)));
+      pointer.inside = true;
+    });
+    addEventListener('pointerleave', () => { pointer.inside = false; });
+  }
+  // 3drotate 模式：三轴各自的随机角速度与相位
+  const wX = 0.3 + Math.random() * 0.6;
+  const wY = 0.2 + Math.random() * 0.7;
+  const wZ = 0.1 + Math.random() * 0.5;
+  const phX = Math.random() * Math.PI * 2;
+  const phZ = Math.random() * Math.PI * 2;
+
+  let yaw = 0, pitch = 0, roll = 0;
+  let time = reduceMotion ? 2 : 0;   // 减少动态：定格一帧棱镜
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }   // 切后台暂停
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt;
+
+    if (CONFIG.animation === 'hover') {
+      /* 目标角 = 指针偏移 × 强度，5% 惯性趋近 */
+      const targetYaw = (pointer.inside ? -pointer.x : 0) * 1.2;
+      const targetPitch = (pointer.inside ? pointer.y : 0) * 1.2;
+      yaw += 0.05 * (targetYaw - yaw);
+      pitch += 0.05 * (targetPitch - pitch);
+      roll += 0.1 * (0 - roll);
+      gl.uniformMatrix3fv(uRot, false, setEuler(yaw, pitch, roll));
+    } else if (CONFIG.animation === '3drotate') {
+      const t = time * CONFIG.timeScale;
+      gl.uniformMatrix3fv(uRot, false, setEuler(
+        t * wY,
+        Math.sin(t * wX + phX) * 0.6,
+        Math.sin(t * wZ + phZ) * 0.5
+      ));
+    } else {
+      gl.uniformMatrix3fv(uRot, false, setEuler(0, 0, 0));   // rotate 模式：wobble 在 shader 里
+    }
+
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>
