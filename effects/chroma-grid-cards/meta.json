@@ -3,8 +3,12 @@
   "name": "彩光网格卡片",
   "category": "card",
   "sub": "hover",
-  "tags": ["网格", "聚光", "去色"],
-  "summary": "一墙黑白卡片，鼠标周围一圈才透出原本的颜色",
+  "tags": [
+    "网格",
+    "聚光",
+    "去色"
+  ],
+  "summary": "一墙卡片平时是灰的，鼠标周围一圈恢复彩色；悬停的卡亮起自己的专属彩色描边，卡内有一团跟着鼠标走的高光",
   "params": [
     {
       "key": "slides",
@@ -15,12 +19,30 @@
       "max": 8,
       "captions": true,
       "default": [
-        { "src": "/samples/sample-1.webp", "caption": "夜枭小憩" },
-        { "src": "/samples/sample-2.webp", "caption": "海边老爷车" },
-        { "src": "/samples/sample-3.webp", "caption": "日落海滩" },
-        { "src": "/samples/sample-5.webp", "caption": "蓝天夹竹桃" },
-        { "src": "/samples/sample-7.webp", "caption": "几何屋檐" },
-        { "src": "/samples/sample-8.webp", "caption": "城市夜色" }
+        {
+          "src": "/samples/sample-1.webp",
+          "caption": "夜枭小憩"
+        },
+        {
+          "src": "/samples/sample-2.webp",
+          "caption": "海边老爷车"
+        },
+        {
+          "src": "/samples/sample-3.webp",
+          "caption": "日落海滩"
+        },
+        {
+          "src": "/samples/sample-5.webp",
+          "caption": "蓝天夹竹桃"
+        },
+        {
+          "src": "/samples/sample-7.webp",
+          "caption": "几何屋檐"
+        },
+        {
+          "src": "/samples/sample-8.webp",
+          "caption": "城市夜色"
+        }
       ]
     },
     {
@@ -76,18 +98,35 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "torch",
       "name": "小手电",
-      "values": { "radius": 140, "softness": 20, "lag": 0.5 }
+      "values": {
+        "radius": 140,
+        "softness": 20,
+        "lag": 0.5
+      }
     },
     {
       "id": "wide",
       "name": "大范围柔光",
-      "values": { "radius": 460, "softness": 100, "lag": 0.12, "borderGlow": false }
+      "values": {
+        "radius": 460,
+        "softness": 100,
+        "lag": 0.12,
+        "borderGlow": false
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

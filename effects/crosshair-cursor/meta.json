@@ -3,8 +3,12 @@
   "name": "十字瞄准线",
   "category": "canvas",
   "sub": "hover",
-  "tags": ["光标", "瞄准", "线条"],
-  "summary": "两条贯穿全屏的细线随鼠标移动，指到目标时中心张开一格",
+  "tags": [
+    "光标",
+    "瞄准",
+    "线条"
+  ],
+  "summary": "整屏十字瞄准线跟着鼠标走，指到目标时中心让开一圈、线条被电流打了一下似地抖动",
   "params": [
     {
       "key": "lag",
@@ -48,7 +52,13 @@
       "default": true,
       "help": "在交叉点旁显示鼠标坐标读数"
     },
-    { "key": "color", "label": "线条颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "color",
+      "label": "线条颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
     {
       "key": "opacity",
       "label": "线条透明度",
@@ -68,18 +78,37 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "sniper",
       "name": "狙击镜",
-      "values": { "lag": 1, "gap": 0, "hoverGap": 60, "opacity": 1, "coords": true }
+      "values": {
+        "lag": 1,
+        "gap": 0,
+        "hoverGap": 60,
+        "opacity": 1,
+        "coords": true
+      }
     },
     {
       "id": "soft",
       "name": "柔和慢随",
-      "values": { "lag": 0.15, "gap": 24, "opacity": 0.3, "coords": false }
+      "values": {
+        "lag": 0.15,
+        "gap": 24,
+        "opacity": 0.3,
+        "coords": false
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

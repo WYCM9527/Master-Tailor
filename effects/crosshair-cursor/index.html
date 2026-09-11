@@ -72,6 +72,11 @@
   <div class="mt-target">TARGET 02</div>
   <div class="mt-target">TARGET 03</div>
 </div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- 指到目标那一瞬的湍流：基频从 1 衰减到 0，位移 40px，线条像被电流打了一下 -->
+  <filter id="mtNoiseX"><feTurbulence id="mtTurbX" type="fractalNoise" baseFrequency="0.000001" numOctaves="1"/><feDisplacementMap in="SourceGraphic" scale="40"/></filter>
+  <filter id="mtNoiseY"><feTurbulence id="mtTurbY" type="fractalNoise" baseFrequency="0.000001" numOctaves="1"/><feDisplacementMap in="SourceGraphic" scale="40"/></filter>
+</svg>
 <div class="mt-line h" id="lT" aria-hidden="true"></div>
 <div class="mt-line h" id="lB" aria-hidden="true"></div>
 <div class="mt-line v" id="lL" aria-hidden="true"></div>
@@ -94,8 +99,27 @@
   let px = innerWidth / 2, py = innerHeight / 2, x = px, y = py, gap = CONFIG.gap, onTarget = false, auto = true;
   addEventListener('pointermove', e => {
     auto = false; px = e.clientX; py = e.clientY;
-    onTarget = !!(e.target && e.target.closest && e.target.closest('.mt-target'));
+    const now = !!(e.target && e.target.closest && e.target.closest('.mt-target'));
+    if (now && !onTarget) shake();   // 刚指到目标：抖一下
+    onTarget = now;
   });
+  // 湍流抖动：0.5 秒内把 feTurbulence 的基频从 1 降到 0（power1 缓动），期间四段线挂位移滤镜
+  const turbX = document.getElementById('mtTurbX'), turbY = document.getElementById('mtTurbY');
+  let shakeRaf = 0;
+  function shake() {
+    if (reduceMotion) return;
+    cancelAnimationFrame(shakeRaf);
+    const t0 = performance.now();
+    lT.style.filter = lB.style.filter = 'url(#mtNoiseX)';
+    lL.style.filter = lR.style.filter = 'url(#mtNoiseY)';
+    (function tick(now) {
+      const p = Math.min(1, (now - t0) / 500);
+      const v = 1 - (1 - Math.pow(1 - p, 2));   // power1 缓出：1 → 0
+      turbX.setAttribute('baseFrequency', v); turbY.setAttribute('baseFrequency', v);
+      if (p < 1) shakeRaf = requestAnimationFrame(tick);
+      else { lT.style.filter = lB.style.filter = lL.style.filter = lR.style.filter = 'none'; }
+    })(t0);
+  }
   document.documentElement.addEventListener('pointerleave', () => (auto = true));
 
   function frame() {
@@ -106,10 +130,10 @@
       gap += (targetGap - gap) * (reduceMotion ? 1 : 0.2);
       // 水平线：左段 0 → x−gap，右段 x+gap → 右边缘；垂直线同理
       // 用 top/left/width/height 直接布局，四段线各自一条
-      lT.style.cssText = 'left:0;top:' + y + 'px;width:' + Math.max(0, x - gap) + 'px';
-      lB.style.cssText = 'left:' + (x + gap) + 'px;top:' + y + 'px;width:' + Math.max(0, innerWidth - x - gap) + 'px';
-      lL.style.cssText = 'left:' + x + 'px;top:0;height:' + Math.max(0, y - gap) + 'px';
-      lR.style.cssText = 'left:' + x + 'px;top:' + (y + gap) + 'px;height:' + Math.max(0, innerHeight - y - gap) + 'px';
+      Object.assign(lT.style, { left: '0px', top: y + 'px', width: Math.max(0, x - gap) + 'px' });
+      Object.assign(lB.style, { left: (x + gap) + 'px', top: y + 'px', width: Math.max(0, innerWidth - x - gap) + 'px' });
+      Object.assign(lL.style, { left: x + 'px', top: '0px', height: Math.max(0, y - gap) + 'px' });
+      Object.assign(lR.style, { left: x + 'px', top: (y + gap) + 'px', height: Math.max(0, innerHeight - y - gap) + 'px' });
       if (CONFIG.coords) {
         coords.textContent = Math.round(x) + ' , ' + Math.round(y);
         coords.style.transform = 'translate(' + (x + gap + 8) + 'px,' + (y + gap + 6) + 'px)';

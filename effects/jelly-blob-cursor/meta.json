@@ -3,8 +3,12 @@
   "name": "果冻光标",
   "category": "canvas",
   "sub": "hover",
-  "tags": ["光标", "果冻", "融合"],
-  "summary": "几团软软的圆球拖着鼠标走，靠近时黏成一团像果冻",
+  "tags": [
+    "光标",
+    "果冻",
+    "融合"
+  ],
+  "summary": "几颗半透明的果冻球带着白色高光点和投影黏在一起跟着鼠标跑，越靠后越慢，拉出黏稠的拖尾",
   "params": [
     {
       "key": "count",
@@ -18,13 +22,13 @@
     },
     {
       "key": "size",
-      "label": "主球大小",
+      "label": "最大球直径",
       "type": "range",
       "target": "css",
       "min": 20,
-      "max": 120,
+      "max": 200,
       "step": 5,
-      "default": 60,
+      "default": 125,
       "unit": "px"
     },
     {
@@ -49,7 +53,13 @@
       "default": 12,
       "help": "球体靠近时边缘融合的程度"
     },
-    { "key": "color", "label": "球体颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "color",
+      "label": "球体颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
     {
       "key": "hideCursor",
       "label": "隐藏系统光标",
@@ -59,18 +69,36 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "single",
       "name": "单球紧随",
-      "values": { "count": 1, "size": 36, "lag": 0.4, "goo": 4 }
+      "values": {
+        "count": 1,
+        "size": 36,
+        "lag": 0.4,
+        "goo": 4
+      }
     },
     {
       "id": "slime",
       "name": "拖长黏液",
-      "values": { "count": 5, "size": 80, "lag": 0.08, "goo": 20 }
+      "values": {
+        "count": 5,
+        "size": 80,
+        "lag": 0.08,
+        "goo": 20
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

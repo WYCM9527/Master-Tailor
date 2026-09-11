@@ -9,103 +9,133 @@
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;        /* 页面底色 */
     --mt-color: #ffffff;     /* 电流颜色 */
-    --mt-thickness: 2px;     /* 电流粗细 */
+    --mt-thickness: 2px;     /* 稳定边框粗细 */
     --mt-glow: 16px;         /* 外发光半径 */
-    --mt-rounded: 16px;      /* 卡片圆角 */
+    --mt-rounded: 24px;      /* 卡片圆角 */
   }
   html, body { margin: 0; height: 100%; }
   body {
     background: var(--mt-bg);
-    display: grid;
-    place-items: center;
+    display: grid; place-items: center;
     overflow: hidden;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     color: #f2f3f8;
   }
   .mt-card {
     position: relative;
-    width: min(360px, 78vw);
-    padding: 34px 30px;
+    width: min(360px, 80vw);
+    padding: 40px 32px;
+    box-sizing: border-box;
     border-radius: var(--mt-rounded);
-    background: #101016;
+    background: #111218;
+    isolation: isolate;
   }
-  .mt-card h3 { margin: 0 0 10px; font-size: 22px; letter-spacing: 0.04em; }
-  .mt-card p { margin: 0; font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, 0.72); }
-  /* 电流层：一张覆盖卡片并向外扩出抖动余量的 SVG，描一条圆角矩形，经湍流位移滤镜变形 */
-  .mt-bolt {
-    position: absolute;
-    inset: -24px;
-    width: calc(100% + 48px);
-    height: calc(100% + 48px);
-    pointer-events: none;
-    overflow: visible;
-    filter: drop-shadow(0 0 var(--mt-glow) var(--mt-color));
+  /* 底层稳定发光边框：两层同色描边，一层 1px 模糊、一层 4px 模糊，叠成柔和的常亮边 */
+  .mt-card .edge { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; border: var(--mt-thickness) solid var(--mt-color); }
+  .mt-card .edge.soft { opacity: 0.6; filter: blur(1px); }
+  .mt-card .edge.wide { filter: blur(4px); }
+  /* 更大范围的背景辉光 */
+  .mt-card .halo {
+    position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+    opacity: 0.3; transform: scale(1.1);
+    filter: blur(calc(var(--mt-glow) * 2));
+    background: linear-gradient(-30deg, var(--mt-color), transparent, var(--mt-color));
   }
-  .mt-bolt rect {
-    fill: none;
-    stroke: var(--mt-color);
-    stroke-width: var(--mt-thickness);
-    filter: url(#mtElectric);
-  }
+  /* 电流线：比卡片大一圈（四周各 60px 余量）的 canvas，噪声折线可以越出卡片边缘 */
+  .mt-card canvas { position: absolute; left: -60px; top: -60px; pointer-events: none; filter: drop-shadow(0 0 var(--mt-glow) var(--mt-color)); }
+  .mt-card h3 { position: relative; margin: 0 0 12px; font-size: 22px; font-weight: 700; }
+  .mt-card p { position: relative; margin: 0; font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, 0.62); }
 
-  /* 用户开启「减少动态效果」时：边框静止为一条发光直线框 */
-  @media (prefers-reduced-motion: reduce) {
-    .mt-bolt rect { filter: none; }
-  }
+  /* 用户开启「减少动态效果」时：电流线定格（JS 同步处理） */
 </style>
 </head>
 <body>
-<div class="mt-card">
-  <svg class="mt-bolt" aria-hidden="true">
-    <defs>
-      <filter id="mtElectric" x="-20%" y="-20%" width="140%" height="140%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="2" result="noise"/>
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"/>
-      </filter>
-    </defs>
-    <rect id="mtRect" x="24" y="24" rx="16" ry="16"/>
-  </svg>
-  <h3 id="mtTitle">高压电流</h3>
-  <p>一圈毛刺状的电光沿着卡片边缘持续抖动、游走，像边框里真的通着电。</p>
+<div class="mt-card" id="mtCard">
+  <div class="halo"></div>
+  <div class="edge soft"></div>
+  <div class="edge wide"></div>
+  <canvas id="mtBolt" aria-hidden="true"></canvas>
+  <h3 id="mtTitle"></h3>
+  <p>边框上一条细细的电弧沿着卡片轮廓不停地扭动游走，底下垫着一圈稳定的发光边。</p>
 </div>
 <script>
   const CONFIG = {
-    jitter: 10,    // 抖动幅度（px）
-    speed: 1,      // 抖动速度倍率
-    title: "高压电流", // 卡片标题
+    chaos: 0.12,       // 电弧扭动幅度
+    speed: 1,          // 扭动速度倍率
+    title: "高压电流",  // 卡片标题
   };
+  // 噪声参数：10 层倍频、频率倍率 1.6、振幅衰减 0.7、基频 10、最大位移 60px
+  const OCTAVES = 10, LACUNARITY = 1.6, GAIN = 0.7, FREQ = 10, DISPLACEMENT = 60, PAD = 60;
 
-  const card = document.querySelector('.mt-card');
-  const rect = document.getElementById('mtRect');
-  const turb = document.querySelector('#mtElectric feTurbulence');
-  const disp = document.querySelector('#mtElectric feDisplacementMap');
+  const card = document.getElementById('mtCard');
+  const canvas = document.getElementById('mtBolt');
+  const ctx = canvas.getContext('2d');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.getElementById('mtTitle').textContent = CONFIG.title;
-  disp.setAttribute('scale', CONFIG.jitter);
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--mt-color').trim() || '#fff';
 
-  // 描边矩形跟随卡片尺寸与圆角
-  function fit() {
-    const w = card.clientWidth, h = card.clientHeight;
-    const r = parseFloat(getComputedStyle(card).borderRadius) || 0;
-    rect.setAttribute('width', w); rect.setAttribute('height', h);
-    rect.setAttribute('rx', r); rect.setAttribute('ry', r);
+  // 一维值噪声（时间作为第二维），多层叠加得到连续流动的扭动量
+  const rnd = (x) => (Math.sin(x * 12.9898) * 43758.5453) % 1;
+  function noise2(x, y) {
+    const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j;
+    const a = rnd(i + j * 57), b = rnd(i + 1 + j * 57), c = rnd(i + (j + 1) * 57), d = rnd(i + 1 + (j + 1) * 57);
+    const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+    return a * (1 - ux) * (1 - uy) + b * ux * (1 - uy) + c * (1 - ux) * uy + d * ux * uy;
   }
-  fit();
-  addEventListener('resize', fit);
-  setInterval(fit, 1000); // 调参改圆角后跟上
-
-  // 让噪声随时间流动：每帧换 seed 太跳，改为缓慢推进 baseFrequency 的微小抖动 + 周期性换 seed
-  let t = 0, last = 0;
-  function frame(now) {
-    if (!document.hidden && !reduceMotion && now - last > 40 / CONFIG.speed) {
-      last = now;
-      t += 1;
-      // 每隔几帧换一个种子，配合微调频率，电流看起来在边框上游走
-      if (t % 3 === 0) turb.setAttribute('seed', String((t / 3) % 1000));
-      const bf = 0.02 + Math.sin(t * 0.1) * 0.006;
-      turb.setAttribute('baseFrequency', bf.toFixed(4));
+  function fbm(x, time, seed) {
+    let y = 0, amp = CONFIG.chaos, freq = FREQ;
+    for (let i = 0; i < OCTAVES; i++) {
+      if (i > 0) y += amp * noise2(freq * x + seed * 100, time * freq * 0.3);   // 第 0 层略过（只留高频细节）
+      freq *= LACUNARITY; amp *= GAIN;
     }
+    return y;
+  }
+  // 圆角矩形周长上按比例取点
+  function rectPoint(t, left, top, w, h, r) {
+    const sw = w - 2 * r, sh = h - 2 * r, arc = (Math.PI * r) / 2, total = 2 * sw + 2 * sh + 4 * arc;
+    let d = t * total, acc = 0;
+    const corner = (cx, cy, a0, p) => ({ x: cx + r * Math.cos(a0 + p * (Math.PI / 2)), y: cy + r * Math.sin(a0 + p * (Math.PI / 2)) });
+    if (d <= acc + sw) return { x: left + r + (d - acc), y: top }; acc += sw;
+    if (d <= acc + arc) return corner(left + w - r, top + r, -Math.PI / 2, (d - acc) / arc); acc += arc;
+    if (d <= acc + sh) return { x: left + w, y: top + r + (d - acc) }; acc += sh;
+    if (d <= acc + arc) return corner(left + w - r, top + h - r, 0, (d - acc) / arc); acc += arc;
+    if (d <= acc + sw) return { x: left + w - r - (d - acc), y: top + h }; acc += sw;
+    if (d <= acc + arc) return corner(left + r, top + h - r, Math.PI / 2, (d - acc) / arc); acc += arc;
+    if (d <= acc + sh) return { x: left, y: top + h - r - (d - acc) }; acc += sh;
+    return corner(left + r, top + r, Math.PI, (d - acc) / arc);
+  }
+
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  let W = 0, H = 0;
+  function fit() {
+    const r = card.getBoundingClientRect();
+    W = r.width + PAD * 2; H = r.height + PAD * 2;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  }
+  fit(); addEventListener('resize', fit);
+
+  let time = 0, last = performance.now();
+  function frame(now) {
     requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) time += dt * CONFIG.speed;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const bw = W - 2 * PAD, bh = H - 2 * PAD;
+    const radius = Math.min(parseFloat(getComputedStyle(card).borderRadius) || 0, Math.min(bw, bh) / 2);
+    const samples = Math.floor((2 * (bw + bh) + 2 * Math.PI * radius) / 2);
+    ctx.beginPath();
+    for (let i = 0; i <= samples; i++) {
+      const p = i / samples, pt = rectPoint(p, PAD, PAD, bw, bh, radius);
+      const x = pt.x + fbm(p * 8, time, 0) * DISPLACEMENT, y = pt.y + fbm(p * 8, time, 1) * DISPLACEMENT;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
   }
   requestAnimationFrame(frame);
 </script>

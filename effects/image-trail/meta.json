@@ -3,8 +3,12 @@
   "name": "图片拖尾",
   "category": "canvas",
   "sub": "hover",
-  "tags": ["光标", "图片", "拖尾"],
-  "summary": "鼠标划过之处不断冒出一张张图片，随后依次缩小消失",
+  "tags": [
+    "光标",
+    "图片",
+    "拖尾"
+  ],
+  "summary": "鼠标划过的地方一张张图片依次冒出，每张从滞后一点的位置滑向鼠标、停一下再缩小消失，连成一条有方向感的图片尾迹",
   "params": [
     {
       "key": "slides",
@@ -15,11 +19,26 @@
       "max": 8,
       "captions": false,
       "default": [
-        { "src": "/samples/sample-1.webp", "caption": "" },
-        { "src": "/samples/sample-2.webp", "caption": "" },
-        { "src": "/samples/sample-3.webp", "caption": "" },
-        { "src": "/samples/sample-4.webp", "caption": "" },
-        { "src": "/samples/sample-5.webp", "caption": "" }
+        {
+          "src": "/samples/sample-1.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-2.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-3.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-4.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-5.webp",
+          "caption": ""
+        }
       ]
     },
     {
@@ -30,7 +49,7 @@
       "min": 30,
       "max": 200,
       "step": 10,
-      "default": 90,
+      "default": 80,
       "unit": "px",
       "help": "鼠标每移动多远冒出一张"
     },
@@ -92,11 +111,21 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "dense",
       "name": "密集小图",
-      "values": { "spacing": 40, "size": 100, "lifetime": 0.8, "maxCount": 16, "tilt": 25 }
+      "values": {
+        "spacing": 40,
+        "size": 100,
+        "lifetime": 0.8,
+        "maxCount": 16,
+        "tilt": 25
+      }
     },
     {
       "id": "posters",
@@ -111,6 +140,10 @@
       }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

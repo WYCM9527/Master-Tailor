@@ -24,7 +24,7 @@
     letter-spacing: 0.14em;
     pointer-events: none;
   }
-  /* 每张冒出的图：弹出 → 停留 → 缩小淡出 */
+  /* 每张冒出的图：在「滞后点」出现 → 0.4s 内滑到鼠标当前位置（这段位移就是拖尾的方向感）→ 停留 → 缩小淡出 */
   .mt-shot {
     position: absolute;
     left: 0; top: 0;
@@ -37,11 +37,10 @@
     animation: mt-shot var(--mt-lifetime) cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   }
   @keyframes mt-shot {
-    0%   { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot)) scale(0.6); }
-    12%  { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot)) scale(1.04); }
-    25%  { transform: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
-    70%  { opacity: 1; transform: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--rot)) scale(0.7); }
+    0%   { opacity: 1; transform: translate(calc(var(--x0) - 50%), calc(var(--y0) - 50%)) rotate(var(--rot)) scale(1); animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+    40%  { opacity: 1; transform: translate(calc(var(--x1) - 50%), calc(var(--y1) - 50%)) rotate(var(--rot)) scale(1); }
+    60%  { opacity: 1; transform: translate(calc(var(--x1) - 50%), calc(var(--y1) - 50%)) rotate(var(--rot)) scale(1); animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1); }
+    100% { opacity: 0; transform: translate(calc(var(--x1) - 50%), calc(var(--y1) - 50%)) rotate(var(--rot)) scale(0.2); }
   }
 
   /* 用户开启「减少动态效果」时：不冒图（JS 同步处理） */
@@ -57,7 +56,7 @@
 <script>
   const CONFIG = {
     slides: [{ src: '/samples/sample-1.webp', caption: '' }], // 轮流出现的图片
-    spacing: 90,     // 出现间距（px）
+    spacing: 80,     // 出现间距（px）
     maxCount: 8,     // 最多同屏
     tilt: 12,        // 随机倾斜（度）
   };
@@ -69,6 +68,9 @@
   srcs.forEach(s => { const i = new Image(); i.src = s; });
 
   let k = 0, lastX = null, lastY = null, auto = true;
+  // 滞后点：以 10% 的速率追鼠标——图片从这里出发滑向鼠标，越快甩动位移越长
+  const mouse = { x: innerWidth / 2, y: innerHeight / 2 }, cache = { x: mouse.x, y: mouse.y };
+  (function follow() { cache.x += (mouse.x - cache.x) * 0.1; cache.y += (mouse.y - cache.y) * 0.1; requestAnimationFrame(follow); })();
   const live = [];
   function spawn(x, y) {
     if (reduceMotion || srcs.length === 0) return;
@@ -76,8 +78,8 @@
     img.className = 'mt-shot';
     img.src = srcs[k++ % srcs.length];
     img.alt = '';
-    img.style.left = x + 'px';
-    img.style.top = y + 'px';
+    img.style.setProperty('--x0', cache.x + 'px'); img.style.setProperty('--y0', cache.y + 'px');
+    img.style.setProperty('--x1', x + 'px'); img.style.setProperty('--y1', y + 'px');
     img.style.setProperty('--rot', ((Math.random() * 2 - 1) * CONFIG.tilt) + 'deg');
     img.style.zIndex = String(k);
     field.appendChild(img);
@@ -86,7 +88,8 @@
     img.addEventListener('animationend', () => { img.remove(); const i = live.indexOf(img); if (i >= 0) live.splice(i, 1); });
   }
   function trail(x, y) {
-    if (lastX === null) { lastX = x; lastY = y; spawn(x, y); return; }
+    mouse.x = x; mouse.y = y;
+    if (lastX === null) { lastX = x; lastY = y; cache.x = x; cache.y = y; spawn(x, y); return; }
     if (Math.hypot(x - lastX, y - lastY) < CONFIG.spacing) return;
     lastX = x; lastY = y;
     spawn(x, y);

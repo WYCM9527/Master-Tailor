@@ -8,7 +8,7 @@
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;        /* 页面底色 */
-    --mt-size: 60px;         /* 主球大小 */
+    --mt-size: 125px;         /* 最大球直径 */
     --mt-color: #ffffff;     /* 球体颜色 */
   }
   html, body { margin: 0; height: 100%; }
@@ -27,6 +27,7 @@
     filter: url(#mtGoo);
     pointer-events: none;
   }
+  /* 每颗球：半透明填充（叠在一起时颜色相加更浓）+ 右下投影 + 球内偏上的白色高光点 */
   .mt-blob {
     position: absolute;
     left: 0; top: 0;
@@ -35,7 +36,18 @@
     margin: calc(var(--mt-size) / -2) 0 0 calc(var(--mt-size) / -2);
     border-radius: 50%;
     background: var(--mt-color);
+    opacity: 0.6;
+    box-shadow: 10px 10px 5px 0 rgba(0, 0, 0, 0.75);
     will-change: transform;
+  }
+  .mt-blob::after {
+    content: '';
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 33%; height: 33%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
   }
   .mt-hint {
     position: absolute;
@@ -83,7 +95,7 @@
   const blobs = Array.from({ length: CONFIG.count }, (_, i) => {
     const el = document.createElement('div');
     el.className = 'mt-blob';
-    const s = 1 - i * 0.18;
+    const s = [0.48, 1, 0.6][i % 3] * (1 - Math.floor(i / 3) * 0.2);   // 源站三档：小 / 大 / 中（60 / 125 / 75）
     el.style.transform = 'translate(-100px,-100px) scale(' + s + ')';
     layer.appendChild(el);
     return { el, x: innerWidth / 2, y: innerHeight / 2, s };

@@ -24,8 +24,8 @@
 <script>
   const CONFIG = {
     cell: 24,          // 格子大小（px）
-    fade: 900,         // 熄灭时长（毫秒）
-    spread: 1,         // 点亮范围（格）
+    fade: 500,         // 每个轨迹点的寿命（毫秒）
+    spread: 2,         // 光斑半径（格）
     gap: 2,            // 格间缝（px）
     color: "#ffffff",  // 亮起颜色
     grid: true,        // 显示底格
@@ -46,21 +46,30 @@
   resize();
   addEventListener('resize', resize);
 
-  // 鼠标所在格及周围 spread 格一起点亮（记录点亮时刻，之后按时间衰减）
+  // 轨迹点：每次鼠标事件推入一个点（两点距离较远时在中间插补，快速划过不断开），
+  // 每个点的强度先在 30% 寿命内升到 1、再在剩余 70% 降到 0，并乘以「速度感」force
+  const MAX_AGE = CONFIG.fade, TRAIL_R = CONFIG.spread * CONFIG.cell * 1.6;
+  const trail = [];
+  let force = 0, lastPt = null;
   function light(x, y) {
     if (reduceMotion) return;
-    const c0 = Math.floor(x / CONFIG.cell), r0 = Math.floor(y / CONFIG.cell);
     const now = performance.now();
-    for (let dc = -CONFIG.spread; dc <= CONFIG.spread; dc++) for (let dr = -CONFIG.spread; dr <= CONFIG.spread; dr++) {
-      // 外圈略早一点「点亮」，衰减得更快，形成中心亮四周暗
-      const ring = Math.max(Math.abs(dc), Math.abs(dr));
-      lit.set((c0 + dc) + ',' + (r0 + dr), now - ring * CONFIG.fade * 0.25);
+    if (lastPt) {
+      const dx = lastPt.x - x, dy = lastPt.y - y, dd = dx * dx + dy * dy;
+      const nf = Math.max(0.3, Math.min(dd / (TRAIL_R * TRAIL_R) * 4, 1));   // 越快越亮
+      force = force * 0.5 + nf * 0.5;
+      const lines = Math.ceil(Math.sqrt(dd) / (TRAIL_R * 0.25));
+      for (let i = 1; i < lines; i++) trail.push({ x: lastPt.x - (dx / lines) * i, y: lastPt.y - (dy / lines) * i, t0: now, force: nf });
     }
+    trail.push({ x, y, t0: now, force });
+    lastPt = { x, y };
   }
   let auto = true;
   addEventListener('pointermove', e => { auto = false; light(e.clientX, e.clientY); });
-  document.documentElement.addEventListener('pointerleave', () => (auto = true));
+  document.documentElement.addEventListener('pointerleave', () => { auto = true; lastPt = null; });
 
+  // 离屏低分辨率画布：把所有活着的轨迹点画成柔和的径向光斑（screen 叠加），再按格心采样得到每格亮度
+  const off = document.createElement('canvas'), octx = off.getContext('2d', { willReadFrequently: true });
   function rect(x, y, s) {
     if (CONFIG.rounded) { const r = s * 0.25; ctx.beginPath(); ctx.roundRect(x, y, s, s, r); ctx.fill(); }
     else ctx.fillRect(x, y, s, s);
@@ -68,6 +77,28 @@
 
   function frame(now) {
     if (!document.hidden) {
+      // 1. 轨迹点老化
+      for (let i = trail.length - 1; i >= 0; i--) if (now - trail[i].t0 > MAX_AGE) trail.splice(i, 1);
+      if (!trail.length) force = 0;
+      // 2. 离屏画光斑（每格 1 像素）
+      if (off.width !== cols || off.height !== rows) { off.width = cols; off.height = rows; }
+      octx.globalCompositeOperation = 'source-over';
+      octx.clearRect(0, 0, cols, rows);
+      octx.globalCompositeOperation = 'screen';
+      const rCell = TRAIL_R / CONFIG.cell;
+      for (const p of trail) {
+        const age = now - p.t0;
+        let k = age < MAX_AGE * 0.3 ? age / (MAX_AGE * 0.3) : 1 - (age - MAX_AGE * 0.3) / (MAX_AGE * 0.7);
+        k *= p.force;
+        const r = rCell * k;
+        if (r <= 0.05) continue;
+        const px = p.x / CONFIG.cell, py = p.y / CONFIG.cell;
+        const g = octx.createRadialGradient(px, py, r * 0.25, px, py, r);
+        g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+        octx.fillStyle = g; octx.beginPath(); octx.arc(px, py, r, 0, Math.PI * 2); octx.fill();
+      }
+      const data = trail.length ? octx.getImageData(0, 0, cols, rows).data : null;
+      // 3. 正式绘制
       ctx.clearRect(0, 0, innerWidth, innerHeight);
       const s = CONFIG.cell - CONFIG.gap;
       if (CONFIG.grid) {
@@ -75,12 +106,9 @@
         for (let c = 0; c < cols; c++) for (let r = 0; r < rows; r++) rect(c * CONFIG.cell, r * CONFIG.cell, s);
       }
       ctx.fillStyle = CONFIG.color;
-      for (const [key, t0] of lit) {
-        const k = 1 - (now - t0) / CONFIG.fade;
-        if (k <= 0) { lit.delete(key); continue; }
-        const [c, r] = key.split(',').map(Number);
-        ctx.globalAlpha = k * k; // 先快后慢地熄灭
-        rect(c * CONFIG.cell, r * CONFIG.cell, s);
+      if (data) for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const a = data[(r * cols + c) * 4 + 3] / 255;   // 光斑覆盖度即该格亮度
+        if (a > 0.02) { ctx.globalAlpha = a; rect(c * CONFIG.cell, r * CONFIG.cell, s); }
       }
       ctx.globalAlpha = 1;
     }

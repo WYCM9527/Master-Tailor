@@ -3,13 +3,23 @@
   "name": "电流边框卡片",
   "category": "card",
   "sub": "idle",
-  "tags": ["边框", "电流", "发光"],
-  "summary": "卡片边框像通了电，一圈毛刺光线不停抖动游走",
+  "tags": [
+    "边框",
+    "电流",
+    "发光"
+  ],
+  "summary": "卡片边框像通了电：一条细电弧沿轮廓连续扭动游走，底下垫着一圈稳定的柔光边与大范围辉光",
   "params": [
-    { "key": "color", "label": "电流颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "color",
+      "label": "电流颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
     {
       "key": "thickness",
-      "label": "电流粗细",
+      "label": "稳定边框粗细",
       "type": "range",
       "target": "css",
       "min": 1,
@@ -19,15 +29,14 @@
       "unit": "px"
     },
     {
-      "key": "jitter",
-      "label": "抖动幅度",
+      "key": "chaos",
+      "label": "扭动幅度",
       "type": "range",
       "target": "config",
-      "min": 2,
-      "max": 24,
-      "step": 2,
-      "default": 10,
-      "help": "边框偏离直线的最大距离"
+      "min": 0.02,
+      "max": 0.4,
+      "step": 0.02,
+      "default": 0.12
     },
     {
       "key": "speed",
@@ -58,7 +67,7 @@
       "min": 0,
       "max": 32,
       "step": 2,
-      "default": 16,
+      "default": 24,
       "unit": "px"
     },
     {
@@ -71,18 +80,37 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "cyan",
       "name": "青色高压",
-      "values": { "color": "#00e5ff", "jitter": 16, "speed": 1.8, "glow": 28 }
+      "values": {
+        "color": "#00e5ff",
+        "speed": 1.8,
+        "glow": 28,
+        "chaos": 0.18
+      }
     },
     {
       "id": "calm",
       "name": "细弱微颤",
-      "values": { "thickness": 1, "jitter": 4, "speed": 0.5, "glow": 8, "rounded": 4 }
+      "values": {
+        "thickness": 1,
+        "speed": 0.5,
+        "glow": 8,
+        "rounded": 4,
+        "chaos": 0.06
+      }
     }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }
