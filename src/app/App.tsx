@@ -1,13 +1,15 @@
 import { Outlet, ScrollRestoration, useLocation } from 'react-router-dom';
 import { TopBar } from '../components/TopBar';
 
-/** 布局：Header（详情页除外）+ 路由出口 + 底边收口线 + 滚动恢复 */
+/** 布局：Header（首页与详情页除外）+ 路由出口 + 底边收口线 + 滚动恢复 */
 export function Layout() {
-  // 详情页不要站点 Header：它自己的第一行（目录 | 返回 | 标题 | 标签）就是页头
-  const isDetail = useLocation().pathname.startsWith('/e/');
+  const { pathname } = useLocation();
+  // 首页是一屏海报，巨字本身就是站名；详情页自己的第一行（目录 | 返回 | 标题 | 标签）就是页头。
+  // 只有效果页（Gallery）保留站点 Header，作为回首页的入口。
+  const showTopBar = pathname !== '/' && !pathname.startsWith('/e/');
   return (
     <>
-      {!isDetail && <TopBar />}
+      {showTopBar && <TopBar />}
       <main>
         <Outlet />
       </main>

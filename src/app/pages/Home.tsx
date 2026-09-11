@@ -26,7 +26,7 @@ export function Home() {
   });
 
   return (
-    <section className="g12 hero" aria-label="站点介绍">
+    <section className="g12 first hero" aria-label="站点介绍">
       <div className="cell span-8 hero-title">
         <span className="mono">Master-Tailor — 前端效果图鉴 · 复制 prompt 粘给你的 AI</span>
         <h1>裁缝大师</h1>
