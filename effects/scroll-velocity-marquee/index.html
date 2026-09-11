@@ -57,7 +57,8 @@
     will-change: transform;
   }
   .mt-track span { padding-right: 0.5em; }
-  .mt-row:nth-child(2) { color: transparent; -webkit-text-stroke: 2px var(--mt-color); }
+  /* 可选：第二排改成空心描边字 */
+  .mt-rows.hollow .mt-row:nth-child(2) { color: transparent; -webkit-text-stroke: 2px var(--mt-color); }
 
   /* 用户开启「减少动态效果」时：两排静止（JS 同步不推进） */
   @media (prefers-reduced-motion: reduce) {
@@ -69,7 +70,7 @@
 <div class="mt-page" id="mtPage">
   <div class="mt-spacer"></div>
 </div>
-<div class="mt-rows" aria-hidden="true">
+<div class="mt-rows" id="mtRows" aria-hidden="true">
   <div class="mt-row"><div class="mt-track" id="mtTrackA"></div></div>
   <div class="mt-row"><div class="mt-track" id="mtTrackB"></div></div>
 </div>
@@ -81,9 +82,11 @@
     baseSpeed: 60,  // 基础速度（px/秒），0 为只随滚动而动
     gain: 3,        // 滚动增益：滚动速度放大倍数
     skew: true,     // 随速倾斜
+    hollow: false,  // 第二排用空心描边字
   };
 
   const page = document.getElementById('mtPage');
+  if (CONFIG.hollow) document.getElementById('mtRows').classList.add('hollow');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // 每条轨道：文案复制到至少两屏宽，平移一份文案宽度后归零，肉眼无缝

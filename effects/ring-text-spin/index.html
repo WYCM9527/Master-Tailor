@@ -35,13 +35,12 @@
     letter-spacing: 0.02em;
     color: var(--mt-color);
     text-transform: uppercase;
-    animation: mt-spin var(--mt-period) linear infinite;
-    animation-direction: var(--mt-direction);
-    animation-play-state: var(--play, running);
+    /* 旋转角由 JS 每帧累加（变速时角度连续，不会跳变） */
+    transform: rotate(var(--rot, 0deg));
+    will-change: transform;
     cursor: default;
     user-select: none;
   }
-  @keyframes mt-spin { to { transform: rotate(360deg); } }
   .mt-ring .c {
     position: absolute;
     left: 50%; top: 50%;
@@ -63,10 +62,7 @@
     opacity: var(--mt-center);
   }
 
-  /* 用户开启「减少动态效果」时：静止的环形文字 */
-  @media (prefers-reduced-motion: reduce) {
-    .mt-ring { animation: none; }
-  }
+  /* 用户开启「减少动态效果」时：静止的环形文字（JS 不推进角度） */
 </style>
 </head>
 <body>
@@ -75,7 +71,7 @@
   const CONFIG = {
     text: "MASTER TAILOR · 裁缝大师 · ", // 环上文字，首尾相接
     radius: 110,       // 圆环半径（px）
-    hoverMode: "slow", // 鼠标悬停时：slow 放慢 / fast 加速 / pause 暂停 / none 不变
+    hoverMode: "fast", // 鼠标悬停时：fast 加速 / slow 放慢 / pause 暂停 / bonkers 狂转 / none 不变
   };
 
   const ring = document.getElementById('mtRing');
@@ -95,17 +91,25 @@
     ring.appendChild(c);
   });
 
-  // 悬停行为：改动画时长倍率或暂停（放慢 ×3、加速 ÷3），直接引用变量以便调参时热更新
-  ring.addEventListener('pointerenter', () => {
-    if (CONFIG.hoverMode === 'pause') ring.style.setProperty('--play', 'paused');
-    else if (CONFIG.hoverMode === 'slow') ring.style.animationDuration = 'calc(var(--mt-period) * 3)';
-    else if (CONFIG.hoverMode === 'fast') ring.style.animationDuration = 'calc(var(--mt-period) / 3)';
-  });
-  ring.addEventListener('pointerleave', () => {
-    ring.style.removeProperty('--play');
-    ring.style.animationDuration = '';
-  });
-  // 纯 CSS 旋转：页面切到后台时浏览器自动暂停渲染
+  // 旋转：角速度 = 360° / 周期 × 倍率；悬停切换倍率目标（加速 ×4、放慢 ÷2、暂停 0、狂转 ×20），
+  // 倍率本身平滑过渡，所以角度始终连续、不会跳变
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cs = getComputedStyle(document.documentElement);
+  const period = parseFloat(cs.getPropertyValue('--mt-period')) || 20;
+  const dir = cs.getPropertyValue('--mt-direction').trim() === 'reverse' ? -1 : 1;
+  const MODES = { fast: 4, slow: 0.5, pause: 0, bonkers: 20, none: 1 };
+  let rot = 0, rate = 1, targetRate = 1, last = performance.now();
+  ring.addEventListener('pointerenter', () => { targetRate = MODES[CONFIG.hoverMode] ?? 1; });
+  ring.addEventListener('pointerleave', () => { targetRate = 1; });
+  (function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (document.hidden || reduceMotion) return;
+    rate += (targetRate - rate) * Math.min(1, dt * 6);
+    rot = (rot + dir * (360 / period) * rate * dt) % 360;
+    ring.style.setProperty('--rot', rot.toFixed(3) + 'deg');
+  })(last);
 </script>
 </body>
 </html>

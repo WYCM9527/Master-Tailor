@@ -3,7 +3,11 @@
   "name": "靠近加粗文字",
   "category": "text",
   "sub": "hover",
-  "tags": ["悬停", "加粗", "磁场"],
+  "tags": [
+    "悬停",
+    "加粗",
+    "磁场"
+  ],
   "summary": "鼠标靠近哪几个字，它们就鼓起来变粗变大，像被放大镜压过",
   "params": [
     {
@@ -33,8 +37,8 @@
       "min": 1,
       "max": 2,
       "step": 0.05,
-      "default": 1.45,
-      "help": "鼠标正压在字上时字放大的倍数"
+      "default": 1,
+      "help": "1 为只变字重不放大（源效果）；大于 1 时靠近的字同时放大"
     },
     {
       "key": "weight",
@@ -62,7 +66,13 @@
       "default": 0.18,
       "help": "越小越黏、越滞后；越大越跟手"
     },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#a3a3a3" },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#a3a3a3"
+    },
     {
       "key": "accent",
       "label": "提亮颜色",
@@ -81,21 +91,44 @@
       "default": 56,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "noto-sans-sc" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "noto-sans-sc"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "wide",
       "name": "大磁场轻放大",
-      "values": { "radius": 260, "grow": 1.2, "damping": 0.1 }
+      "values": {
+        "radius": 260,
+        "grow": 1.2,
+        "damping": 0.1
+      }
     },
     {
       "id": "punch",
       "name": "重压",
-      "values": { "radius": 90, "grow": 1.9, "damping": 0.35, "font": "smiley-sans" }
+      "values": {
+        "radius": 90,
+        "grow": 1.9,
+        "damping": 0.35,
+        "font": "smiley-sans"
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

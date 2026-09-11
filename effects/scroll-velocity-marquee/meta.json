@@ -3,7 +3,11 @@
   "name": "滚速跑马灯",
   "category": "text",
   "sub": "marquee",
-  "tags": ["跑马灯", "滚动", "速度"],
+  "tags": [
+    "跑马灯",
+    "滚动",
+    "速度"
+  ],
   "summary": "两排大字随页面滚动的快慢加速、减速甚至倒流",
   "params": [
     {
@@ -53,7 +57,20 @@
       "default": true,
       "help": "跑得快时文字顺势倾斜一点"
     },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "hollow",
+      "label": "第二排空心字",
+      "type": "toggle",
+      "target": "config",
+      "default": false
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
     {
       "key": "fontSize",
       "label": "字号",
@@ -65,21 +82,44 @@
       "default": 72,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "smiley-sans" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "smiley-sans"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "still",
       "name": "只随滚动",
-      "values": { "baseSpeed": 0, "gain": 6, "skew": false }
+      "values": {
+        "baseSpeed": 0,
+        "gain": 6,
+        "skew": false
+      }
     },
     {
       "id": "outline",
       "name": "巨字慢滚",
-      "values": { "fontSize": 112, "baseSpeed": 30, "gain": 2, "font": "system-sans" }
+      "values": {
+        "fontSize": 112,
+        "baseSpeed": 30,
+        "gain": 2,
+        "font": "system-sans"
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

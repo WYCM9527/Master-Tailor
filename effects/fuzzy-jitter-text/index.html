@@ -34,8 +34,10 @@
     text: "SIGNAL LOST",   // 文案
     intensity: 0.2,        // 抖动强度（相对字高）
     hoverIntensity: 0.55,  // 悬停时强度
-    sliceHeight: 2,        // 扫描线粗细（px）
-    fps: 24,               // 抖动频率（次/秒）
+    sliceHeight: 1,        // 扫描线粗细（px）
+    fps: 60,               // 抖动频率（次/秒）
+    direction: "horizontal", // 抖动方向：horizontal 横向 / vertical 纵向 / both 双向
+    glitch: false,         // 周期爆发：每 2 秒猛抖 0.2 秒
     color: "#ffffff",      // 文字颜色
     fontSize: 120,         // 字号（px）
   };
@@ -75,14 +77,21 @@
   canvas.addEventListener('pointerenter', () => (hovering = true));
   canvas.addEventListener('pointerleave', () => (hovering = false));
 
-  // 每条扫描线随机左右错位，幅度 = 强度 × 字高 × 随机
+  // 周期爆发：每 2 秒把强度顶到 1 持续 0.2 秒
+  let burst = false;
+  if (CONFIG.glitch && !reduceMotion) setInterval(() => { burst = true; setTimeout(() => (burst = false), 200); }, 2000);
+
+  // 每条扫描线随机错位（横向 / 纵向 / 双向），幅度 = 强度 × 字高 × 随机
   function draw() {
     ctx.clearRect(0, 0, w, h);
-    const amp = (hovering ? CONFIG.hoverIntensity : CONFIG.intensity) * CONFIG.fontSize * 0.3;
+    const k = burst ? 1 : hovering ? CONFIG.hoverIntensity : CONFIG.intensity;
+    const amp = k * CONFIG.fontSize * 0.3;
     const sh = CONFIG.sliceHeight;
+    const horiz = CONFIG.direction !== 'vertical', vert = CONFIG.direction !== 'horizontal';
     for (let y = 0; y < h; y += sh) {
-      const dx = reduceMotion ? 0 : (Math.random() * 2 - 1) * amp;
-      ctx.drawImage(off, 0, y * dpr, w * dpr, sh * dpr, dx, y, w, sh);
+      const dx = reduceMotion || !horiz ? 0 : (Math.random() * 2 - 1) * amp;
+      const dy = reduceMotion || !vert ? 0 : (Math.random() * 2 - 1) * amp * 0.5;
+      ctx.drawImage(off, 0, y * dpr, w * dpr, sh * dpr, dx, y + dy, w, sh);
     }
   }
 

@@ -41,11 +41,10 @@
   .mt-focus .w {
     position: relative;
     filter: blur(var(--mt-blurAmount));
-    opacity: 0.55;
-    transition: filter var(--mt-moveDuration) ease, opacity var(--mt-moveDuration) ease;
+    transition: filter var(--mt-moveDuration) ease;
     cursor: default;
   }
-  .mt-focus .w.on { filter: blur(0); opacity: 1; }
+  .mt-focus .w.on { filter: blur(0); }
 
   /* 取景框：四个角括号，用 transform 滑到当前词的位置与尺寸 */
   .mt-focus .frame {
@@ -56,19 +55,22 @@
     transform-origin: 0 0;
     transition: transform var(--mt-moveDuration) cubic-bezier(0.2, 0.8, 0.2, 1), width var(--mt-moveDuration) ease, height var(--mt-moveDuration) ease;
   }
+  /* 四个角标：16px 小方块只留两条边，3px 圆角 + 同色 4px 发光 */
   .mt-focus .frame i {
     position: absolute;
-    width: 0.35em; height: 0.35em;
+    width: 16px; height: 16px;
     border: 3px solid var(--mt-frame);
+    border-radius: 3px;
+    filter: drop-shadow(0 0 4px var(--mt-frame));
   }
-  .mt-focus .frame i:nth-child(1) { left: -6px; top: -6px; border-right: 0; border-bottom: 0; }
-  .mt-focus .frame i:nth-child(2) { right: -6px; top: -6px; border-left: 0; border-bottom: 0; }
-  .mt-focus .frame i:nth-child(3) { left: -6px; bottom: -6px; border-right: 0; border-top: 0; }
-  .mt-focus .frame i:nth-child(4) { right: -6px; bottom: -6px; border-left: 0; border-top: 0; }
+  .mt-focus .frame i:nth-child(1) { left: -10px; top: -10px; border-right: 0; border-bottom: 0; }
+  .mt-focus .frame i:nth-child(2) { right: -10px; top: -10px; border-left: 0; border-bottom: 0; }
+  .mt-focus .frame i:nth-child(3) { left: -10px; bottom: -10px; border-right: 0; border-top: 0; }
+  .mt-focus .frame i:nth-child(4) { right: -10px; bottom: -10px; border-left: 0; border-top: 0; }
 
   /* 用户开启「减少动态效果」时：全部清晰、取景框瞬移 */
   @media (prefers-reduced-motion: reduce) {
-    .mt-focus .w { filter: none; opacity: 1; transition: none; }
+    .mt-focus .w { filter: none; transition: none; }
     .mt-focus .frame { transition: none; }
   }
 </style>

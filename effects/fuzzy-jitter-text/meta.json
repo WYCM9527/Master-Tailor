@@ -3,7 +3,11 @@
   "name": "毛边抖动文字",
   "category": "text",
   "sub": "idle",
-  "tags": ["抖动", "信号", "复古"],
+  "tags": [
+    "抖动",
+    "信号",
+    "复古"
+  ],
   "summary": "文字每一行扫描线都在细微地左右错动，像信号不稳的老屏幕",
   "params": [
     {
@@ -44,8 +48,37 @@
       "min": 1,
       "max": 8,
       "step": 1,
-      "default": 2,
+      "default": 1,
       "unit": "px"
+    },
+    {
+      "key": "direction",
+      "label": "抖动方向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "horizontal",
+          "label": "横向"
+        },
+        {
+          "value": "vertical",
+          "label": "纵向"
+        },
+        {
+          "value": "both",
+          "label": "双向"
+        }
+      ],
+      "default": "horizontal"
+    },
+    {
+      "key": "glitch",
+      "label": "周期爆发",
+      "type": "toggle",
+      "target": "config",
+      "default": false,
+      "help": "每 2 秒猛抖 0.2 秒"
     },
     {
       "key": "fps",
@@ -55,7 +88,7 @@
       "min": 6,
       "max": 60,
       "step": 2,
-      "default": 24,
+      "default": 60,
       "displayUnit": " 次/秒"
     },
     {
@@ -76,14 +109,28 @@
       "default": 120,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "smiley-sans" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "smiley-sans"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "calm",
       "name": "轻微不稳",
-      "values": { "intensity": 0.08, "hoverIntensity": 0.3, "fps": 12 }
+      "values": {
+        "intensity": 0.08,
+        "hoverIntensity": 0.3,
+        "fps": 12
+      }
     },
     {
       "id": "broken",
@@ -95,8 +142,21 @@
         "fps": 40,
         "color": "#4ade80"
       }
+    },
+    {
+      "id": "glitch",
+      "name": "双向爆发",
+      "values": {
+        "direction": "both",
+        "glitch": true,
+        "intensity": 0.1
+      }
     }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

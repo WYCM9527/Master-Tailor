@@ -52,13 +52,14 @@
 <script>
   const CONFIG = {
     text: "把鼠标划过这行字，它会被扰动、再自己复原。", // 文案
-    radius: 70,      // 扰动半径（px）
-    duration: 800,   // 复原时长（毫秒）
+    radius: 100,     // 扰动半径（px）
+    duration: 1200,  // 复原时长（毫秒，鼠标正下方的字用满，越远越短）
     speed: 40,       // 乱字刷新（毫秒）
-    glyphs: "symbol", // 乱字字符：symbol 符号 / latin 字母数字 / block 方块与线
+    glyphs: "dots",   // 乱字字符：dots 点号 / symbol 符号 / latin 字母数字 / block 方块与线
   };
 
   const POOLS = {
+    dots: '.:',
     symbol: "!@#$%&*+=?/<>{}[]|~^",
     latin: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
     block: "▓▒░█▀▄▌▐│─┼",
@@ -87,7 +88,9 @@
       if (!chars[i].trim()) return;
       const r = c.getBoundingClientRect();
       const dx = r.left + r.width / 2 - x, dy = r.top + r.height / 2 - y;
-      if (Math.hypot(dx, dy) <= CONFIG.radius) c.dataset.until = String(now + CONFIG.duration);
+      const d = Math.hypot(dx, dy);
+      // 离鼠标越近扰动越久：时长 × (1 − d/半径)，边缘只闪一下
+      if (d <= CONFIG.radius) c.dataset.until = String(Math.max(Number(c.dataset.until) || 0, now + CONFIG.duration * (1 - d / CONFIG.radius)));
     });
   }
   host.addEventListener('pointermove', e => disturbAt(e.clientX, e.clientY));

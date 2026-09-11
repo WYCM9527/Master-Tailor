@@ -3,8 +3,12 @@
   "name": "逐字弹入",
   "category": "text",
   "sub": "idle",
-  "tags": ["进场", "弹跳", "逐字"],
-  "summary": "字符从下方依次弹起落定，带一点过冲的弹簧手感",
+  "tags": [
+    "进场",
+    "弹跳",
+    "逐字"
+  ],
+  "summary": "文字一个字接一个字从下方浮起落定，也可以按词切分，可选弹簧过冲与旋转",
   "params": [
     {
       "key": "text",
@@ -22,9 +26,26 @@
       "min": 0.2,
       "max": 2,
       "step": 0.1,
-      "default": 0.9,
+      "default": 0.7,
       "unit": "em",
       "help": "字从下方多远处弹起，以字高为单位"
+    },
+    {
+      "key": "splitBy",
+      "label": "切分方式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "chars",
+          "label": "按字"
+        },
+        {
+          "value": "words",
+          "label": "按词（空格分）"
+        }
+      ],
+      "default": "chars"
     },
     {
       "key": "duration",
@@ -34,7 +55,7 @@
       "min": 0.3,
       "max": 1.5,
       "step": 0.1,
-      "default": 0.7,
+      "default": 1.2,
       "unit": "s",
       "displayUnit": " 秒"
     },
@@ -55,21 +76,36 @@
       "type": "select",
       "target": "css",
       "options": [
-        { "value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "label": "弹簧过冲" },
-        { "value": "cubic-bezier(0.22, 1, 0.36, 1)", "label": "干脆落定" },
-        { "value": "cubic-bezier(0.68, -0.6, 0.32, 1.6)", "label": "夸张回弹" }
+        {
+          "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+          "label": "干脆落定（源效果）"
+        },
+        {
+          "value": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+          "label": "弹簧过冲"
+        },
+        {
+          "value": "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
+          "label": "夸张回弹"
+        }
       ],
-      "default": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+      "default": "cubic-bezier(0.22, 1, 0.36, 1)"
     },
     {
       "key": "rotate",
       "label": "带一点旋转",
       "type": "toggle",
       "target": "css",
-      "default": true,
-      "help": "弹起时字略微倾斜，落定归正"
+      "default": false,
+      "help": "弹起时字略微倾斜 12°，落定归正（源效果不带旋转）"
     },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
     {
       "key": "fontSize",
       "label": "字号",
@@ -81,32 +117,44 @@
       "default": 56,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "system-sans"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "bouncy",
-      "name": "夸张回弹",
+      "name": "弹簧旋转",
       "values": {
-        "ease": "cubic-bezier(0.68, -0.6, 0.32, 1.6)",
-        "distance": 1.4,
-        "duration": 1,
-        "stagger": 70
+        "ease": "cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "rotate": true,
+        "distance": 0.9,
+        "duration": 0.7
       }
     },
     {
-      "id": "crisp",
-      "name": "干脆利落",
+      "id": "words",
+      "name": "按词弹入",
       "values": {
-        "ease": "cubic-bezier(0.22, 1, 0.36, 1)",
-        "distance": 0.5,
-        "duration": 0.45,
-        "stagger": 30,
-        "rotate": false
+        "splitBy": "words",
+        "text": "Split by words and rise",
+        "stagger": 120
       }
     }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

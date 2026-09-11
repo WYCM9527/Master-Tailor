@@ -3,7 +3,11 @@
   "name": "环形旋转文字",
   "category": "text",
   "sub": "idle",
-  "tags": ["环形", "旋转", "印章"],
+  "tags": [
+    "环形",
+    "旋转",
+    "印章"
+  ],
   "summary": "一圈文字沿圆环缓缓转动，像一枚会转的印章徽标",
   "params": [
     {
@@ -44,8 +48,14 @@
       "type": "select",
       "target": "css",
       "options": [
-        { "value": "normal", "label": "顺时针" },
-        { "value": "reverse", "label": "逆时针" }
+        {
+          "value": "normal",
+          "label": "顺时针"
+        },
+        {
+          "value": "reverse",
+          "label": "逆时针"
+        }
       ],
       "default": "normal"
     },
@@ -55,12 +65,28 @@
       "type": "select",
       "target": "config",
       "options": [
-        { "value": "slow", "label": "放慢" },
-        { "value": "fast", "label": "加速" },
-        { "value": "pause", "label": "暂停" },
-        { "value": "none", "label": "不变" }
+        {
+          "value": "fast",
+          "label": "加速（×4）"
+        },
+        {
+          "value": "slow",
+          "label": "放慢（÷2）"
+        },
+        {
+          "value": "pause",
+          "label": "暂停"
+        },
+        {
+          "value": "bonkers",
+          "label": "狂转（×20）"
+        },
+        {
+          "value": "none",
+          "label": "不变"
+        }
       ],
-      "default": "slow"
+      "default": "fast"
     },
     {
       "key": "center",
@@ -70,7 +96,13 @@
       "default": true,
       "help": "圆心放一个小方块作为徽标锚点"
     },
-    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
     {
       "key": "fontSize",
       "label": "字号",
@@ -82,10 +114,20 @@
       "default": 18,
       "unit": "px"
     },
-    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "jetbrains-mono" }
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "jetbrains-mono"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "stamp",
       "name": "大印章",
@@ -100,9 +142,18 @@
     {
       "id": "spin",
       "name": "快转逆时针",
-      "values": { "period": 6, "direction": "reverse", "hoverMode": "pause", "center": false }
+      "values": {
+        "period": 6,
+        "direction": "reverse",
+        "hoverMode": "pause",
+        "center": false
+      }
     }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }
