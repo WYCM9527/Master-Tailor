@@ -46,16 +46,24 @@
   /* 跑马灯带：默认整体移出行外（上方或下方由 JS 按进入方向决定），悬停时滑回 0 */
   .mt-row .band {
     position: absolute; inset: 0;
+    overflow: hidden;                 /* 内容层反向起步时露在带子外的部分必须被裁掉 */
     background: var(--mt-band);
     color: var(--mt-bg);
     display: flex; align-items: center;
     transform: translateY(var(--from, 101%));
-    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: transform var(--mt-duration) cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
   }
   /* 悬停态统一由 JS 加 is-hover 类驱动：涌入前要先把带子无过渡地挪到进入侧，
      用 :hover 伪类会让过渡从上一次的旧位置开始（方向判断失效） */
+  /* 带子里的内容层反向起步：带从上来时内容从下来，两者同时归零 → 内容像被带子「擦出来」而不是跟着带子一起滑 */
+  .mt-row .band .inner {
+    display: flex; align-items: center; height: 100%;
+    transform: translateY(calc(-1 * var(--from, 101%)));
+    transition: transform var(--mt-duration) cubic-bezier(0.16, 1, 0.3, 1);
+  }
   .mt-row.is-hover .band { transform: translateY(0); }
+  .mt-row.is-hover .band .inner { transform: translateY(0); }
   .mt-row.is-hover .name { color: transparent; }
   .mt-track {
     display: flex; align-items: center; gap: 28px;
@@ -76,7 +84,7 @@
   /* 用户开启「减少动态效果」时：跑马灯静止，涌入不做过渡 */
   @media (prefers-reduced-motion: reduce) {
     .mt-track { animation: none; }
-    .mt-row .band, .mt-row .name { transition: none; }
+    .mt-row .band, .mt-row .band .inner, .mt-row .name { transition: none; }
   }
 </style>
 </head>
@@ -112,16 +120,20 @@
       const img = document.createElement('img'); img.src = srcs[(i + k) % srcs.length]; img.alt = '';
       track.append(t, img);
     }
-    band.appendChild(track);
+    const inner = document.createElement('div');
+    inner.className = 'inner';
+    inner.appendChild(track);
+    band.appendChild(inner);
     row.append(label, band);
     // 鼠标从上方还是下方进入：带子从同一侧涌入、从离开侧退出
     row.addEventListener('pointerenter', e => {
       const r = row.getBoundingClientRect();
       // 三步走：先无过渡跳到进入侧 → 强制回流让起点生效 → 再加类触发涌入过渡
-      band.style.transition = 'none';
+      const inner = band.querySelector('.inner');
+      band.style.transition = 'none'; inner.style.transition = 'none';
       row.style.setProperty('--from', e.clientY < r.top + r.height / 2 ? '-101%' : '101%');
       void band.offsetHeight;
-      band.style.transition = '';
+      band.style.transition = ''; inner.style.transition = '';
       row.classList.add('is-hover');
     });
     row.addEventListener('pointerleave', e => {
@@ -145,10 +157,11 @@
       const row = rows[i % rows.length];
       const band = row.querySelector('.band');
       // 与真实悬停同款三步走：先无过渡挪到涌入侧，回流后再触发过渡
-      band.style.transition = 'none';
+      const inner = band.querySelector('.inner');
+      band.style.transition = 'none'; inner.style.transition = 'none';
       row.style.setProperty('--from', i % 2 ? '-101%' : '101%');
       void band.offsetHeight;
-      band.style.transition = '';
+      band.style.transition = ''; inner.style.transition = '';
       row.classList.add('is-hover');
       i++;
     }, 1600);

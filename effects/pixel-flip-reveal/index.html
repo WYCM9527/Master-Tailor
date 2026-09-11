@@ -27,81 +27,78 @@
     cursor: pointer;
     background: #14151f;
   }
-  /* 底层：揭示图；上层：封面被切成一格格，每格只显示自己那块 */
-  .mt-card .back {
+  /* 两层内容：封面与揭示图叠着，谁在上由 JS 切换；像素层盖在最上面 */
+  .mt-card .face {
     position: absolute; inset: 0;
     width: 100%; height: 100%;
     object-fit: cover;
   }
+  .mt-card .face.hidden { display: none; }
   .mt-card .grid {
     position: absolute; inset: 0;
     display: grid;
     pointer-events: none;
   }
-  .mt-card .px {
-    background-image: var(--front);
-    background-size: var(--cols) var(--rows);
-    background-position: var(--bx) var(--by);
-    transition: opacity 0.12s linear, background-color 0.12s linear;
-    transition-delay: var(--d, 0s);
-  }
-  /* 翻走：先闪一下过渡色再消失 */
-  .mt-card.on .px {
-    background-image: none;
-    background-color: var(--mt-pixelColor);
-    opacity: 0;
-  }
+  /* 像素块：纯色小方块，两段式——先一格格盖满整卡，换图，再一格格散去 */
+  .mt-card .px { background: var(--mt-pixelColor); display: none; }
+  .mt-card .px.on { display: block; }
 
-  /* 用户开启「减少动态效果」时：悬停直接切换到揭示图 */
-  @media (prefers-reduced-motion: reduce) {
-    .mt-card .px { transition: none !important; }
-  }
+  /* 用户开启「减少动态效果」时：悬停直接切换到揭示图（JS 同步处理） */
 </style>
 </head>
 <body>
 <div class="mt-card" id="mtCard">
-  <img class="back" id="mtBack" src="/samples/sample-8.webp" alt="">
+  <img class="face" id="mtFront" alt="">
+  <img class="face hidden" id="mtBack" alt="">
   <div class="grid" id="mtGrid" aria-hidden="true"></div>
 </div>
 <script>
   const CONFIG = {
     front: "/samples/sample-4.webp", // 封面图
     back: "/samples/sample-8.webp",  // 揭示图
-    grid: 10,          // 像素格数（每边）
-    duration: 0.8,     // 翻转总时长（秒）
-    order: "random",   // 翻走顺序：random 随机 / wave 左上到右下 / center 中心向外
+    grid: 7,           // 像素格数（每边）
+    duration: 0.3,     // 每一段（盖满 / 散去）的时长（秒）
+    order: "random",   // 像素出现顺序：random 随机 / wave 左上到右下 / center 中心向外
   };
 
   const card = document.getElementById('mtCard');
   const grid = document.getElementById('mtGrid');
+  const front = document.getElementById('mtFront'), back = document.getElementById('mtBack');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.getElementById('mtBack').src = CONFIG.back;
+  front.src = CONFIG.front; back.src = CONFIG.back;
   const n = CONFIG.grid;
   grid.style.gridTemplateColumns = 'repeat(' + n + ', 1fr)';
   grid.style.gridTemplateRows = 'repeat(' + n + ', 1fr)';
-  grid.style.setProperty('--front', 'url("' + CONFIG.front + '")');
-  grid.style.setProperty('--cols', (n * 100) + '%');
-  grid.style.setProperty('--rows', (n * 100) + '%');
 
-  // 每格的延迟按顺序分配：随机 / 按 (c + r) 斜扫 / 按到中心的距离
+  // 每格的出场次序：随机 / 按 (c + r) 斜扫 / 按到中心的距离
   const cells = [];
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
     const el = document.createElement('div');
     el.className = 'px';
-    // 背景按格子位置偏移，使每格显示封面对应区域
-    el.style.setProperty('--bx', (c / (n - 1) * 100) + '%');
-    el.style.setProperty('--by', (r / (n - 1) * 100) + '%');
     let rank;
     if (CONFIG.order === 'wave') rank = (c + r) / (2 * (n - 1));
     else if (CONFIG.order === 'center') rank = Math.hypot(c - (n - 1) / 2, r - (n - 1) / 2) / (Math.SQRT2 * (n - 1) / 2);
     else rank = Math.random();
-    el.style.setProperty('--d', (rank * CONFIG.duration * 0.85).toFixed(3) + 's');
     grid.appendChild(el);
-    cells.push(el);
+    cells.push({ el, rank });
   }
+  const ordered = cells.slice().sort((a, b) => a.rank - b.rank);
 
-  card.addEventListener('pointerenter', () => card.classList.add('on'));
-  card.addEventListener('pointerleave', () => card.classList.remove('on'));
+  /* 两段式动画：① 像素按次序逐个出现盖满整卡（时长 duration）；② 到点后换图；③ 像素再按同一次序逐个消失 */
+  let active = false, timers = [];
+  function animate(activate) {
+    timers.forEach(clearTimeout); timers = [];
+    active = activate;
+    if (reduceMotion) { front.classList.toggle('hidden', activate); back.classList.toggle('hidden', !activate); return; }
+    const each = (CONFIG.duration * 1000) / ordered.length;
+    ordered.forEach(({ el }) => el.classList.remove('on'));
+    ordered.forEach(({ el }, i) => timers.push(setTimeout(() => el.classList.add('on'), i * each)));
+    timers.push(setTimeout(() => { front.classList.toggle('hidden', activate); back.classList.toggle('hidden', !activate); }, CONFIG.duration * 1000));
+    ordered.forEach(({ el }, i) => timers.push(setTimeout(() => el.classList.remove('on'), CONFIG.duration * 1000 + i * each)));
+  }
+  card.addEventListener('pointerenter', () => { if (!active) animate(true); });
+  card.addEventListener('pointerleave', () => { if (active) animate(false); });
+  card.addEventListener('click', () => animate(!active));
 
   /* @mt:thumb-start */
   // 缩略图演示：自动翻开 / 盖回循环；真实鼠标进入后停止
@@ -110,8 +107,8 @@
     card.addEventListener('pointerenter', () => (auto = false));
     setInterval(() => {
       if (document.hidden || !auto) return;
-      card.classList.toggle('on');
-    }, CONFIG.duration * 1000 + 1500);
+      animate(!active);
+    }, CONFIG.duration * 2000 + 1500);
   }
   /* @mt:thumb-end */
 </script>

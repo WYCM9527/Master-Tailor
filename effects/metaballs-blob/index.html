@@ -7,86 +7,133 @@
 <style>
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
-    --mt-bg: #0a0a0f;        /* 页面底色 */
-    --mt-color: #ffffff;     /* 球体颜色 */
+    --mt-bg: #0a0a0f;        /* 页面底色（球以外透出它） */
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; }
-  /* 球层整体挂黏合滤镜：模糊 + alpha 高对比，相邻球边缘融合 */
-  .mt-field { position: fixed; inset: 0; filter: url(#mtGoo); }
-  .mt-ball {
-    position: absolute;
-    left: 0; top: 0;
-    border-radius: 50%;
-    background: var(--mt-color);
-    will-change: transform;
-  }
-
-  /* 用户开启「减少动态效果」时：球体静止（JS 同步处理） */
-  @media (prefers-reduced-motion: reduce) {
-    .mt-ball { transition: none; }
-  }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 用户开启「减少动态效果」时：JS 停止时间推进，球静止；光标球仍跟随 */
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <filter id="mtGoo">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="blur"/>
-    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 30 -14" result="goo"/>
-    <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
-  </filter>
-</svg>
-<div class="mt-field" id="mtField" aria-hidden="true"></div>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
 <script>
   const CONFIG = {
-    count: 6,      // 球体数量
-    size: 110,     // 球体平均直径（px）
-    speed: 1,      // 游动速度倍率
-    goo: 20,       // 黏合强度（模糊半径）
-    follow: true,  // 一颗跟随鼠标
+    color: "#ffffff",         // 球体颜色
+    cursorColor: "#ffffff",   // 光标球颜色
+    ballCount: 15,            // 小球数量
+    speed: 0.3,               // 游动速度
+    animationSize: 30,        // 画面范围
+    clumpFactor: 1,           // 聚簇松紧
+    cursorBallSize: 3,        // 光标球大小
+    hoverSmoothness: 0.05,    // 光标球跟随
   };
+  const MAX_BALLS = 50;
 
-  const field = document.getElementById('mtField');
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: false });
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.querySelector('#mtGoo feGaussianBlur').setAttribute('stdDeviation', CONFIG.goo);
 
-  // 每颗球沿各自的椭圆轨道慢慢游动（两组不同频率的正弦叠加，轨迹不重复）
-  const balls = Array.from({ length: CONFIG.count }, (_, i) => {
-    const el = document.createElement('div');
-    el.className = 'mt-ball';
-    const d = CONFIG.size * (0.6 + Math.random() * 0.8);
-    el.style.width = el.style.height = d + 'px';
-    el.style.margin = (-d / 2) + 'px 0 0 ' + (-d / 2) + 'px';
-    field.appendChild(el);
-    return {
-      el, d,
-      ax: 0.2 + Math.random() * 0.25, ay: 0.2 + Math.random() * 0.25,   // 轨道半径（占屏比例）
-      fx: 0.3 + Math.random() * 0.5, fy: 0.3 + Math.random() * 0.5,     // 频率
-      px: Math.random() * Math.PI * 2, py: Math.random() * Math.PI * 2, // 相位
-      x: innerWidth / 2, y: innerHeight / 2,
-    };
-  });
+  const VS = `#version 300 es
+    in vec2 aPos;
+    void main() { gl_Position = vec4(aPos, 0.0, 1.0); }
+  `;
+  // 片元：经典融球——每颗球对像素贡献 r²/d²，所有贡献相加超过阈值 1.3 处为「球体」；
+  // 用 fwidth 做一像素宽的抗锯齿边；颜色按小球与光标球各自的贡献比例混合
+  const FS = `#version 300 es
+    precision highp float;
+    out vec4 outColor;
+    uniform vec2  uRes, uMouse;
+    uniform vec3  uColor, uCursorColor;
+    uniform float uSize, uCursorR;
+    uniform int   uCount;
+    uniform vec3  uBalls[${MAX_BALLS}];   // xy 位置、z 半径（世界单位）
 
-  let mx = -9999, my = -9999;
-  addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; });
-  document.documentElement.addEventListener('pointerleave', () => { mx = -9999; my = -9999; });
+    float field(vec2 c, float r, vec2 p) { vec2 d = p - c; return (r * r) / dot(d, d); }
 
-  let t = 0;
-  function frame() {
-    if (!document.hidden && !reduceMotion) {
-      t += 0.016 * CONFIG.speed;
-      const cx = innerWidth / 2, cy = innerHeight / 2;
-      balls.forEach((b, i) => {
-        let tx = cx + Math.sin(t * b.fx + b.px) * innerWidth * b.ax;
-        let ty = cy + Math.cos(t * b.fy + b.py) * innerHeight * b.ay;
-        // 第一颗可选跟随鼠标（鼠标不在时回到自己的轨道）
-        if (CONFIG.follow && i === 0 && mx > -9000) { tx = mx; ty = my; }
-        b.x += (tx - b.x) * 0.08; b.y += (ty - b.y) * 0.08;
-        b.el.style.transform = 'translate(' + b.x + 'px,' + b.y + 'px)';
-      });
+    void main() {
+      float scale = uSize / uRes.y;
+      vec2 coord = (gl_FragCoord.xy - uRes * 0.5) * scale;
+      vec2 mouseW = (uMouse - uRes * 0.5) * scale;
+      float m1 = 0.0;
+      for (int i = 0; i < ${MAX_BALLS}; i++) { if (i >= uCount) break; m1 += field(uBalls[i].xy, uBalls[i].z, coord); }
+      float m2 = uCursorR > 0.0 ? field(mouseW, uCursorR, coord) : 0.0;
+      float total = m1 + m2;
+      float f = smoothstep(-1.0, 1.0, (total - 1.3) / min(1.0, fwidth(total)));
+      vec3 col = total > 0.0 ? uColor * (m1 / total) + uCursorColor * (m2 / total) : vec3(0.0);
+      outColor = vec4(col * f, f);
     }
-    requestAnimationFrame(frame);
+  `;
+
+  // ---- WebGL 底座 ----
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+
+  // 源站按 dpr 1 渲染，这里同样固定 1 倍：融球边缘本就柔和，省下算力
+  function resize() {
+    canvas.width = innerWidth; canvas.height = innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U('uRes'), canvas.width, canvas.height);
   }
+  resize(); addEventListener('resize', resize);
+  gl.uniform3fv(U('uColor'), hexRgb(CONFIG.color));
+  gl.uniform3fv(U('uCursorColor'), hexRgb(CONFIG.cursorColor));
+  gl.uniform1f(U('uSize'), CONFIG.animationSize);
+  gl.uniform1f(U('uCursorR'), CONFIG.cursorBallSize);
+  const n = Math.max(1, Math.min(MAX_BALLS, CONFIG.ballCount));
+  gl.uniform1i(U('uCount'), n);
+  const uBalls = U('uBalls'), uMouse = U('uMouse');
+
+  // 每颗球的轨道参数由确定性哈希生成：起始相位、角速度、轨道半径、是否叠加二次摆动、球半径
+  const fract = (v) => v - Math.floor(v);
+  const hash31 = (p) => { const r = [p * 0.1031, p * 0.103, p * 0.0973].map(fract); const d = r[0] * (r[1] + 33.33) + r[1] * (r[2] + 33.33) + r[2] * (r[0] + 33.33); return r.map(v => fract(v + d)); };
+  const hash33 = (v) => { const p = [v[0] * 0.1031, v[1] * 0.103, v[2] * 0.0973].map(fract); const d = p[0] * (p[1] + 33.33) + p[1] * (p[2] + 33.33) + p[2] * (p[0] + 33.33); const r = p.map(x => fract(x + d)); return r.map((_, i) => fract((r[i % 3] + r[(i + 1) % 3]) * r[(i + 2) % 3])); };
+  const balls = Array.from({ length: n }, (_, i) => {
+    const h1 = hash31(i + 1), h2 = hash33(h1);
+    return { st: h1[0] * 2 * Math.PI, dtFactor: 0.1 * Math.PI + h1[1] * 0.3 * Math.PI, baseScale: 5 + h1[1] * 5, toggle: Math.floor(h2[0] * 2), radius: 0.5 + h2[2] * 1.5 };
+  });
+  const data = new Float32Array(MAX_BALLS * 3);
+
+  // 光标球：鼠标在页面内时跟随（带黏滞），否则自己绕中心慢慢转
+  let inside = false, px = 0, py = 0;
+  const mouseBall = { x: innerWidth / 2, y: innerHeight / 2 };
+  addEventListener('pointermove', (e) => { inside = true; px = e.clientX; py = innerHeight - e.clientY; });
+  document.addEventListener('mouseleave', () => (inside = false));
+
+  let elapsed = reduceMotion ? 8 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!reduceMotion) elapsed += dt;
+    for (let i = 0; i < n; i++) {
+      const b = balls[i], d = elapsed * CONFIG.speed * b.dtFactor, a = b.st + d;
+      data[i * 3] = Math.cos(a) * b.baseScale * CONFIG.clumpFactor;
+      data[i * 3 + 1] = Math.sin(a + d * b.toggle) * b.baseScale * CONFIG.clumpFactor;
+      data[i * 3 + 2] = b.radius;
+    }
+    const tx = inside ? px : canvas.width * 0.5 + Math.cos(elapsed * CONFIG.speed) * canvas.width * 0.15;
+    const ty = inside ? py : canvas.height * 0.5 + Math.sin(elapsed * CONFIG.speed) * canvas.height * 0.15;
+    mouseBall.x += (tx - mouseBall.x) * CONFIG.hoverSmoothness;
+    mouseBall.y += (ty - mouseBall.y) * CONFIG.hoverSmoothness;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform3fv(uBalls, data);
+    gl.uniform2f(uMouse, mouseBall.x, mouseBall.y);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  gl.clearColor(0, 0, 0, 0);
   requestAnimationFrame(frame);
 </script>
 </body>

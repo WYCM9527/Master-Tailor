@@ -3,21 +3,15 @@
   "name": "贴纸翻角",
   "category": "card",
   "sub": "hover",
-  "tags": ["贴纸", "翻角", "拖拽"],
-  "summary": "一张贴纸悬停时翘起一角露出背胶，还能拖着到处贴",
+  "tags": ["贴纸", "翻折", "拖拽", "高光"],
+  "summary": "一张贴纸悬停时沿一条边整体向下翻折、露出背面，按住翻得更多，表面有跟着鼠标走的高光，还能拖着到处贴",
   "params": [
-    {
-      "key": "photo",
-      "label": "贴纸图片",
-      "type": "image",
-      "target": "config",
-      "default": "/samples/sample-5.webp"
-    },
+    { "key": "photo", "label": "贴纸图片", "type": "image", "target": "config", "default": "/samples/sample-5.webp" },
     {
       "key": "size",
-      "label": "贴纸大小",
+      "label": "贴纸宽度",
       "type": "range",
-      "target": "css",
+      "target": "config",
       "min": 120,
       "max": 360,
       "step": 10,
@@ -25,55 +19,78 @@
       "unit": "px"
     },
     {
-      "key": "peel",
-      "label": "翘起幅度",
+      "key": "peelHover",
+      "label": "悬停翻折",
       "type": "range",
-      "target": "css",
-      "min": 10,
+      "target": "config",
+      "min": 5,
       "max": 60,
       "step": 5,
       "default": 30,
       "unit": "%",
-      "help": "悬停时翘起的那一角占贴纸边长的比例"
+      "help": "翻下来的部分占贴纸高度的比例"
     },
     {
-      "key": "corner",
-      "label": "翘起的角",
+      "key": "peelActive",
+      "label": "按住翻折",
+      "type": "range",
+      "target": "config",
+      "min": 5,
+      "max": 80,
+      "step": 5,
+      "default": 40,
+      "unit": "%"
+    },
+    {
+      "key": "peelDirection",
+      "label": "翻折方向",
       "type": "select",
       "target": "config",
       "options": [
-        { "value": "br", "label": "右下" },
-        { "value": "tr", "label": "右上" },
-        { "value": "bl", "label": "左下" },
-        { "value": "tl", "label": "左上" }
+        { "value": "0", "label": "从上往下" },
+        { "value": "180", "label": "从下往上" },
+        { "value": "90", "label": "从右往左" },
+        { "value": "270", "label": "从左往右" }
       ],
-      "default": "br"
+      "default": "0"
     },
     {
       "key": "rotate",
-      "label": "初始歪斜",
+      "label": "贴纸歪斜",
       "type": "range",
-      "target": "css",
-      "min": -20,
-      "max": 20,
+      "target": "config",
+      "min": -45,
+      "max": 45,
       "step": 1,
-      "default": -6,
-      "unit": "deg",
-      "displayUnit": "°"
+      "default": 30,
+      "unit": "°"
     },
     {
-      "key": "draggable",
-      "label": "可拖拽",
-      "type": "toggle",
+      "key": "shadow",
+      "label": "投影浓度",
+      "type": "range",
       "target": "config",
-      "default": true
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 0.6
     },
-    { "key": "shadow", "label": "翘起投影", "type": "toggle", "target": "css", "default": true },
+    {
+      "key": "lighting",
+      "label": "高光强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.5,
+      "step": 0.05,
+      "default": 0.1
+    },
+    { "key": "draggable", "label": "可拖拽", "type": "toggle", "target": "config", "default": true },
     {
       "key": "rounded",
-      "label": "贴纸圆角",
+      "label": "圆角",
       "type": "range",
-      "target": "css",
+      "target": "config",
       "min": 0,
       "max": 40,
       "step": 2,
@@ -83,16 +100,8 @@
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "big",
-      "name": "大翻角",
-      "values": { "peel": 55, "corner": "tr", "size": 300, "rotate": 4 }
-    },
-    {
-      "id": "flat",
-      "name": "小翘不拖",
-      "values": { "peel": 12, "draggable": false, "rotate": 0, "rounded": 4 }
-    }
+    { "id": "big", "name": "大翻折", "values": { "peelHover": 50, "peelActive": 65, "size": 300, "rotate": 8 } },
+    { "id": "side", "name": "侧翻不拖", "values": { "peelDirection": "90", "draggable": false, "rotate": 0, "rounded": 4 } }
   ],
   "thumb": { "mode": "autoplay" },
   "source": { "kind": "visual-inspiration" }

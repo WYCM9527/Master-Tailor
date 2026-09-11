@@ -3,8 +3,12 @@
   "name": "目标框光标",
   "category": "canvas",
   "sub": "hover",
-  "tags": ["光标", "取景框", "锁定"],
-  "summary": "四个角括号跟着鼠标缓缓旋转，指到目标就展开套住它",
+  "tags": [
+    "光标",
+    "取景框",
+    "锁定"
+  ],
+  "summary": "四个角括号组成的瞄准框跟随鼠标自转，指到目标时四角飞去贴住目标四角、鼠标在框内移动时有视差，按下有缩放反馈",
   "params": [
     {
       "key": "size",
@@ -36,24 +40,37 @@
       "type": "range",
       "target": "config",
       "min": 0,
-      "max": 24,
-      "step": 2,
-      "default": 8,
+      "max": 20,
+      "step": 1,
+      "default": 3,
       "unit": "px",
       "help": "套住目标时比目标外扩多少"
     },
     {
       "key": "lag",
-      "label": "跟随迟滞",
+      "label": "角标迟滞",
       "type": "range",
       "target": "config",
       "min": 0.1,
       "max": 1,
       "step": 0.05,
-      "default": 0.3
+      "default": 0.3,
+      "help": "角标飞向目标的跟随速度，越小视差越明显"
     },
-    { "key": "dot", "label": "中心圆点", "type": "toggle", "target": "css", "default": true },
-    { "key": "color", "label": "框线颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    {
+      "key": "dot",
+      "label": "中心圆点",
+      "type": "toggle",
+      "target": "css",
+      "default": true
+    },
+    {
+      "key": "color",
+      "label": "框线颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
     {
       "key": "thickness",
       "label": "框线粗细",
@@ -67,18 +84,37 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "hud",
       "name": "快速 HUD",
-      "values": { "spin": 1.5, "lag": 0.6, "size": 40, "padding": 14, "thickness": 1 }
+      "values": {
+        "spin": 1.5,
+        "lag": 0.6,
+        "size": 40,
+        "padding": 14,
+        "thickness": 1
+      }
     },
     {
       "id": "soft",
       "name": "慢转无点",
-      "values": { "spin": 8, "lag": 0.15, "dot": false, "size": 22 }
+      "values": {
+        "spin": 8,
+        "lag": 0.15,
+        "dot": false,
+        "size": 22
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

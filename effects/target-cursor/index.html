@@ -21,40 +21,34 @@
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
     color: #f2f3f8;
   }
-  /* 目标框：一个跟随鼠标的容器 + 四个角括号 + 中心点；空闲时整体自转 */
-  .mt-target {
-    position: fixed;
-    left: 0; top: 0;
-    width: 28px; height: 28px;
+  /* 光标：一个零尺寸的锚点始终贴着鼠标；四个角标是它的子元素，各自独立位移 —
+     空闲时角标围成小方框并整体自转，锁定时各自飞到目标四角（相对鼠标反向位移，形成视差） */
+  .mt-cursor {
+    position: fixed; left: 0; top: 0;
+    width: 0; height: 0;
     pointer-events: none;
-    will-change: transform, width, height;
+    transform: translate(var(--x, 50vw), var(--y, 50vh)) scale(var(--press, 1)) rotate(var(--rot, 0deg));
+    will-change: transform;
   }
-  .mt-target .spin {
-    position: absolute; inset: 0;
-    animation: mt-spin var(--mt-spin) linear infinite;
-    animation-play-state: var(--play, running);
-    transition: transform 0.3s ease;
-  }
-  .mt-target.locked .spin { animation: none; }
-  @keyframes mt-spin { to { transform: rotate(360deg); } }
-  .mt-target i {
-    position: absolute;
-    width: 30%; height: 30%;
-    min-width: 6px; min-height: 6px;
-    max-width: 14px; max-height: 14px;
+  .mt-cursor i {
+    position: absolute; left: 0; top: 0;
+    width: var(--corner, 12px); height: var(--corner, 12px);
     border: var(--mt-thickness) solid var(--mt-color);
+    box-sizing: border-box;
+    transform: translate(var(--cx, 0px), var(--cy, 0px));
+    will-change: transform;
   }
-  .mt-target i:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; }
-  .mt-target i:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
-  .mt-target i:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; }
-  .mt-target i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
-  .mt-target .dot {
-    position: absolute;
-    left: 50%; top: 50%;
+  .mt-cursor i:nth-child(1) { border-right: 0; border-bottom: 0; }
+  .mt-cursor i:nth-child(2) { border-left: 0; border-bottom: 0; }
+  .mt-cursor i:nth-child(3) { border-left: 0; border-top: 0; }
+  .mt-cursor i:nth-child(4) { border-right: 0; border-top: 0; }
+  .mt-cursor .dot {
+    position: absolute; left: -2px; top: -2px;
     width: 4px; height: 4px;
-    margin: -2px 0 0 -2px;
     background: var(--mt-color);
     opacity: var(--mt-dot);
+    transform: scale(var(--dot, 1));
+    transition: transform 0.3s ease;
   }
   /* 示范目标：几个可被锁定的按钮 */
   .mt-targets {
@@ -77,9 +71,6 @@
   .mt-btn:hover { background: var(--mt-color); color: #0a0a0f; }
 
   /* 用户开启「减少动态效果」时：不自转、直接跟手（JS 同步处理） */
-  @media (prefers-reduced-motion: reduce) {
-    .mt-target .spin { animation: none; }
-  }
 </style>
 </head>
 <body>
@@ -88,51 +79,76 @@
   <button type="button" class="mt-btn">或者我</button>
   <button type="button" class="mt-btn">再试这个</button>
 </div>
-<div class="mt-target" id="mtTarget" aria-hidden="true">
-  <div class="spin"><i></i><i></i><i></i><i></i></div>
+<div class="mt-cursor" id="mtCursor" aria-hidden="true">
+  <i></i><i></i><i></i><i></i>
   <div class="dot"></div>
 </div>
 <script>
   const CONFIG = {
     size: 28,      // 空闲时大小（px）
-    padding: 8,    // 锁定留边（px）
-    lag: 0.3,      // 跟随迟滞（1 完全跟手）
+    padding: 3,    // 锁定时框线离目标边缘的距离（px）
+    lag: 0.3,      // 角标飞向目标的迟滞（越小越有视差感）
   };
 
-  const target = document.getElementById('mtTarget');
+  const cursor = document.getElementById('mtCursor');
+  const corners = [...cursor.querySelectorAll('i')];
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const spinMs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-spin')) * 1000 || 3000;
+  const CORNER = 12;
+  cursor.style.setProperty('--corner', CORNER + 'px');
+  // 空闲时四角相对鼠标的位置：围成 size 大小的方框
+  const half = CONFIG.size / 2;
+  const idlePos = [[-half, -half], [half - CORNER, -half], [half - CORNER, half - CORNER], [-half, half - CORNER]];
 
-  // 当前几何与目标几何：中心点与宽高，逐帧插值
-  let x = innerWidth / 2, y = innerHeight / 2, w = CONFIG.size, h = CONFIG.size;
-  let tx = x, ty = y, tw = w, th = h, locked = null, auto = true;
+  // 鼠标位置（光标锚点直接贴手，只留一点点平滑）
+  let mx = innerWidth / 2, my = innerHeight / 2, cx = mx, cy = my, locked = null, auto = true, rot = 0;
+  const cur = corners.map((_, i) => ({ x: idlePos[i][0], y: idlePos[i][1] }));
 
-  addEventListener('pointermove', e => {
+  addEventListener('pointermove', (e) => {
     auto = false;
-    const el = e.target && e.target.closest ? e.target.closest('.mt-btn') : null;
-    setTarget(e.clientX, e.clientY, el);
+    mx = e.clientX; my = e.clientY;
+    setLock(e.target && e.target.closest ? e.target.closest('.mt-btn') : null);
   });
   document.documentElement.addEventListener('pointerleave', () => (auto = true));
+  // 按下：中心点缩到 0.7、整框缩到 0.9
+  addEventListener('pointerdown', () => { cursor.style.setProperty('--press', '0.9'); cursor.style.setProperty('--dot', '0.7'); });
+  addEventListener('pointerup', () => { cursor.style.setProperty('--press', '1'); cursor.style.setProperty('--dot', '1'); });
 
-  function setTarget(px, py, el) {
-    if (el) {
-      const r = el.getBoundingClientRect();
-      tx = r.left + r.width / 2; ty = r.top + r.height / 2;
-      tw = r.width + CONFIG.padding * 2; th = r.height + CONFIG.padding * 2;
-      locked = el;
-    } else {
-      tx = px; ty = py; tw = CONFIG.size; th = CONFIG.size; locked = null;
-    }
-    target.classList.toggle('locked', !!locked);
+  function setLock(el) {
+    if (el === locked) return;
+    locked = el;
+    if (locked) rot = 0;   // 锁定时框摆正
   }
 
-  function frame() {
-    if (!document.hidden) {
-      const k = reduceMotion ? 1 : CONFIG.lag;
-      x += (tx - x) * k; y += (ty - y) * k; w += (tw - w) * k; h += (th - h) * k;
-      target.style.width = w + 'px'; target.style.height = h + 'px';
-      target.style.transform = 'translate(' + (x - w / 2) + 'px,' + (y - h / 2) + 'px)';
-    }
+  let last = performance.now();
+  function frame(now) {
     requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (document.hidden) return;
+    // 锚点贴手
+    const kc = reduceMotion ? 1 : 0.5;
+    cx += (mx - cx) * kc; cy += (my - cy) * kc;
+    // 空闲自转；锁定时停住
+    if (!locked && !reduceMotion) rot = (rot + (360 * dt * 1000) / spinMs) % 360;
+    cursor.style.setProperty('--x', cx + 'px'); cursor.style.setProperty('--y', cy + 'px');
+    cursor.style.setProperty('--rot', rot.toFixed(2) + 'deg');
+    // 角标目标：锁定时为「目标四角（外扩 padding） − 锚点位置」，所以鼠标在目标内移动时角标反向位移留在原处（视差）
+    let targets = idlePos;
+    if (locked) {
+      const r = locked.getBoundingClientRect(), p = CONFIG.padding;
+      targets = [
+        [r.left - p - cx, r.top - p - cy],
+        [r.right + p - CORNER - cx, r.top - p - cy],
+        [r.right + p - CORNER - cx, r.bottom + p - CORNER - cy],
+        [r.left - p - cx, r.bottom + p - CORNER - cy],
+      ];
+    }
+    const k = reduceMotion ? 1 : CONFIG.lag;
+    corners.forEach((c, i) => {
+      cur[i].x += (targets[i][0] - cur[i].x) * k; cur[i].y += (targets[i][1] - cur[i].y) * k;
+      c.style.setProperty('--cx', cur[i].x.toFixed(1) + 'px'); c.style.setProperty('--cy', cur[i].y.toFixed(1) + 'px');
+    });
   }
   requestAnimationFrame(frame);
 
@@ -146,10 +162,9 @@
       t += 0.02;
       const i = Math.floor(t) % btns.length, f = t - Math.floor(t);
       const r = btns[i].getBoundingClientRect();
-      const nx = r.left + r.width / 2 + Math.sin(f * Math.PI * 2) * r.width * 0.9;
-      const ny = r.top + r.height / 2 + Math.cos(f * Math.PI) * 60;
-      // 前半段在目标外游走，后半段停在目标上锁定
-      setTarget(nx, ny, f > 0.45 ? btns[i] : null);
+      // 前半段在目标外游走，后半段进到目标里慢慢移动（看得到角标视差）
+      if (f < 0.45) { mx = r.left + r.width / 2 + Math.sin(f * Math.PI * 2) * r.width * 0.9; my = r.top + r.height / 2 + Math.cos(f * Math.PI) * 60; setLock(null); }
+      else { mx = r.left + r.width * (0.2 + (f - 0.45) * 1.1); my = r.top + r.height / 2; setLock(btns[i]); }
     }, 30);
   }
   /* @mt:thumb-end */

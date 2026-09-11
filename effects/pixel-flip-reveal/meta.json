@@ -3,8 +3,12 @@
   "name": "像素块揭示卡片",
   "category": "card",
   "sub": "hover",
-  "tags": ["像素", "揭示", "卡片"],
-  "summary": "悬停时一片像素块随机翻走，露出底下的另一张图",
+  "tags": [
+    "像素",
+    "揭示",
+    "卡片"
+  ],
+  "summary": "悬停时纯色像素块一格格盖满整张卡、换成另一张图、再一格格散开露出来，像老游戏的场景切换",
   "params": [
     {
       "key": "front",
@@ -28,29 +32,39 @@
       "min": 4,
       "max": 20,
       "step": 1,
-      "default": 10,
+      "default": 7,
       "help": "每边切成多少格"
     },
     {
       "key": "duration",
-      "label": "翻转总时长",
+      "label": "每段时长",
       "type": "range",
       "target": "config",
-      "min": 0.3,
-      "max": 2,
-      "step": 0.1,
-      "default": 0.8,
-      "displayUnit": " 秒"
+      "min": 0.1,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.3,
+      "displayUnit": " 秒",
+      "help": "盖满与散去各用这么久"
     },
     {
       "key": "order",
-      "label": "翻走顺序",
+      "label": "像素次序",
       "type": "select",
       "target": "config",
       "options": [
-        { "value": "random", "label": "随机" },
-        { "value": "wave", "label": "从左上到右下" },
-        { "value": "center", "label": "从中心向外" }
+        {
+          "value": "random",
+          "label": "随机"
+        },
+        {
+          "value": "wave",
+          "label": "从左上到右下"
+        },
+        {
+          "value": "center",
+          "label": "从中心向外"
+        }
       ],
       "default": "random"
     },
@@ -75,18 +89,35 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
     {
       "id": "wave",
       "name": "斜扫波",
-      "values": { "order": "wave", "grid": 14, "duration": 1.2 }
+      "values": {
+        "order": "wave",
+        "grid": 14,
+        "duration": 1.2
+      }
     },
     {
       "id": "burst",
       "name": "中心炸开",
-      "values": { "order": "center", "grid": 8, "duration": 0.5, "pixelColor": "#000000" }
+      "values": {
+        "order": "center",
+        "grid": 8,
+        "duration": 0.5,
+        "pixelColor": "#000000"
+      }
     }
   ],
-  "thumb": { "mode": "autoplay" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }

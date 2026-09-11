@@ -2,74 +2,81 @@
   "slug": "metaballs-blob",
   "name": "融球",
   "category": "background",
-  "sub": "idle",
-  "tags": ["融球", "液态", "有机"],
-  "summary": "几团圆球慢慢游动，靠近时像水银一样黏合成一块",
+  "sub": "hover",
+  "tags": ["融球", "液态", "有机", "WebGL2"],
+  "summary": "十几颗小球在画面中央密密地绕着圈游动，靠近就融成一团液体；一颗更大的球跟着鼠标，撞进去把它们黏在一起",
   "params": [
+    { "key": "color", "label": "球体颜色", "type": "color", "target": "config", "default": "#ffffff" },
+    { "key": "cursorColor", "label": "光标球颜色", "type": "color", "target": "config", "default": "#ffffff" },
     {
-      "key": "count",
-      "label": "球体数量",
+      "key": "ballCount",
+      "label": "小球数量",
       "type": "range",
       "target": "config",
       "min": 3,
-      "max": 12,
+      "max": 40,
       "step": 1,
-      "default": 6
-    },
-    {
-      "key": "size",
-      "label": "球体大小",
-      "type": "range",
-      "target": "config",
-      "min": 40,
-      "max": 200,
-      "step": 10,
-      "default": 110,
-      "unit": "px",
-      "help": "平均直径，每颗在此基础上随机大小"
+      "default": 15
     },
     {
       "key": "speed",
       "label": "游动速度",
       "type": "range",
       "target": "config",
-      "min": 0.2,
-      "max": 3,
-      "step": 0.1,
-      "default": 1
+      "min": 0.05,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.3
     },
     {
-      "key": "goo",
-      "label": "黏合强度",
+      "key": "animationSize",
+      "label": "画面范围",
       "type": "range",
       "target": "config",
-      "min": 6,
-      "max": 40,
-      "step": 2,
-      "default": 20,
-      "help": "球体靠近时融合的范围"
+      "min": 15,
+      "max": 60,
+      "step": 1,
+      "default": 30,
+      "help": "越大球看起来越小、活动范围越大"
     },
     {
-      "key": "follow",
-      "label": "一颗跟随鼠标",
-      "type": "toggle",
+      "key": "clumpFactor",
+      "label": "聚簇松紧",
+      "type": "range",
       "target": "config",
-      "default": true
+      "min": 0.3,
+      "max": 2.5,
+      "step": 0.1,
+      "default": 1,
+      "help": "越小球越挤在一起"
     },
-    { "key": "color", "label": "球体颜色", "type": "color", "target": "css", "default": "#ffffff" }
+    {
+      "key": "cursorBallSize",
+      "label": "光标球大小",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 8,
+      "step": 0.5,
+      "default": 3,
+      "help": "0 为不显示光标球"
+    },
+    {
+      "key": "hoverSmoothness",
+      "label": "光标球跟随",
+      "type": "range",
+      "target": "config",
+      "min": 0.01,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.05,
+      "help": "越小越黏、越滞后"
+    }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "mercury",
-      "name": "水银一大团",
-      "values": { "count": 10, "size": 150, "goo": 36, "speed": 0.6 }
-    },
-    {
-      "id": "beads",
-      "name": "小珠子快游",
-      "values": { "count": 12, "size": 50, "goo": 10, "speed": 2.4, "follow": false }
-    }
+    { "id": "green", "name": "荧光绿", "values": { "color": "#27ff64", "cursorColor": "#27ff64" } },
+    { "id": "tight", "name": "紧簇小球", "values": { "ballCount": 30, "clumpFactor": 0.6, "animationSize": 40, "speed": 0.5 } }
   ],
   "thumb": { "mode": "live" },
   "source": { "kind": "visual-inspiration" }
