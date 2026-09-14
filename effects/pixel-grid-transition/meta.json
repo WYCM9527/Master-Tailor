@@ -1,0 +1,27 @@
+{
+  "slug": "pixel-grid-transition",
+  "name": "像素格转场",
+  "category": "transition",
+  "sub": "keynote",
+  "tags": ["转场", "像素", "网格", "换页"],
+  "summary": "换页时整屏被一格格像素块从上到下参差地铺满，盖住的一瞬换成新页，再按相反顺序一格格褪去",
+  "params": [
+    { "key": "imageA", "label": "第一页图片", "type": "image", "target": "config", "default": "/samples/sample-1.webp" },
+    { "key": "imageB", "label": "第二页图片", "type": "image", "target": "config", "default": "/samples/sample-3.webp" },
+    { "key": "titleA", "label": "第一页标题", "type": "text", "target": "config", "default": "第一章", "maxLength": 16 },
+    { "key": "titleB", "label": "第二页标题", "type": "text", "target": "config", "default": "第二章", "maxLength": 16 },
+    { "key": "rows", "label": "格子行数", "type": "range", "target": "config", "min": 4, "max": 16, "step": 1, "default": 8 },
+    { "key": "pattern", "label": "铺开顺序", "type": "select", "target": "config", "options": [{ "value": "wave", "label": "从上到下（参差）" }, { "value": "random", "label": "完全随机" }, { "value": "diagonal", "label": "对角线" }, { "value": "center", "label": "从中心向外" }], "default": "wave" },
+    { "key": "stagger", "label": "相邻档延迟", "type": "range", "target": "config", "min": 10, "max": 80, "step": 5, "default": 30, "displayUnit": " 毫秒" },
+    { "key": "hold", "label": "自动换页间隔", "type": "range", "target": "config", "min": 2, "max": 10, "step": 0.5, "default": 4, "displayUnit": " 秒" },
+    { "key": "duration", "label": "单格翻转时长", "type": "range", "target": "css", "min": 0.2, "max": 0.8, "step": 0.05, "default": 0.4, "unit": "s", "displayUnit": " 秒" },
+    { "key": "cell", "label": "像素格颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "从上到下", "values": {} },
+    { "id": "center", "name": "中心爆开", "values": { "pattern": "center", "rows": 12, "cell": "#111118", "stagger": 20 } },
+    { "id": "random", "name": "随机粗格", "values": { "pattern": "random", "rows": 5, "cell": "#7c9cff", "stagger": 40 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · PixelTransition", "url": "https://github.com/codrops/PixelTransition", "license": "MIT（思路参考，代码自写）" }
+}

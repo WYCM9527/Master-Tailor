@@ -1,0 +1,26 @@
+{
+  "slug": "distort-filter-button",
+  "name": "扭曲滤镜按钮",
+  "category": "button",
+  "sub": "click",
+  "tags": ["按钮", "SVG 滤镜", "扭曲", "粘液"],
+  "summary": "点一下按钮，它像被电流打了一下整颗扭曲抖动再恢复；或换成悬停变体：底色弹性拉伸，两侧甩出几滴黏连的液滴",
+  "params": [
+    { "key": "label", "label": "按钮文字", "type": "text", "target": "config", "default": "点我一下", "maxLength": 12 },
+    { "key": "variant", "label": "变体", "type": "select", "target": "config", "options": [{ "value": "glitch", "label": "点击湍流扭曲" }, { "value": "wobble", "label": "悬停弹性液滴" }], "default": "glitch" },
+    { "key": "strength", "label": "扭曲强度", "type": "range", "target": "config", "min": 5, "max": 80, "step": 5, "default": 30 },
+    { "key": "frequency", "label": "褶皱细密度", "type": "range", "target": "config", "min": 0.01, "max": 0.12, "step": 0.01, "default": 0.04 },
+    { "key": "duration", "label": "扭曲时长", "type": "range", "target": "config", "min": 200, "max": 1200, "step": 50, "default": 400, "displayUnit": " 毫秒" },
+    { "key": "btnBg", "label": "按钮底色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "btnColor", "label": "文字颜色", "type": "color", "target": "css", "default": "#0a0a0f" },
+    { "key": "radius", "label": "圆角", "type": "range", "target": "css", "min": 0, "max": 40, "step": 2, "default": 40, "unit": "px" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 12, "max": 22, "step": 1, "default": 15, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "点击扭曲", "values": {} },
+    { "id": "wobble", "name": "悬停液滴", "values": { "variant": "wobble", "btnBg": "#f472b6", "label": "悬停试试" } },
+    { "id": "violent", "name": "剧烈抖动", "values": { "strength": 70, "frequency": 0.1, "duration": 700, "btnBg": "#fbbf24" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · DistortedButtonEffects", "url": "https://github.com/codrops/DistortedButtonEffects", "license": "MIT（思路参考，代码自写）" }
+}

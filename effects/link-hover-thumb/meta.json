@@ -1,0 +1,27 @@
+{
+  "slug": "link-hover-thumb",
+  "name": "链接悬停浮图",
+  "category": "text",
+  "sub": "hover",
+  "tags": ["链接", "缩略图", "悬停", "揭示"],
+  "summary": "悬停哪条链接，右侧就浮出一张缩略图：两层裁切从相反方向交汇把图揭开，随光标横移；四种揭示方式",
+  "params": [
+    { "key": "slides", "label": "链接与缩略图", "type": "images", "target": "config", "min": 2, "max": 6, "captions": true, "default": [{"src": "/samples/sample-1.webp", "caption": "山谷晨雾"}, {"src": "/samples/sample-2.webp", "caption": "海边球车"}, {"src": "/samples/sample-3.webp", "caption": "黄昏海滩"}, {"src": "/samples/sample-4.webp", "caption": "林间逆光"}] },
+    { "key": "variant", "label": "揭示方式", "type": "select", "target": "config", "options": [{ "value": "slide", "label": "左右交汇" }, { "value": "diag", "label": "对角交汇" }, { "value": "zoom", "label": "缩放" }, { "value": "flip", "label": "翻入" }], "default": "slide" },
+    { "key": "follow", "label": "跟随光标横移", "type": "toggle", "target": "config", "default": true },
+    { "key": "numbered", "label": "显示序号", "type": "toggle", "target": "config", "default": true },
+    { "key": "width", "label": "浮图宽度", "type": "range", "target": "css", "min": 120, "max": 360, "step": 10, "default": 220, "unit": "px" },
+    { "key": "duration", "label": "揭示时长", "type": "range", "target": "css", "min": 0.2, "max": 1.2, "step": 0.05, "default": 0.5, "unit": "s", "displayUnit": " 秒" },
+    { "key": "accent", "label": "悬停链接色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 18, "max": 56, "step": 2, "default": 30, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "左右交汇", "values": {} },
+    { "id": "diag", "name": "对角交汇", "values": { "variant": "diag", "accent": "#f472b6" } },
+    { "id": "flip", "name": "翻入不跟随", "values": { "variant": "flip", "follow": false, "width": 280, "duration": 0.7 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · ImageRevealHover", "url": "https://github.com/codrops/ImageRevealHover", "license": "MIT（思路参考，代码自写）" }
+}

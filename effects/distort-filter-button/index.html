@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扭曲滤镜按钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-btnBg: #7c9cff;     /* 按钮底色 */
+    --mt-btnColor: #0a0a0f;  /* 文字颜色 */
+    --mt-radius: 999px;      /* 圆角 */
+    --mt-fontSize: 15px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-wrap { position: relative; display: inline-block; }
+  /* 按钮本体只负责文字；底色与滤镜都在 .bg 上，这样文字不会被滤镜糊掉 */
+  .mt-btn { position: relative; padding: 16px 40px; border: 0; background: transparent; color: var(--mt-btnColor); font: inherit; font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; z-index: 1; }
+  .mt-bg { position: absolute; inset: 0; border-radius: var(--mt-radius); background: var(--mt-btnBg); }
+  /* 变体 glitch：点击时整颗（含文字）过一遍湍流位移滤镜，频率从 0 冲到峰值再回 0 */
+  .mt-wrap.glitch.on { filter: url(#mtWarp); }
+  /* 变体 wobble：悬停时底色横向拉伸、弹性回弹；两侧各甩出三滴同色小液滴，与底色一起套粘液滤镜黏在一起 */
+  .mt-wrap.wobble .mt-goo { position: absolute; inset: -40px -80px; filter: url(#mtGoo); pointer-events: none; }
+  .mt-wrap.wobble .mt-goo .mt-bg { inset: 40px 80px; transition: transform 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .mt-wrap.wobble .drop { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--mt-btnBg); transform: translate(0, 0) scale(0); transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s; transition-delay: var(--d); opacity: 0; }
+  .mt-wrap.wobble .drop.l { left: 80px; } .mt-wrap.wobble .drop.r { left: calc(100% - 80px); }
+  .mt-wrap.wobble.on .mt-goo .mt-bg { transform: scaleX(1.06); }
+  .mt-wrap.wobble.on .drop { opacity: 1; transform: translate(var(--x), var(--y)) scale(var(--s)); }
+  .mt-wrap.wobble .mt-btn { padding: 16px 40px; }
+  @media (prefers-reduced-motion: reduce) { .mt-wrap .mt-bg, .mt-wrap .drop { transition: none; } .mt-wrap.glitch.on { filter: none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="mtWarp" x="-20%" y="-50%" width="140%" height="200%">
+      <feTurbulence id="mtTurb" type="fractalNoise" baseFrequency="0.000001" numOctaves="1" result="warp"/>
+      <feOffset dx="-90" dy="-90" in="warp" result="warpOffset"/>
+      <feDisplacementMap id="mtDisp" xChannelSelector="R" yChannelSelector="G" scale="30" in="SourceGraphic" in2="warpOffset"/>
+    </filter>
+    <filter id="mtGoo"><feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/><feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9"/></filter>
+  </defs>
+</svg>
+<div class="mt-wrap" id="mtWrap">
+  <div class="mt-goo" id="mtGooLayer"><div class="mt-bg"></div></div>
+  <button type="button" class="mt-btn" id="mtBtn"></button>
+</div>
+<script>
+  const CONFIG = {
+    label: "点我一下",     // 按钮文字
+    variant: "glitch",     // 变体：glitch 点击时湍流扭曲 / wobble 悬停时弹性拉伸 + 甩出液滴
+    strength: 30,          // glitch 位移强度
+    frequency: 0.04,       // glitch 湍流峰值频率（越大褶皱越细）
+    duration: 400,         // glitch 一次扭曲的时长（毫秒）
+  };
+  const wrap = document.getElementById('mtWrap'), btn = document.getElementById('mtBtn'), turb = document.getElementById('mtTurb'), disp = document.getElementById('mtDisp');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  btn.textContent = CONFIG.label; wrap.classList.add(CONFIG.variant); disp.setAttribute('scale', CONFIG.strength);
+  let userTook = false;
+  if (CONFIG.variant === 'wobble') {
+    // 六滴液滴：左右各三，飞出的位移与大小各不相同
+    const goo = document.getElementById('mtGooLayer');
+    [[-1, -26, -18, 0.9, 0], [-1, -40, 6, 0.6, 60], [-1, -22, 22, 0.5, 120], [1, 26, -18, 0.9, 0], [1, 40, 6, 0.6, 60], [1, 22, 22, 0.5, 120]].forEach(([side, x, y, s, d]) => {
+      const el = document.createElement('i'); el.className = 'drop ' + (side < 0 ? 'l' : 'r');
+      el.style.setProperty('--x', x + 'px'); el.style.setProperty('--y', y + 'px'); el.style.setProperty('--s', s); el.style.setProperty('--d', d + 'ms'); goo.appendChild(el);
+    });
+    wrap.addEventListener('pointerenter', () => { userTook = true; wrap.classList.add('on'); });
+    wrap.addEventListener('pointerleave', () => wrap.classList.remove('on'));
+  } else {
+    // 点击：频率 0 → 峰值 → 0，各占一半时长，期间开滤镜，结束后关掉（滤镜常开会让文字发糊）
+    let raf = 0;
+    function glitch() {
+      if (reduceMotion) return;
+      cancelAnimationFrame(raf); wrap.classList.add('on');
+      const t0 = performance.now();
+      (function step(now) {
+        const k = Math.min(1, (now - t0) / CONFIG.duration), f = CONFIG.frequency * (k < 0.5 ? k * 2 : 2 - k * 2);
+        turb.setAttribute('baseFrequency', Math.max(0.000001, f).toFixed(5));
+        if (k < 1) raf = requestAnimationFrame(step); else { wrap.classList.remove('on'); turb.setAttribute('baseFrequency', '0.000001'); }
+      })(t0);
+    }
+    btn.addEventListener('click', () => { userTook = true; glitch(); });
+    wrap.glitch = glitch;
+  }
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人碰时定期自己触发一次
+  if (!reduceMotion) setInterval(() => {
+    if (userTook || document.hidden) return;
+    if (CONFIG.variant === 'wobble') { wrap.classList.add('on'); setTimeout(() => wrap.classList.remove('on'), 1200); } else wrap.glitch();
+  }, 2400);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

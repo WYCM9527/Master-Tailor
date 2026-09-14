@@ -1,0 +1,27 @@
+{
+  "slug": "image-glitch-slices",
+  "name": "图片故障闪切",
+  "category": "card",
+  "sub": "idle",
+  "tags": ["故障", "图片", "切片", "纯 CSS"],
+  "summary": "一张图每隔几秒「信号不良」一下：几条横带错位闪切、偶尔整张泛一层色，然后恢复正常，纯 CSS 多层裁切实现",
+  "params": [
+    { "key": "photo", "label": "图片", "type": "image", "target": "config", "default": "/samples/sample-8.webp" },
+    { "key": "intensity", "label": "每层切几条", "type": "range", "target": "config", "min": 2, "max": 14, "step": 1, "default": 6 },
+    { "key": "active", "label": "故障占比", "type": "range", "target": "config", "min": 0.1, "max": 1, "step": 0.05, "default": 0.25, "help": "一轮周期里多大比例时间在闪" },
+    { "key": "hoverOnly", "label": "只在悬停时故障", "type": "toggle", "target": "config", "default": false },
+    { "key": "flash", "label": "整张闪色", "type": "toggle", "target": "config", "default": true },
+    { "key": "gapH", "label": "横向错位", "type": "range", "target": "css", "min": 0, "max": 40, "step": 2, "default": 10, "unit": "px" },
+    { "key": "gapV", "label": "纵向错位", "type": "range", "target": "css", "min": 0, "max": 20, "step": 1, "default": 5, "unit": "px" },
+    { "key": "period", "label": "一轮周期", "type": "range", "target": "css", "min": 1, "max": 10, "step": 0.5, "default": 4, "unit": "s", "displayUnit": " 秒" },
+    { "key": "tint", "label": "闪色", "type": "color", "target": "css", "default": "#af4949" },
+    { "key": "radius", "label": "圆角", "type": "range", "target": "css", "min": 0, "max": 32, "step": 2, "default": 14, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "heavy", "name": "重度故障", "values": { "intensity": 12, "active": 0.6, "gapH": 30, "period": 2, "tint": "#22d3ee" } },
+    { "id": "hover", "name": "悬停才闪", "values": { "hoverOnly": true, "active": 1, "period": 1.5, "photo": "/samples/sample-4.webp" } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Codrops · CSSGlitchEffect", "url": "https://github.com/codrops/CSSGlitchEffect", "license": "MIT（思路参考，代码自写）" }
+}

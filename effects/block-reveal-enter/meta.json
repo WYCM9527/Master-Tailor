@@ -1,0 +1,27 @@
+{
+  "slug": "block-reveal-enter",
+  "name": "色块揭示进场",
+  "category": "loading",
+  "sub": "idle",
+  "tags": ["进场", "色块", "揭示", "错落"],
+  "summary": "标题、正文、图片、按钮依次被一块颜色从一侧盖住、再从另一侧收走，内容就在色块滑走时出现，可留一条色边",
+  "params": [
+    { "key": "direction", "label": "色块方向", "type": "select", "target": "config", "options": [{ "value": "lr", "label": "从左到右" }, { "value": "rl", "label": "从右到左" }, { "value": "tb", "label": "从上到下" }, { "value": "bt", "label": "从下到上" }], "default": "lr" },
+    { "key": "coverArea", "label": "留下的色边", "type": "range", "target": "config", "min": 0, "max": 40, "step": 2, "default": 0, "unit": "%", "help": "收走后保留的比例" },
+    { "key": "stagger", "label": "块间错开", "type": "range", "target": "config", "min": 0, "max": 400, "step": 20, "default": 120, "displayUnit": " 毫秒" },
+    { "key": "duration", "label": "单程时长", "type": "range", "target": "css", "min": 0.2, "max": 1.2, "step": 0.05, "default": 0.5, "unit": "s", "displayUnit": " 秒" },
+    { "key": "block", "label": "色块颜色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "先盖住，再揭开", "maxLength": 20 },
+    { "key": "text", "label": "正文", "type": "text", "target": "config", "default": "每一块内容都先被一块颜色盖住，再从另一侧滑走，内容就在色块后面出现了。", "maxLength": 80 },
+    { "key": "button", "label": "按钮文字", "type": "text", "target": "config", "default": "开始", "maxLength": 8 },
+    { "key": "photo", "label": "图片", "type": "image", "target": "config", "default": "/samples/sample-7.webp" },
+    { "key": "loop", "label": "演示循环", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "edge", "name": "留色边", "values": { "coverArea": 6, "block": "#fbbf24", "direction": "rl" } },
+    { "id": "vertical", "name": "自上而下", "values": { "direction": "tb", "block": "#f472b6", "stagger": 200, "duration": 0.7 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Codrops · BlockRevealers", "url": "https://github.com/codrops/BlockRevealers", "license": "MIT（思路参考，代码自写）" }
+}

@@ -1,0 +1,25 @@
+{
+  "slug": "pixel-glitch-hover",
+  "name": "像素故障透视悬停",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["像素化", "故障", "3D", "悬停"],
+  "summary": "悬停图片时，清晰的图变成粗像素马赛克并整块倒进 3D 空间里，横带错位闪切、叠色闪烁，像一块被掀翻的坏屏幕",
+  "params": [
+    { "key": "slides", "label": "图片与标签", "type": "images", "target": "config", "min": 1, "max": 6, "captions": true, "default": [{"src": "/samples/sample-6.webp", "caption": "Ripley"}, {"src": "/samples/sample-4.webp", "caption": "Nostromo"}, {"src": "/samples/sample-8.webp", "caption": "LV-426"}] },
+    { "key": "pixelSize", "label": "像素化程度", "type": "range", "target": "config", "min": 8, "max": 64, "step": 4, "default": 24, "help": "横向压成多少格，越小越粗" },
+    { "key": "tilt", "label": "倒进 3D", "type": "toggle", "target": "config", "default": true },
+    { "key": "columns", "label": "列数", "type": "range", "target": "config", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "key": "gap", "label": "故障错位", "type": "range", "target": "css", "min": 4, "max": 60, "step": 2, "default": 20, "unit": "px" },
+    { "key": "tiltTime", "label": "倒下时长", "type": "range", "target": "css", "min": 0.2, "max": 1.2, "step": 0.05, "default": 0.5, "unit": "s", "displayUnit": " 秒" },
+    { "key": "tintA", "label": "叠色 A", "type": "color", "target": "css", "default": "#f3727e" },
+    { "key": "tintB", "label": "叠色 B", "type": "color", "target": "css", "default": "#3124c7" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "coarse", "name": "粗格平放", "values": { "pixelSize": 10, "tilt": false, "gap": 36 } },
+    { "id": "cyan", "name": "青绿故障", "values": { "tintA": "#22d3ee", "tintB": "#065f46", "pixelSize": 32 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · GlitchPerspective", "url": "https://github.com/codrops/GlitchPerspective", "license": "MIT（思路参考，代码自写）" }
+}

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片故障闪切</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-gapH: 10px;         /* 横向错位量 */
+    --mt-gapV: 5px;          /* 纵向错位量 */
+    --mt-period: 4s;         /* 一轮故障的周期 */
+    --mt-tint: #af4949;      /* 闪色层的叠加色 */
+    --mt-radius: 14px;       /* 圆角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+
+  /* 同一张图叠 5 层：底层完整；2–4 层各自按关键帧只露出几条随机横带并左右错位；第 5 层叠色偶尔整张闪一下 */
+  .mt-glitch { position: relative; width: min(720px, 92vw); aspect-ratio: 3 / 2; overflow: hidden; border-radius: var(--mt-radius); }
+  .mt-glitch .layer {
+    position: absolute; top: calc(var(--mt-gapV) * -1); left: calc(var(--mt-gapH) * -1); width: calc(100% + var(--mt-gapH) * 2); height: calc(100% + var(--mt-gapV) * 2);
+    background: var(--img) center / cover no-repeat; transform: translate3d(0, 0, 0);
+  }
+  .mt-glitch .layer:nth-child(n+2) { animation-duration: var(--mt-period); animation-timing-function: linear; animation-iteration-count: infinite; animation-delay: var(--delay, 0s); }
+  .mt-glitch .layer:nth-child(2) { animation-name: mt-g1; }
+  .mt-glitch .layer:nth-child(3) { animation-name: mt-g2; }
+  .mt-glitch .layer:nth-child(4) { animation-name: mt-g3; }
+  .mt-glitch .layer:nth-child(5) { background-color: var(--mt-tint); background-blend-mode: overlay; animation-name: mt-flash; }
+  .mt-glitch.hover-only .layer:nth-child(n+2) { animation-play-state: paused; opacity: 0; }
+  .mt-glitch.hover-only:hover .layer:nth-child(n+2) { animation-play-state: running; opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .mt-glitch .layer:nth-child(n+2) { animation: none; opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="mt-glitch" id="mtGlitch" role="img" aria-label="故障闪切的图片">
+  <div class="layer"></div><div class="layer"></div><div class="layer"></div><div class="layer"></div><div class="layer"></div>
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-8.webp",  // 图片
+    intensity: 6,          // 每层切几条横带
+    active: 0.25,          // 故障占周期的比例（0.25 = 一轮里四分之一时间在闪）
+    hoverOnly: false,      // 只在悬停时故障
+    flash: true,           // 偶尔整张叠色闪一下
+  };
+  const box = document.getElementById('mtGlitch');
+  box.style.setProperty('--img', `url("${CONFIG.photo}")`); if (CONFIG.hoverOnly) box.classList.add('hover-only');
+  if (!CONFIG.flash) box.lastElementChild.style.display = 'none';
+  // 关键帧按需生成：故障只发生在周期前 active 比例内，其余时间该层完全裁掉（clip 成 0 高）；
+  // 每个关键帧点随机选一条横带（top%、height%）并左右错位 ±gap
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function frames(name, gapSign) {
+    const n = CONFIG.intensity * 2, steps = [];
+    for (let i = 0; i <= n; i++) {
+      const t = (i / n) * CONFIG.active * 100, top = rnd(0, 92), h = rnd(1, 8), x = (i % 2 ? 1 : -1) * gapSign;
+      steps.push(`${t.toFixed(2)}% { clip-path: polygon(0 ${top}%, 100% ${top}%, 100% ${(top + h)}%, 0 ${(top + h)}%); transform: translate3d(calc(var(--mt-gapH) * ${x}), 0, 0); }`);
+    }
+    steps.push(`${(CONFIG.active * 100 + 0.1).toFixed(2)}%, 100% { clip-path: polygon(0 0, 0 0, 0 0, 0 0); transform: translate3d(0, 0, 0); }`);
+    return `@keyframes ${name} { ${steps.join(' ')} }`;
+  }
+  const flash = `@keyframes mt-flash { 0%, 5% { opacity: 0.85; transform: translate3d(var(--mt-gapH), var(--mt-gapV), 0); } 5.5%, 100% { opacity: 0; transform: translate3d(0, 0, 0); } }`;
+  const style = document.createElement('style'); style.textContent = [frames('mt-g1', 1), frames('mt-g2', -1), frames('mt-g3', 1), flash].join('\n'); document.head.appendChild(style);
+  // 三层错开起跑，故障不同时发生
+  box.children[2].style.setProperty('--delay', `calc(var(--mt-period) * -0.2)`);
+  box.children[3].style.setProperty('--delay', `calc(var(--mt-period) * -0.25)`);
+  document.addEventListener('visibilitychange', () => box.querySelectorAll('.layer').forEach(l => l.style.animationPlayState = document.hidden ? 'paused' : ''));
+</script>
+</body>
+</html>

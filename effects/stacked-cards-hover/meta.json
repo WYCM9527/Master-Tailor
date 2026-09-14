@@ -1,0 +1,25 @@
+{
+  "slug": "stacked-cards-hover",
+  "name": "层叠色卡悬停",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["卡片", "层叠", "悬停", "色卡"],
+  "summary": "悬停一张卡片，它背后依次滑出三张彩色的卡片形成层叠，像抽出一叠彩纸；阶梯、扇开、纵深三种排布",
+  "params": [
+    { "key": "slides", "label": "卡片图片", "type": "images", "target": "config", "min": 2, "max": 6, "captions": true, "default": [{"src": "/samples/sample-1.webp", "caption": "山谷"}, {"src": "/samples/sample-2.webp", "caption": "海边"}, {"src": "/samples/sample-3.webp", "caption": "黄昏"}] },
+    { "key": "variant", "label": "排布变体", "type": "select", "target": "config", "options": [{ "value": "stairs", "label": "阶梯" }, { "value": "fan", "label": "扇开" }, { "value": "depth", "label": "纵深" }], "default": "stairs" },
+    { "key": "colors", "label": "彩卡颜色", "type": "colors", "target": "config", "min": 1, "max": 4, "default": ["#f472b6", "#a855f7", "#3b82f6"] },
+    { "key": "columns", "label": "列数", "type": "range", "target": "config", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "key": "distance", "label": "每层错开", "type": "range", "target": "css", "min": 4, "max": 40, "step": 2, "default": 14, "unit": "px" },
+    { "key": "duration", "label": "展开时长", "type": "range", "target": "css", "min": 0.2, "max": 1.2, "step": 0.05, "default": 0.5, "unit": "s", "displayUnit": " 秒" },
+    { "key": "radius", "label": "卡片圆角", "type": "range", "target": "css", "min": 0, "max": 32, "step": 2, "default": 14, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "阶梯", "values": {} },
+    { "id": "fan", "name": "扇开", "values": { "variant": "fan", "colors": ["#fbbf24", "#f97316", "#ef4444"], "distance": 20 } },
+    { "id": "depth", "name": "纵深", "values": { "variant": "depth", "colors": ["#22d3ee", "#3b82f6", "#6366f1", "#8b5cf6"], "distance": 22, "duration": 0.7 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · StackMotionHoverEffects", "url": "https://github.com/codrops/StackMotionHoverEffects", "license": "MIT（思路参考，代码自写）" }
+}

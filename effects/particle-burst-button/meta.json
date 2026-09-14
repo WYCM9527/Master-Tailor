@@ -1,0 +1,27 @@
+{
+  "slug": "particle-burst-button",
+  "name": "按钮粒子消散",
+  "category": "button",
+  "sub": "click",
+  "tags": ["按钮", "粒子", "消散", "点击"],
+  "summary": "点一下，按钮从一侧开始被「吹散」成一串同色小粒子飘走，直到整颗消失；停一下再从粒子聚拢回来",
+  "params": [
+    { "key": "label", "label": "按钮文字", "type": "text", "target": "config", "default": "发送", "maxLength": 12 },
+    { "key": "shape", "label": "粒子形状", "type": "select", "target": "config", "options": [{ "value": "circle", "label": "圆点" }, { "value": "square", "label": "方块" }, { "value": "triangle", "label": "三角" }], "default": "circle" },
+    { "key": "direction", "label": "消散方向", "type": "select", "target": "config", "options": [{ "value": "left", "label": "向左" }, { "value": "right", "label": "向右" }, { "value": "top", "label": "向上" }, { "value": "bottom", "label": "向下" }], "default": "left" },
+    { "key": "duration", "label": "消散用时", "type": "range", "target": "config", "min": 400, "max": 2500, "step": 100, "default": 1000, "displayUnit": " 毫秒" },
+    { "key": "amount", "label": "粒子密度", "type": "range", "target": "config", "min": 1, "max": 8, "step": 1, "default": 3 },
+    { "key": "oscillation", "label": "飞行摆幅", "type": "range", "target": "config", "min": 0, "max": 60, "step": 5, "default": 20, "unit": "px" },
+    { "key": "speed", "label": "飞行速度", "type": "range", "target": "config", "min": 1, "max": 10, "step": 1, "default": 4 },
+    { "key": "hold", "label": "消散后停留", "type": "range", "target": "config", "min": 0, "max": 3000, "step": 100, "default": 800, "displayUnit": " 毫秒" },
+    { "key": "btnBg", "label": "按钮底色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "btnColor", "label": "文字颜色", "type": "color", "target": "css", "default": "#0a0a0f" }
+  ],
+  "presets": [
+    { "id": "default", "name": "向左圆点", "values": {} },
+    { "id": "up", "name": "向上方块", "values": { "direction": "top", "shape": "square", "amount": 5, "oscillation": 10, "label": "上传" } },
+    { "id": "burst", "name": "向右快散", "values": { "direction": "right", "shape": "triangle", "duration": 600, "speed": 8, "btnBg": "#f472b6", "btnColor": "#ffffff", "label": "删除" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · ParticleEffectsButtons", "url": "https://github.com/codrops/ParticleEffectsButtons", "license": "MIT（思路参考，代码自写）" }
+}

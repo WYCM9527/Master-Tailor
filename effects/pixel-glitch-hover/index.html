@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素故障透视悬停</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-tintA: #f3727e;     /* 故障叠色 A */
+    --mt-tintB: #3124c7;     /* 故障叠色 B */
+    --mt-gap: 20px;          /* 故障横向错位 */
+    --mt-tiltTime: 0.5s;     /* 倒下的时长 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 28px; width: min(860px, 92vw); }
+  .mt-item { position: relative; cursor: pointer; aspect-ratio: 0.8; perspective: 1000px; }
+  .mt-item .label { position: absolute; left: 0; bottom: -28px; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; }
+  /* 清晰原图：悬停时隐去，让位给像素化的故障层 */
+  .mt-item .clean { position: absolute; inset: 0; background: var(--img) center / cover; transition: opacity 0.25s ease-out; }
+  /* 像素化图组：5 层同一张低分辨率图（canvas 缩到几十像素再放大，image-rendering: pixelated 保持锐利方块） */
+  .mt-item .glitch { position: absolute; inset: 0; display: grid; opacity: 0; transition: opacity 0.25s ease-out, transform var(--mt-tiltTime) cubic-bezier(0.2, 1, 0.3, 1); transform-style: preserve-3d; }
+  .mt-item .glitch i { grid-area: 1 / 1 / -1 / -1; background: var(--pix) center / cover; image-rendering: pixelated; background-color: var(--tint, transparent); background-blend-mode: var(--blend, normal); opacity: 0; }
+  .mt-item .glitch i:first-child { opacity: 1; }
+  .mt-item:hover .clean, .mt-item.demo .clean { opacity: 0; }
+  /* 悬停：整组倒进 3D 里，像一块屏幕被掀翻 */
+  .mt-item:hover .glitch, .mt-item.demo .glitch { opacity: 1; transform: translateZ(-200px) rotateX(60deg) rotateZ(-35deg); }
+  .mt-item.flat:hover .glitch, .mt-item.flat.demo .glitch { transform: none; }
+  .mt-item:hover .glitch i:nth-child(n+2), .mt-item.demo .glitch i:nth-child(n+2) { opacity: 1; animation-duration: 1s; animation-iteration-count: infinite; animation-direction: alternate; animation-timing-function: linear; }
+  .mt-item:hover .glitch i:nth-child(2), .mt-item.demo .glitch i:nth-child(2) { --tint: var(--mt-tintA); --blend: color-dodge; animation-name: mt-s1; }
+  .mt-item:hover .glitch i:nth-child(3), .mt-item.demo .glitch i:nth-child(3) { --tint: var(--mt-tintB); --blend: luminosity; animation-name: mt-s2; }
+  .mt-item:hover .glitch i:nth-child(4), .mt-item.demo .glitch i:nth-child(4) { animation-name: mt-s3; transform: scale(-1, -1); }
+  .mt-item:hover .glitch i:nth-child(5), .mt-item.demo .glitch i:nth-child(5) { --tint: var(--mt-tintA); --blend: overlay; animation: mt-flash 0.5s steps(1, end) infinite; }
+  @keyframes mt-flash { 0%, 100% { opacity: 0.6; } 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .mt-item .glitch, .mt-item .clean { transition: none; } .mt-item .glitch i { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="mt-grid" id="mtGrid"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-6.webp","caption":"Ripley"},{"src":"/samples/sample-4.webp","caption":"Nostromo"},{"src":"/samples/sample-8.webp","caption":"LV-426"}], // 图片与标签
+    pixelSize: 24,        // 像素化程度：横向压成多少个像素块
+    tilt: true,           // 悬停时倒进 3D
+    columns: 3,           // 列数
+  };
+  const grid = document.getElementById('mtGrid');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  grid.style.setProperty('--cols', CONFIG.columns);
+  // 故障切片关键帧：每层随机几条横带 + 左右错位（与站内「图片故障闪切」同一思路）
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const frames = (name, sign) => { const s = []; for (let i = 0; i <= 10; i++) { const top = rnd(0, 92), h = rnd(2, 10); s.push(`${i * 10}% { clip-path: polygon(0 ${top}%, 100% ${top}%, 100% ${top + h}%, 0 ${top + h}%); transform: translate3d(calc(var(--mt-gap) * ${i % 2 ? sign : -sign}), 0, 0); }`); } return `@keyframes ${name} { ${s.join(' ')} }`; };
+  const style = document.createElement('style'); style.textContent = [frames('mt-s1', 1), frames('mt-s2', -1), frames('mt-s3', 1)].join('\n'); document.head.appendChild(style);
+  // 像素化：把图缩到 pixelSize 像素宽的小画布，再作为背景放大
+  function pixelate(src, cb) {
+    const img = new Image(); img.src = src;
+    img.onload = () => { const w = CONFIG.pixelSize, h = Math.round(w * img.height / img.width); const c = document.createElement('canvas'); c.width = w; c.height = h; const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false; ctx.drawImage(img, 0, 0, w, h); cb(c.toDataURL()); };
+  }
+  CONFIG.slides.forEach((s) => {
+    const item = document.createElement('div'); item.className = 'mt-item' + (CONFIG.tilt ? '' : ' flat');
+    item.innerHTML = `<div class="clean"></div><div class="glitch"><i></i><i></i><i></i><i></i><i></i></div><span class="label"></span>`;
+    item.querySelector('.clean').style.setProperty('--img', `url("${s.src}")`); item.querySelector('.label').textContent = s.caption || '';
+    pixelate(s.src, (url) => item.querySelector('.glitch').style.setProperty('--pix', `url("${url}")`));
+    item.addEventListener('pointerenter', () => (userTook = true));
+    grid.appendChild(item);
+  });
+  let userTook = false;
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流故障一张
+  if (!reduceMotion) { let i = 0; const items = grid.querySelectorAll('.mt-item'); setInterval(() => { if (userTook || document.hidden) return; items.forEach(it => it.classList.remove('demo')); items[i % items.length].classList.add('demo'); i++; }, 1800); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

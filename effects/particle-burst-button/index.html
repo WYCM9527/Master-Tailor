@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>按钮粒子消散</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-btnBg: #f2f3f8;     /* 按钮底色（粒子同色） */
+    --mt-btnColor: #0a0a0f;  /* 按钮文字颜色 */
+    --mt-radius: 6px;        /* 圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 按钮外套一个容器，粒子画布比按钮大一圈盖在上面 */
+  .mt-wrap { position: relative; }
+  .mt-btn {
+    position: relative; padding: 16px 40px; border: 0; border-radius: var(--mt-radius); cursor: pointer;
+    background: var(--mt-btnBg); color: var(--mt-btnColor); font: inherit; font-size: 15px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    clip-path: inset(0 0 0 0);
+  }
+  .mt-btn.busy { pointer-events: none; }
+  .mt-wrap canvas { position: absolute; left: calc(var(--pad) * -1); top: calc(var(--pad) * -1); pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="mt-wrap" id="mtWrap"><button type="button" class="mt-btn" id="mtBtn"></button><canvas id="mtCanvas" aria-hidden="true"></canvas></div>
+<script>
+  const CONFIG = {
+    label: "发送",           // 按钮文字
+    shape: "circle",         // 粒子形状：circle 圆点 / square 方块 / triangle 三角
+    direction: "left",       // 消散方向：left 向左 / right 向右 / top 向上 / bottom 向下
+    duration: 1000,          // 消散用时（毫秒）
+    amount: 3,               // 粒子密度系数
+    oscillation: 20,         // 粒子飞行时的上下摆幅（px）
+    speed: 4,                // 粒子飞行速度上限
+    hold: 800,               // 消散后停多久再聚回（毫秒）
+  };
+
+  const wrap = document.getElementById('mtWrap'), btn = document.getElementById('mtBtn'), canvas = document.getElementById('mtCanvas'), ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  btn.textContent = CONFIG.label;
+  const PAD = 150; wrap.style.setProperty('--pad', PAD + 'px');
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--mt-btnBg').trim() || '#fff';
+  const horizontal = () => CONFIG.direction === 'left' || CONFIG.direction === 'right';
+  const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+  // ---- 粒子：在「消散前沿」处生成，沿方向飞行并上下正弦摆动，活一段帧数后消失；聚回时反向 ----
+  let particles = [], raf = 0, running = false, disintegrating = true, lastProgress = 0, rect = null, userTook = false;
+  function setup() {
+    rect = btn.getBoundingClientRect();
+    canvas.width = rect.width + PAD * 2; canvas.height = rect.height + PAD * 2;
+    canvas.style.width = canvas.width + 'px'; canvas.style.height = canvas.height + 'px';
+  }
+  function addParticle(x, y) {
+    const frames = CONFIG.duration * 60 / 1000, speed = Math.random() * CONFIG.speed, dir = (CONFIG.direction === 'left' || CONFIG.direction === 'top') ? -1 : 1;
+    particles.push({ x: disintegrating ? 0 : speed * -frames * dir, y: 0, bx: x, by: y, speed: speed * dir, life: 0, death: frames * 0.6 + Math.random() * frames * 0.6, counter: disintegrating ? 0 : frames, increase: Math.PI * 2 / frames, size: 1 + Math.floor(Math.random() * 3) });
+  }
+  // 前沿位置随进度推进：进度 p 时，按钮被裁掉的边到了 p × 宽（或高）处
+  function addParticles(progress) {
+    const diff = disintegrating ? progress - lastProgress : lastProgress - progress; lastProgress = progress;
+    const len = horizontal() ? rect.width : rect.height;
+    const edge = len * progress + diff * (disintegrating ? 100 : 220);
+    let n = Math.floor(CONFIG.amount * (diff * 100 + 1));
+    while (n-- > 0) {
+      if (horizontal()) addParticle(PAD + (CONFIG.direction === 'left' ? edge : rect.width - edge), PAD + rect.height * Math.random());
+      else addParticle(PAD + rect.width * Math.random(), PAD + (CONFIG.direction === 'top' ? edge : rect.height - edge));
+    }
+  }
+  function clip(progress) {
+    // 裁切：从消散方向那一侧把按钮裁掉 progress 的比例
+    const p = (progress * 100).toFixed(2) + '%';
+    btn.style.clipPath = CONFIG.direction === 'left' ? `inset(0 0 0 ${p})` : CONFIG.direction === 'right' ? `inset(0 ${p} 0 0)` : CONFIG.direction === 'top' ? `inset(${p} 0 0 0)` : `inset(0 0 ${p} 0)`;
+  }
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.fillStyle = color;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      if (p.life > p.death) { particles.splice(i, 1); continue; }
+      const along = horizontal() ? 'x' : 'y', across = horizontal() ? 'y' : 'x';
+      p[along] += p.speed; p[across] = CONFIG.oscillation * Math.sin(p.counter * p.increase); p.life++; p.counter += disintegrating ? 1 : -1;
+      const x = p.bx + p.x, y = p.by + p.y;
+      ctx.beginPath();
+      if (CONFIG.shape === 'circle') ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      else if (CONFIG.shape === 'triangle') { ctx.moveTo(x, y); ctx.lineTo(x + p.size, y + p.size); ctx.lineTo(x + p.size, y - p.size); }
+      else ctx.rect(x, y, p.size, p.size);
+      ctx.fill();
+    }
+  }
+  // 一次完整过程：进度 0→1（消散）或 1→0（聚回）
+  function run(toDisintegrate) {
+    disintegrating = toDisintegrate; lastProgress = toDisintegrate ? 0 : 1; setup(); btn.classList.add('busy');
+    const t0 = performance.now();
+    cancelAnimationFrame(raf);
+    (function frame(now) {
+      const k = Math.min(1, (now - t0) / CONFIG.duration), e = easeInOutCubic(k), progress = toDisintegrate ? e : 1 - e;
+      clip(progress); if (k < 1 || particles.length === 0) addParticles(progress);
+      draw();
+      if (k < 1 || particles.length) raf = requestAnimationFrame(frame);
+      else { btn.classList.remove('busy'); if (toDisintegrate) setTimeout(() => run(false), CONFIG.hold); }
+    })(t0);
+  }
+  btn.addEventListener('click', () => { userTook = true; if (!btn.classList.contains('busy') && !reduceMotion) run(true); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人点时每隔几秒自己消散一次
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden && !btn.classList.contains('busy')) run(true); }, CONFIG.duration * 2 + CONFIG.hold + 2200);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

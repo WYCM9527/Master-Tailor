@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>粘液文字悬停</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #f472b6;    /* 融化后（第二个词）的颜色 */
+    --mt-fontSize: 64px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-menu { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+  /* 每项：一张 SVG，里面两段文字叠在同一位置；悬停时整组过一遍粘液滤镜——模糊拉到峰值再收回，同时 A 淡出 B 淡入，两词的笔画在模糊中黏成一团再分开 */
+  .mt-item { position: relative; display: block; cursor: pointer; text-decoration: none; line-height: 1; }
+  .mt-item svg { display: block; height: calc(var(--mt-fontSize) * 1.25); width: auto; overflow: visible; }
+  .mt-item text { font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 800; letter-spacing: -0.02em; fill: var(--mt-color); }
+  .mt-item text.b { fill: var(--mt-accent); opacity: 0; }
+  /* 滤镜只在融化过程中挂上：常开时阈值会把字的抗锯齿边切成锯齿 */
+  .mt-item g.melting { filter: url(#mtGoo); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- 模糊 → alpha 阈值 → 用原图着色：blur 为 0 时等于原图，blur 拉大时相邻笔画粘连成块 -->
+    <filter id="mtGoo" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur id="mtBlur" in="SourceGraphic" stdDeviation="0" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" result="goo"/>
+      <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+    </filter>
+  </defs>
+</svg>
+<nav class="mt-menu" id="mtMenu" aria-label="菜单"></nav>
+<script>
+  const CONFIG = {
+    pairs: "作品=Works｜关于=About｜日志=Journal｜联系=Contact",   // 每项「悬停前=悬停后」，用「｜」分隔
+    duration: 1.2,        // 融化一次的时长（秒）
+    blur: 4,              // 模糊峰值（越大黏得越狠）
+  };
+  const menu = document.getElementById('mtMenu'), blurEl = document.getElementById('mtBlur');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const NS = 'http://www.w3.org/2000/svg';
+  const fs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-fontSize')) || 64;
+  // 每项一张 SVG：宽度按两词中较长者估算
+  const items = CONFIG.pairs.split('｜').map(s => s.trim()).filter(Boolean).map(p => { const [a, b = a] = p.split('='); return { a: a.trim(), b: b.trim() }; }).map(({ a, b }) => {
+    const el = document.createElement('a'); el.className = 'mt-item'; el.href = '#'; el.setAttribute('aria-label', a); el.addEventListener('click', e => e.preventDefault());
+    const w = Math.max(a.length, b.length) * fs * 1.05 + fs * 0.5, h = fs * 1.25;
+    const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', `0 0 ${w} ${h}`); svg.setAttribute('width', w); svg.setAttribute('height', h); svg.setAttribute('aria-hidden', 'true');
+    const g = document.createElementNS(NS, 'g');
+    for (const [txt, cls] of [[a, 'a'], [b, 'b']]) { const t = document.createElementNS(NS, 'text'); t.setAttribute('x', 0); t.setAttribute('y', fs * 0.95); t.setAttribute('class', cls); t.textContent = txt; g.appendChild(t); }
+    svg.appendChild(g); el.appendChild(svg); menu.appendChild(el);
+    return { el, g, ta: g.children[0], tb: g.children[1], state: 0, target: 0, raf: 0 };
+  });
+  // 单项动画：进度 s 0→1；模糊 = 峰值 × sin(πs)，A 的透明度 1−s、B 为 s。滤镜是全局共享的，所以同一时刻只让正在动的那一项驱动 blur
+  function animate(item) {
+    cancelAnimationFrame(item.raf);
+    const from = item.state, to = item.target, t0 = performance.now(), dur = CONFIG.duration * 1000 * Math.abs(to - from);
+    item.g.classList.add('melting');
+    (function step(now) {
+      const k = dur ? Math.min(1, (now - t0) / dur) : 1, s = from + (to - from) * k;
+      item.state = s;
+      blurEl.setAttribute('stdDeviation', reduceMotion ? 0 : (CONFIG.blur * Math.sin(Math.PI * s)).toFixed(2));
+      // 两词的透明度用余弦交叉：中途两者都还比较实，模糊后叠加处仍能过阈值，融成一团而不是双双消失
+      item.ta.style.opacity = Math.cos(Math.PI * s / 2) ** 1.2; item.tb.style.opacity = Math.sin(Math.PI * s / 2) ** 1.2;
+      if (k < 1) item.raf = requestAnimationFrame(step); else { blurEl.setAttribute('stdDeviation', '0'); item.g.classList.remove('melting'); }
+    })(t0);
+  }
+  let userTook = false;
+  items.forEach(item => {
+    item.el.addEventListener('pointerenter', () => { userTook = true; item.target = 1; animate(item); });
+    item.el.addEventListener('pointerleave', () => { item.target = 0; animate(item); });
+  });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流融一遍
+  if (!reduceMotion) { let i = 0; setInterval(() => { if (userTook || document.hidden) return; const it = items[i % items.length]; i++; it.target = 1; animate(it); setTimeout(() => { if (!userTook) { it.target = 0; animate(it); } }, CONFIG.duration * 1000 + 500); }, CONFIG.duration * 2000 + 1000); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

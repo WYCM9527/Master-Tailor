@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>链接悬停浮图</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 悬停时链接颜色 */
+    --mt-width: 220px;       /* 浮图宽度 */
+    --mt-duration: 0.5s;     /* 揭示时长 */
+    --mt-fontSize: 30px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-list { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .mt-link { position: relative; text-decoration: none; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.02em; line-height: 1.3; padding: 6px 0; transition: color 0.3s; }
+  .mt-link:hover, .mt-link.demo { color: var(--mt-accent); z-index: 10; }
+  .mt-link .idx { display: inline-block; width: 2.2em; font-size: 0.45em; font-weight: 500; opacity: 0.5; letter-spacing: 0.1em; vertical-align: 0.6em; }
+  /* 浮图：两层裁切——外层与内层朝相反方向位移，交汇处正好露出图片；变体只改初始位移 / 变换 */
+  .mt-thumb { position: absolute; top: 50%; left: var(--x, 100%); width: var(--mt-width); aspect-ratio: 4 / 3; margin-top: calc(var(--mt-width) * -0.375); overflow: hidden; pointer-events: none; opacity: 0; border-radius: 8px; }
+  .mt-thumb .inner { display: block; width: 100%; height: 100%; overflow: hidden; }
+  .mt-thumb .img { display: block; width: 100%; height: 100%; background: var(--img) center / cover; }
+  .mt-thumb .inner, .mt-thumb .img { transition: transform var(--mt-duration) cubic-bezier(0.2, 1, 0.3, 1); }
+  /* slide：外层从左来、图从右来 */
+  .mt-list.slide .mt-thumb .inner { transform: translateX(-100%); } .mt-list.slide .mt-thumb .img { transform: translateX(100%); }
+  /* diag：沿对角线 */
+  .mt-list.diag .mt-thumb .inner { transform: translate(-100%, -100%); } .mt-list.diag .mt-thumb .img { transform: translate(100%, 100%); }
+  /* zoom：图从放大缩回、外层从缩小长开 */
+  .mt-list.zoom .mt-thumb .inner { transform: scale(0.5); } .mt-list.zoom .mt-thumb .img { transform: scale(2); }
+  /* flip：绕竖轴翻入 */
+  .mt-list.flip .mt-thumb { perspective: 800px; } .mt-list.flip .mt-thumb .inner { transform: rotateY(-90deg); transform-origin: 0 50%; } .mt-list.flip .mt-thumb .img { transform: scale(1.2); }
+  .mt-link:hover .mt-thumb, .mt-link.demo .mt-thumb { opacity: 1; }
+  .mt-link:hover .mt-thumb .inner, .mt-link:hover .mt-thumb .img, .mt-link.demo .mt-thumb .inner, .mt-link.demo .mt-thumb .img { transform: none; }
+  @media (prefers-reduced-motion: reduce) { .mt-thumb .inner, .mt-thumb .img, .mt-link { transition: none; } }
+</style>
+</head>
+<body>
+<nav class="mt-list" id="mtList" aria-label="作品列表"></nav>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"山谷晨雾"},{"src":"/samples/sample-2.webp","caption":"海边球车"},{"src":"/samples/sample-3.webp","caption":"黄昏海滩"},{"src":"/samples/sample-4.webp","caption":"林间逆光"}], // 链接文字与对应缩略图
+    variant: "slide",      // 揭示方式：slide 左右交汇 / diag 对角交汇 / zoom 缩放 / flip 翻入
+    follow: true,          // 浮图横向跟随光标位置
+    numbered: true,        // 显示序号
+  };
+  const list = document.getElementById('mtList');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  list.classList.add(CONFIG.variant);
+  CONFIG.slides.forEach((s, i) => {
+    const a = document.createElement('a'); a.className = 'mt-link'; a.href = '#'; a.addEventListener('click', e => e.preventDefault());
+    a.innerHTML = (CONFIG.numbered ? `<span class="idx">${String(i + 1).padStart(2, '0')}</span>` : '') + `<span class="label"></span><span class="mt-thumb" aria-hidden="true"><span class="inner"><span class="img"></span></span></span>`;
+    a.querySelector('.label').textContent = s.caption || `作品 ${i + 1}`;
+    a.querySelector('.img').style.setProperty('--img', `url("${s.src}")`);
+    // 浮图放在链接右侧，跟随时按光标在链接内的横向位置移动
+    a.addEventListener('pointermove', (e) => { if (!CONFIG.follow) return; const r = a.getBoundingClientRect(); a.querySelector('.mt-thumb').style.setProperty('--x', Math.min(r.width + 20, Math.max(40, e.clientX - r.left + 30)) + 'px'); });
+    a.addEventListener('pointerenter', () => (userTook = true));
+    list.appendChild(a);
+  });
+  let userTook = false;
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流悬停每个链接
+  if (!reduceMotion) { let i = 0; const links = list.querySelectorAll('.mt-link'); setInterval(() => { if (userTook || document.hidden) return; links.forEach(l => l.classList.remove('demo')); links[i % links.length].classList.add('demo'); i++; }, 1500); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

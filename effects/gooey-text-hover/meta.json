@@ -1,0 +1,24 @@
+{
+  "slug": "gooey-text-hover",
+  "name": "粘液文字悬停",
+  "category": "text",
+  "sub": "hover",
+  "tags": ["粘液", "融化", "菜单", "SVG 滤镜"],
+  "summary": "悬停菜单项时，文字先像蜡一样融化黏成一团，再凝固成另一个词、换了颜色；移开时融回原词",
+  "params": [
+    { "key": "pairs", "label": "词对", "type": "text", "target": "config", "default": "作品=Works｜关于=About｜日志=Journal｜联系=Contact", "maxLength": 120, "help": "每项「悬停前=悬停后」，用「｜」分隔" },
+    { "key": "duration", "label": "融化时长", "type": "range", "target": "config", "min": 0.4, "max": 2.5, "step": 0.1, "default": 1.2, "displayUnit": " 秒" },
+    { "key": "blur", "label": "黏连强度", "type": "range", "target": "config", "min": 2, "max": 12, "step": 1, "default": 4 },
+    { "key": "accent", "label": "融化后颜色", "type": "color", "target": "css", "default": "#f472b6" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 32, "max": 120, "step": 4, "default": 64, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "中英互融", "values": {} },
+    { "id": "same", "name": "同词换色", "values": { "pairs": "首页｜作品｜关于", "accent": "#22d3ee", "blur": 7 } },
+    { "id": "slow", "name": "慢融大字", "values": { "duration": 2, "fontSize": 96, "blur": 8, "accent": "#fbbf24" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · GooeyTextHoverEffect", "url": "https://github.com/codrops/GooeyTextHoverEffect", "license": "MIT（思路参考，代码自写）" }
+}

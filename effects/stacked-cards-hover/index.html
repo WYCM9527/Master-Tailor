@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>层叠色卡悬停</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-distance: 14px;     /* 每层错开距离 */
+    --mt-duration: 0.5s;     /* 展开时长 */
+    --mt-radius: 14px;       /* 卡片圆角 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 36px; width: min(900px, 92vw); perspective: 1000px; }
+  .mt-item { position: relative; cursor: pointer; }
+  /* 主卡在最上层；底下 N 张彩色卡默认完全重叠在主卡后面（看不见），悬停时按变体错开 */
+  .mt-item .card { position: relative; z-index: 2; border-radius: var(--mt-radius); overflow: hidden; background: #16161d; transition: transform var(--mt-duration) cubic-bezier(0.2, 1, 0.3, 1); }
+  .mt-item .card img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+  .mt-item .card h3 { margin: 0; padding: 12px 14px; font-size: 15px; }
+  .mt-item .sheet { position: absolute; inset: 0; border-radius: var(--mt-radius); background: var(--c); opacity: 0; transform: none; transition: transform var(--mt-duration) cubic-bezier(0.2, 1, 0.3, 1), opacity var(--mt-duration); transition-delay: calc(var(--i) * 40ms); z-index: 1; }
+  .mt-item:hover .sheet, .mt-item.demo .sheet { opacity: var(--o); }
+  /* 变体 stairs：向右下阶梯错开 */
+  .mt-grid.stairs .mt-item:hover .sheet, .mt-grid.stairs .mt-item.demo .sheet { transform: translate(calc(var(--mt-distance) * var(--n)), calc(var(--mt-distance) * var(--n))); }
+  .mt-grid.stairs .mt-item:hover .card, .mt-grid.stairs .mt-item.demo .card { transform: translate(calc(var(--mt-distance) * -0.5), calc(var(--mt-distance) * -0.5)); }
+  /* 变体 fan：绕左下角扇开 */
+  .mt-grid.fan .mt-item .sheet { transform-origin: 10% 100%; }
+  .mt-grid.fan .mt-item:hover .sheet, .mt-grid.fan .mt-item.demo .sheet { transform: rotate(calc(var(--n) * -5deg)) translateY(calc(var(--mt-distance) * var(--n) * -0.3)); }
+  .mt-grid.fan .mt-item:hover .card, .mt-grid.fan .mt-item.demo .card { transform: rotate(3deg); }
+  /* 变体 depth：向后一层层退到 3D 纵深并抬起 */
+  .mt-grid.depth .mt-item { transform-style: preserve-3d; }
+  .mt-grid.depth .mt-item:hover .sheet, .mt-grid.depth .mt-item.demo .sheet { transform: translate3d(0, calc(var(--mt-distance) * var(--n) * -1), calc(var(--n) * -40px)) rotateX(calc(var(--n) * 4deg)); }
+  .mt-grid.depth .mt-item:hover .card, .mt-grid.depth .mt-item.demo .card { transform: translateZ(20px) rotateX(-4deg); }
+  @media (prefers-reduced-motion: reduce) { .mt-item .sheet, .mt-item .card { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-grid" id="mtGrid"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"山谷"},{"src":"/samples/sample-2.webp","caption":"海边"},{"src":"/samples/sample-3.webp","caption":"黄昏"}], // 卡片图片与标题
+    variant: "stairs",       // 变体：stairs 阶梯 / fan 扇开 / depth 纵深
+    colors: ["#f472b6", "#a855f7", "#3b82f6"],   // 底下彩卡的颜色（由近到远）
+    columns: 3,              // 列数
+  };
+  const grid = document.getElementById('mtGrid');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  grid.classList.add(CONFIG.variant); grid.style.setProperty('--cols', CONFIG.columns);
+  CONFIG.slides.forEach((s) => {
+    const item = document.createElement('div'); item.className = 'mt-item';
+    // 彩卡：最近的一张 n=1 最实，越远越淡
+    CONFIG.colors.forEach((c, i) => { const sheet = document.createElement('div'); sheet.className = 'sheet'; sheet.style.setProperty('--c', c); sheet.style.setProperty('--n', i + 1); sheet.style.setProperty('--i', i); sheet.style.setProperty('--o', (1 - i * 0.22).toFixed(2)); item.appendChild(sheet); });
+    const card = document.createElement('div'); card.className = 'card'; card.innerHTML = '<img alt=""><h3></h3>'; card.querySelector('img').src = s.src; card.querySelector('h3').textContent = s.caption || ''; item.appendChild(card);
+    grid.appendChild(item);
+  });
+  let userTook = false; grid.addEventListener('pointerenter', () => (userTook = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流展开每张
+  if (!reduceMotion) { let i = 0; const items = grid.querySelectorAll('.mt-item'); setInterval(() => { if (userTook || document.hidden) return; items.forEach(it => it.classList.remove('demo')); items[i % items.length].classList.add('demo'); i++; }, 1600); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

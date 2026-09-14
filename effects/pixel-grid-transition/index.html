@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素格转场</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-cell: #f2f3f8;      /* 像素格颜色 */
+    --mt-duration: 0.4s;     /* 单格翻亮 / 翻暗的时长 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
+
+  /* 两页叠在同一位置，同一时刻只显示一页；换页由 View Transitions 原子完成，视觉全部交给上面的像素格层 */
+  .mt-page { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; cursor: pointer; }
+  .mt-page[hidden] { display: none; }
+  .mt-page img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.55); }
+  .mt-page h1 { position: relative; margin: 0; font-size: clamp(32px, 6vw, 72px); letter-spacing: -0.03em; text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6); }
+  .mt-page p { position: relative; margin: 12px 0 0; opacity: 0.7; font-size: 15px; }
+  /* 关掉 View Transitions 的默认交叉淡化：换页发生在像素格盖满的时候，不需要它再做动画 */
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+  /* 像素格层 */
+  .mt-pixels { position: fixed; inset: 0; z-index: 10; display: grid; grid-template-columns: repeat(var(--cols), 1fr); grid-template-rows: repeat(var(--rows), 1fr); pointer-events: none; }
+  .mt-pixels i { display: block; background: var(--mt-cell); opacity: 0; transform: scale(0.6); transition: opacity var(--mt-duration) cubic-bezier(0.7, 0, 0.3, 1), transform var(--mt-duration) cubic-bezier(0.7, 0, 0.3, 1); transition-delay: var(--d); }
+  .mt-pixels.cover i { opacity: 1; transform: scale(1.02); }
+  /* @mt:fallback 无 View Transitions API 时直接切换两页的 hidden 属性，像素格照常盖住整个过程，观感一致 */
+  @media (prefers-reduced-motion: reduce) { .mt-pixels i { transition: none; } }
+</style>
+</head>
+<body>
+<main class="mt-page" id="mtA"><img id="mtImgA" alt=""><h1 id="mtTitleA"></h1><p>点击任意处切换</p></main>
+<main class="mt-page" id="mtB" hidden><img id="mtImgB" alt=""><h1 id="mtTitleB"></h1><p>点击任意处切换</p></main>
+<div class="mt-pixels" id="mtPixels" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    imageA: "/samples/sample-1.webp",  // 第一页图片
+    imageB: "/samples/sample-3.webp",  // 第二页图片
+    titleA: "第一章",                   // 第一页标题
+    titleB: "第二章",                   // 第二页标题
+    rows: 8,             // 像素格行数（列数按宽高比自动算）
+    pattern: "wave",     // 铺开顺序：wave 从上到下带随机 / random 完全随机 / diagonal 从左上到右下 / center 从中心向外
+    stagger: 30,         // 相邻一档格子的延迟（毫秒）
+    hold: 4,             // 演示：每隔几秒自动换页
+  };
+  const pixels = document.getElementById('mtPixels'), pages = [document.getElementById('mtA'), document.getElementById('mtB')];
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtImgA').src = CONFIG.imageA; document.getElementById('mtImgB').src = CONFIG.imageB;
+  document.getElementById('mtTitleA').textContent = CONFIG.titleA; document.getElementById('mtTitleB').textContent = CONFIG.titleB;
+  const durMs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-duration')) * 1000 || 400;
+
+  // 建格：格子尽量接近正方形；每格按图案算一个「档位」，延迟 = 档位 × stagger
+  let cells = [], maxTier = 0;
+  function build() {
+    const rows = CONFIG.rows, cols = Math.max(2, Math.round(rows * innerWidth / innerHeight));
+    pixels.style.setProperty('--rows', rows); pixels.style.setProperty('--cols', cols); pixels.innerHTML = ''; cells = []; maxTier = 0;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      let tier;
+      if (CONFIG.pattern === 'random') tier = Math.random() * (rows + 4);
+      else if (CONFIG.pattern === 'diagonal') tier = (r + c * rows / cols) + Math.random() * 2;
+      else if (CONFIG.pattern === 'center') tier = Math.hypot(r - (rows - 1) / 2, (c - (cols - 1) / 2) * rows / cols) + Math.random() * 1.5;
+      else tier = r + Math.random() * 5;                       // wave：按行 + 0–5 档随机，Codrops 式的「参差波前」
+      maxTier = Math.max(maxTier, tier);
+      const i = document.createElement('i'); i.dataset.tier = tier; cells.push(i); pixels.appendChild(i);
+    }
+  }
+  build(); addEventListener('resize', build);
+  const setDelays = (reverse) => cells.forEach(i => i.style.setProperty('--d', ((reverse ? maxTier - i.dataset.tier : +i.dataset.tier) * CONFIG.stagger) + 'ms'));
+
+  let current = 0, busy = false, userTook = false;
+  const swap = () => { pages[current].hidden = true; current = 1 - current; pages[current].hidden = false; };
+  async function go() {
+    if (busy) return; busy = true;
+    if (reduceMotion) { swap(); busy = false; return; }
+    // 1. 像素格按图案顺序翻亮，盖满整屏
+    setDelays(false); pixels.classList.add('cover');
+    await new Promise(r => setTimeout(r, maxTier * CONFIG.stagger + durMs + 60));
+    // 2. 盖满时换页：有 View Transitions 就用它把 DOM 切换做成一次原子快照（默认动画已关掉）
+    if (document.startViewTransition) { try { await document.startViewTransition(swap).finished; } catch (_) { /* 已在回调里换页 */ } }
+    else swap();   // @mt:fallback
+    // 3. 反序翻暗露出新页
+    setDelays(true); pixels.classList.remove('cover');
+    await new Promise(r => setTimeout(r, maxTier * CONFIG.stagger + durMs + 60));
+    busy = false;
+  }
+  pages.forEach(p => p.addEventListener('click', () => { userTook = true; go(); }));
+  addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') go(); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：定时自动换页
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) go(); }, CONFIG.hold * 1000);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
