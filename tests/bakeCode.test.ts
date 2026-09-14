@@ -92,7 +92,10 @@ describe('bakeCode', () => {
       thumb: true,
       fontsCssHref: '/fonts/fonts.css',
     });
-    expect(out).toContain('window.__MT_ENV = { thumb: true }');
+    expect(out).toContain('window.__MT_ENV = { thumb: true, visible: true }');
+    // thumb 模式把 dpr 封顶为 1，并带离屏暂停的 mt:visible 通道
+    expect(out).toContain("Object.defineProperty(window, 'devicePixelRatio'");
+    expect(out).toContain("d.type === 'mt:visible'");
     expect(out).toContain('<link rel="stylesheet" href="/fonts/fonts.css">');
     expect(out).toContain('@mt:thumb-start');
     expect(out).toContain('photo: "blob:http-local-preview"');

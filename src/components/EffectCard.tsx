@@ -11,11 +11,19 @@ import { IconArrowRight } from './Icons';
 const DESIGN_W = 1280;
 const DESIGN_H = 720;
 
+/** 距视口多近开始挂载 / 恢复运行；离开这个范围就暂停 */
+const NEAR_MARGIN = '240px';
+/** 离视口多远才真正卸载 iframe（留出滞后区，来回滚动不反复重建） */
+const FAR_MARGIN = '150% 0px';
+
 /**
  * 效果页的效果 Cell（效果区内部 3 列之一）：
- * - 预览铺满 Cell（16:9，与详情页舞台同比例），IntersectionObserver 首次进入视口才挂载 iframe
+ * - 预览铺满 Cell（16:9，与详情页舞台同比例），IntersectionObserver 接近视口才挂载 iframe
  * - iframe 固定按 1280×720 设计视口渲染，再 transform: scale 等比缩小到卡片宽度——
  *   避免整屏效果在小视口下文字换行 / 溢出错乱（如 Hero 图文轮播）
+ * - 性能：几百张卡不能同时活着。滚出「近区」就给 iframe 发 mt:visible=false，runtime 把它
+ *   整体暂停（rAF 挂起、CSS 动画暂停、document.hidden 置真）；滚出「远区」直接卸载 iframe，
+ *   滚回来再重建。任一时刻真正在跑的只有视口附近的十来张
  * - 底部标题条，悬停整条黑白反转、箭头右移
  * - iframe 常态 pointer-events:none，整 Cell 可点击进详情；
  *   Cell 把真实鼠标坐标（换算回设计坐标）postMessage 给 iframe，thumb 演示块可跟随真实指针
@@ -28,6 +36,7 @@ export function EffectCard({ effect }: { effect: Effect }) {
   const previewRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [scale, setScale] = useState(0);
   const to = `/e/${meta.slug}`;
   const transitioning = useViewTransitionState(to);
@@ -37,18 +46,37 @@ export function EffectCard({ effect }: { effect: Effect }) {
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(
+    // 近区：进入 → 挂载并运行；离开 → 暂停
+    const near = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setMounted(true);
-          io.disconnect();
-        }
+        const on = entries.some((e) => e.isIntersecting);
+        setVisible(on);
+        if (on) setMounted(true);
       },
-      { rootMargin: '240px' },
+      { rootMargin: NEAR_MARGIN },
     );
-    io.observe(el);
-    return () => io.disconnect();
+    // 远区：离开 → 卸载（进入不做事，挂载交给近区）
+    const far = new IntersectionObserver(
+      (entries) => {
+        if (entries.every((e) => !e.isIntersecting)) setMounted(false);
+      },
+      { rootMargin: FAR_MARGIN },
+    );
+    near.observe(el);
+    far.observe(el);
+    return () => {
+      near.disconnect();
+      far.disconnect();
+    };
   }, []);
+
+  // 可见性变化 → 通知 iframe 暂停 / 恢复；iframe 重建完成时也补发一次当前状态
+  const postVisible = (v: boolean) => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'mt:visible', visible: v }, '*');
+  };
+  useEffect(() => {
+    postVisible(visible);
+  }, [visible]);
 
   // 卡片宽度 → 缩放比（随窗口尺寸变化持续更新）
   useEffect(() => {
@@ -101,6 +129,7 @@ export function EffectCard({ effect }: { effect: Effect }) {
           <iframe
             ref={iframeRef}
             srcDoc={srcdoc}
+            onLoad={() => postVisible(visible)}
             sandbox="allow-scripts allow-same-origin"
             title={`${meta.name} 预览`}
             loading="lazy"
