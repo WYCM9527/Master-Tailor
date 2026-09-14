@@ -1,0 +1,26 @@
+{
+  "slug": "mosaic-fade-image",
+  "name": "拼块渐显图",
+  "category": "card",
+  "sub": "idle",
+  "tags": ["图片", "进场", "拼块", "黑白上色"],
+  "summary": "一张图被切成一格格拼块，各块以随机先后淡入拼成整图，先是黑白，拼齐后整体染上颜色",
+  "params": [
+    { "key": "photo", "label": "图片", "type": "image", "target": "config", "default": "/samples/sample-2.webp" },
+    { "key": "cols", "label": "横向块数", "type": "range", "target": "config", "min": 2, "max": 16, "step": 1, "default": 6 },
+    { "key": "rows", "label": "纵向块数", "type": "range", "target": "config", "min": 2, "max": 16, "step": 1, "default": 4 },
+    { "key": "fade", "label": "每块淡入时长", "type": "range", "target": "config", "min": 200, "max": 2500, "step": 100, "default": 1000, "displayUnit": " 毫秒" },
+    { "key": "maxDelay", "label": "随机延迟上限", "type": "range", "target": "config", "min": 0, "max": 3000, "step": 100, "default": 1200, "displayUnit": " 毫秒" },
+    { "key": "grayFirst", "label": "先黑白后上色", "type": "toggle", "target": "config", "default": true },
+    { "key": "colorDelay", "label": "上色时刻", "type": "range", "target": "config", "min": 0, "max": 4000, "step": 100, "default": 1300, "displayUnit": " 毫秒" },
+    { "key": "radius", "label": "图片圆角", "type": "range", "target": "css", "min": 0, "max": 80, "step": 4, "default": 40, "unit": "px" },
+    { "key": "size", "label": "图片边长", "type": "range", "target": "css", "min": 200, "max": 600, "step": 20, "default": 360, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "fine", "name": "细碎快拼", "values": { "cols": 12, "rows": 12, "fade": 500, "maxDelay": 900, "colorDelay": 900, "radius": 16 } },
+    { "id": "color", "name": "直接彩色", "values": { "grayFirst": false, "cols": 4, "rows": 4, "fade": 1400, "maxDelay": 1600, "photo": "/samples/sample-6.webp" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Magic UI · Pixel Image", "url": "https://magicui.design/docs/components/pixel-image", "license": "MIT（思路参考，代码自写）" }
+}

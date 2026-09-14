@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>主题切换扩散</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 深色主题底色 */
+    --mt-lightBg: #f5f5f7;   /* 浅色主题底色 */
+    --mt-duration: 0.5s;     /* 扩散时长 */
+    --mt-accent: #7c9cff;    /* 强调色（按钮与卡片描边） */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  /* 两套主题变量：切换 html 上的 .light 类即整页换色 */
+  html { --bg: var(--mt-bg); --fg: #f2f3f8; --muted: rgba(255, 255, 255, 0.6); --card: rgba(255, 255, 255, 0.06); --line: rgba(255, 255, 255, 0.12); }
+  html.light { --bg: var(--mt-lightBg); --fg: #111118; --muted: rgba(0, 0, 0, 0.55); --card: rgba(0, 0, 0, 0.04); --line: rgba(0, 0, 0, 0.1); }
+  body { background: var(--bg); color: var(--fg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-page { width: min(560px, 90vw); }
+  .mt-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+  .mt-brand { font-weight: 800; letter-spacing: 0.06em; font-size: 14px; }
+  .mt-toggle {
+    width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--fg);
+    display: grid; place-items: center; cursor: pointer; padding: 0;
+  }
+  .mt-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .mt-toggle .sun { display: none; } html.light .mt-toggle .sun { display: block; } html.light .mt-toggle .moon { display: none; }
+  h1 { margin: 0 0 10px; font-size: 34px; letter-spacing: -0.02em; }
+  p { margin: 0 0 24px; color: var(--muted); line-height: 1.7; }
+  .mt-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .mt-card { padding: 16px; border-radius: 14px; background: var(--card); border: 1px solid var(--line); }
+  .mt-card b { display: block; font-size: 22px; color: var(--mt-accent); margin-bottom: 4px; }
+  .mt-card span { font-size: 13px; color: var(--muted); }
+
+  /* View Transitions：关掉默认的交叉淡化，新画面由 JS 用 clip-path 从按钮处扩出来 */
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+  ::view-transition-new(root) { z-index: 2; } ::view-transition-old(root) { z-index: 1; }
+  /* 不支持 View Transitions 的浏览器：用一层新主题色的遮罩做同样的扩散 */
+  .mt-fallback { position: fixed; inset: 0; z-index: 99; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="mt-page">
+  <div class="mt-top">
+    <div class="mt-brand" id="mtBrand"></div>
+    <button type="button" class="mt-toggle" id="mtToggle" aria-label="切换深浅色主题">
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </div>
+  <h1 id="mtTitle"></h1>
+  <p id="mtDesc"></p>
+  <div class="mt-cards"><div class="mt-card"><b>164</b><span>效果</span></div><div class="mt-card"><b>09</b><span>分类</span></div><div class="mt-card"><b>1 步</b><span>复制 prompt</span></div></div>
+</div>
+<script>
+  const CONFIG = {
+    brand: "MASTER-TAILOR",                              // 左上角品牌字
+    title: "白天与夜晚，一键切换",                          // 标题
+    desc: "点右上角的按钮：新主题不是闪一下换掉，而是从按钮那一点向整个页面扩散开来。", // 说明
+    shape: "circle",       // 扩散形状：circle 圆 / diamond 菱形 / square 方形 / star 五角星
+    fromCenter: false,     // 从屏幕中心扩散（关闭则从按钮位置）
+  };
+
+  const btn = document.getElementById('mtToggle'), root = document.documentElement;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtBrand').textContent = CONFIG.brand;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  document.getElementById('mtDesc').textContent = CONFIG.desc;
+  const durationMs = parseFloat(getComputedStyle(root).getPropertyValue('--mt-duration')) * 1000 || 500;
+  let busy = false, userTook = false;
+
+  // 起止两个 clip-path：从一个点收缩的形状 → 大到能盖住整个视口的同形状（坐标用百分比，避免高倍屏偏移）
+  function clipPaths(cx, cy) {
+    const W = innerWidth, H = innerHeight, R = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy));
+    const P = (x, y) => `${x / W * 100}% ${y / H * 100}%`, at = P(cx, cy);
+    const poly = (pts) => `polygon(${pts.join(', ')})`, collapsed = (n) => poly(Array(n).fill(at));
+    switch (CONFIG.shape) {
+      case 'diamond': { const r = R * Math.SQRT2; return [collapsed(4), poly([P(cx, cy - r), P(cx + r, cy), P(cx, cy + r), P(cx - r, cy)])]; }
+      case 'square': { const s = Math.max(Math.max(cx, W - cx), Math.max(cy, H - cy)) * 1.05; return [collapsed(4), poly([P(cx - s, cy - s), P(cx + s, cy - s), P(cx + s, cy + s), P(cx - s, cy + s)])]; }
+      case 'star': {
+        const star = (r) => { const v = []; for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5, b = a + Math.PI / 5; v.push(P(cx + r * Math.cos(a), cy + r * Math.sin(a)), P(cx + r * 0.42 * Math.cos(b), cy + r * 0.42 * Math.sin(b))); } return poly(v); };
+        return [star(Math.max(2, R * 0.03)), star(R * Math.SQRT2 * 1.03)];
+      }
+      default: return [`circle(0% at ${at})`, `circle(${R / (Math.hypot(W, H) / Math.SQRT2) * 100}% at ${at})`];
+    }
+  }
+  function toggle() {
+    if (busy) return;
+    const r = btn.getBoundingClientRect();
+    const cx = CONFIG.fromCenter ? innerWidth / 2 : r.left + r.width / 2, cy = CONFIG.fromCenter ? innerHeight / 2 : r.top + r.height / 2;
+    const [from, to] = clipPaths(cx, cy), easing = CONFIG.shape === 'star' ? 'linear' : 'ease-in-out';
+    if (reduceMotion) { root.classList.toggle('light'); return; }
+    busy = true;
+    if (typeof document.startViewTransition === 'function') {
+      // 新画面被截成快照，用 clip-path 从起点形状扩到全屏
+      const t = document.startViewTransition(() => root.classList.toggle('light'));
+      t.ready.then(() => root.animate({ clipPath: [from, to] }, { duration: durationMs, easing, fill: 'forwards', pseudoElement: '::view-transition-new(root)' })).catch(() => {});
+      t.finished.finally(() => { busy = false; });
+    } else {
+      // 回退：先铺一层新主题底色的遮罩扩散出去，扩满后真正切换主题、撤掉遮罩
+      const ov = document.createElement('div'); ov.className = 'mt-fallback';
+      ov.style.background = root.classList.contains('light') ? getComputedStyle(root).getPropertyValue('--mt-bg') : getComputedStyle(root).getPropertyValue('--mt-lightBg');
+      document.body.appendChild(ov);
+      ov.animate({ clipPath: [from, to] }, { duration: durationMs, easing, fill: 'forwards' }).finished.then(() => { root.classList.toggle('light'); ov.remove(); busy = false; });
+    }
+  }
+  btn.addEventListener('click', () => { userTook = true; toggle(); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：每 2.8 秒自动切一次
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) toggle(); }, 2800);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

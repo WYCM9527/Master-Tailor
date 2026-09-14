@@ -1,0 +1,27 @@
+{
+  "slug": "ring-gauge-progress",
+  "name": "环形进度",
+  "category": "loading",
+  "sub": "idle",
+  "tags": ["进度", "圆环", "仪表", "数字"],
+  "summary": "一个粗圆环从顶部顺时针长出进度，剩余部分是留有小空隙的淡轨道，中间的数字与弧线同步滚动",
+  "params": [
+    { "key": "value", "label": "初始进度", "type": "range", "target": "config", "min": 0, "max": 100, "step": 5, "default": 0, "unit": "%" },
+    { "key": "step", "label": "演示每步增加", "type": "range", "target": "config", "min": 5, "max": 50, "step": 5, "default": 10 },
+    { "key": "interval", "label": "演示间隔", "type": "range", "target": "config", "min": 0.5, "max": 5, "step": 0.5, "default": 2, "displayUnit": " 秒" },
+    { "key": "thickness", "label": "弧线粗细", "type": "range", "target": "config", "min": 3, "max": 16, "step": 1, "default": 10 },
+    { "key": "gap", "label": "两端空隙", "type": "range", "target": "config", "min": 0, "max": 10, "step": 1, "default": 5, "unit": "%" },
+    { "key": "suffix", "label": "数字后缀", "type": "text", "target": "config", "default": "%", "maxLength": 6 },
+    { "key": "duration", "label": "过渡时长", "type": "range", "target": "css", "min": 0.2, "max": 2.5, "step": 0.1, "default": 1, "unit": "s", "displayUnit": " 秒" },
+    { "key": "size", "label": "尺寸", "type": "range", "target": "css", "min": 80, "max": 320, "step": 10, "default": 160, "unit": "px" },
+    { "key": "primary", "label": "进度弧颜色", "type": "color", "target": "css", "default": "#6366f1" },
+    { "key": "color", "label": "数字颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "thin", "name": "细环无隙", "values": { "thickness": 4, "gap": 0, "primary": "#22c55e", "size": 200 } },
+    { "id": "score", "name": "评分表", "values": { "value": 60, "step": 5, "interval": 1, "suffix": "分", "primary": "#f59e0b", "thickness": 14 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Magic UI · Animated Circular Progress Bar", "url": "https://magicui.design/docs/components/animated-circular-progress-bar", "license": "MIT（思路参考，代码自写）" }
+}

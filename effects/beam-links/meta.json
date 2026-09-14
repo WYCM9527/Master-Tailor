@@ -1,0 +1,27 @@
+{
+  "slug": "beam-links",
+  "name": "连线光束",
+  "category": "card",
+  "sub": "idle",
+  "tags": ["连线", "光束", "集成图", "SVG"],
+  "summary": "几个节点用弧线连到中间的枢纽，每条线上有一束渐变的光反复从一端流向另一端，产品集成图、架构图的标配",
+  "params": [
+    { "key": "left", "label": "左侧节点", "type": "text", "target": "config", "default": "文档｜表格｜邮件", "maxLength": 40, "help": "用「｜」分隔，1–4 个" },
+    { "key": "hub", "label": "中间枢纽", "type": "text", "target": "config", "default": "AI", "maxLength": 8 },
+    { "key": "right", "label": "右侧节点", "type": "text", "target": "config", "default": "日历｜聊天｜看板", "maxLength": 40, "help": "用「｜」分隔，1–4 个" },
+    { "key": "colorA", "label": "光束起始色", "type": "color", "target": "config", "default": "#ffaa40" },
+    { "key": "colorB", "label": "光束结束色", "type": "color", "target": "config", "default": "#9c40ff" },
+    { "key": "duration", "label": "一趟时长", "type": "range", "target": "config", "min": 1, "max": 10, "step": 0.5, "default": 5, "displayUnit": " 秒" },
+    { "key": "curvature", "label": "弯曲程度", "type": "range", "target": "config", "min": 0, "max": 160, "step": 5, "default": 75, "unit": "px", "help": "0 为直线" },
+    { "key": "rightToLeft", "label": "右侧反向流动", "type": "toggle", "target": "config", "default": true },
+    { "key": "lineWidth", "label": "线宽", "type": "range", "target": "css", "min": 1, "max": 5, "step": 0.5, "default": 2, "unit": "px" },
+    { "key": "lineOpacity", "label": "底线不透明度", "type": "range", "target": "css", "min": 0, "max": 0.6, "step": 0.05, "default": 0.2 }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "straight", "name": "直线快流", "values": { "curvature": 0, "duration": 2, "colorA": "#22d3ee", "colorB": "#3b82f6" } },
+    { "id": "fan", "name": "大扇形", "values": { "left": "输入｜语音｜图片｜文件", "right": "总结｜翻译｜代码｜图表", "curvature": 120, "lineWidth": 1.5 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Animated Beam", "url": "https://magicui.design/docs/components/animated-beam", "license": "MIT（思路参考，代码自写）" }
+}

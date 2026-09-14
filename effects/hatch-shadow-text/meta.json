@@ -1,0 +1,27 @@
+{
+  "slug": "hatch-shadow-text",
+  "name": "线影文字",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["投影", "斜线", "标题", "版式"],
+  "summary": "关键词底下垫一层由细密斜线排成的投影，斜线纹理还在缓缓流动，像老海报的手工阴影活了过来",
+  "params": [
+    { "key": "prefix", "label": "前置文字", "type": "text", "target": "config", "default": "Ship ", "maxLength": 24 },
+    { "key": "word", "label": "关键词", "type": "text", "target": "config", "default": "Fast", "maxLength": 16 },
+    { "key": "italic", "label": "关键词斜体", "type": "toggle", "target": "config", "default": true },
+    { "key": "shadow", "label": "投影颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "offset", "label": "投影偏移", "type": "range", "target": "css", "min": 0.02, "max": 0.12, "step": 0.01, "default": 0.04, "unit": "em" },
+    { "key": "hatch", "label": "斜线密度", "type": "range", "target": "css", "min": 0.03, "max": 0.14, "step": 0.01, "default": 0.06, "unit": "em", "help": "数值越小线越密" },
+    { "key": "speed", "label": "流动一轮时长", "type": "range", "target": "css", "min": 3, "max": 40, "step": 1, "default": 15, "unit": "s", "displayUnit": " 秒" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 48, "max": 200, "step": 4, "default": 120, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "poster", "name": "海报红", "values": { "shadow": "#ff2975", "offset": 0.08, "hatch": 0.05, "speed": 8 } },
+    { "id": "chinese", "name": "中文标题", "values": { "prefix": "把界面 ", "word": "缝好", "italic": false, "fontSize": 96, "offset": 0.06 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Line Shadow Text", "url": "https://magicui.design/docs/components/line-shadow-text", "license": "MIT（思路参考，代码自写）" }
+}

@@ -1,0 +1,31 @@
+{
+  "slug": "theme-wipe-toggle",
+  "name": "主题切换扩散",
+  "category": "button",
+  "sub": "click",
+  "tags": ["深浅色", "主题切换", "View Transitions", "扩散"],
+  "summary": "点一下日月按钮，新主题从按钮那一点以圆形（或菱形、星形）扩散开来铺满整页，而不是生硬地闪一下换色",
+  "params": [
+    { "key": "shape", "label": "扩散形状", "type": "select", "target": "config", "options": [
+      { "value": "circle", "label": "圆形" },
+      { "value": "diamond", "label": "菱形" },
+      { "value": "square", "label": "方形" },
+      { "value": "star", "label": "五角星" }
+    ], "default": "circle" },
+    { "key": "fromCenter", "label": "从屏幕中心扩散", "type": "toggle", "target": "config", "default": false, "help": "关闭则从按钮位置扩散" },
+    { "key": "duration", "label": "扩散时长", "type": "range", "target": "css", "min": 0.2, "max": 1.5, "step": 0.1, "default": 0.5, "unit": "s", "displayUnit": " 秒" },
+    { "key": "lightBg", "label": "浅色主题底色", "type": "color", "target": "css", "default": "#f5f5f7" },
+    { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "brand", "label": "品牌字", "type": "text", "target": "config", "default": "MASTER-TAILOR", "maxLength": 20 },
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "白天与夜晚，一键切换", "maxLength": 24 },
+    { "key": "desc", "label": "说明", "type": "text", "target": "config", "default": "点右上角的按钮：新主题不是闪一下换掉，而是从按钮那一点向整个页面扩散开来。", "maxLength": 80 },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "圆形扩散", "values": {} },
+    { "id": "star", "name": "五角星", "values": { "shape": "star", "duration": 0.8, "accent": "#ffd319" } },
+    { "id": "center", "name": "中心菱形", "values": { "shape": "diamond", "fromCenter": true, "duration": 0.6 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Magic UI · Animated Theme Toggler", "url": "https://magicui.design/docs/components/animated-theme-toggler", "license": "MIT（思路参考，代码自写）" }
+}

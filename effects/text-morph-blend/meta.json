@@ -1,0 +1,23 @@
+{
+  "slug": "text-morph-blend",
+  "name": "文字融变",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["融变", "液体", "标题", "轮换"],
+  "summary": "一个词像液体一样融化、流进下一个词的形状里再凝固，靠模糊 + 阈值滤镜做出的经典文字变形",
+  "params": [
+    { "key": "words", "label": "轮换词语", "type": "text", "target": "config", "default": "你好｜融变｜文字｜像液体｜一样｜流动", "maxLength": 80, "help": "多个词用「｜」分隔" },
+    { "key": "morphTime", "label": "融变时长", "type": "range", "target": "config", "min": 0.5, "max": 3, "step": 0.1, "default": 1.5, "displayUnit": " 秒" },
+    { "key": "holdTime", "label": "停留时长", "type": "range", "target": "config", "min": 0, "max": 3, "step": 0.1, "default": 0.5, "displayUnit": " 秒" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 40, "max": 160, "step": 4, "default": 96, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "slow", "name": "慢融", "values": { "morphTime": 3, "holdTime": 1.5 } },
+    { "id": "brand", "name": "品牌词", "values": { "words": "MASTER｜TAILOR｜STUDIO", "color": "#ffd319", "fontSize": 128, "morphTime": 1.2, "holdTime": 1 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Morphing Text", "url": "https://magicui.design/docs/components/morphing-text", "license": "MIT（思路参考，代码自写）" }
+}

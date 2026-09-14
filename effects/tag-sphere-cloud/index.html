@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D 标签云</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+  canvas { display: block; cursor: grab; touch-action: none; border-radius: 12px; }
+  canvas.dragging { cursor: grabbing; }
+</style>
+</head>
+<body>
+<canvas id="mtCloud" width="420" height="420" role="img" aria-label="可拖动旋转的 3D 标签云"></canvas>
+<script>
+  const CONFIG = {
+    tags: "设计｜动效｜前端｜排版｜色彩｜交互｜品牌｜插画｜原型｜字体｜栅格｜留白｜对比｜节奏｜层级｜图标｜留存｜转化｜可用性｜一致性", // 标签，用「｜」分隔
+    radius: 130,          // 球半径（px）
+    fontSize: 14,         // 标签字号（px）
+    color: "#f2f3f8",     // 标签文字颜色
+    pill: "#1f1f2a",      // 标签底色
+    accent: "#7c9cff",    // 被点选、转到正前方的标签底色
+    autoSpeed: 1,         // 自动旋转速度倍率
+  };
+
+  const canvas = document.getElementById('mtCloud'), ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(2, devicePixelRatio || 1), SIZE = 420;
+  canvas.width = SIZE * dpr; canvas.height = SIZE * dpr; canvas.style.width = canvas.style.height = SIZE + 'px';
+  const tags = CONFIG.tags.split('｜').map(t => t.trim()).filter(Boolean);
+
+  // 斐波那契球面：把 N 个点均匀撒在球面上
+  const pts = tags.map((label, i) => {
+    const n = tags.length, y = (i * 2 / n) - 1 + 1 / n, r = Math.sqrt(1 - y * y), phi = i * Math.PI * (3 - Math.sqrt(5));
+    return { label, x: Math.cos(phi) * r * CONFIG.radius, y: y * CONFIG.radius, z: Math.sin(phi) * r * CONFIG.radius, sx: 0, sy: 0, sr: 0, front: 0 };
+  });
+  let rot = { x: 0, y: 0 }, mouse = { x: SIZE / 2, y: SIZE / 2 }, dragging = false, lastP = null, focus = null, picked = -1;
+  const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+  // 旋转矩阵：先绕 Y 再绕 X
+  function project(p) {
+    const cx = Math.cos(rot.x), sx = Math.sin(rot.x), cy = Math.cos(rot.y), sy = Math.sin(rot.y);
+    const rx = p.x * cy - p.z * sy, rz = p.x * sy + p.z * cy, ry = p.y * cx + rz * sx;
+    return { x: rx, y: ry, z: rz };
+  }
+  // 点击：把最近的标签转到正前方（求出让它落在 z 轴正向的旋转角，缓动过去）
+  canvas.addEventListener('pointerdown', (e) => {
+    const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    let hit = -1;
+    pts.forEach((p, i) => { if (Math.hypot(p.sx - mx, p.sy - my) < p.sr) hit = i; });
+    if (hit >= 0) {
+      const p = pts[hit], tx = -Math.atan2(p.y, Math.hypot(p.x, p.z)), ty = Math.atan2(p.x, p.z);
+      const dist = Math.hypot(tx - rot.x, ty - rot.y);
+      focus = { fromX: rot.x, fromY: rot.y, tx, ty, t0: performance.now(), dur: Math.min(2000, Math.max(800, dist * 1000)) };
+      picked = hit; return;
+    }
+    dragging = true; lastP = { x: e.clientX, y: e.clientY }; canvas.classList.add('dragging'); canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    const r = canvas.getBoundingClientRect(); mouse = { x: e.clientX - r.left, y: e.clientY - r.top };
+    if (dragging && lastP) { rot.y += (e.clientX - lastP.x) * 0.002; rot.x += (e.clientY - lastP.y) * 0.002; lastP = { x: e.clientX, y: e.clientY }; focus = null; }
+  });
+  const stop = () => { dragging = false; lastP = null; canvas.classList.remove('dragging'); };
+  canvas.addEventListener('pointerup', stop); canvas.addEventListener('pointercancel', stop);
+  canvas.addEventListener('pointerleave', () => { stop(); mouse = { x: SIZE / 2, y: SIZE / 2 }; });
+
+  ctx.font = `600 ${CONFIG.fontSize * dpr}px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const widths = tags.map(t => ctx.measureText(t).width / dpr);
+  const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`; };
+  const pillRgb = hexRgb(CONFIG.pill), accRgb = hexRgb(CONFIG.accent), txtRgb = hexRgb(CONFIG.color);
+
+  function frame(now) {
+    if (!document.hidden) {
+      // 旋转：有点选目标时缓动过去；否则按鼠标偏离中心的方向与距离慢慢转（鼠标不在时中心=0，微转）
+      if (focus) {
+        const k = easeOutCubic(Math.min(1, (now - focus.t0) / focus.dur));
+        rot.x = focus.fromX + (focus.tx - focus.fromX) * k; rot.y = focus.fromY + (focus.ty - focus.fromY) * k;
+        if (k >= 1) focus = null;
+      } else if (!dragging && !reduceMotion) {
+        const dx = mouse.x - SIZE / 2, dy = mouse.y - SIZE / 2, dist = Math.hypot(dx, dy) / (SIZE * 0.707);
+        const speed = (0.003 + dist * 0.01) * CONFIG.autoSpeed;
+        rot.x += (dy / SIZE) * speed + 0.0006 * CONFIG.autoSpeed; rot.y += (dx / SIZE) * speed + 0.0012 * CONFIG.autoSpeed;
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // 投影：z 越大越靠前 → 越大、越实；先画后面的，前面的盖在上面
+      const order = pts.map((p, i) => ({ i, q: project(p) })).sort((a, b) => a.q.z - b.q.z);
+      for (const { i, q } of order) {
+        const p = pts[i], R = CONFIG.radius;
+        const scale = (q.z + 2 * R) / (3 * R), alpha = Math.max(0.2, Math.min(1, (q.z + 1.5 * R) / (2 * R)));
+        const x = SIZE / 2 + q.x, y = SIZE / 2 + q.y, w = (widths[i] + 18) * scale, h = (CONFIG.fontSize + 12) * scale;
+        p.sx = x; p.sy = y; p.sr = Math.max(w, h) / 2;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = `rgb(${i === picked ? accRgb : pillRgb})`;
+        ctx.beginPath(); ctx.roundRect((x - w / 2) * dpr, (y - h / 2) * dpr, w * dpr, h * dpr, h * dpr / 2); ctx.fill();
+        ctx.fillStyle = `rgb(${txtRgb})`;
+        ctx.font = `600 ${CONFIG.fontSize * scale * dpr}px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`;
+        ctx.fillText(p.label, x * dpr, y * dpr + 1);
+      }
+      ctx.globalAlpha = 1;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

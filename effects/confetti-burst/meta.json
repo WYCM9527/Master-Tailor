@@ -1,0 +1,31 @@
+{
+  "slug": "confetti-burst",
+  "name": "彩纸礼花",
+  "category": "button",
+  "sub": "click",
+  "tags": ["彩纸", "庆祝", "礼花", "点击"],
+  "summary": "点一下按钮，一把彩色纸片从按钮喷向空中，翻飞着散开、被重力拉回落下；也可切成两侧礼炮或满屏烟花",
+  "params": [
+    { "key": "label", "label": "按钮文字", "type": "text", "target": "config", "default": "庆祝一下", "maxLength": 12 },
+    { "key": "mode", "label": "发射方式", "type": "select", "target": "config", "options": [
+      { "value": "cannon", "label": "从按钮喷出" },
+      { "value": "sides", "label": "两侧礼炮" },
+      { "value": "fireworks", "label": "满屏烟花" }
+    ], "default": "cannon" },
+    { "key": "count", "label": "彩纸数量", "type": "range", "target": "config", "min": 10, "max": 300, "step": 10, "default": 50 },
+    { "key": "spread", "label": "散开角度", "type": "range", "target": "config", "min": 10, "max": 180, "step": 5, "default": 45, "unit": "deg", "displayUnit": "°" },
+    { "key": "velocity", "label": "初速度", "type": "range", "target": "config", "min": 15, "max": 90, "step": 5, "default": 45 },
+    { "key": "gravity", "label": "重力", "type": "range", "target": "config", "min": 0.2, "max": 3, "step": 0.1, "default": 1 },
+    { "key": "scalar", "label": "彩纸大小", "type": "range", "target": "config", "min": 0.5, "max": 3, "step": 0.1, "default": 1 },
+    { "key": "colors", "label": "彩纸颜色", "type": "colors", "target": "config", "default": ["#26ccff", "#a25afd", "#ff5e7e", "#88ff5a", "#fcff42", "#ffa62d", "#ff36ff"], "min": 1, "max": 8 },
+    { "key": "btnBg", "label": "按钮底色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "从按钮喷出", "values": {} },
+    { "id": "sides", "name": "两侧礼炮", "values": { "mode": "sides", "colors": ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"], "label": "开幕" } },
+    { "id": "fireworks", "name": "满屏烟花", "values": { "mode": "fireworks", "label": "新年快乐", "count": 60 } },
+    { "id": "gold", "name": "金色大礼花", "values": { "count": 160, "spread": 100, "velocity": 60, "gravity": 0.8, "scalar": 1.4, "colors": ["#ffd319", "#fff5b0", "#ffb300", "#ffffff"] } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Magic UI · Confetti（基于 canvas-confetti 的思路）", "url": "https://magicui.design/docs/components/confetti", "license": "MIT（思路参考，代码自写）" }
+}

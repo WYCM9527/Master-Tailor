@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环形进度</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-primary: #6366f1;   /* 进度弧颜色 */
+    --mt-track: rgba(255, 255, 255, 0.12); /* 剩余轨道颜色 */
+    --mt-color: #f2f3f8;     /* 数字颜色 */
+    --mt-size: 160px;        /* 尺寸 */
+    --mt-duration: 1s;       /* 进度变化的过渡时长 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-gauge { position: relative; width: var(--mt-size); height: var(--mt-size); }
+  .mt-gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  /* 两段弧：进度弧从顶部顺时针长出；剩余轨道紧跟其后、两端各留一小段空隙 */
+  .mt-gauge circle { fill: none; stroke-linecap: round; transition: stroke-dasharray var(--mt-duration) ease, stroke-dashoffset var(--mt-duration) ease; }
+  .mt-gauge .bar { stroke: var(--mt-primary); }
+  .mt-gauge .track { stroke: var(--mt-track); }
+  .mt-num {
+    position: absolute; inset: 0; display: flex; align-items: baseline; justify-content: center; padding-top: calc(var(--mt-size) * 0.4);
+    color: var(--mt-color); font-size: calc(var(--mt-size) * 0.19); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  }
+  .mt-num small { font-size: 0.55em; opacity: 0.6; margin-left: 2px; }
+
+  /* 用户开启「减少动态效果」时：数值直接跳变 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-gauge circle { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-gauge" id="mtGauge" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <svg viewBox="0 0 100 100" aria-hidden="true">
+    <circle class="track" id="mtTrack" cx="50" cy="50" r="45"/>
+    <circle class="bar" id="mtBar" cx="50" cy="50" r="45"/>
+  </svg>
+  <div class="mt-num"><span id="mtNum">0</span><small id="mtSuffix"></small></div>
+</div>
+<script>
+  const CONFIG = {
+    value: 0,        // 初始进度（0–100）
+    step: 10,        // 演示时每次增加
+    interval: 2,     // 演示时每次增加的间隔（秒）
+    thickness: 10,   // 弧线粗细（相对 100 的画布）
+    gap: 5,          // 进度弧与轨道之间的空隙（百分比）
+    suffix: "%",     // 数字后缀（留空则不显示）
+  };
+
+  const bar = document.getElementById('mtBar'), track = document.getElementById('mtTrack'), num = document.getElementById('mtNum'), gauge = document.getElementById('mtGauge');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const C = 2 * Math.PI * 45, PX = C / 100;
+  bar.setAttribute('stroke-width', CONFIG.thickness); track.setAttribute('stroke-width', CONFIG.thickness);
+  document.getElementById('mtSuffix').textContent = CONFIG.suffix;
+  const durationMs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-duration')) * 1000 || 1000;
+
+  let shown = 0, numAnim = 0;
+  function setValue(v) {
+    const p = Math.max(0, Math.min(100, Math.round(v)));
+    // 进度弧：长度 p%；轨道：从 p + gap 开始，长度 100 − p − 2gap（不够放时隐藏）
+    bar.style.strokeDasharray = `${p * PX} ${C}`;
+    const rest = 100 - p - 2 * CONFIG.gap;
+    track.style.strokeDasharray = rest > 0 ? `${rest * PX} ${C}` : `0 ${C}`;
+    track.style.strokeDashoffset = -((p + CONFIG.gap) * PX);
+    gauge.setAttribute('aria-valuenow', p);
+    // 数字：从当前显示值滚到目标值，时长与弧线一致
+    cancelAnimationFrame(numAnim);
+    const from = shown, t0 = performance.now();
+    (function tick(now) {
+      const k = reduceMotion ? 1 : Math.min(1, (now - t0) / durationMs), e = 1 - Math.pow(1 - k, 3);
+      shown = Math.round(from + (p - from) * e); num.textContent = shown;
+      if (k < 1) numAnim = requestAnimationFrame(tick);
+    })(t0);
+  }
+  let value = CONFIG.value;
+  setValue(value);
+
+  /* @mt:thumb-start */
+  // 演示：每隔一段时间加一步，满了回到 0
+  setInterval(() => { if (document.hidden) return; value = value >= 100 ? 0 : Math.min(100, value + CONFIG.step); setValue(value); }, CONFIG.interval * 1000);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>彩带揭示文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字最终颜色 */
+    --mt-fontSize: 64px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+
+  .mt-line { margin: 0; font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: var(--mt-color); white-space: nowrap; }
+  /* 揭示词：文字本身透明，把背景裁进字形——背景是「左边实色 / 中间彩带 / 右边透明」的渐变，彩带位置从 −17% 扫到 117% */
+  .mt-reveal {
+    display: inline-block; color: transparent; -webkit-background-clip: text; background-clip: text; background-size: 100% 100%;
+    overflow: hidden; vertical-align: bottom; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+</style>
+</head>
+<body>
+<h1 class="mt-line"><span id="mtPrefix"></span><span class="mt-reveal" id="mtReveal"></span></h1>
+<script>
+  const CONFIG = {
+    prefix: "",                              // 前置普通文字（可留空）
+    words: "裁缝大师｜界面的裁缝师｜复制 prompt 就好", // 揭示词，多个用「｜」分隔轮播
+    colors: ["#a97cf8", "#f38cb8", "#fdcc92"], // 彩带颜色（从左到右）
+    duration: 1.5,        // 一次扫过的时长（秒）
+    holdTime: 1.2,        // 扫完后停留（秒），再换下一个词
+    band: 17,             // 彩带半宽（占文字宽度的百分比）
+  };
+
+  const prefix = document.getElementById('mtPrefix'), el = document.getElementById('mtReveal');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  prefix.textContent = CONFIG.prefix;
+  const words = CONFIG.words.split('｜').map(w => w.trim()).filter(Boolean);
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--mt-color').trim() || '#fff';
+  const B = CONFIG.band;
+
+  // 渐变：pos 之前是实色（已揭示），pos ± B 是彩带，pos 之后透明（未揭示）
+  function gradient(pos) {
+    const a = pos - B, b = pos + B;
+    if (a >= 100) return `linear-gradient(90deg, ${textColor}, ${textColor})`;
+    const parts = [];
+    if (a > 0) parts.push(`${textColor} 0%`, `${textColor} ${a.toFixed(2)}%`);
+    const n = CONFIG.colors.length;
+    CONFIG.colors.forEach((c, i) => parts.push(`${c} ${(n === 1 ? pos : a + i / (n - 1) * B * 2).toFixed(2)}%`));
+    if (b < 100) parts.push(`transparent ${b.toFixed(2)}%`, `transparent 100%`);
+    return `linear-gradient(90deg, ${parts.join(', ')})`;
+  }
+  // 量出每个词的宽度：多词轮播时容器宽度平滑变化，彩带扫过的距离也随之变化
+  const probe = el.cloneNode(); probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;width:auto;'; el.parentElement.appendChild(probe);
+  const widths = words.map(w => { probe.textContent = w; return probe.getBoundingClientRect().width; }); probe.remove();
+
+  const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  let index = 0, t0 = 0, phase = 'sweep', raf = 0;
+  function show(i) {
+    el.textContent = words[i]; if (words.length > 1) el.style.width = widths[i] + 'px';
+    el.style.backgroundImage = gradient(reduceMotion ? 200 : -B);
+    t0 = performance.now(); phase = 'sweep';
+  }
+  function frame(now) {
+    if (!document.hidden && !reduceMotion) {
+      if (phase === 'sweep') {
+        const k = Math.min(1, (now - t0) / (CONFIG.duration * 1000));
+        el.style.backgroundImage = gradient(-B + easeInOutCubic(k) * (100 + 2 * B));
+        if (k >= 1) { phase = 'hold'; t0 = now; }
+      } else if (words.length > 1 && now - t0 > CONFIG.holdTime * 1000) {
+        index = (index + 1) % words.length; show(index);
+      }
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  show(0); raf = requestAnimationFrame(frame);
+</script>
+</body>
+</html>

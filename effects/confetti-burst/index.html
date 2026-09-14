@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>彩纸礼花</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-btnBg: #f2f3f8;     /* 按钮底色 */
+    --mt-btnColor: #0a0a0f;  /* 按钮文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .mt-btn {
+    position: relative; z-index: 1; border: 0; border-radius: 999px; padding: 14px 28px;
+    background: var(--mt-btnBg); color: var(--mt-btnColor); font: inherit; font-size: 16px; font-weight: 700; cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .mt-btn:hover { transform: translateY(-1px); }
+  .mt-btn:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<button type="button" class="mt-btn" id="mtBtn"></button>
+<script>
+  const CONFIG = {
+    label: "庆祝一下",     // 按钮文字
+    mode: "cannon",        // 发射方式：cannon 从按钮喷出 / sides 两侧礼炮 / fireworks 满屏烟花
+    count: 50,             // 每次发射的彩纸数量
+    spread: 45,            // 散开角度（度）
+    velocity: 45,          // 初速度
+    gravity: 1,            // 重力
+    scalar: 1,             // 彩纸大小倍率
+    colors: ["#26ccff", "#a25afd", "#ff5e7e", "#88ff5a", "#fcff42", "#ffa62d", "#ff36ff"], // 彩纸颜色
+  };
+
+  const canvas = document.getElementById('mtCanvas'), ctx = canvas.getContext('2d'), btn = document.getElementById('mtBtn');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  btn.textContent = CONFIG.label;
+  let W = 0, H = 0;
+  function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+  resize(); addEventListener('resize', resize);
+  const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`; };
+  const palette = CONFIG.colors.map(hexRgb);
+  let userTook = false;
+
+  // ---- 粒子：一张会翻飞的小纸片。位置沿 angle2D 方向以 velocity 前进并被重力拉下，velocity 每帧 ×decay；
+  //      纸片本身用 wobble（绕行摆动）和 tilt（翻转）两个相位画成一个不断变形的四边形，看起来在空中打转 ----
+  const fetti = [];
+  function fire({ x, y, count, angle, spread, velocity, ticks = 200, decay = 0.9 }) {
+    const rad = angle * Math.PI / 180, rs = spread * Math.PI / 180;
+    for (let i = 0; i < count; i++) fetti.push({
+      x: x * W, y: y * H, wobble: Math.random() * 10, wobbleSpeed: Math.min(0.11, Math.random() * 0.1 + 0.05),
+      velocity: velocity * 0.5 + Math.random() * velocity, angle2D: -rad + (0.5 * rs - Math.random() * rs),
+      tiltAngle: (Math.random() * 0.5 + 0.25) * Math.PI, color: palette[i % palette.length], shape: Math.random() < 0.5 ? 'circle' : 'square',
+      tick: 0, totalTicks: ticks, decay, gravity: CONFIG.gravity * 3, scalar: CONFIG.scalar, rnd: Math.random() + 2,
+    });
+  }
+  function step() {
+    ctx.clearRect(0, 0, W, H);
+    for (let i = fetti.length - 1; i >= 0; i--) {
+      const f = fetti[i];
+      f.x += Math.cos(f.angle2D) * f.velocity; f.y += Math.sin(f.angle2D) * f.velocity + f.gravity;
+      f.velocity *= f.decay;
+      f.wobble += f.wobbleSpeed; const wx = f.x + 10 * f.scalar * Math.cos(f.wobble), wy = f.y + 10 * f.scalar * Math.sin(f.wobble);
+      f.tiltAngle += 0.1; const ts = Math.sin(f.tiltAngle), tc = Math.cos(f.tiltAngle); f.rnd = Math.random() + 2;
+      const progress = f.tick++ / f.totalTicks;
+      const x1 = f.x + f.rnd * tc, y1 = f.y + f.rnd * ts, x2 = wx + f.rnd * tc, y2 = wy + f.rnd * ts;
+      ctx.fillStyle = `rgba(${f.color},${1 - progress})`;
+      ctx.beginPath();
+      if (f.shape === 'circle') ctx.ellipse(f.x, f.y, Math.abs(x2 - x1) * 0.6, Math.abs(y2 - y1) * 0.6, Math.PI / 10 * f.wobble, 0, Math.PI * 2);
+      else { ctx.moveTo(f.x, f.y); ctx.lineTo(wx, y1); ctx.lineTo(x2, y2); ctx.lineTo(x1, wy); }
+      ctx.closePath(); ctx.fill();
+      if (f.tick >= f.totalTicks || f.y > H + 40) fetti.splice(i, 1);
+    }
+    if (fetti.length) requestAnimationFrame(step); else running = false;
+  }
+  let running = false;
+  const run = () => { if (!running) { running = true; requestAnimationFrame(step); } };
+
+  // ---- 三种发射方式 ----
+  let streamTimer = 0;
+  function celebrate() {
+    if (reduceMotion) return;
+    const r = btn.getBoundingClientRect(), bx = (r.left + r.width / 2) / W, by = (r.top + r.height / 2) / H;
+    clearInterval(streamTimer);
+    if (CONFIG.mode === 'sides') {
+      // 两侧礼炮：3 秒内每帧从左右两边各喷两片，朝画面中央斜上方
+      const end = performance.now() + 3000;
+      (function stream() {
+        if (performance.now() > end || document.hidden) return;
+        fire({ x: 0, y: 0.5, count: 2, angle: 60, spread: 55, velocity: CONFIG.velocity * 1.3 });
+        fire({ x: 1, y: 0.5, count: 2, angle: 120, spread: 55, velocity: CONFIG.velocity * 1.3 });
+        run(); requestAnimationFrame(stream);
+      })();
+    } else if (CONFIG.mode === 'fireworks') {
+      // 满屏烟花：5 秒内每 250ms 在左右上方随机位置各炸一朵，越到后面越小
+      const dur = 5000, end = performance.now() + dur;
+      streamTimer = setInterval(() => {
+        const left = end - performance.now(); if (left <= 0 || document.hidden) return clearInterval(streamTimer);
+        const c = Math.round(CONFIG.count * (left / dur));
+        fire({ x: 0.1 + Math.random() * 0.2, y: Math.random() - 0.2, count: c, angle: 90, spread: 360, velocity: 30, ticks: 60 });
+        fire({ x: 0.7 + Math.random() * 0.2, y: Math.random() - 0.2, count: c, angle: 90, spread: 360, velocity: 30, ticks: 60 });
+        run();
+      }, 250);
+    } else {
+      fire({ x: bx, y: by, count: CONFIG.count, angle: 90, spread: CONFIG.spread, velocity: CONFIG.velocity });
+      run();
+    }
+  }
+  btn.addEventListener('click', () => { userTook = true; celebrate(); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：每 4 秒自动放一次
+  if (!reduceMotion) {
+    setTimeout(() => { if (!userTook) celebrate(); }, 500);
+    setInterval(() => { if (!userTook && !document.hidden) celebrate(); }, 4000);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

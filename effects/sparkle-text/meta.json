@@ -1,0 +1,25 @@
+{
+  "slug": "sparkle-text",
+  "name": "星光文字",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["星星", "闪烁", "标题", "可爱"],
+  "summary": "文字周围不断冒出小小的四角星，一颗颗放大、转一下、缩回去，过一会儿换个位置再闪，像撒了一把魔法粉",
+  "params": [
+    { "key": "text", "label": "文字", "type": "text", "target": "config", "default": "闪闪发光", "maxLength": 24 },
+    { "key": "count", "label": "星星数量", "type": "range", "target": "config", "min": 2, "max": 30, "step": 1, "default": 10 },
+    { "key": "star", "label": "星星大小", "type": "range", "target": "css", "min": 10, "max": 48, "step": 1, "default": 21, "unit": "px" },
+    { "key": "color1", "label": "星星颜色 A", "type": "color", "target": "config", "default": "#9e7aff" },
+    { "key": "color2", "label": "星星颜色 B", "type": "color", "target": "config", "default": "#fe8bbb" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 32, "max": 140, "step": 4, "default": 72, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "gold", "name": "金粉", "values": { "color1": "#ffd319", "color2": "#fff5b0", "count": 18, "star": 16 } },
+    { "id": "sparse", "name": "点点星", "values": { "count": 4, "star": 32, "color1": "#67e8f9", "color2": "#ffffff" } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Sparkles Text", "url": "https://magicui.design/docs/components/sparkles-text", "license": "MIT（思路参考，代码自写）" }
+}

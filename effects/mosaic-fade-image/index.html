@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拼块渐显图</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-radius: 40px;       /* 图片圆角 */
+    --mt-size: 360px;        /* 图片边长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+
+  /* 同一张图叠 N 份，每份用 clip-path 只露出自己那一格；各格错开时间淡入，最后一起从黑白变彩色 */
+  .mt-mosaic { position: relative; width: var(--mt-size); height: var(--mt-size); max-width: 92vw; max-height: 92vw; user-select: none; }
+  .mt-piece { position: absolute; inset: 0; opacity: 0; transition: opacity var(--fade) ease-out; transition-delay: var(--delay); }
+  .mt-piece img {
+    width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--mt-radius);
+    filter: grayscale(1); transition: filter var(--fade) cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .mt-mosaic.in .mt-piece { opacity: 1; }
+  .mt-mosaic.color .mt-piece img, .mt-mosaic.no-gray .mt-piece img { filter: grayscale(0); }
+
+  /* 用户开启「减少动态效果」时：直接显示 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-piece, .mt-piece img { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-mosaic" id="mtMosaic" role="img" aria-label="拼块渐显的图片"></div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-2.webp",  // 图片
+    cols: 6,             // 横向拼块数
+    rows: 4,             // 纵向拼块数
+    fade: 1000,          // 每块淡入时长（毫秒）
+    maxDelay: 1200,      // 各块随机延迟上限（毫秒）
+    grayFirst: true,     // 先黑白后上色
+    colorDelay: 1300,    // 上色开始时间（毫秒，从开始计）
+  };
+
+  const box = document.getElementById('mtMosaic');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  box.style.setProperty('--fade', CONFIG.fade + 'ms');
+  if (!CONFIG.grayFirst) box.classList.add('no-gray');
+
+  // 生成 rows × cols 个格子：第 (r, c) 块的 clip-path 是它在整图中的那块矩形（百分比）
+  for (let r = 0; r < CONFIG.rows; r++) for (let c = 0; c < CONFIG.cols; c++) {
+    const piece = document.createElement('div'); piece.className = 'mt-piece';
+    const x0 = c * 100 / CONFIG.cols, x1 = (c + 1) * 100 / CONFIG.cols, y0 = r * 100 / CONFIG.rows, y1 = (r + 1) * 100 / CONFIG.rows;
+    piece.style.clipPath = `polygon(${x0}% ${y0}%, ${x1}% ${y0}%, ${x1}% ${y1}%, ${x0}% ${y1}%)`;
+    piece.style.setProperty('--delay', Math.round(Math.random() * CONFIG.maxDelay) + 'ms');
+    const img = document.createElement('img'); img.src = CONFIG.photo; img.alt = ''; img.draggable = false;
+    piece.appendChild(img); box.appendChild(piece);
+  }
+
+  let timer = 0;
+  function play() {
+    clearTimeout(timer);
+    box.classList.remove('in', 'color');
+    // 重新洗一遍延迟，每次拼出来的顺序都不一样
+    box.querySelectorAll('.mt-piece').forEach(p => p.style.setProperty('--delay', Math.round(Math.random() * CONFIG.maxDelay) + 'ms'));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      box.classList.add('in');
+      timer = setTimeout(() => box.classList.add('color'), reduceMotion ? 0 : CONFIG.colorDelay);
+    }));
+  }
+  play();
+  box.addEventListener('click', play);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：拼完停一会儿再重拼一遍
+  if (!reduceMotion) setInterval(() => { if (!document.hidden) play(); }, CONFIG.maxDelay + CONFIG.fade + CONFIG.colorDelay + 2500);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

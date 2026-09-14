@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>连线光束</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-line: #808080;      /* 底线颜色 */
+    --mt-lineOpacity: 0.2;   /* 底线不透明度 */
+    --mt-lineWidth: 2px;     /* 线宽 */
+    --mt-node: #16161d;      /* 节点底色 */
+    --mt-color: #f2f3f8;     /* 节点文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 三列节点：左 3、中 1、右 3；连线 SVG 铺满容器、垫在节点之下 */
+  .mt-board { position: relative; width: min(560px, 92vw); height: 300px; }
+  .mt-col { position: absolute; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; }
+  .mt-col.left { left: 0; } .mt-col.right { right: 0; } .mt-col.mid { left: 50%; transform: translateX(-50%); justify-content: center; }
+  .mt-node {
+    position: relative; z-index: 1; display: grid; place-items: center;
+    width: 56px; height: 56px; border-radius: 50%; padding: 0 6px; box-sizing: border-box;
+    background: var(--mt-node); color: var(--mt-color); border: 2px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 0 20px -12px rgba(0, 0, 0, 0.8);
+    font-size: 12px; font-weight: 600; text-align: center; line-height: 1.1; word-break: keep-all;
+  }
+  .mt-node.hub { width: 72px; height: 72px; font-size: 14px; border-color: rgba(255, 255, 255, 0.25); }
+  .mt-wires { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .mt-wires path { fill: none; stroke-linecap: round; stroke-width: var(--mt-lineWidth); }
+  .mt-wires .base { stroke: var(--mt-line); stroke-opacity: var(--mt-lineOpacity); }
+</style>
+</head>
+<body>
+<div class="mt-board" id="mtBoard">
+  <svg class="mt-wires" id="mtWires" aria-hidden="true"><defs id="mtDefs"></defs></svg>
+  <div class="mt-col left" id="mtLeft"></div>
+  <div class="mt-col mid"><div class="mt-node hub" id="mtHub"></div></div>
+  <div class="mt-col right" id="mtRight"></div>
+</div>
+<script>
+  const CONFIG = {
+    left: "文档｜表格｜邮件",      // 左侧节点，用「｜」分隔
+    hub: "AI",                    // 中间枢纽节点
+    right: "日历｜聊天｜看板",    // 右侧节点，用「｜」分隔
+    colorA: "#ffaa40",            // 光束起始色
+    colorB: "#9c40ff",            // 光束结束色
+    duration: 5,                  // 一束光跑完一趟的时长（秒）
+    curvature: 75,                // 外侧连线的弯曲程度（px，0 为直线）
+    rightToLeft: true,            // 右侧连线反向流动（从右侧节点流回枢纽）
+  };
+
+  const board = document.getElementById('mtBoard'), svg = document.getElementById('mtWires'), defs = document.getElementById('mtDefs');
+  const NS = 'http://www.w3.org/2000/svg';
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const split = (s) => s.split('｜').map(t => t.trim()).filter(Boolean);
+  const mk = (label, parent) => { const n = document.createElement('div'); n.className = 'mt-node'; n.textContent = label; parent.appendChild(n); return n; };
+  const leftNodes = split(CONFIG.left).map(l => mk(l, document.getElementById('mtLeft')));
+  const rightNodes = split(CONFIG.right).map(l => mk(l, document.getElementById('mtRight')));
+  const hub = document.getElementById('mtHub'); hub.textContent = CONFIG.hub;
+
+  // 每条连线：一条淡底线 + 一条用「移动渐变」描边的亮线；渐变只有 10% 宽，从一端扫到另一端就是一束光
+  const beams = [];
+  function makeBeam(from, to, curv, reverse, delay) {
+    const id = 'g' + beams.length;
+    const grad = document.createElementNS(NS, 'linearGradient');
+    grad.id = id; grad.setAttribute('gradientUnits', 'userSpaceOnUse');
+    grad.innerHTML = `<stop offset="0" stop-color="${CONFIG.colorA}" stop-opacity="0"/><stop offset="0" stop-color="${CONFIG.colorA}"/><stop offset="0.325" stop-color="${CONFIG.colorB}"/><stop offset="1" stop-color="${CONFIG.colorB}" stop-opacity="0"/>`;
+    defs.appendChild(grad);
+    const base = document.createElementNS(NS, 'path'); base.setAttribute('class', 'base');
+    const glow = document.createElementNS(NS, 'path'); glow.setAttribute('stroke', `url(#${id})`);
+    svg.append(base, glow);
+    beams.push({ from, to, curv, reverse, delay, grad, base, glow, t: -delay });
+  }
+  function layout() {
+    const r = board.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${r.width} ${r.height}`);
+    const c = (el) => { const b = el.getBoundingClientRect(); return [b.left - r.left + b.width / 2, b.top - r.top + b.height / 2]; };
+    for (const bm of beams) {
+      const [x1, y1] = c(bm.from), [x2, y2] = c(bm.to);
+      // 二次贝塞尔：控制点在两端中点上方 curvature 处
+      const d = `M ${x1},${y1} Q ${(x1 + x2) / 2},${y1 - bm.curv} ${x2},${y2}`;
+      bm.base.setAttribute('d', d); bm.glow.setAttribute('d', d); bm.W = r.width;
+    }
+  }
+  // 左列 → 枢纽：上下两条向中间弯、中间直；枢纽 → 右列 同理（可反向）
+  const curvFor = (i, n) => (n === 1 ? 0 : (i - (n - 1) / 2) * (CONFIG.curvature / Math.max(1, (n - 1) / 2)));
+  leftNodes.forEach((n, i) => makeBeam(n, hub, curvFor(i, leftNodes.length), false, i * 0.4));
+  rightNodes.forEach((n, i) => makeBeam(hub, n, curvFor(i, rightNodes.length), CONFIG.rightToLeft, 0.6 + i * 0.4));
+  layout(); addEventListener('resize', layout);
+
+  // 渐变位置随时间推进：x2 从 0% 走到 100%，x1 领先 10%；缓动用 expo-out，起步快、收尾慢
+  const easeOutExpo = (t) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!document.hidden) for (const bm of beams) {
+      if (!reduceMotion) { bm.t += dt; if (bm.t > CONFIG.duration) bm.t -= CONFIG.duration; }
+      const p = reduceMotion ? 0.5 : easeOutExpo(Math.max(0, bm.t) / CONFIG.duration);
+      const W = bm.W || 1;
+      const x2 = bm.reverse ? (1 - p) * W : p * W, x1 = bm.reverse ? x2 - 0.1 * W : x2 + 0.1 * W;
+      bm.grad.setAttribute('x1', x1); bm.grad.setAttribute('x2', x2); bm.grad.setAttribute('y1', 0); bm.grad.setAttribute('y2', 0);
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

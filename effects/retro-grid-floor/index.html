@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>复古透视网格</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-angle: 65deg;       /* 地面倾角：越大越贴近地平线 */
+    --mt-cell: 60px;         /* 格子大小 */
+    --mt-line: #808080;      /* 网格线颜色 */
+    --mt-opacity: 0.5;       /* 网格整体透明度 */
+    --mt-speed: 15s;         /* 滚动一轮的时长（越小越快） */
+    --mt-fade: 90%;          /* 近处（底部）渐隐到底色的高度 */
+    --mt-color: #f2f3f8;     /* 标题文字颜色 */
+    --mt-fontSize: 72px;     /* 标题字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+
+  /* 舞台：一个透视容器，地面是一块巨大的平面，绕顶边向观者倾倒 */
+  .mt-scene { position: fixed; inset: 0; overflow: hidden; perspective: 200px; opacity: var(--mt-opacity); pointer-events: none; }
+  /* 绕视口中心倾倒：上半部分远去、压成地平线，下半部分向观者展开 */
+  .mt-tilt { position: absolute; inset: 0; transform: rotateX(var(--mt-angle)); }
+  .mt-floor {
+    /* 平面向远处多伸出 6 个视口高，才能一直铺到地平线 */
+    position: absolute; top: -600vh; left: -200%;
+    width: 600vw; height: 900vh;
+    background-image:
+      linear-gradient(to right, var(--mt-line) 1px, transparent 0),
+      linear-gradient(to bottom, var(--mt-line) 1px, transparent 0);
+    background-size: var(--mt-cell) var(--mt-cell);
+    /* 网格向观者滚动：每轮正好下移 8 个格子，首尾无缝 */
+    animation: mt-roll var(--mt-speed) linear infinite;
+  }
+  @keyframes mt-roll { from { transform: translateY(calc(var(--mt-cell) * -8)); } to { transform: translateY(0); } }
+  /* 近处渐隐：底部融进底色，远处地平线清晰 */
+  .mt-haze { position: absolute; inset: 0; background: linear-gradient(to top, var(--mt-bg), transparent var(--mt-fade)); }
+
+  .mt-title {
+    position: relative; z-index: 1; margin: 0;
+    font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 800; letter-spacing: -0.03em; line-height: 1;
+    color: var(--mt-color); text-align: center; white-space: pre-wrap;
+  }
+
+  /* 用户开启「减少动态效果」时：网格静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-floor { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-scene" aria-hidden="true">
+  <div class="mt-tilt"><div class="mt-floor"></div></div>
+  <div class="mt-haze"></div>
+</div>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    title: "RETRO",   // 标题文字（留空则不显示）
+  };
+  const title = document.getElementById('mtTitle');
+  title.textContent = CONFIG.title;
+  if (!CONFIG.title) title.hidden = true;
+  // 后台标签页暂停动画，省电
+  document.addEventListener('visibilitychange', () => {
+    document.querySelector('.mt-floor').style.animationPlayState = document.hidden ? 'paused' : 'running';
+  });
+</script>
+</body>
+</html>

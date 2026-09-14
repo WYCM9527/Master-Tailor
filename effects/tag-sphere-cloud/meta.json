@@ -1,0 +1,24 @@
+{
+  "slug": "tag-sphere-cloud",
+  "name": "3D 标签云",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["标签云", "3D", "球体", "拖拽"],
+  "summary": "几十个标签均匀贴在一个看不见的球面上缓缓转动，前面的大而实、后面的小而淡；鼠标能拨动、拖转，点一个标签它会转到正前方",
+  "params": [
+    { "key": "tags", "label": "标签", "type": "text", "target": "config", "default": "设计｜动效｜前端｜排版｜色彩｜交互｜品牌｜插画｜原型｜字体｜栅格｜留白｜对比｜节奏｜层级｜图标｜留存｜转化｜可用性｜一致性", "maxLength": 200, "help": "用「｜」分隔，建议 12–40 个" },
+    { "key": "radius", "label": "球半径", "type": "range", "target": "config", "min": 60, "max": 180, "step": 10, "default": 130, "unit": "px" },
+    { "key": "fontSize", "label": "标签字号", "type": "range", "target": "config", "min": 10, "max": 22, "step": 1, "default": 14, "unit": "px" },
+    { "key": "autoSpeed", "label": "自转速度", "type": "range", "target": "config", "min": 0, "max": 3, "step": 0.25, "default": 1 },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "config", "default": "#f2f3f8" },
+    { "key": "pill", "label": "标签底色", "type": "color", "target": "config", "default": "#1f1f2a" },
+    { "key": "accent", "label": "点选高亮色", "type": "color", "target": "config", "default": "#7c9cff" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "tech", "name": "技术栈", "values": { "tags": "TypeScript｜React｜Vue｜Node｜Rust｜Go｜Python｜Docker｜Postgres｜Redis｜GraphQL｜Vite｜Tailwind｜Figma｜Git｜Linux｜Nginx｜AWS", "pill": "#0f172a", "accent": "#22d3ee", "radius": 140 } },
+    { "id": "compact", "name": "紧凑小球", "values": { "radius": 80, "fontSize": 11, "autoSpeed": 1.5 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Icon Cloud", "url": "https://magicui.design/docs/components/icon-cloud", "license": "MIT（思路参考，代码自写）" }
+}

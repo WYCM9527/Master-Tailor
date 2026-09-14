@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>边缘光束隧道</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-perspective: 100px;   /* 透视深度：越小隧道越深、边缘拉得越长 */
+    --mt-grid: rgba(255, 255, 255, 0.12); /* 四壁网格线颜色 */
+    --mt-color: #f2f3f8;       /* 卡片文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 房间：四面墙从屏幕四条边向纵深方向倒下去，形成一条隧道 */
+  .mt-room {
+    position: fixed; inset: 0; overflow: hidden; clip-path: inset(0);
+    perspective: var(--mt-perspective); transform-style: preserve-3d; pointer-events: none;
+  }
+  .mt-wall {
+    position: absolute; transform-style: preserve-3d;
+    /* 网格：格子边长 = 光束宽度（百分比相对墙面自身尺寸） */
+    background:
+      linear-gradient(var(--mt-grid) 0 1px, transparent 1px var(--cell)) 50% -0.5px / var(--cell) var(--cell),
+      linear-gradient(90deg, var(--mt-grid) 0 1px, transparent 1px var(--cell)) 50% 50% / var(--cell) var(--cell);
+  }
+  .mt-wall.top    { top: 0; left: 0; width: var(--W); height: var(--M); transform-origin: 50% 0; transform: rotateX(-90deg); }
+  .mt-wall.bottom { top: var(--H); left: 0; width: var(--W); height: var(--M); transform-origin: 50% 0; transform: rotateX(-90deg); }
+  .mt-wall.left   { top: 0; left: 0; width: var(--H); height: var(--M); transform-origin: 0 0; transform: rotate(90deg) rotateX(-90deg); }
+  .mt-wall.right  { top: 0; right: 0; width: var(--H); height: var(--M); transform-origin: 100% 0; transform: rotate(-90deg) rotateX(-90deg); }
+
+  /* 光束：一条竖向渐变的细长条，从墙面远端（下方）飞到近端（上方 = 屏幕边缘）飞出 */
+  .mt-beam {
+    position: absolute; top: 0; left: var(--x); width: var(--cell); aspect-ratio: 1 / var(--ar);
+    background: linear-gradient(var(--hue), transparent);
+    animation: mt-fly var(--dur) linear infinite; animation-delay: var(--delay);
+  }
+  @keyframes mt-fly { from { transform: translate(-50%, var(--M)); } to { transform: translate(-50%, -100%); } }
+
+  .mt-card {
+    position: relative; z-index: 1; max-width: 340px; padding: 20px 24px; border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); backdrop-filter: blur(6px);
+    color: var(--mt-color);
+  }
+  .mt-card h2 { margin: 0 0 8px; font-size: 18px; font-weight: 700; }
+  .mt-card p { margin: 0; font-size: 14px; line-height: 1.6; opacity: 0.75; }
+
+  /* 用户开启「减少动态效果」时：光束停在隧道中段 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-beam { animation: none; transform: translate(-50%, 40%); }
+  }
+</style>
+</head>
+<body>
+<div class="mt-room" id="mtRoom" aria-hidden="true">
+  <div class="mt-wall top"></div>
+  <div class="mt-wall bottom"></div>
+  <div class="mt-wall left"></div>
+  <div class="mt-wall right"></div>
+</div>
+<div class="mt-card" id="mtCard">
+  <h2 id="mtTitle"></h2>
+  <p id="mtDesc"></p>
+</div>
+<script>
+  const CONFIG = {
+    title: "恭喜你晋升！",                                   // 卡片标题
+    desc: "你的努力和坚持有了回报。很高兴看到你迈出下一步，继续保持。", // 卡片正文（留空则隐藏卡片）
+    beams: 3,            // 每面墙的光束数量
+    beamSize: 5,         // 光束宽度（占墙面宽度的百分比，也是网格格子大小）
+    duration: 3,         // 一束光飞完一趟的时长（秒）
+    delayMax: 3,         // 光束起飞的随机错开上限（秒）
+    colorful: true,      // 彩色：每束光随机色相；关闭则统一用强调色
+    accent: "#7c9cff",   // 单色模式下的光束颜色
+  };
+
+  const room = document.getElementById('mtRoom');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  document.getElementById('mtDesc').textContent = CONFIG.desc;
+  if (!CONFIG.title && !CONFIG.desc) document.getElementById('mtCard').hidden = true;
+
+  // 墙面尺寸：顶 / 底墙宽 = 视口宽，左 / 右墙宽 = 视口高，四面墙的「深度」都取视口长边
+  function size() {
+    const W = innerWidth, H = innerHeight, M = Math.max(W, H);
+    room.style.setProperty('--W', W + 'px'); room.style.setProperty('--H', H + 'px'); room.style.setProperty('--M', M + 'px');
+    room.style.setProperty('--cell', CONFIG.beamSize + '%');
+  }
+  size(); addEventListener('resize', size);
+
+  const hue = () => CONFIG.colorful ? `hsl(${Math.floor(Math.random() * 360)} 80% 60%)` : CONFIG.accent;
+  // 每面墙：光束落在网格列上，均匀分到 beams 个位置，各自随机延迟、随机长短
+  const cellsPerSide = Math.floor(100 / CONFIG.beamSize), step = cellsPerSide / CONFIG.beams;
+  for (const wall of room.querySelectorAll('.mt-wall')) {
+    for (let i = 0; i < CONFIG.beams; i++) {
+      const b = document.createElement('div');
+      b.className = 'mt-beam';
+      b.style.setProperty('--x', Math.floor(i * step) * CONFIG.beamSize + '%');
+      b.style.setProperty('--ar', 1 + Math.floor(Math.random() * 10));
+      b.style.setProperty('--hue', hue());
+      b.style.setProperty('--dur', CONFIG.duration + 's');
+      b.style.setProperty('--delay', (Math.random() * CONFIG.delayMax) + 's');
+      // 每飞完一趟换一个颜色和长度，看起来像源源不断的新光束
+      b.addEventListener('animationiteration', () => { b.style.setProperty('--hue', hue()); b.style.setProperty('--ar', 1 + Math.floor(Math.random() * 10)); });
+      wall.appendChild(b);
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    room.querySelectorAll('.mt-beam').forEach(b => b.style.animationPlayState = document.hidden ? 'paused' : 'running');
+  });
+</script>
+</body>
+</html>

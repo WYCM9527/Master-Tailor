@@ -1,0 +1,27 @@
+{
+  "slug": "retro-grid-floor",
+  "name": "复古透视网格",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["网格", "透视", "合成器浪潮", "复古"],
+  "summary": "一块无限延伸的地面网格向观者滚来，远处收成地平线，近处融进底色，80 年代合成器浪潮的经典画面",
+  "params": [
+    { "key": "angle", "label": "地面倾角", "type": "range", "target": "css", "min": 30, "max": 85, "step": 1, "default": 65, "unit": "deg", "displayUnit": "°", "help": "越大越贴近地平线" },
+    { "key": "cell", "label": "格子大小", "type": "range", "target": "css", "min": 20, "max": 120, "step": 5, "default": 60, "unit": "px" },
+    { "key": "speed", "label": "滚动一轮时长", "type": "range", "target": "css", "min": 4, "max": 40, "step": 1, "default": 15, "unit": "s", "displayUnit": " 秒", "help": "越小滚得越快" },
+    { "key": "opacity", "label": "网格透明度", "type": "range", "target": "css", "min": 0.1, "max": 1, "step": 0.05, "default": 0.5 },
+    { "key": "fade", "label": "近处渐隐高度", "type": "range", "target": "css", "min": 30, "max": 100, "step": 5, "default": 90, "unit": "%" },
+    { "key": "line", "label": "网格线颜色", "type": "color", "target": "css", "default": "#808080" },
+    { "key": "title", "label": "标题文字", "type": "text", "target": "config", "default": "RETRO", "maxLength": 20, "help": "留空则只有网格" },
+    { "key": "color", "label": "标题颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "fontSize", "label": "标题字号", "type": "range", "target": "css", "min": 32, "max": 140, "step": 4, "default": 72, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "neon", "name": "霓虹夜路", "values": { "line": "#ff2bd6", "opacity": 0.8, "cell": 45, "speed": 8, "color": "#ffd319" } },
+    { "id": "blueprint", "name": "蓝图", "values": { "line": "#4c8dff", "angle": 75, "cell": 80, "speed": 25, "opacity": 0.35, "title": "" } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Retro Grid", "url": "https://magicui.design/docs/components/retro-grid", "license": "MIT（思路参考，代码自写）" }
+}

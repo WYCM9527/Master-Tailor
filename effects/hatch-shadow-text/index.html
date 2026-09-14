@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>线影文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-shadow: #f2f3f8;    /* 斜线投影颜色 */
+    --mt-offset: 0.04em;     /* 投影偏移量 */
+    --mt-hatch: 0.06em;      /* 斜线纹理的密度（一格的大小） */
+    --mt-speed: 15s;         /* 纹理流动一轮的时长 */
+    --mt-fontSize: 120px;    /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+
+  .mt-title {
+    margin: 0; font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 600; letter-spacing: -0.05em; line-height: 1;
+    color: var(--mt-color); text-align: center; text-wrap: balance;
+  }
+  /* 关键词：本体之下垫一份同样的文字，用斜线纹理填充、向右下偏移，形成「线条排成的投影」；纹理持续沿对角线流动 */
+  .mt-word { position: relative; z-index: 0; display: inline-flex; }
+  .mt-word.italic { font-style: italic; }
+  .mt-word::after {
+    content: attr(data-text);
+    position: absolute; top: var(--mt-offset); left: var(--mt-offset); z-index: -1;
+    background: linear-gradient(45deg, transparent 45%, var(--mt-shadow) 45%, var(--mt-shadow) 55%, transparent 0);
+    background-size: var(--mt-hatch) var(--mt-hatch);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: mt-hatch-flow var(--mt-speed) linear infinite;
+  }
+  @keyframes mt-hatch-flow { from { background-position: 0 0; } to { background-position: 100% -100%; } }
+
+  /* 用户开启「减少动态效果」时：纹理静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-word::after { animation: none; }
+  }
+</style>
+</head>
+<body>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    prefix: "Ship ",     // 前面的普通文字
+    word: "Fast",        // 带线影的关键词
+    italic: true,        // 关键词斜体
+  };
+  const title = document.getElementById('mtTitle');
+  title.append(CONFIG.prefix);
+  const w = document.createElement('span');
+  w.className = 'mt-word' + (CONFIG.italic ? ' italic' : '');
+  w.dataset.text = CONFIG.word; w.textContent = CONFIG.word;
+  title.appendChild(w);
+  document.addEventListener('visibilitychange', () => { title.style.setProperty('--mt-speed', document.hidden ? '0s' : ''); });
+</script>
+</body>
+</html>

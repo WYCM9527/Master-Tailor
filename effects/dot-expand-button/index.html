@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圆点扩散按钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-accent: #f2f3f8;    /* 圆点 / 填充色 */
+    --mt-color: #f2f3f8;     /* 默认文字颜色 */
+    --mt-onAccent: #0a0a0f;  /* 填充后文字颜色 */
+    --mt-border: rgba(255, 255, 255, 0.2); /* 边框颜色 */
+    --mt-duration: 0.3s;     /* 过渡时长 */
+    --mt-fontSize: 16px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-btn {
+    position: relative; overflow: hidden; cursor: pointer;
+    padding: 12px 28px; border-radius: 999px; border: 1px solid var(--mt-border); background: transparent;
+    color: var(--mt-color); font: inherit; font-size: var(--mt-fontSize); font-weight: 600; letter-spacing: 0.01em;
+  }
+  .mt-btn .front { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  /* 小圆点：悬停时放大到 100 倍撑满整颗按钮，成为新的底色 */
+  .mt-btn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mt-accent); transition: transform var(--mt-duration) ease; }
+  .mt-btn .front .label { display: inline-block; transition: transform var(--mt-duration) ease, opacity var(--mt-duration) ease; }
+  /* 第二层文字 + 箭头：预先在右侧 48px 处等待，悬停时滑到位 */
+  .mt-btn .back {
+    position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+    color: var(--mt-onAccent); opacity: 0; transform: translateX(48px);
+    transition: transform var(--mt-duration) ease, opacity var(--mt-duration) ease;
+  }
+  .mt-btn .back svg { width: 1.1em; height: 1.1em; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .mt-btn:hover .dot, .mt-btn:focus-visible .dot, .mt-btn.demo .dot { transform: scale(100.8); }
+  .mt-btn:hover .front .label, .mt-btn:focus-visible .front .label, .mt-btn.demo .front .label { transform: translateX(48px); opacity: 0; }
+  .mt-btn:hover .back, .mt-btn:focus-visible .back, .mt-btn.demo .back { transform: translateX(-5px); opacity: 1; }
+  .mt-btn:focus-visible { outline: 2px solid var(--mt-accent); outline-offset: 3px; }
+
+  /* 用户开启「减少动态效果」时：直接切换 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-btn .dot, .mt-btn .front .label, .mt-btn .back { transition: none; }
+  }
+</style>
+</head>
+<body>
+<button type="button" class="mt-btn" id="mtBtn">
+  <span class="front"><span class="dot" aria-hidden="true"></span><span class="label" id="mtLabel"></span></span>
+  <span class="back" aria-hidden="true"><span id="mtLabel2"></span><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+</button>
+<script>
+  const CONFIG = {
+    label: "开始使用",   // 按钮文字
+  };
+  const btn = document.getElementById('mtBtn');
+  document.getElementById('mtLabel').textContent = CONFIG.label;
+  document.getElementById('mtLabel2').textContent = CONFIG.label;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let userTook = false;
+  btn.addEventListener('pointerenter', () => { userTook = true; btn.classList.remove('demo'); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时自己一开一合
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) btn.classList.toggle('demo'); }, 1400);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

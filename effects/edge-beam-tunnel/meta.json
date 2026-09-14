@@ -1,0 +1,27 @@
+{
+  "slug": "edge-beam-tunnel",
+  "name": "边缘光束隧道",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["隧道", "光束", "3D", "透视"],
+  "summary": "屏幕四条边各是一面透视的网格墙，彩色光束从纵深处沿墙面飞向观者、从边缘飞出，像穿行在光的隧道里",
+  "params": [
+    { "key": "perspective", "label": "透视深度", "type": "range", "target": "css", "min": 40, "max": 300, "step": 10, "default": 100, "unit": "px", "help": "越小隧道越深" },
+    { "key": "beams", "label": "每面墙光束数", "type": "range", "target": "config", "min": 1, "max": 6, "step": 1, "default": 3 },
+    { "key": "beamSize", "label": "光束宽度", "type": "range", "target": "config", "min": 2, "max": 10, "step": 1, "default": 5, "unit": "%", "help": "也是网格格子的大小" },
+    { "key": "duration", "label": "飞行时长", "type": "range", "target": "config", "min": 1, "max": 6, "step": 0.5, "default": 3, "displayUnit": " 秒" },
+    { "key": "delayMax", "label": "起飞错开", "type": "range", "target": "config", "min": 0, "max": 6, "step": 0.5, "default": 3, "displayUnit": " 秒" },
+    { "key": "colorful", "label": "彩色光束", "type": "toggle", "target": "config", "default": true, "help": "关闭则统一用下面的强调色" },
+    { "key": "accent", "label": "单色光束颜色", "type": "color", "target": "config", "default": "#7c9cff" },
+    { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "恭喜你晋升！", "maxLength": 24 },
+    { "key": "desc", "label": "卡片正文", "type": "text", "target": "config", "default": "你的努力和坚持有了回报。很高兴看到你迈出下一步，继续保持。", "maxLength": 80, "help": "标题和正文都留空则不显示卡片" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "hyperspace", "name": "超光速", "values": { "beams": 6, "beamSize": 3, "duration": 1.5, "delayMax": 1.5, "perspective": 60 } },
+    { "id": "mono", "name": "单色静谧", "values": { "colorful": false, "accent": "#38bdf8", "beams": 2, "duration": 5, "perspective": 160 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Warp Background", "url": "https://magicui.design/docs/components/warp-background", "license": "MIT（思路参考，代码自写）" }
+}

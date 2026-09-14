@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>脉冲同心环</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-ring: #ffffff;      /* 圆环颜色 */
+    --mt-duration: 2s;       /* 一次呼吸的时长 */
+    --mt-fade: 100%;         /* 向下渐隐的高度（100% = 底部完全隐去） */
+    --mt-color: #f2f3f8;     /* 中央文字颜色 */
+    --mt-fontSize: 48px;     /* 中央文字字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+
+  /* 一组同心圆：越外圈越大、越淡；整体自上而下渐隐 */
+  .mt-rings {
+    position: fixed; inset: 0; pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, #000, transparent var(--mt-fade));
+    mask-image: linear-gradient(to bottom, #000, transparent var(--mt-fade));
+  }
+  .mt-ring {
+    position: absolute; left: 50%; top: 50%;
+    width: var(--size); height: var(--size); opacity: var(--o);
+    border-radius: 50%; border: 1px solid var(--mt-ring);
+    background: color-mix(in srgb, var(--mt-ring) 25%, transparent);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+    transform: translate(-50%, -50%) scale(1);
+    /* 呼吸：每一圈都缩到 0.9 再回来，外圈比内圈晚一点，形成由内向外的脉冲 */
+    animation: mt-pulse var(--mt-duration) ease infinite; animation-delay: var(--delay);
+  }
+  @keyframes mt-pulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(0.9); } }
+
+  .mt-title {
+    position: relative; z-index: 1; margin: 0; text-align: center; white-space: pre-wrap;
+    font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 500; letter-spacing: -0.03em; color: var(--mt-color);
+  }
+
+  /* 用户开启「减少动态效果」时：圆环静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-ring { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-rings" id="mtRings" aria-hidden="true"></div>
+<p class="mt-title" id="mtTitle"></p>
+<script>
+  const CONFIG = {
+    title: "Ripple",     // 中央文字（留空则不显示）
+    count: 8,            // 圆环数量
+    baseSize: 210,       // 最内圈直径（px）
+    step: 70,            // 每向外一圈直径增加（px）
+    opacity: 0.24,       // 最内圈不透明度，向外每圈递减 0.03
+    stagger: 0.06,       // 相邻圈的脉冲延迟（秒）
+  };
+
+  const wrap = document.getElementById('mtRings');
+  const title = document.getElementById('mtTitle');
+  title.textContent = CONFIG.title;
+  if (!CONFIG.title) title.hidden = true;
+
+  for (let i = 0; i < CONFIG.count; i++) {
+    const r = document.createElement('div');
+    r.className = 'mt-ring';
+    r.style.setProperty('--size', (CONFIG.baseSize + i * CONFIG.step) + 'px');
+    r.style.setProperty('--o', Math.max(0.02, CONFIG.opacity - i * 0.03).toFixed(3));
+    r.style.setProperty('--delay', (i * CONFIG.stagger) + 's');
+    wrap.appendChild(r);
+  }
+  document.addEventListener('visibilitychange', () => {
+    wrap.querySelectorAll('.mt-ring').forEach(r => r.style.animationPlayState = document.hidden ? 'paused' : 'running');
+  });
+</script>
+</body>
+</html>

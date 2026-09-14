@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>放大镜</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-ring: #ffffff;      /* 镜圈颜色 */
+    --mt-ringWidth: 2px;     /* 镜圈粗细（0 为无圈） */
+    --mt-radius: 16px;       /* 图片圆角 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-card { width: min(420px, 90vw); }
+  /* 取景区：底图 + 一层放大后的同图，放大层用圆形遮罩只露出光标周围一块 */
+  .mt-view { position: relative; overflow: hidden; border-radius: var(--mt-radius); aspect-ratio: 4 / 3; cursor: crosshair; touch-action: none; }
+  .mt-view img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; }
+  .mt-lens {
+    position: absolute; inset: 0; opacity: 0; transform: scale(0.58);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    -webkit-mask-image: radial-gradient(circle var(--r) at var(--x) var(--y), #000 100%, transparent 100%);
+    mask-image: radial-gradient(circle var(--r) at var(--x) var(--y), #000 100%, transparent 100%);
+    transform-origin: var(--x) var(--y);
+  }
+  .mt-lens img { transform: scale(var(--zoom)); transform-origin: var(--x) var(--y); }
+  .mt-view.on .mt-lens { opacity: 1; transform: scale(1); }
+  /* 镜圈：一个跟着光标的空心圆 */
+  .mt-ring {
+    position: absolute; left: var(--x); top: var(--y); width: calc(var(--r) * 2); height: calc(var(--r) * 2);
+    transform: translate(-50%, -50%) scale(0.58); border-radius: 50%; box-sizing: border-box;
+    border: var(--mt-ringWidth) solid var(--mt-ring); opacity: 0; pointer-events: none;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+  .mt-view.on .mt-ring { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  .mt-meta { padding: 16px 4px 0; }
+  .mt-meta h2 { margin: 0 0 6px; font-size: 22px; font-weight: 700; }
+  .mt-meta p { margin: 0; font-size: 14px; line-height: 1.6; opacity: 0.7; }
+
+  /* 用户开启「减少动态效果」时：镜片直接出现，不做缩放过渡 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-lens, .mt-ring { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-card">
+  <div class="mt-view" id="mtView" role="img" aria-label="可放大查看的图片">
+    <img id="mtBase" alt="">
+    <div class="mt-lens" id="mtLens"><img id="mtZoom" alt=""></div>
+    <div class="mt-ring"></div>
+  </div>
+  <div class="mt-meta"><h2 id="mtTitle"></h2><p id="mtDesc"></p></div>
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-3.webp",   // 图片
+    zoom: 2,                            // 放大倍数
+    lensSize: 150,                      // 镜片直径（px）
+    title: "下一站露营地",               // 标题
+    desc: "把鼠标移到图上，像拿着放大镜一样查看细节。", // 说明
+  };
+
+  const view = document.getElementById('mtView'), lens = document.getElementById('mtLens');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtBase').src = CONFIG.photo; document.getElementById('mtZoom').src = CONFIG.photo;
+  document.getElementById('mtTitle').textContent = CONFIG.title; document.getElementById('mtDesc').textContent = CONFIG.desc;
+  view.style.setProperty('--r', (CONFIG.lensSize / 2) + 'px'); view.style.setProperty('--zoom', CONFIG.zoom);
+  let userTook = false;
+
+  // 镜片位置 = 光标位置：遮罩圆心、放大层的缩放原点、镜圈都跟着同一组坐标
+  function moveTo(x, y) { view.style.setProperty('--x', x + 'px'); view.style.setProperty('--y', y + 'px'); }
+  view.addEventListener('pointerenter', () => { userTook = true; view.classList.add('on'); });
+  view.addEventListener('pointermove', (e) => { const r = view.getBoundingClientRect(); moveTo(e.clientX - r.left, e.clientY - r.top); });
+  view.addEventListener('pointerleave', () => view.classList.remove('on'));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') view.classList.remove('on'); });
+  moveTo(view.clientWidth / 2, view.clientHeight / 2);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时镜片自己沿椭圆慢慢巡游
+  if (!reduceMotion) {
+    let t = 0, last = performance.now();
+    (function auto(now) {
+      if (userTook) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!document.hidden) {
+        t += dt; view.classList.add('on');
+        const w = view.clientWidth, h = view.clientHeight;
+        moveTo(w / 2 + Math.cos(t * 0.8) * w * 0.28, h / 2 + Math.sin(t * 1.1) * h * 0.24);
+      }
+      requestAnimationFrame(auto);
+    })(performance.now());
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

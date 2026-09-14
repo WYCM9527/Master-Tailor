@@ -1,0 +1,35 @@
+{
+  "slug": "hand-drawn-marker",
+  "name": "手绘标注",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["荧光笔", "手绘", "下划线", "强调"],
+  "summary": "用手绘的笔触给段落里的关键词划荧光笔、下划线、方框或圈，笔画像真人握笔一样微微发抖、逐渐画出来",
+  "params": [
+    { "key": "text", "label": "段落文字", "type": "text", "target": "config", "default": "好的界面不靠解释，【重要的话】要让人一眼看见——像用荧光笔在纸上【划出来】那样直接。", "maxLength": 120, "help": "用【】包住要标注的词" },
+    { "key": "action", "label": "标注样式", "type": "select", "target": "config", "options": [
+      { "value": "highlight", "label": "荧光笔" },
+      { "value": "underline", "label": "下划线" },
+      { "value": "box", "label": "方框" },
+      { "value": "circle", "label": "圈起来" },
+      { "value": "strike", "label": "删除线" },
+      { "value": "bracket", "label": "方括号" }
+    ], "default": "highlight" },
+    { "key": "color", "label": "笔的颜色", "type": "color", "target": "config", "default": "#ff9800" },
+    { "key": "strokeWidth", "label": "线条粗细", "type": "range", "target": "config", "min": 1, "max": 5, "step": 0.5, "default": 1.5, "unit": "px", "help": "荧光笔样式固定与文字同高" },
+    { "key": "duration", "label": "画完时长", "type": "range", "target": "config", "min": 200, "max": 2000, "step": 100, "default": 600, "displayUnit": " 毫秒" },
+    { "key": "iterations", "label": "描几遍", "type": "range", "target": "config", "min": 1, "max": 3, "step": 1, "default": 2 },
+    { "key": "padding", "label": "与文字间距", "type": "range", "target": "config", "min": 0, "max": 10, "step": 1, "default": 2, "unit": "px" },
+    { "key": "roughness", "label": "手抖程度", "type": "range", "target": "config", "min": 0, "max": 3, "step": 0.5, "default": 1, "help": "0 工整，3 潦草" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 16, "max": 48, "step": 2, "default": 28, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "荧光笔", "values": {} },
+    { "id": "circle", "name": "红笔圈重点", "values": { "action": "circle", "color": "#ef4444", "strokeWidth": 2, "roughness": 1.5, "padding": 4 } },
+    { "id": "underline", "name": "蓝笔划线", "values": { "action": "underline", "color": "#38bdf8", "strokeWidth": 2.5, "iterations": 1, "duration": 400 } },
+    { "id": "box", "name": "工整方框", "values": { "action": "box", "color": "#a3e635", "roughness": 0, "iterations": 1, "padding": 6 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Highlighter（基于 rough-notation 的思路）", "url": "https://magicui.design/docs/components/highlighter", "license": "MIT（思路参考，代码自写）" }
+}

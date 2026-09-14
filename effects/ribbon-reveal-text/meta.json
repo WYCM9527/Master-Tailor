@@ -1,0 +1,26 @@
+{
+  "slug": "ribbon-reveal-text",
+  "name": "彩带揭示文字",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["揭示", "彩带", "渐变", "标题"],
+  "summary": "一条多色彩带从左到右扫过隐形的文字，扫过之处文字显现成实色，彩带前方仍是空白，像用彩笔把字一笔涂出来",
+  "params": [
+    { "key": "prefix", "label": "前置文字", "type": "text", "target": "config", "default": "", "maxLength": 20, "help": "可留空" },
+    { "key": "words", "label": "揭示词", "type": "text", "target": "config", "default": "裁缝大师｜界面的裁缝师｜复制 prompt 就好", "maxLength": 80, "help": "多个词用「｜」分隔轮播" },
+    { "key": "colors", "label": "彩带颜色", "type": "colors", "target": "config", "min": 1, "max": 6, "default": ["#a97cf8", "#f38cb8", "#fdcc92"] },
+    { "key": "duration", "label": "扫过时长", "type": "range", "target": "config", "min": 0.5, "max": 4, "step": 0.1, "default": 1.5, "displayUnit": " 秒" },
+    { "key": "holdTime", "label": "停留时长", "type": "range", "target": "config", "min": 0.3, "max": 4, "step": 0.1, "default": 1.2, "displayUnit": " 秒" },
+    { "key": "band", "label": "彩带宽度", "type": "range", "target": "config", "min": 5, "max": 40, "step": 1, "default": 17, "unit": "%", "help": "半宽，占文字宽度的百分比" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 28, "max": 120, "step": 4, "default": 64, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dia", "name": "五色宽带", "values": { "colors": ["#c679c4", "#fa3d1d", "#ffb005", "#e1e1fe", "#0358f7"], "band": 28, "duration": 2 } },
+    { "id": "single", "name": "单词单色", "values": { "words": "发布了", "prefix": "新版本 ", "colors": ["#22d3ee"], "band": 10, "duration": 1 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Dia Text Reveal", "url": "https://magicui.design/docs/components/dia-text-reveal", "license": "MIT（思路参考，代码自写）" }
+}

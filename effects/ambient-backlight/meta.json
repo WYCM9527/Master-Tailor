@@ -1,0 +1,26 @@
+{
+  "slug": "ambient-backlight",
+  "name": "背光晕染",
+  "category": "card",
+  "sub": "idle",
+  "tags": ["光晕", "氛围灯", "图片", "环境光"],
+  "summary": "图片背后垫一层由它自己模糊、提饱和而成的彩色光晕，颜色随画面而变，像电视机后面的氛围灯",
+  "params": [
+    { "key": "photo", "label": "图片", "type": "image", "target": "config", "default": "/samples/sample-4.webp" },
+    { "key": "blur", "label": "光晕模糊半径", "type": "range", "target": "config", "min": 5, "max": 60, "step": 1, "default": 20 },
+    { "key": "saturate", "label": "光晕饱和度", "type": "range", "target": "config", "min": 1, "max": 8, "step": 0.5, "default": 4 },
+    { "key": "intensity", "label": "光晕强度", "type": "range", "target": "css", "min": 0.2, "max": 1, "step": 0.05, "default": 1 },
+    { "key": "breathe", "label": "缓慢呼吸", "type": "toggle", "target": "config", "default": true },
+    { "key": "radius", "label": "图片圆角", "type": "range", "target": "css", "min": 0, "max": 48, "step": 2, "default": 20, "unit": "px" },
+    { "key": "size", "label": "图片宽度", "type": "range", "target": "css", "min": 200, "max": 640, "step": 20, "default": 360, "unit": "px" },
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "环境光", "maxLength": 20 },
+    { "key": "desc", "label": "说明", "type": "text", "target": "config", "default": "光晕的颜色来自画面本身，像电视机后面的氛围灯。", "maxLength": 60 }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "wide", "name": "大范围柔光", "values": { "blur": 45, "saturate": 3, "intensity": 0.8, "photo": "/samples/sample-1.webp" } },
+    { "id": "tight", "name": "紧贴高饱和", "values": { "blur": 10, "saturate": 7, "breathe": false, "radius": 8 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Magic UI · Backlight", "url": "https://magicui.design/docs/components/backlight", "license": "MIT（思路参考，代码自写）" }
+}

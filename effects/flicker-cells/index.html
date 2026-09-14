@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>闪烁方格</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    size: 4,            // 方格边长（px）
+    gap: 6,             // 方格间距（px）
+    flicker: 0.3,       // 闪烁率：每个格子每秒改变亮度的概率
+    maxOpacity: 0.3,    // 最亮不透明度
+    color: "#6b7280",   // 方格颜色
+    gridLines: false,   // 叠加淡淡的网格线（亮格漂移风格）
+    spotlight: true,    // 鼠标附近的格子更亮
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const [cr, cg, cb] = hexRgb(CONFIG.color);
+
+  let dpr = 1, cols = 0, rows = 0, cells = new Float32Array(0), pitch = CONFIG.size + CONFIG.gap;
+  const mouse = { x: -1e4, y: -1e4 };
+  function resize() {
+    dpr = Math.min(2, devicePixelRatio || 1);
+    canvas.width = Math.floor(innerWidth * dpr); canvas.height = Math.floor(innerHeight * dpr);
+    cols = Math.ceil(innerWidth / pitch); rows = Math.ceil(innerHeight / pitch);
+    // 每个格子存一个 0–1 的亮度系数，初始随机
+    cells = new Float32Array(cols * rows);
+    for (let i = 0; i < cells.length; i++) cells[i] = Math.random();
+  }
+  resize(); addEventListener('resize', resize);
+  addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  addEventListener('pointerleave', () => { mouse.x = mouse.y = -1e4; });
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!document.hidden) {
+      // 每帧按「闪烁率 × dt」的概率给格子换一个新亮度——概率按时间折算，帧率高低不影响节奏
+      if (!reduceMotion) {
+        const p = CONFIG.flicker * dt;
+        for (let i = 0; i < cells.length; i++) if (Math.random() < p) cells[i] = Math.random();
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const s = CONFIG.size * dpr, step = pitch * dpr;
+      if (CONFIG.gridLines) {
+        // 淡网格线：沿格子边缘画 1px 线，让「亮格」像落在图纸上
+        ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.12)`; ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i <= cols; i++) { const x = Math.round(i * step - CONFIG.gap * dpr / 2) + 0.5; ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+        for (let j = 0; j <= rows; j++) { const y = Math.round(j * step - CONFIG.gap * dpr / 2) + 0.5; ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+        ctx.stroke();
+      }
+      const R = 160 * dpr, mx = mouse.x * dpr, my = mouse.y * dpr;
+      for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+        let a = cells[i * rows + j] * CONFIG.maxOpacity;
+        if (CONFIG.spotlight) {
+          // 鼠标聚光：距离 160px 内按平方衰减额外提亮
+          const dx = i * step - mx, dy = j * step - my, d2 = dx * dx + dy * dy;
+          if (d2 < R * R) a = Math.min(1, a + (1 - d2 / (R * R)) * 0.6);
+        }
+        if (a < 0.01) continue;
+        ctx.fillStyle = `rgba(${cr},${cg},${cb},${a.toFixed(3)})`;
+        ctx.fillRect(i * step, j * step, s, s);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

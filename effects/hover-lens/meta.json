@@ -1,0 +1,26 @@
+{
+  "slug": "hover-lens",
+  "name": "放大镜",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["放大镜", "图片", "细节", "悬停"],
+  "summary": "鼠标移到图片上，光标处出现一枚圆形放大镜，镜中是放大两倍的画面并随手移动，像拿着凸透镜看照片",
+  "params": [
+    { "key": "photo", "label": "图片", "type": "image", "target": "config", "default": "/samples/sample-3.webp" },
+    { "key": "zoom", "label": "放大倍数", "type": "range", "target": "config", "min": 1.2, "max": 4, "step": 0.1, "default": 2 },
+    { "key": "lensSize", "label": "镜片直径", "type": "range", "target": "config", "min": 80, "max": 320, "step": 10, "default": 150, "unit": "px" },
+    { "key": "ring", "label": "镜圈颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "ringWidth", "label": "镜圈粗细", "type": "range", "target": "css", "min": 0, "max": 6, "step": 1, "default": 2, "unit": "px", "help": "0 为无圈" },
+    { "key": "radius", "label": "图片圆角", "type": "range", "target": "css", "min": 0, "max": 40, "step": 2, "default": 16, "unit": "px" },
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "下一站露营地", "maxLength": 20 },
+    { "key": "desc", "label": "说明", "type": "text", "target": "config", "default": "把鼠标移到图上，像拿着放大镜一样查看细节。", "maxLength": 60 },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "loupe", "name": "小镜大倍", "values": { "zoom": 3.5, "lensSize": 100, "ringWidth": 3 } },
+    { "id": "soft", "name": "无圈大镜", "values": { "zoom": 1.5, "lensSize": 260, "ringWidth": 0, "photo": "/samples/sample-5.webp" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Magic UI · Lens（Aceternity 有同名组件，视觉一致）", "url": "https://magicui.design/docs/components/lens", "license": "MIT（思路参考，代码自写）" }
+}

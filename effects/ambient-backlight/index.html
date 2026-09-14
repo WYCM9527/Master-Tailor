@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>背光晕染</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-radius: 20px;       /* 图片圆角 */
+    --mt-size: 360px;        /* 图片宽度 */
+    --mt-intensity: 1;       /* 光晕强度（不透明度倍率） */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-stage { position: relative; width: var(--mt-size); max-width: 88vw; }
+  /* 背光：把图片本身高斯模糊、再大幅提高饱和度，作为一层光晕垫在原图后面——颜色自然来自画面 */
+  .mt-glow {
+    position: absolute; inset: 0; z-index: 0; filter: url(#mtBacklight); opacity: var(--mt-intensity);
+    transform: scale(var(--spread, 1)); transform-origin: 50% 50%;
+    transition: transform 0.6s ease;
+  }
+  .mt-glow img, .mt-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border-radius: var(--mt-radius); }
+  .mt-photo { position: relative; z-index: 1; }
+  .mt-stage.breathe .mt-glow { animation: mt-breathe 4s ease-in-out infinite; }
+  @keyframes mt-breathe { 0%, 100% { opacity: calc(var(--mt-intensity) * 0.75); } 50% { opacity: var(--mt-intensity); } }
+  .mt-stage:hover .mt-glow { --spread: 1.06; }
+  .mt-cap { position: relative; z-index: 1; margin: 18px 4px 0; }
+  .mt-cap h2 { margin: 0 0 4px; font-size: 20px; }
+  .mt-cap p { margin: 0; font-size: 14px; opacity: 0.65; line-height: 1.6; }
+
+  /* 用户开启「减少动态效果」时：光晕不呼吸 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-stage.breathe .mt-glow { animation: none; }
+    .mt-glow { transition: none; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- 滤镜区域放大到 200%，模糊才能溢出到图片之外形成光晕 -->
+    <filter id="mtBacklight" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="blurred" id="mtBlur"/>
+      <feColorMatrix type="saturate" in="blurred" values="4" id="mtSat"/>
+    </filter>
+  </defs>
+</svg>
+<div class="mt-stage" id="mtStage">
+  <div class="mt-glow" aria-hidden="true"><img id="mtGlowImg" alt=""></div>
+  <img class="mt-photo" id="mtPhoto" alt="">
+  <div class="mt-cap"><h2 id="mtTitle"></h2><p id="mtDesc"></p></div>
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-4.webp",     // 图片
+    blur: 20,                             // 光晕模糊半径
+    saturate: 4,                          // 光晕饱和度倍率
+    breathe: true,                        // 光晕缓慢呼吸
+    title: "环境光",                       // 标题
+    desc: "光晕的颜色来自画面本身，像电视背后的氛围灯。", // 说明
+  };
+  document.getElementById('mtGlowImg').src = CONFIG.photo; document.getElementById('mtPhoto').src = CONFIG.photo;
+  document.getElementById('mtBlur').setAttribute('stdDeviation', CONFIG.blur);
+  document.getElementById('mtSat').setAttribute('values', CONFIG.saturate);
+  document.getElementById('mtTitle').textContent = CONFIG.title; document.getElementById('mtDesc').textContent = CONFIG.desc;
+  if (CONFIG.breathe) document.getElementById('mtStage').classList.add('breathe');
+</script>
+</body>
+</html>
