@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>镜面切片文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-ghost: #7c9cff;     /* 切片颜色 */
+    --mt-slice: 10px;        /* 每条切片的高度 */
+    --mt-shift: 16px;        /* 悬停时的位移量 */
+    --mt-duration: 0.5s;     /* 过渡时长 */
+    --mt-fontSize: 64px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  /* 主字上方（或下方）叠几条只露出字顶部一小截的「切片」，每条都是同一段文字裁出来的；悬停时切片与主字按不同延迟一起位移，像字的顶部被切成几片镜像挪开 */
+  .mt-wrap { position: relative; display: inline-block; padding: 40px 24px; cursor: pointer; }
+  .mt-text { display: block; font-size: var(--mt-fontSize); font-weight: 300; letter-spacing: 0.02em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+  .mt-strip { height: var(--mt-slice); overflow: hidden; color: var(--mt-ghost); transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1); transition-delay: var(--d); }
+  .mt-strip .mt-text { transform: translateY(var(--o, 0)); }   /* 切片各自露出文字的不同高度段 */
+  .mt-main { transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mt-wrap:hover .mt-strip, .mt-wrap:hover .mt-main, .mt-wrap.demo .mt-strip, .mt-wrap.demo .mt-main { transform: var(--move); }
+  .mt-wrap.below .mt-strip { color: var(--mt-ghost); }
+  @media (prefers-reduced-motion: reduce) { .mt-strip, .mt-main { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-wrap" id="mtWrap"></div>
+<script>
+  const CONFIG = {
+    text: "镜面切片",       // 文字
+    slices: 3,             // 切片条数
+    direction: "up",       // 位移方向：up 向上 / down 向下 / left 向左 / right 向右
+    position: "above",     // 切片位置：above 主字上方 / below 主字下方
+    stagger: 70,           // 相邻切片的延迟差（毫秒）
+    sliceFromTop: true,    // 切片取字的顶部（关掉则每条取字的不同高度段，像逐层剖开）
+  };
+  const wrap = document.getElementById('mtWrap');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const moves = { up: `translateY(calc(var(--mt-shift) * -1))`, down: `translateY(var(--mt-shift))`, left: `translateX(calc(var(--mt-shift) * -1))`, right: `translateX(var(--mt-shift))` };
+  wrap.style.setProperty('--move', moves[CONFIG.direction] || moves.up); wrap.classList.toggle('below', CONFIG.position === 'below');
+  const mk = (cls) => { const d = document.createElement('div'); d.className = cls; const t = document.createElement('span'); t.className = 'mt-text'; t.textContent = CONFIG.text; d.appendChild(t); return d; };
+  const main = mk('mt-main'); main.setAttribute('aria-label', CONFIG.text);
+  const strips = Array.from({ length: CONFIG.slices }, (_, i) => {
+    const s = mk('mt-strip'); s.setAttribute('aria-hidden', 'true');
+    // 离主字越远的切片延迟越大；「逐层剖开」时第 i 条露出字的第 i 段
+    const far = CONFIG.position === 'above' ? CONFIG.slices - 1 - i : i;
+    s.style.setProperty('--d', (far + 1) * CONFIG.stagger + 'ms');
+    if (!CONFIG.sliceFromTop) s.style.setProperty('--o', `calc(var(--mt-slice) * ${-(CONFIG.position === 'above' ? i : CONFIG.slices - 1 - i)})`);
+    return s;
+  });
+  if (CONFIG.position === 'above') { strips.forEach(s => wrap.appendChild(s)); wrap.appendChild(main); } else { wrap.appendChild(main); strips.forEach(s => wrap.appendChild(s)); }
+  let userTook = false; wrap.addEventListener('pointerenter', () => (userTook = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时定期挪开、复位
+  if (!reduceMotion) setInterval(() => { if (userTook || document.hidden) return; wrap.classList.toggle('demo'); }, 1500);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

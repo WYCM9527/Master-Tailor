@@ -1,0 +1,27 @@
+{
+  "slug": "content-scan-highlight",
+  "name": "扫描线高亮",
+  "category": "card",
+  "sub": "click",
+  "tags": ["扫描", "高亮", "计数", "卡片"],
+  "summary": "点「开始扫描」，一道竖向光带从左扫到右，扫过的关键词逐个亮起、右上角百分比滚动攀升；扫到头停一下再退回，高亮熄灭",
+  "params": [
+    { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "内容检测", "maxLength": 16 },
+    { "key": "text", "label": "正文", "type": "text", "target": "config", "default": "这段文字看起来像是由机器生成的：句式过于规整，词汇选择偏向高频词，情感表达平淡，几乎没有个人经验的细节，段落之间的过渡也显得机械。", "maxLength": 200 },
+    { "key": "words", "label": "高亮词", "type": "text", "target": "config", "default": "机器生成｜过于规整｜高频词｜平淡｜机械", "maxLength": 80, "help": "用「｜」分隔，需出现在正文中" },
+    { "key": "unit", "label": "计数单位", "type": "text", "target": "config", "default": "% 疑似", "maxLength": 8 },
+    { "key": "scanDuration", "label": "扫过去用时", "type": "range", "target": "config", "min": 1, "max": 6, "step": 0.5, "default": 3, "displayUnit": " 秒" },
+    { "key": "backDuration", "label": "退回用时", "type": "range", "target": "config", "min": 0.3, "max": 3, "step": 0.1, "default": 1, "displayUnit": " 秒" },
+    { "key": "auto", "label": "自动演示", "type": "toggle", "target": "config", "default": true },
+    { "key": "accent", "label": "扫描线 / 高亮色", "type": "color", "target": "css", "default": "#7c3aed" },
+    { "key": "cardBg", "label": "卡片底色", "type": "color", "target": "css", "default": "#f7f7fb" },
+    { "key": "color", "label": "正文颜色", "type": "color", "target": "css", "default": "#1b1b1f" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "green", "name": "绿色快扫", "values": { "accent": "#059669", "scanDuration": 1.5, "backDuration": 0.5, "title": "语法检查", "unit": "% 完成" } },
+    { "id": "dark", "name": "深色卡", "values": { "cardBg": "#16161d", "color": "#e5e7eb", "accent": "#22d3ee" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Animata · Content Scan", "url": "https://github.com/codse/animata", "license": "MIT（思路参考，代码自写）" }
+}

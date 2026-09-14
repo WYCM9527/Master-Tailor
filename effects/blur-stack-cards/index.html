@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模糊叠卡</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #1b1b1f;     /* 卡片文字颜色 */
+    --mt-offset: 44px;       /* 每层错开的距离 */
+    --mt-blur: 2px;          /* 后层的模糊程度 */
+    --mt-duration: 0.6s;     /* 换位时长 */
+    --mt-radius: 12px;       /* 圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 几张卡叠在一起：越后面的越小、越往左退、越模糊；点最前面一张，它向上飞走再落到最后 */
+  .mt-stack { position: relative; width: min(400px, 80vw); height: min(380px, 60vh); }
+  .mt-card { position: absolute; left: 50%; top: 50%; width: calc(100% - var(--i) * var(--mt-offset)); height: calc(100% - var(--i) * var(--mt-offset)); transform: translate(calc(-50% - var(--i) * var(--mt-offset)), -50%); z-index: calc(10 - var(--i)); filter: blur(calc(var(--mt-blur) * min(var(--i), 1))); border-radius: var(--mt-radius); background: var(--c); color: var(--mt-color); padding: 20px 22px; box-sizing: border-box; cursor: pointer; box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6); transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1), width var(--mt-duration), height var(--mt-duration), filter var(--mt-duration), z-index 0s var(--mt-duration); overflow: hidden; }
+  .mt-card h2 { margin: 0 0 6px; font-size: 20px; }
+  .mt-card p { margin: 0 0 14px; font-size: 14px; opacity: 0.75; line-height: 1.5; }
+  .mt-card .row { display: flex; justify-content: space-between; align-items: center; height: 44px; padding: 0 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(255, 255, 255, 0.7); font-size: 14px; }
+  .mt-card .row i { display: inline-block; width: 22px; height: 22px; border-radius: 6px; margin-right: 10px; vertical-align: middle; background: var(--sw); }
+  .mt-card .row span:last-child { opacity: 0.55; }
+  /* 飞走：先向上抛出屏幕，再瞬移到底层位置落下 */
+  .mt-card.fly { transform: translate(-50%, -220%) rotate(-4deg); transition: transform calc(var(--mt-duration) * 0.7) cubic-bezier(0.4, 0, 0.6, 1); z-index: 20; filter: none; }
+  .mt-hint { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); font-size: 12px; letter-spacing: 0.15em; color: #f2f3f8; opacity: 0.45; }
+  @media (prefers-reduced-motion: reduce) { .mt-card { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-stack" id="mtStack" role="list"></div>
+<div class="mt-hint">点最前面的卡片</div>
+<script>
+  const CONFIG = {
+    cards: "颜色=品牌色延伸出的一套色板。｜系统设计=组件间距与层级的约定。｜主题=亮暗两套主题一键切换。",   // 每张「标题=说明」，用「｜」分隔
+    colors: ["#e2e8f0", "#dbeafe", "#e0e7ff", "#fce7f3"],   // 卡片颜色（按顺序循环）
+    rows: 3,             // 每张卡里的示例行数
+  };
+  const stack = document.getElementById('mtStack');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const swatches = ['#f472b6', '#7c9cff', '#34d399', '#fbbf24', '#a78bfa'];
+  let cards = CONFIG.cards.split('｜').map(s => s.trim()).filter(Boolean).map((s, i) => {
+    const [t, d = ''] = s.split('=');
+    const el = document.createElement('article'); el.className = 'mt-card'; el.setAttribute('role', 'listitem'); el.style.setProperty('--c', CONFIG.colors[i % CONFIG.colors.length]);
+    el.innerHTML = `<h2></h2><p></p>` + Array.from({ length: CONFIG.rows }, (_, k) => `<div class="row"><span><i style="--sw:${swatches[(i + k) % swatches.length]}"></i>条目 ${k + 1}</span><span>${(k + 1) * 12}%</span></div>`).join('');
+    el.querySelector('h2').textContent = t.trim(); el.querySelector('p').textContent = d.trim();
+    el.addEventListener('click', () => { userTook = true; if (cards[0] === el) cycle(); });
+    stack.appendChild(el); return el;
+  });
+  const layout = () => cards.forEach((c, i) => c.style.setProperty('--i', i));
+  layout();
+  let busy = false, userTook = false;
+  function cycle() {
+    if (busy || cards.length < 2) return; busy = true;
+    const front = cards[0];
+    if (reduceMotion) { cards.push(cards.shift()); layout(); busy = false; return; }
+    front.classList.add('fly');
+    setTimeout(() => {
+      // 飞出后关掉过渡，瞬移到最底层的位置，再恢复过渡让它「落下」
+      cards.push(cards.shift()); front.style.transition = 'none'; front.classList.remove('fly'); front.style.setProperty('--i', cards.length - 1); front.style.transform = `translate(calc(-50% - ${cards.length - 1} * var(--mt-offset)), -200%)`;
+      void front.offsetWidth; front.style.transition = ''; front.style.transform = ''; layout(); setTimeout(() => (busy = false), 600);
+    }, 450);
+  }
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人点时定期翻一张
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) cycle(); }, 2400);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

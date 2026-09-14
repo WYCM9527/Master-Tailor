@@ -1,0 +1,25 @@
+{
+  "slug": "shape-shift-headline",
+  "name": "变形图窗标题",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["标题", "图窗", "变形", "跑马灯"],
+  "summary": "一句大标题中间嵌着一个图窗，窗的宽度和圆角在几种形状之间不停变形，窗里一串图片持续滚过；悬停暂停",
+  "params": [
+    { "key": "prefix", "label": "前半句", "type": "text", "target": "config", "default": "形状", "maxLength": 12 },
+    { "key": "suffix", "label": "后半句", "type": "text", "target": "config", "default": "会变", "maxLength": 12 },
+    { "key": "slides", "label": "窗里的图片", "type": "images", "target": "config", "min": 2, "max": 8, "default": [{"src": "/samples/sample-1.webp", "caption": ""}, {"src": "/samples/sample-2.webp", "caption": ""}, {"src": "/samples/sample-3.webp", "caption": ""}, {"src": "/samples/sample-4.webp", "caption": ""}, {"src": "/samples/sample-6.webp", "caption": ""}], "captions": false },
+    { "key": "speed", "label": "图片滚一轮", "type": "range", "target": "config", "min": 4, "max": 30, "step": 1, "default": 12, "displayUnit": " 秒" },
+    { "key": "period", "label": "变形一轮", "type": "range", "target": "css", "min": 3, "max": 16, "step": 0.5, "default": 8, "unit": "s", "displayUnit": " 秒" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 32, "max": 120, "step": 4, "default": 64, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "fast", "name": "快变快滚", "values": { "period": 4, "speed": 6, "prefix": "看", "suffix": "世界" } },
+    { "id": "huge", "name": "巨字慢变", "values": { "fontSize": 110, "period": 14, "speed": 20 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Animata · Shape Shifter", "url": "https://github.com/codse/animata", "license": "MIT（思路参考，代码自写；变形关键帧自定）" }
+}

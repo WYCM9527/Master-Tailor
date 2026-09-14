@@ -1,0 +1,27 @@
+{
+  "slug": "mirror-slice-text",
+  "name": "镜面切片文字",
+  "category": "text",
+  "sub": "hover",
+  "tags": ["文字", "切片", "悬停", "重影"],
+  "summary": "一行大字上方叠着几条只露出字顶部的细切片，悬停时切片与主字按先后错开挪动，像字被切成几层镜像滑开",
+  "params": [
+    { "key": "text", "label": "文字", "type": "text", "target": "config", "default": "镜面切片", "maxLength": 16 },
+    { "key": "slices", "label": "切片条数", "type": "range", "target": "config", "min": 1, "max": 8, "step": 1, "default": 3 },
+    { "key": "direction", "label": "位移方向", "type": "select", "target": "config", "options": [{ "value": "up", "label": "向上" }, { "value": "down", "label": "向下" }, { "value": "left", "label": "向左" }, { "value": "right", "label": "向右" }], "default": "up" },
+    { "key": "position", "label": "切片位置", "type": "select", "target": "config", "options": [{ "value": "above", "label": "主字上方" }, { "value": "below", "label": "主字下方" }], "default": "above" },
+    { "key": "stagger", "label": "切片延迟差", "type": "range", "target": "config", "min": 0, "max": 200, "step": 10, "default": 70, "displayUnit": " 毫秒" },
+    { "key": "sliceFromTop", "label": "切片都取字顶部", "type": "toggle", "target": "config", "default": true, "help": "关掉则每条露出字的不同高度段" },
+    { "key": "ghost", "label": "切片颜色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "slice", "label": "切片高度", "type": "range", "target": "css", "min": 4, "max": 24, "step": 1, "default": 10, "unit": "px" },
+    { "key": "shift", "label": "位移量", "type": "range", "target": "css", "min": 4, "max": 48, "step": 2, "default": 16, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "layers", "name": "逐层剖开", "values": { "sliceFromTop": false, "slices": 5, "slice": 12, "ghost": "#f2f3f8", "direction": "left" } },
+    { "id": "below", "name": "下方倒影", "values": { "position": "below", "direction": "down", "ghost": "#f472b6", "slices": 4 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Animata · Mirror Text", "url": "https://github.com/codse/animata", "license": "MIT（思路参考，代码自写）" }
+}

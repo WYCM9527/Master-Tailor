@@ -1,0 +1,158 @@
+{
+  "slug": "sibling-focus-nav",
+  "name": "邻居失焦导航",
+  "category": "nav",
+  "sub": "hover",
+  "tags": [
+    "导航",
+    "失焦",
+    "悬停",
+    "纯 CSS"
+  ],
+  "summary": "悬停某个导航项时其余项一起变淡 / 模糊 / 缩小 / 去色 / 左移让路，只有它保持清晰；纯 CSS :has()",
+  "params": [
+    {
+      "key": "items",
+      "label": "链接文字",
+      "type": "text",
+      "target": "config",
+      "default": "首页｜作品集｜关于我们｜日志｜联系",
+      "maxLength": 60,
+      "help": "用「｜」分隔"
+    },
+    {
+      "key": "mode",
+      "label": "失焦方式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "dim",
+          "label": "变淡"
+        },
+        {
+          "value": "blur",
+          "label": "模糊"
+        },
+        {
+          "value": "shrink",
+          "label": "缩小变淡"
+        },
+        {
+          "value": "gray",
+          "label": "去色"
+        },
+        {
+          "value": "push",
+          "label": "左移变淡"
+        }
+      ],
+      "default": "dim"
+    },
+    {
+      "key": "layout",
+      "label": "排布",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "column",
+          "label": "竖排"
+        },
+        {
+          "value": "row",
+          "label": "横排"
+        }
+      ],
+      "default": "column"
+    },
+    {
+      "key": "amount",
+      "label": "失焦程度",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 1.5,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "accent",
+      "label": "悬停项颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "duration",
+      "label": "过渡时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.1,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.25,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 80,
+      "step": 2,
+      "default": 44,
+      "unit": "px"
+    },
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "system-sans"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "变淡",
+      "values": {}
+    },
+    {
+      "id": "blur",
+      "name": "模糊",
+      "values": {
+        "mode": "blur",
+        "accent": "#f472b6"
+      }
+    },
+    {
+      "id": "row-gray",
+      "name": "横排去色",
+      "values": {
+        "mode": "gray",
+        "layout": "row",
+        "fontSize": 24,
+        "accent": "#fbbf24"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Animata · Sibling Focus Nav",
+    "url": "https://github.com/codse/animata",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>邻居失焦导航</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 悬停项颜色 */
+    --mt-amount: 1;          /* 失焦程度倍率 */
+    --mt-duration: 0.25s;    /* 过渡时长 */
+    --mt-fontSize: 44px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-nav { display: flex; flex-direction: column; gap: 0.15em; padding: 24px; }
+  .mt-nav.row { flex-direction: row; flex-wrap: wrap; gap: 0.6em 1.2em; justify-content: center; }
+  .mt-link { position: relative; text-decoration: none; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; transition: opacity var(--mt-duration) ease-out, filter var(--mt-duration) ease-out, transform var(--mt-duration) ease-out, color var(--mt-duration) ease-out; }
+  .mt-link:hover, .mt-link:focus-visible, .mt-link.hot { color: var(--mt-accent); outline: none; }
+  /* 核心：容器里「有一个被悬停 / 聚焦的链接」时，其余链接失焦——用 :has() 选出兄弟 */
+  .mt-nav.dim:has(> .mt-link:hover) > .mt-link:not(:hover), .mt-nav.dim:has(> .mt-link:focus-visible) > .mt-link:not(:focus-visible), .mt-nav.dim.demo > .mt-link:not(.hot) { opacity: calc(1 - 0.75 * var(--mt-amount)); }
+  .mt-nav.blur:has(> .mt-link:hover) > .mt-link:not(:hover), .mt-nav.blur:has(> .mt-link:focus-visible) > .mt-link:not(:focus-visible), .mt-nav.blur.demo > .mt-link:not(.hot) { filter: blur(calc(4px * var(--mt-amount))); opacity: 0.7; }
+  .mt-nav.shrink:has(> .mt-link:hover) > .mt-link:not(:hover), .mt-nav.shrink:has(> .mt-link:focus-visible) > .mt-link:not(:focus-visible), .mt-nav.shrink.demo > .mt-link:not(.hot) { transform: scale(calc(1 - 0.12 * var(--mt-amount))); opacity: 0.5; }
+  .mt-nav.gray:has(> .mt-link:hover) > .mt-link:not(:hover), .mt-nav.gray:has(> .mt-link:focus-visible) > .mt-link:not(:focus-visible), .mt-nav.gray.demo > .mt-link:not(.hot) { filter: grayscale(1) contrast(0.6); opacity: calc(1 - 0.5 * var(--mt-amount)); }
+  .mt-nav.push:has(> .mt-link:hover) > .mt-link:not(:hover), .mt-nav.push:has(> .mt-link:focus-visible) > .mt-link:not(:focus-visible), .mt-nav.push.demo > .mt-link:not(.hot) { transform: translateX(calc(-16px * var(--mt-amount))); opacity: 0.4; }
+  @media (prefers-reduced-motion: reduce) { .mt-link { transition: none; } .mt-nav.blur:has(> .mt-link:hover) > .mt-link:not(:hover) { filter: none; } }
+</style>
+</head>
+<body>
+<nav class="mt-nav" id="mtNav" aria-label="导航"></nav>
+<script>
+  const CONFIG = {
+    items: "首页｜作品集｜关于我们｜日志｜联系",   // 链接文字，用「｜」分隔
+    mode: "dim",           // 失焦方式：dim 变淡 / blur 模糊 / shrink 缩小变淡 / gray 去色 / push 左移变淡
+    layout: "column",      // 排布：column 竖排 / row 横排
+  };
+  const nav = document.getElementById('mtNav');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  nav.classList.add(CONFIG.mode); if (CONFIG.layout === 'row') nav.classList.add('row');
+  const links = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean).map(t => { const a = document.createElement('a'); a.className = 'mt-link'; a.href = '#'; a.textContent = t; a.addEventListener('click', e => e.preventDefault()); a.addEventListener('pointerenter', () => { userTook = true; nav.classList.remove('demo'); links.forEach(l => l.classList.remove('hot')); }); nav.appendChild(a); return a; });
+  let userTook = false;
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流「悬停」一项
+  if (!reduceMotion) { let i = 0; setInterval(() => { if (userTook || document.hidden) return; links.forEach(l => l.classList.remove('hot')); links[i % links.length].classList.add('hot'); nav.classList.add('demo'); i++; }, 1300); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

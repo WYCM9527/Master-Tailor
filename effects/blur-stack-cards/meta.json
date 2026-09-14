@@ -1,0 +1,25 @@
+{
+  "slug": "blur-stack-cards",
+  "name": "模糊叠卡",
+  "category": "card",
+  "sub": "click",
+  "tags": ["卡片", "叠放", "模糊", "点击"],
+  "summary": "几张信息卡向左后方一层层错开叠着，越后面越小越模糊；点最前面一张，它向上飞出再落到最后，后面的依次变清晰顶上来",
+  "params": [
+    { "key": "cards", "label": "卡片内容", "type": "text", "target": "config", "default": "颜色=品牌色延伸出的一套色板。｜系统设计=组件间距与层级的约定。｜主题=亮暗两套主题一键切换。", "maxLength": 160, "help": "每张「标题=说明」，用「｜」分隔" },
+    { "key": "colors", "label": "卡片颜色", "type": "colors", "target": "config", "min": 1, "max": 6, "default": ["#e2e8f0", "#dbeafe", "#e0e7ff", "#fce7f3"] },
+    { "key": "rows", "label": "示例行数", "type": "range", "target": "config", "min": 0, "max": 5, "step": 1, "default": 3 },
+    { "key": "offset", "label": "每层错开", "type": "range", "target": "css", "min": 16, "max": 80, "step": 4, "default": 44, "unit": "px" },
+    { "key": "blur", "label": "后层模糊", "type": "range", "target": "css", "min": 0, "max": 6, "step": 0.5, "default": 2, "unit": "px" },
+    { "key": "duration", "label": "换位时长", "type": "range", "target": "css", "min": 0.3, "max": 1.2, "step": 0.1, "default": 0.6, "unit": "s", "displayUnit": " 秒" },
+    { "key": "radius", "label": "圆角", "type": "range", "target": "css", "min": 0, "max": 28, "step": 2, "default": 12, "unit": "px" },
+    { "key": "color", "label": "卡片文字色", "type": "color", "target": "css", "default": "#1b1b1f" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dark", "name": "深色卡", "values": { "colors": ["#1f2937", "#312e81", "#3b0764"], "color": "#f2f3f8", "blur": 3 } },
+    { "id": "tight", "name": "紧凑清晰", "values": { "offset": 20, "blur": 0, "rows": 2, "duration": 0.4 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Animata · Blur Stack Card", "url": "https://github.com/codse/animata", "license": "MIT（思路参考，代码自写）" }
+}

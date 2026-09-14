@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扫描线高亮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-cardBg: #f7f7fb;    /* 卡片底色 */
+    --mt-color: #1b1b1f;     /* 正文颜色 */
+    --mt-accent: #7c3aed;    /* 扫描线与高亮颜色 */
+    --mt-radius: 14px;       /* 圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-card { position: relative; width: min(560px, 90vw); padding: 28px 30px 24px; border-radius: var(--mt-radius); background: var(--mt-cardBg); color: var(--mt-color); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8); }
+  .mt-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .mt-head h2 { margin: 0; font-size: 18px; }
+  /* 计数：两位数字，各自在一条竖向数字带里滚动 */
+  .mt-count { display: inline-flex; align-items: baseline; gap: 2px; font-weight: 800; font-size: 22px; color: var(--mt-accent); }
+  .mt-count .digit { display: inline-block; height: 1.1em; overflow: hidden; line-height: 1.1; }
+  .mt-count .digit span { display: block; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mt-count small { font-size: 12px; font-weight: 500; opacity: 0.6; margin-left: 4px; }
+  .mt-body { position: relative; padding: 16px 18px; border-radius: 10px; background: #fff; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06); overflow: hidden; font-size: 15px; line-height: 1.9; }
+  /* 扫描线：一条竖向光带，从左边扫到右边 */
+  .mt-scanner { position: absolute; top: 0; bottom: 0; left: -30px; width: 30px; pointer-events: none; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--mt-accent) 35%, transparent) 60%, var(--mt-accent)); box-shadow: 0 0 20px color-mix(in srgb, var(--mt-accent) 50%, transparent); opacity: 0; transform: translateX(var(--x, 0px)); }
+  .mt-body.scanning .mt-scanner { opacity: 1; }
+  /* 高亮词：扫过之后底色亮起、文字加粗 */
+  .mt-body mark { background: transparent; color: inherit; border-radius: 3px; padding: 0 2px; transition: background-color 0.25s, color 0.25s, font-weight 0.25s; }
+  .mt-body mark.on { background: color-mix(in srgb, var(--mt-accent) 22%, transparent); color: var(--mt-accent); font-weight: 700; }
+  .mt-btn { margin-top: 16px; padding: 10px 22px; border: 0; border-radius: 999px; background: var(--mt-accent); color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.2s, opacity 0.2s; }
+  .mt-btn:active { transform: scale(0.96); } .mt-btn[disabled] { opacity: 0.5; cursor: default; }
+  @media (prefers-reduced-motion: reduce) { .mt-count .digit span, .mt-body mark { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-card">
+  <div class="mt-head"><h2 id="mtTitle"></h2><div class="mt-count" id="mtCount" aria-live="polite"></div></div>
+  <div class="mt-body" id="mtBody"><div class="mt-scanner" id="mtScanner"></div><p id="mtText" style="margin:0"></p></div>
+  <button type="button" class="mt-btn" id="mtBtn">开始扫描</button>
+</div>
+<script>
+  const CONFIG = {
+    title: "内容检测",       // 卡片标题
+    text: "这段文字看起来像是由机器生成的：句式过于规整，词汇选择偏向高频词，情感表达平淡，几乎没有个人经验的细节，段落之间的过渡也显得机械。", // 正文
+    words: "机器生成｜过于规整｜高频词｜平淡｜机械",   // 扫到就高亮的词，用「｜」分隔
+    unit: "% 疑似",          // 计数后的单位文字
+    scanDuration: 3,         // 扫过去用时（秒）
+    backDuration: 1,         // 扫回来用时（秒）
+    auto: true,              // 演示：自动定时扫描
+  };
+  const body = document.getElementById('mtBody'), scanner = document.getElementById('mtScanner'), textEl = document.getElementById('mtText'), count = document.getElementById('mtCount'), btn = document.getElementById('mtBtn');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  // 正文里把关键词包成 <mark>
+  const words = CONFIG.words.split('｜').map(s => s.trim()).filter(Boolean);
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = words.length ? new RegExp(`(${words.map(esc).join('|')})`, 'g') : null;
+  CONFIG.text.split(re || /(?!)/).forEach(part => { if (words.includes(part)) { const m = document.createElement('mark'); m.textContent = part; textEl.appendChild(m); } else textEl.append(part); });
+  const marks = [...textEl.querySelectorAll('mark')];
+  // 计数器：两位滚动数字 + 单位
+  count.innerHTML = '<span class="digit"><span>0</span></span><span class="digit"><span>0</span></span><small></small>'; count.querySelector('small').textContent = CONFIG.unit;
+  const digits = [...count.querySelectorAll('.digit span')];
+  digits.forEach(d => { d.innerHTML = Array.from({ length: 10 }, (_, n) => `<i style="display:block;font-style:normal">${n}</i>`).join(''); });
+  const setCount = (n) => { const s = String(Math.max(0, Math.min(99, Math.round(n)))).padStart(2, '0'); digits.forEach((d, i) => (d.style.transform = `translateY(${-1.1 * +s[i]}em)`)); };
+  setCount(0);
+  const maxPct = Math.min(99, Math.round(60 + marks.length * 6));
+  let scanning = false, userTook = false;
+  function scan() {
+    if (scanning) return; scanning = true; btn.disabled = true; marks.forEach(m => m.classList.remove('on'));
+    const bodyRect = body.getBoundingClientRect(), W = body.clientWidth + 30, t0 = performance.now();
+    const fwd = reduceMotion ? 0 : CONFIG.scanDuration * 1000, back = reduceMotion ? 0 : CONFIG.backDuration * 1000;
+    body.classList.add('scanning');
+    (function frame(now) {
+      const t = now - t0;
+      if (t <= fwd) {
+        // 前进：扫描线右缘越过哪个词，哪个词就亮起；计数按进度爬升
+        const x = (fwd ? t / fwd : 1) * W; scanner.style.setProperty('--x', x + 'px');
+        const edge = bodyRect.left + x;
+        marks.forEach(m => { const r = m.getBoundingClientRect(); m.classList.toggle('on', r.right <= edge); });
+        setCount((fwd ? t / fwd : 1) * maxPct);
+        requestAnimationFrame(frame);
+      } else if (t <= fwd + 200) { marks.forEach(m => m.classList.add('on')); setCount(maxPct); requestAnimationFrame(frame); }
+      else if (t <= fwd + 200 + back) {
+        // 返回：扫描线退回，计数回落，高亮陆续熄灭
+        const k = back ? (t - fwd - 200) / back : 1; scanner.style.setProperty('--x', (1 - k) * W + 'px'); setCount((1 - k) * maxPct);
+        const edge = bodyRect.left + (1 - k) * W; marks.forEach(m => { const r = m.getBoundingClientRect(); m.classList.toggle('on', r.left <= edge - 30); });
+        requestAnimationFrame(frame);
+      } else { body.classList.remove('scanning'); scanner.style.setProperty('--x', '0px'); marks.forEach(m => m.classList.remove('on')); setCount(0); scanning = false; btn.disabled = false; }
+    })(t0);
+  }
+  btn.addEventListener('click', () => { userTook = true; scan(); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人点时定期自动扫一次
+  if (!reduceMotion && CONFIG.auto) { setTimeout(scan, 600); setInterval(() => { if (!userTook && !document.hidden) scan(); }, (CONFIG.scanDuration + CONFIG.backDuration) * 1000 + 2200); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
