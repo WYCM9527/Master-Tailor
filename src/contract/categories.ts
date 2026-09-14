@@ -8,6 +8,9 @@ const TRIGGER_SUBS: SubDef[] = [
   { id: 'scroll', name: '滚动触发', desc: '页面滚动到指定位置时触发' },
 ];
 
+/** 「背景效果」不收滚动触发：背景是页面的底，随滚动变化的应归到转场 / 展示类 */
+const BACKGROUND_SUBS: SubDef[] = TRIGGER_SUBS.filter((s) => s.id !== 'scroll');
+
 /** 「文字效果」：触发方式之外，多一类持续滚动 / 轮换的纯文字条目 */
 const TEXT_SUBS: SubDef[] = [
   ...TRIGGER_SUBS,
@@ -32,7 +35,7 @@ const TRANSITION_SUBS: SubDef[] = [
 
 /** 一级分类（subs 即该分类下的二级分类表，侧边栏只显示有效果的子项） */
 export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
-  { id: 'background', name: '背景效果', subs: TRIGGER_SUBS },
+  { id: 'background', name: '背景效果', subs: BACKGROUND_SUBS },
   { id: 'button', name: '按钮与交互', subs: TRIGGER_SUBS },
   { id: 'nav', name: '导航菜单', subs: TRIGGER_SUBS },
   { id: 'text', name: '文字效果', subs: TEXT_SUBS },
