@@ -1,0 +1,188 @@
+{
+  "slug": "elastic-grid-scroll",
+  "name": "弹性网格滚动",
+  "category": "showcase",
+  "sub": "stack-scroll",
+  "tags": [
+    "网格",
+    "滚动",
+    "滞后",
+    "弹性"
+  ],
+  "summary": "一面图片墙，滚动时中间列紧跟、两侧列越靠外越拖后，快滚时图片被纵向拉长，停下后各列像橡皮筋一样弹回对齐",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片",
+      "type": "images",
+      "target": "config",
+      "min": 2,
+      "max": 12,
+      "default": [
+        {
+          "src": "/samples/sample-1.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-2.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-3.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-4.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-5.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-6.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-7.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-8.webp",
+          "caption": ""
+        }
+      ],
+      "captions": false
+    },
+    {
+      "key": "columns",
+      "label": "列数",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 7,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "key": "rows",
+      "label": "每列几张",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "baseLag",
+      "label": "中间列滞后",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.1,
+      "default": 0.5
+    },
+    {
+      "key": "lagStep",
+      "label": "每列递增滞后",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.4,
+      "step": 0.01,
+      "default": 0.13
+    },
+    {
+      "key": "stretch",
+      "label": "快滚拉伸",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "aspect",
+      "label": "图片比例",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "0.75",
+          "label": "竖版"
+        },
+        {
+          "value": "1",
+          "label": "方形"
+        },
+        {
+          "value": "1.33",
+          "label": "横版"
+        }
+      ],
+      "default": "0.75"
+    },
+    {
+      "key": "gap",
+      "label": "格间距",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 40,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 8,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "loose",
+      "name": "拖得更开",
+      "values": {
+        "baseLag": 0.8,
+        "lagStep": 0.3,
+        "columns": 7,
+        "aspect": "1"
+      }
+    },
+    {
+      "id": "tight",
+      "name": "只拉伸不错开",
+      "values": {
+        "baseLag": 0.1,
+        "lagStep": 0,
+        "stretch": 1.8,
+        "columns": 4,
+        "aspect": "1.33"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Codrops · ElasticGridScroll",
+    "url": "https://github.com/codrops/ElasticGridScroll",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

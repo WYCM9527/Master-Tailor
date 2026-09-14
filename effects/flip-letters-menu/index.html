@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D 翻字菜单</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #f7f5f0;        /* 页面底色 */
+    --mt-color: #111111;     /* 文字颜色 */
+    --mt-accent: #f32015;    /* 翻出来的新字颜色 */
+    --mt-fontSize: 80px;     /* 字号 */
+    --mt-imgWidth: 220px;    /* 浮图宽度 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-menu { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1em; font-size: var(--mt-fontSize); }
+  .mt-item { position: relative; display: block; text-decoration: none; color: inherit; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; cursor: pointer; padding: 0.05em 0; }
+  .mt-item .num { position: absolute; left: -1.6em; top: 0.35em; font-size: 0.2em; font-weight: 400; letter-spacing: 0.1em; opacity: 0.5; }
+  /* 每个词一个透视舞台，视点故意放在最左侧很远处，字翻转时有明显的近大远小 */
+  .mt-item .word { position: relative; display: inline-block; perspective: 1000px; perspective-origin: -150% 50%; white-space: nowrap; }
+  .mt-item .word .clone { position: absolute; left: 0; top: 0; color: var(--mt-accent); }
+  .mt-item .ch { display: inline-block; transform-origin: 50% 50%; will-change: transform, opacity; }
+  .mt-item .clone .ch { opacity: 0; transform: translateY(-100%) rotateX(90deg); }
+  .mt-item .ch { transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.5s; transition-delay: var(--d); }
+  /* 悬停：原字向下翻走，副本从上翻进来 */
+  .mt-item.on .word .orig .ch { opacity: 0; transform: translateY(100%) rotateX(-90deg); }
+  .mt-item.on .word .clone .ch { opacity: 1; transform: none; }
+  /* 浮图：跟着光标走 */
+  .mt-reveal { position: fixed; left: 0; top: 0; width: var(--mt-imgWidth); aspect-ratio: 3 / 4; pointer-events: none; opacity: 0; z-index: 5; overflow: hidden; }
+  .mt-reveal .inner { width: 100%; height: 100%; overflow: hidden; }
+  .mt-reveal .img { width: 100%; height: 100%; background: var(--img) center / cover; }
+  .mt-reveal .inner, .mt-reveal .img { transition: transform 0.4s cubic-bezier(0.2, 1, 0.3, 1); }
+  .mt-reveal .inner { transform: translateY(100%); } .mt-reveal .img { transform: translateY(-100%); }
+  .mt-reveal.show { opacity: 1; } .mt-reveal.show .inner, .mt-reveal.show .img { transform: none; }
+  @media (prefers-reduced-motion: reduce) { .mt-item .ch, .mt-reveal .inner, .mt-reveal .img { transition: none; } }
+</style>
+</head>
+<body>
+<nav class="mt-menu" id="mtMenu" aria-label="菜单"></nav>
+<div class="mt-reveal" id="mtReveal" aria-hidden="true"><div class="inner"><div class="img" id="mtRevealImg"></div></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"作品"},{"src":"/samples/sample-2.webp","caption":"关于"},{"src":"/samples/sample-3.webp","caption":"日志"},{"src":"/samples/sample-4.webp","caption":"联系"}], // 菜单词与对应浮图
+    stagger: 25,          // 相邻字的错开（毫秒）
+    showImage: true,      // 悬停时显示跟随光标的浮图
+    swing: true,          // 浮图随光标移动方向轻微摆动
+    numbered: true,       // 显示序号
+  };
+  const menu = document.getElementById('mtMenu'), reveal = document.getElementById('mtReveal'), revealImg = document.getElementById('mtRevealImg');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const split = (text, cls) => { const w = document.createElement('span'); w.className = cls; [...text].forEach((c, i) => { const s = document.createElement('span'); s.className = 'ch'; s.textContent = c; s.style.setProperty('--d', i * CONFIG.stagger + 'ms'); w.appendChild(s); }); return w; };
+  let userTook = false, active = null;
+  CONFIG.slides.forEach((s, i) => {
+    const a = document.createElement('a'); a.className = 'mt-item'; a.href = '#'; a.addEventListener('click', e => e.preventDefault());
+    if (CONFIG.numbered) { const n = document.createElement('span'); n.className = 'num'; n.textContent = String(i + 1).padStart(2, '0'); a.appendChild(n); }
+    const word = document.createElement('span'); word.className = 'word'; word.append(split(s.caption || '', 'orig'), split(s.caption || '', 'clone')); word.lastChild.setAttribute('aria-hidden', 'true'); a.appendChild(word);
+    a.addEventListener('pointerenter', () => { userTook = true; enter(a, s.src); });
+    a.addEventListener('pointerleave', () => leave(a));
+    menu.appendChild(a);
+  });
+  function enter(a, src) { active = a; a.classList.add('on'); if (CONFIG.showImage) { revealImg.style.setProperty('--img', `url("${src}")`); reveal.classList.add('show'); first = true; } }
+  function leave(a) { a.classList.remove('on'); if (active === a) { active = null; reveal.classList.remove('show'); } }
+  // 浮图跟随：位置用插值追光标，摆动角度来自横向速度
+  const mouse = { x: innerWidth / 2, y: innerHeight / 2 }, cur = { x: 0, y: 0, r: 0 }; let first = true, prevX = mouse.x;
+  addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  (function tick() {
+    requestAnimationFrame(tick); if (document.hidden) return;
+    const tx = mouse.x + 30, ty = mouse.y - reveal.offsetHeight / 2, vx = mouse.x - prevX; prevX = mouse.x;
+    if (first) { cur.x = tx; cur.y = ty; cur.r = 0; first = false; }
+    cur.x += (tx - cur.x) * 0.15; cur.y += (ty - cur.y) * 0.15; cur.r += ((CONFIG.swing ? Math.max(-25, Math.min(25, vx * 0.6)) : 0) - cur.r) * 0.1;
+    reveal.style.transform = `translate(${cur.x}px, ${cur.y}px) rotate(${cur.r}deg)`;
+  })();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流翻一个词（不显示浮图）
+  if (!reduceMotion) { let i = 0; const items = menu.querySelectorAll('.mt-item'); setInterval(() => { if (userTook || document.hidden) return; items.forEach(it => it.classList.remove('on')); items[i % items.length].classList.add('on'); i++; }, 1500); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弹性网格滚动</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-gap: 16px;          /* 格间距 */
+    --mt-radius: 8px;        /* 图片圆角 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); font-family: var(--mt-font); color: var(--mt-color); overflow-x: hidden; }
+
+  /* 真正滚动的是一根看不见的长条；网格固定在视口里，每一列各自按「带滞后的滚动值」位移 */
+  .mt-spacer { width: 1px; }
+  .mt-stage { position: fixed; inset: 0; overflow: hidden; }
+  .mt-grid { position: absolute; left: 4vw; right: 4vw; top: 6vh; display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: var(--mt-gap); }
+  .mt-col { display: flex; flex-direction: column; gap: var(--mt-gap); will-change: transform; }
+  .mt-col .item { position: relative; overflow: hidden; border-radius: var(--mt-radius); aspect-ratio: var(--ar); background: #16161d; transform: scale(var(--sx, 1), var(--sy, 1)); transform-origin: 50% 50%; }
+  .mt-col .item img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .mt-hint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); font-size: 12px; letter-spacing: 0.15em; opacity: 0.5; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="mt-spacer" id="mtSpacer"></div>
+<div class="mt-stage"><div class="mt-grid" id="mtGrid"></div></div>
+<div class="mt-hint">快速滚动试试</div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片（循环填满网格）
+    columns: 5,          // 列数
+    rows: 6,             // 每列几张
+    baseLag: 0.5,        // 中间列的滞后（0 无滞后，越大越拖）
+    lagStep: 0.13,       // 离中心每远一列多增加的滞后
+    stretch: 1,          // 快滚时图片的拉伸程度倍率（0 关闭）
+    aspect: "0.75",      // 图片宽高比：0.75 竖版 / 1 方形 / 1.33 横版
+  };
+  const grid = document.getElementById('mtGrid'), spacer = document.getElementById('mtSpacer');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  grid.style.setProperty('--cols', CONFIG.columns);
+  const mid = (CONFIG.columns - 1) / 2, cols = [];
+  for (let c = 0; c < CONFIG.columns; c++) {
+    const col = document.createElement('div'); col.className = 'mt-col';
+    for (let r = 0; r < CONFIG.rows; r++) {
+      const item = document.createElement('div'); item.className = 'item'; item.style.setProperty('--ar', CONFIG.aspect);
+      const img = document.createElement('img'); img.src = CONFIG.slides[(c * CONFIG.rows + r) % CONFIG.slides.length].src; img.alt = ''; item.appendChild(img); col.appendChild(item);
+    }
+    grid.appendChild(col);
+    // 滞后越大，这一列追上真实滚动位置越慢：lerp 系数由滞后换算
+    cols.push({ el: col, lag: CONFIG.baseLag + Math.abs(c - mid) * CONFIG.lagStep, y: 0 });
+  }
+  function layout() { spacer.style.height = (grid.offsetHeight + innerHeight * 0.5) + 'px'; }
+  layout(); addEventListener('resize', layout); addEventListener('load', layout);
+
+  let prevScroll = scrollY, vel = 0, sx = 1, sy = 1;
+  (function tick() {
+    requestAnimationFrame(tick); if (document.hidden) return;
+    const target = scrollY;
+    const v = scrollY - prevScroll; prevScroll = scrollY; vel += (v - vel) * 0.2;
+    // 速度 → 拉伸：慢滚不变，快滚横向收窄、纵向拉长（阈值以上才生效）
+    const speed = Math.min(1, Math.max(0, (Math.abs(vel) * 60 - 700) / 3300)) * CONFIG.stretch;
+    sx += ((1 - 0.3 * speed) - sx) * 0.15; sy += ((1 + 0.7 * speed) - sy) * 0.15;
+    grid.style.setProperty('--sx', sx.toFixed(3)); grid.style.setProperty('--sy', sy.toFixed(3));
+    cols.forEach(col => {
+      if (reduceMotion) { col.y = target; } else { const k = 1 / (1 + col.lag * 6); col.y += (target - col.y) * k; }
+      col.el.style.transform = `translateY(${(-col.y).toFixed(2)}px)`;
+    });
+  })();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人滚时自己来回快慢滚动，展示列间错开与回弹
+  let userTook = false; addEventListener('wheel', () => (userTook = true), { passive: true }); addEventListener('touchstart', () => (userTook = true), { passive: true });
+  if (!reduceMotion) { let t = 0; (function auto() { requestAnimationFrame(auto); if (userTook || document.hidden) return; t += 0.012; const max = document.documentElement.scrollHeight - innerHeight; const p = 0.5 - 0.5 * Math.cos(t); scrollTo(0, Math.pow(p, 1.6) * max); })(); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

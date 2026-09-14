@@ -1,0 +1,26 @@
+{
+  "slug": "menu-hover-swing-image",
+  "name": "菜单悬停甩图",
+  "category": "nav",
+  "sub": "hover",
+  "tags": ["菜单", "图片", "跟随", "摆动"],
+  "summary": "悬停菜单项时一张图跳出来跟着光标走：光标横移越快，图片甩得越斜、闪得越亮；停下来就慢慢摆正回暗",
+  "params": [
+    { "key": "slides", "label": "菜单项与图片", "type": "images", "target": "config", "min": 2, "max": 6, "captions": true, "default": [{"src": "/samples/sample-1.webp", "caption": "山谷晨雾"}, {"src": "/samples/sample-2.webp", "caption": "海边球车"}, {"src": "/samples/sample-3.webp", "caption": "黄昏海滩"}, {"src": "/samples/sample-4.webp", "caption": "林间逆光"}] },
+    { "key": "metas", "label": "右侧小字", "type": "text", "target": "config", "default": "2024｜2023｜2023｜2022", "maxLength": 60, "help": "用「｜」分隔，按顺序对应" },
+    { "key": "swing", "label": "最大摆角", "type": "range", "target": "config", "min": 0, "max": 90, "step": 5, "default": 60, "unit": "°" },
+    { "key": "flash", "label": "最大提亮", "type": "range", "target": "config", "min": 1, "max": 6, "step": 0.5, "default": 4 },
+    { "key": "follow", "label": "跟随紧密度", "type": "range", "target": "config", "min": 0.04, "max": 0.4, "step": 0.02, "default": 0.12 },
+    { "key": "accent", "label": "悬停文字色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 32, "max": 120, "step": 4, "default": 64, "unit": "px" },
+    { "key": "imgWidth", "label": "图片宽度", "type": "range", "target": "css", "min": 140, "max": 400, "step": 10, "default": 240, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "calm", "name": "轻摆不闪", "values": { "swing": 15, "flash": 1, "follow": 0.2, "accent": "#f472b6" } },
+    { "id": "wild", "name": "狂甩", "values": { "swing": 90, "flash": 6, "follow": 0.06, "imgWidth": 320 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · RapidImageHoverMenu", "url": "https://github.com/codrops/RapidImageHoverMenu", "license": "MIT（思路参考，代码自写）" }
+}

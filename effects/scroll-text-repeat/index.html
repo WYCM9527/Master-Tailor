@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动重复文字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 主字颜色 */
+    --mt-ghost: #7c9cff;     /* 重影颜色（描边模式下为描边色） */
+    --mt-fontSize: 18vw;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); font-family: var(--mt-font); color: var(--mt-color); overflow-x: hidden; }
+
+  .mt-page { padding: 40vh 4vw 50vh; display: flex; flex-direction: column; gap: 30vh; }
+  .mt-intro { font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5; margin: 0; }
+  /* 每个词：主字在流内，N 份重影绝对定位叠在同一位置；滚动进度把重影上下推开 */
+  .mt-word { position: relative; font-size: var(--mt-fontSize); font-weight: 900; line-height: 0.85; letter-spacing: -0.04em; text-transform: uppercase; white-space: nowrap; }
+  .mt-word .rep { display: block; position: absolute; left: 0; top: 0; color: var(--mt-ghost); will-change: transform; }
+  .mt-word .rep.main { position: relative; color: var(--mt-color); z-index: 2; }
+  .mt-page.outline .mt-word .rep:not(.main) { color: transparent; -webkit-text-stroke: 1px var(--mt-ghost); }
+  .mt-page.fade .mt-word .rep:not(.main) { opacity: var(--fade); }
+  @media (prefers-reduced-motion: reduce) { .mt-word .rep:not(.main) { display: none; } }
+</style>
+</head>
+<body>
+<main class="mt-page" id="mtPage"><p class="mt-intro">向下滚动</p></main>
+<script>
+  const CONFIG = {
+    words: "重复｜再重复｜直到成为节奏",   // 每行一个大词，用「｜」分隔
+    copies: 9,             // 每个词的份数（含主字）
+    spread: 12,            // 相邻重影的间距（占字高的百分比）
+    style: "solid",        // 重影样式：solid 实心 / outline 描边 / fade 渐淡
+    direction: "both",     // 展开方向：both 上下都展开 / up 只向上 / down 只向下
+  };
+  const page = document.getElementById('mtPage');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (CONFIG.style !== 'solid') page.classList.add(CONFIG.style);
+  const words = CONFIG.words.split('｜').map(s => s.trim()).filter(Boolean);
+  const blocks = words.map((w) => {
+    const el = document.createElement('h2'); el.className = 'mt-word'; el.setAttribute('aria-label', w);
+    const half = Math.floor(CONFIG.copies / 2), reps = [];
+    // 与源思路一致：第 k 份的目标位移 ty 与「延迟」按离主字的远近递增——远的重影晚一点才开始动
+    for (let i = 0; i < CONFIG.copies; i++) {
+      const s = document.createElement('span'); s.className = 'rep'; s.textContent = w; s.setAttribute('aria-hidden', 'true');
+      let ty, delay;
+      if (i === CONFIG.copies - 1) { ty = 0; delay = 0; s.classList.add('main'); }
+      else if (i < half) { ty = half * CONFIG.spread - CONFIG.spread * i; delay = 0.1 * (half - i) - 0.1; }
+      else { ty = -(half * CONFIG.spread - (i - half) * CONFIG.spread); delay = 0.1 * (half - (i - half)) - 0.1; }
+      if (CONFIG.direction === 'up') ty = -Math.abs(ty); else if (CONFIG.direction === 'down') ty = Math.abs(ty);
+      s.style.setProperty('--fade', (1 - Math.abs(ty) / (half * CONFIG.spread + CONFIG.spread) * 0.85).toFixed(2));
+      el.appendChild(s); reps.push({ s, ty, delay });
+    }
+    page.appendChild(el); return { el, reps };
+  });
+  // 进度：元素从视口底部出现（0）到完全滚出顶部（1）；每份重影在 [delay, 1] 区间内把位移从 0 推到 ty
+  function update() {
+    const vh = innerHeight;
+    blocks.forEach(({ el, reps }) => {
+      const r = el.getBoundingClientRect();
+      const p = Math.max(0, Math.min(1, (vh - r.top) / (vh + r.height)));
+      reps.forEach(({ s, ty, delay }) => {
+        if (!ty) return;
+        const k = Math.max(0, Math.min(1, (p - delay) / (1 - delay))), e = 1 - (1 - k) * (1 - k);   // power1 出
+        s.style.transform = `translateY(${(ty * e).toFixed(2)}%)`;
+      });
+    });
+  }
+  if (!reduceMotion) { addEventListener('scroll', update, { passive: true }); addEventListener('resize', update); update(); }
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人滚时自动来回慢滚
+  let userTook = false; addEventListener('wheel', () => (userTook = true), { passive: true }); addEventListener('touchstart', () => (userTook = true), { passive: true });
+  if (!reduceMotion) { let t = 0; (function auto() { requestAnimationFrame(auto); if (userTook || document.hidden) return; t += 0.004; const max = document.documentElement.scrollHeight - innerHeight; scrollTo(0, (0.5 - 0.5 * Math.cos(t)) * max); })(); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

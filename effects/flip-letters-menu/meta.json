@@ -1,0 +1,27 @@
+{
+  "slug": "flip-letters-menu",
+  "name": "3D 翻字菜单",
+  "category": "nav",
+  "sub": "hover",
+  "tags": ["菜单", "3D", "逐字翻转", "浮图"],
+  "summary": "悬停菜单词，每个字像立体牌子一样依次向下翻走、换色的新字从上方翻进来，视点偏在一侧所以近大远小明显；浮图跟着光标摆动",
+  "params": [
+    { "key": "slides", "label": "菜单词与浮图", "type": "images", "target": "config", "min": 2, "max": 6, "captions": true, "default": [{"src": "/samples/sample-1.webp", "caption": "作品"}, {"src": "/samples/sample-2.webp", "caption": "关于"}, {"src": "/samples/sample-3.webp", "caption": "日志"}, {"src": "/samples/sample-4.webp", "caption": "联系"}] },
+    { "key": "stagger", "label": "逐字错开", "type": "range", "target": "config", "min": 0, "max": 120, "step": 5, "default": 25, "displayUnit": " 毫秒" },
+    { "key": "showImage", "label": "显示浮图", "type": "toggle", "target": "config", "default": true },
+    { "key": "swing", "label": "浮图随速度摆动", "type": "toggle", "target": "config", "default": true },
+    { "key": "numbered", "label": "显示序号", "type": "toggle", "target": "config", "default": true },
+    { "key": "accent", "label": "新字颜色", "type": "color", "target": "css", "default": "#f32015" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#111111" },
+    { "key": "bg", "label": "页面底色", "type": "color", "target": "css", "default": "#f7f5f0" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 40, "max": 140, "step": 4, "default": 80, "unit": "px" },
+    { "key": "imgWidth", "label": "浮图宽度", "type": "range", "target": "css", "min": 120, "max": 360, "step": 10, "default": 220, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dark", "name": "深色", "values": { "bg": "#0a0a0f", "color": "#f2f3f8", "accent": "#7cff9c" } },
+    { "id": "slow", "name": "慢翻大字", "values": { "stagger": 80, "fontSize": 120, "numbered": false, "accent": "#3b82f6" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · 3DLettersMenuHover", "url": "https://github.com/codrops/3DLettersMenuHover", "license": "MIT（思路参考，代码自写）" }
+}

@@ -1,0 +1,26 @@
+{
+  "slug": "scroll-text-repeat",
+  "name": "滚动重复文字",
+  "category": "text",
+  "sub": "scroll",
+  "tags": ["滚动", "重影", "大字", "排版"],
+  "summary": "几行超大标题，随着滚动从每个词上下「抽」出一层层同样的重影，越滚越散开，像被慢门拍下的残影；实心、描边、渐淡三种重影",
+  "params": [
+    { "key": "words", "label": "大词", "type": "text", "target": "config", "default": "重复｜再重复｜直到成为节奏", "maxLength": 60, "help": "每行一个，用「｜」分隔" },
+    { "key": "copies", "label": "份数", "type": "range", "target": "config", "min": 3, "max": 15, "step": 2, "default": 9 },
+    { "key": "spread", "label": "重影间距", "type": "range", "target": "config", "min": 4, "max": 30, "step": 2, "default": 12, "unit": "%", "help": "占字高的比例" },
+    { "key": "style", "label": "重影样式", "type": "select", "target": "config", "options": [{ "value": "solid", "label": "实心" }, { "value": "outline", "label": "描边" }, { "value": "fade", "label": "渐淡" }], "default": "solid" },
+    { "key": "direction", "label": "展开方向", "type": "select", "target": "config", "options": [{ "value": "both", "label": "上下都展开" }, { "value": "up", "label": "只向上" }, { "value": "down", "label": "只向下" }], "default": "both" },
+    { "key": "color", "label": "主字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "ghost", "label": "重影颜色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 8, "max": 26, "step": 1, "default": 18, "unit": "vw" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "实心蓝影", "values": {} },
+    { "id": "outline", "name": "描边", "values": { "style": "outline", "ghost": "#f2f3f8", "copies": 11, "spread": 10 } },
+    { "id": "fade-up", "name": "向上渐淡", "values": { "style": "fade", "direction": "up", "ghost": "#f472b6", "copies": 7, "spread": 16 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · TextRepetitionEffect", "url": "https://github.com/codrops/TextRepetitionEffect", "license": "MIT（思路参考，代码自写）" }
+}

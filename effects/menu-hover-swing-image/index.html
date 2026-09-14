@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>菜单悬停甩图</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 悬停文字颜色 */
+    --mt-fontSize: 64px;     /* 字号 */
+    --mt-imgWidth: 240px;    /* 图片宽度 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-menu { display: flex; flex-direction: column; width: min(900px, 92vw); }
+  .mt-item { position: relative; display: flex; align-items: baseline; gap: 0.6em; padding: 0.35em 0; border-bottom: 1px solid color-mix(in srgb, var(--mt-color) 15%, transparent); text-decoration: none; color: inherit; cursor: pointer; }
+  .mt-item:first-child { border-top: 1px solid color-mix(in srgb, var(--mt-color) 15%, transparent); }
+  .mt-item .label { font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.03em; line-height: 1; transition: color 0.25s, transform 0.4s cubic-bezier(0.2, 1, 0.3, 1); }
+  .mt-item .meta { font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; margin-left: auto; }
+  .mt-item:hover .label, .mt-item.demo .label { color: var(--mt-accent); transform: translateX(0.2em); }
+  /* 图片：固定定位、跟随光标；两层反向滑入，方向取光标的移动方向 */
+  .mt-reveal { position: fixed; left: 0; top: 0; width: var(--mt-imgWidth); aspect-ratio: 4 / 5; pointer-events: none; z-index: 5; opacity: 0; will-change: transform, filter; }
+  .mt-reveal .inner { width: 100%; height: 100%; overflow: hidden; transition: transform 0.2s ease-out; transform: translateX(var(--from, 100%)); }
+  .mt-reveal .img { width: 100%; height: 100%; background: var(--img) center / cover; transition: transform 0.2s ease-out; transform: translateX(calc(var(--from, 100%) * -1)); }
+  .mt-reveal.show { opacity: 1; } .mt-reveal.show .inner, .mt-reveal.show .img { transform: none; }
+  @media (prefers-reduced-motion: reduce) { .mt-reveal .inner, .mt-reveal .img, .mt-item .label { transition: none; } }
+</style>
+</head>
+<body>
+<nav class="mt-menu" id="mtMenu" aria-label="菜单"></nav>
+<div class="mt-reveal" id="mtReveal" aria-hidden="true"><div class="inner"><div class="img" id="mtImg"></div></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"山谷晨雾"},{"src":"/samples/sample-2.webp","caption":"海边球车"},{"src":"/samples/sample-3.webp","caption":"黄昏海滩"},{"src":"/samples/sample-4.webp","caption":"林间逆光"}], // 菜单项与对应图片
+    swing: 60,            // 快速移动时图片的最大摆角（度）
+    flash: 4,             // 快速移动时图片的最大提亮倍数
+    follow: 0.12,         // 跟随的紧密度（越大越贴）
+    metas: "2024｜2023｜2023｜2022",   // 每项右侧的小字
+  };
+  const menu = document.getElementById('mtMenu'), reveal = document.getElementById('mtReveal'), img = document.getElementById('mtImg');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const metas = CONFIG.metas.split('｜');
+  let userTook = false, active = null, first = true;
+  const mouse = { x: innerWidth / 2, y: innerHeight / 2 }, cache = { x: mouse.x, y: mouse.y }, cur = { x: 0, y: 0, r: 0, b: 1 };
+  addEventListener('pointermove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  CONFIG.slides.forEach((s, i) => {
+    const a = document.createElement('a'); a.className = 'mt-item'; a.href = '#'; a.addEventListener('click', e => e.preventDefault());
+    a.innerHTML = `<span class="label"></span><span class="meta"></span>`; a.querySelector('.label').textContent = s.caption || `项目 ${i + 1}`; a.querySelector('.meta').textContent = metas[i % metas.length] || '';
+    a.addEventListener('pointerenter', () => { userTook = true; active = a; first = true; img.style.setProperty('--img', `url("${s.src}")`); reveal.style.setProperty('--from', (mouse.x - cache.x) < 0 ? '-100%' : '100%'); reveal.classList.add('show'); });
+    a.addEventListener('pointerleave', () => { if (active === a) { active = null; reveal.classList.remove('show'); } });
+    menu.appendChild(a);
+  });
+  // 每帧：位置插值追光标；横向速度越大，图片摆角越大、越亮
+  (function tick() {
+    requestAnimationFrame(tick); if (document.hidden) return;
+    const dx = mouse.x - cache.x, dist = Math.min(100, Math.abs(dx)); cache.x = mouse.x; cache.y = mouse.y;
+    const tx = mouse.x - reveal.offsetWidth / 2, ty = mouse.y - reveal.offsetHeight / 2;
+    const tr = reduceMotion ? 0 : (dist / 100) * (dx < 0 ? CONFIG.swing : -CONFIG.swing), tb = reduceMotion ? 1 : 1 + (dist / 100) * (CONFIG.flash - 1);
+    if (first) { cur.x = tx; cur.y = ty; cur.r = 0; cur.b = 1; first = false; }
+    cur.x += (tx - cur.x) * CONFIG.follow; cur.y += (ty - cur.y) * CONFIG.follow; cur.r += (tr - cur.r) * 0.1; cur.b += (tb - cur.b) * 0.1;
+    reveal.style.transform = `translate(${cur.x.toFixed(1)}px, ${cur.y.toFixed(1)}px) rotate(${cur.r.toFixed(2)}deg)`; reveal.style.filter = `brightness(${cur.b.toFixed(2)})`;
+  })();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时模拟光标在菜单上左右扫过
+  if (!reduceMotion) { let t = 0; const items = menu.querySelectorAll('.mt-item'); (function auto() { requestAnimationFrame(auto); if (userTook || document.hidden || !items.length) return; t += 0.02; const i = Math.floor((t / (Math.PI * 2)) % items.length); items.forEach(it => it.classList.remove('demo')); items[i].classList.add('demo'); const r = items[i].getBoundingClientRect(); mouse.x = r.left + r.width * (0.5 + 0.4 * Math.sin(t * 1.7)); mouse.y = r.top + r.height / 2; if (active !== items[i]) { active = items[i]; first = true; img.style.setProperty('--img', `url("${CONFIG.slides[i].src}")`); reveal.classList.add('show'); } })(); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
