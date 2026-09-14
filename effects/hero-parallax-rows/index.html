@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动视差行</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-radius: 14px;       /* 卡片圆角 */
+    --mt-gap: 20px;          /* 卡片间距 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
+  .mt-page { height: 100vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .mt-page::-webkit-scrollbar { display: none; }
+  .mt-track { height: 300vh; }
+  /* 定住的舞台：三行卡片在 3D 里从「翘起、倾斜、淡」滚到「放平、对正、实」，同时各行横向反向滑动 */
+  .mt-stage { position: sticky; top: 0; height: 100vh; overflow: hidden; perspective: 1000px; display: flex; flex-direction: column; justify-content: center; }
+  .mt-head { position: absolute; top: 10vh; left: 0; right: 0; text-align: center; padding: 0 24px; z-index: 2; pointer-events: none; }
+  .mt-head h1 { margin: 0 0 8px; font-size: clamp(28px, 4.6vw, 54px); letter-spacing: -0.03em; }
+  .mt-head p { margin: 0; opacity: 0.6; font-size: 16px; }
+  .mt-rows { transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateZ(var(--rz, 0deg)) translateY(var(--ty, 0px)); opacity: var(--op, 1); display: flex; flex-direction: column; gap: var(--mt-gap); will-change: transform; }
+  .mt-row { display: flex; gap: var(--mt-gap); justify-content: center; transform: translateX(var(--tx, 0px)); will-change: transform; }
+  .mt-row.rev { --tx: calc(var(--x, 0px) * -1); } .mt-row:not(.rev) { --tx: var(--x, 0px); }
+
+  /* ===== 滚动驱动层：支持 animation-timeline 的浏览器直接把滚动进度绑到关键帧上，不经过 JS =====
+     渐进增强：不支持的浏览器（含 Firefox 稳定版）走下面 JS 的 scroll 监听做同样的事，画面一致。 */
+  @supports (animation-timeline: scroll()) {
+    .mt-rows { animation: mt-flat linear both; animation-timeline: scroll(nearest); }
+    .mt-row { animation: mt-slide ease-in-out both; animation-timeline: scroll(nearest); }
+    .mt-row.rev { animation-name: mt-slide-rev; }
+    @keyframes mt-flat {
+      from { transform: rotateX(var(--tiltX)) rotateZ(var(--tiltZ)) translateY(-45vh); opacity: 0.25; }
+      33%  { transform: rotateX(0deg) rotateZ(0deg) translateY(-28vh); opacity: 1; }
+      to   { transform: rotateX(0deg) rotateZ(0deg) translateY(5vh); opacity: 1; }
+    }
+    @keyframes mt-slide { from { transform: translateX(calc(var(--slide) * -0.5)); } to { transform: translateX(calc(var(--slide) * 0.5)); } }
+    @keyframes mt-slide-rev { from { transform: translateX(calc(var(--slide) * 0.5)); } to { transform: translateX(calc(var(--slide) * -0.5)); } }
+  }
+  @media (prefers-reduced-motion: reduce) { .mt-rows, .mt-row { animation: none !important; } }
+  .mt-card { flex: none; width: clamp(160px, 22vw, 300px); aspect-ratio: 4 / 3; border-radius: var(--mt-radius); overflow: hidden; background: #16161d; position: relative; }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mt-card span { position: absolute; left: 12px; bottom: 10px; font-size: 13px; font-weight: 600; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); }
+</style>
+</head>
+<body>
+<div class="mt-page" id="mtPage">
+  <div class="mt-track">
+    <div class="mt-stage">
+      <div class="mt-head"><h1 id="mtTitle"></h1><p id="mtSub"></p></div>
+      <div class="mt-rows" id="mtRows"></div>
+    </div>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"作品一"},{"src":"/samples/sample-2.webp","caption":"作品二"},{"src":"/samples/sample-3.webp","caption":"作品三"},{"src":"/samples/sample-4.webp","caption":"作品四"},{"src":"/samples/sample-5.webp","caption":"作品五"},{"src":"/samples/sample-6.webp","caption":"作品六"},{"src":"/samples/sample-7.webp","caption":"作品七"},{"src":"/samples/sample-8.webp","caption":"作品八"}], // 卡片图片与标题
+    title: "往下滚，作品墙立起来",     // 标题
+    sub: "三行卡片反向滑动，从翘起到放平", // 副标题
+    rows: 3,             // 行数
+    tiltX: 15,           // 初始俯仰角（度）
+    tiltZ: 20,           // 初始平面旋转角（度）
+    slide: 600,          // 每行横向滑动的总距离（px）
+  };
+
+  const page = document.getElementById('mtPage'), rows = document.getElementById('mtRows');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title; document.getElementById('mtSub').textContent = CONFIG.sub;
+  const perRow = 5;
+  for (let r = 0; r < CONFIG.rows; r++) {
+    const row = document.createElement('div'); row.className = 'mt-row' + (r % 2 ? ' rev' : '');
+    for (let i = 0; i < perRow; i++) {
+      const s = CONFIG.slides[(i + r * 2) % CONFIG.slides.length];
+      const c = document.createElement('div'); c.className = 'mt-card'; c.innerHTML = '<img alt=""><span></span>'; c.querySelector('img').src = s.src; c.querySelector('span').textContent = s.caption || ''; row.appendChild(c);
+    }
+    rows.appendChild(row);
+  }
+  // 关键帧里用到的三个量交给 CSS 变量
+  rows.style.setProperty('--tiltX', CONFIG.tiltX + 'deg'); rows.style.setProperty('--tiltZ', CONFIG.tiltZ + 'deg'); rows.style.setProperty('--slide', CONFIG.slide + 'px');
+  const scrollDriven = CSS.supports('animation-timeline: scroll()') && !reduceMotion;
+  // 降级：不支持滚动驱动动画时，用 scroll 监听算同样的进度 → 整体俯仰与旋转归零、透明度升满、纵向落下；各行横向位移
+  const lerp = (a, b, t) => a + (b - a) * t;
+  function update() {
+    if (scrollDriven) return;
+    const max = page.scrollHeight - page.clientHeight, k = max > 0 ? Math.min(1, page.scrollTop / max) : 0;
+    const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;   // ease-in-out
+    rows.style.setProperty('--rx', lerp(CONFIG.tiltX, 0, Math.min(1, k * 3)) + 'deg');
+    rows.style.setProperty('--rz', lerp(CONFIG.tiltZ, 0, Math.min(1, k * 3)) + 'deg');
+    rows.style.setProperty('--op', lerp(0.25, 1, Math.min(1, k * 3)));
+    rows.style.setProperty('--ty', lerp(-page.clientHeight * 0.45, page.clientHeight * 0.05, e) + 'px');
+    rows.style.setProperty('--x', lerp(-CONFIG.slide / 2, CONFIG.slide / 2, e) + 'px');
+  }
+  update(); page.addEventListener('scroll', update, { passive: true }); addEventListener('resize', update);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动往返滚动，用户一滚就停
+  if (!reduceMotion) {
+    let userTook = false, dir = 1;
+    for (const ev of ['wheel', 'pointerdown', 'keydown', 'touchstart']) page.addEventListener(ev, () => (userTook = true), { passive: true, once: true });
+    (function auto() {
+      if (userTook) return;
+      if (!document.hidden) { const max = page.scrollHeight - page.clientHeight; page.scrollTop += dir * 4; if (page.scrollTop >= max - 1) dir = -1; if (page.scrollTop <= 1) dir = 1; }
+      requestAnimationFrame(auto);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

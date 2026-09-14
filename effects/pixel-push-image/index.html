@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素扭曲图</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+  canvas { display: block; max-width: 92vw; max-height: 88vh; border-radius: 12px; cursor: crosshair; touch-action: none; }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" role="img" aria-label="被鼠标推开像素的图片"></canvas>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-6.webp",  // 图片
+    cell: 8,             // 像素块大小（px）
+    radius: 120,         // 鼠标影响半径（px）
+    strength: 40,        // 推开的最大距离（px）
+    spring: 0.12,        // 回弹速度（越大回得越快）
+    shape: "square",     // 像素形状：square 方块 / circle 圆点
+    gap: 1,              // 像素块之间的缝（px）
+  };
+
+  const canvas = document.getElementById('mtCanvas'), ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const W = 720, H = 480;
+  canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // 把图片缩到「一格一像素」的小画布上取色，每格得到一个颜色；再放大成方块画出来
+  const img = new Image(); img.src = CONFIG.photo;
+  const cols = Math.ceil(W / CONFIG.cell), rows = Math.ceil(H / CONFIG.cell);
+  let colors = null, pts = null;
+  img.onload = () => {
+    const small = document.createElement('canvas'); small.width = cols; small.height = rows;
+    const sc = small.getContext('2d');
+    // cover 裁切：按短边铺满
+    const s = Math.max(cols / img.width, rows / img.height), dw = img.width * s, dh = img.height * s;
+    sc.drawImage(img, (cols - dw) / 2, (rows - dh) / 2, dw, dh);
+    const data = sc.getImageData(0, 0, cols, rows).data;
+    colors = new Array(cols * rows); pts = new Array(cols * rows);
+    for (let i = 0; i < cols * rows; i++) {
+      colors[i] = `rgb(${data[i * 4]},${data[i * 4 + 1]},${data[i * 4 + 2]})`;
+      const x = (i % cols) * CONFIG.cell, y = Math.floor(i / cols) * CONFIG.cell;
+      pts[i] = { x, y, ox: 0, oy: 0, vx: 0, vy: 0 };   // ox/oy：当前偏移；v：速度
+    }
+  };
+
+  const mouse = { x: -1e4, y: -1e4 };
+  canvas.addEventListener('pointermove', (e) => { const r = canvas.getBoundingClientRect(); mouse.x = (e.clientX - r.left) * (W / r.width); mouse.y = (e.clientY - r.top) * (H / r.height); });
+  canvas.addEventListener('pointerleave', () => { mouse.x = mouse.y = -1e4; });
+  let userTook = false; canvas.addEventListener('pointerenter', () => (userTook = true));
+
+  function frame() {
+    requestAnimationFrame(frame);
+    if (document.hidden || !pts) return;
+    ctx.clearRect(0, 0, W, H);
+    const R = CONFIG.radius, size = CONFIG.cell - CONFIG.gap, half = CONFIG.cell / 2;
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      if (!reduceMotion) {
+        // 鼠标附近：沿远离鼠标的方向被推开，越近推得越远；离开影响范围后弹簧把它拉回原位
+        const cx = p.x + half + p.ox, cy = p.y + half + p.oy, dx = cx - mouse.x, dy = cy - mouse.y, d = Math.hypot(dx, dy);
+        let tx = 0, ty = 0;
+        if (d < R && d > 0.01) { const f = (1 - d / R) * CONFIG.strength; tx = dx / d * f; ty = dy / d * f; }
+        p.vx += (tx - p.ox) * CONFIG.spring; p.vy += (ty - p.oy) * CONFIG.spring; p.vx *= 0.75; p.vy *= 0.75;
+        p.ox += p.vx; p.oy += p.vy;
+      }
+      ctx.fillStyle = colors[i];
+      if (CONFIG.shape === 'circle') { ctx.beginPath(); ctx.arc(p.x + half + p.ox, p.y + half + p.oy, size / 2, 0, Math.PI * 2); ctx.fill(); }
+      else ctx.fillRect(p.x + p.ox + CONFIG.gap / 2, p.y + p.oy + CONFIG.gap / 2, size, size);
+    }
+  }
+  frame();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时一个看不见的手指在图上画圈
+  if (!reduceMotion) {
+    let t = 0, last = performance.now();
+    (function auto(now) {
+      if (userTook) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!document.hidden) { t += dt; mouse.x = W / 2 + Math.cos(t * 1.1) * W * 0.3; mouse.y = H / 2 + Math.sin(t * 1.7) * H * 0.3; }
+      requestAnimationFrame(auto);
+    })(performance.now());
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

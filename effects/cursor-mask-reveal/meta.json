@@ -1,0 +1,25 @@
+{
+  "slug": "cursor-mask-reveal",
+  "name": "光标遮罩揭示",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["遮罩", "揭示", "反色", "光标"],
+  "summary": "页面下面藏着一层反色的另一句话，光标处开一个圆洞把它露出来，圆洞平滑地跟着鼠标走，像用探照灯照出隐藏文字",
+  "params": [
+    { "key": "over", "label": "上层文字", "type": "text", "target": "config", "default": "表面上，这只是一段普通的文字。", "maxLength": 60 },
+    { "key": "under", "label": "下层文字", "type": "text", "target": "config", "default": "底下藏着【另一句话】，只在光标经过时露出来。", "maxLength": 60, "help": "用【】包住要强调的词" },
+    { "key": "size", "label": "圆洞直径", "type": "range", "target": "css", "min": 80, "max": 500, "step": 10, "default": 220, "unit": "px" },
+    { "key": "ease", "label": "跟随平滑度", "type": "range", "target": "config", "min": 0.05, "max": 1, "step": 0.05, "default": 0.18, "help": "越小拖得越明显" },
+    { "key": "hideWhenLeave", "label": "离开时收起", "type": "toggle", "target": "config", "default": true },
+    { "key": "underBg", "label": "下层底色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 24, "max": 72, "step": 2, "default": 44, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "big", "name": "大洞慢跟", "values": { "size": 400, "ease": 0.08 } },
+    { "id": "neon", "name": "霓虹底", "values": { "underBg": "#7c3aed", "size": 160 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 SVG Mask Effect 一类遮罩揭示", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

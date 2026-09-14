@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡片文字揭示</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-card: #16161d;      /* 卡片底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #a855f7;    /* 揭示分界线颜色 */
+    --mt-radius: 18px;       /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-card { width: min(560px, 90vw); padding: 28px 32px 30px; border-radius: var(--mt-radius); background: var(--mt-card); border: 1px solid rgba(255, 255, 255, 0.08); }
+  .mt-card h2 { margin: 0 0 6px; font-size: 22px; }
+  .mt-card p { margin: 0 0 22px; font-size: 14px; opacity: 0.6; line-height: 1.6; }
+  /* 揭示区：两层文字叠着——上层是「问题」（半透明星点底纹），下层是「答案」；鼠标横向划过，左侧露出答案 */
+  .mt-reveal { position: relative; height: 96px; cursor: col-resize; user-select: none; overflow: hidden; border-radius: 10px; }
+  .mt-reveal .face { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 20px; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
+  .mt-reveal .top { color: rgba(255, 255, 255, 0.35); background: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1.5px) 0 0 / 14px 14px; clip-path: inset(0 0 0 var(--x, 0%)); }
+  .mt-reveal .under { color: var(--mt-color); background: color-mix(in srgb, var(--mt-accent) 12%, transparent); clip-path: inset(0 calc(100% - var(--x, 0%)) 0 0); }
+  .mt-reveal .under mark { background: none; color: var(--mt-accent); }
+  /* 分界线：一条竖光条跟着光标 */
+  .mt-reveal .edge { position: absolute; top: 0; bottom: 0; left: var(--x, 0%); width: 2px; background: var(--mt-accent); box-shadow: 0 0 14px var(--mt-accent); transform: translateX(-1px); opacity: var(--edge, 0); transition: opacity 0.25s; }
+  .mt-reveal .top, .mt-reveal .under { transition: clip-path 0.08s linear; }
+  @media (prefers-reduced-motion: reduce) { .mt-reveal .top, .mt-reveal .under { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-card">
+  <h2 id="mtTitle"></h2><p id="mtDesc"></p>
+  <div class="mt-reveal" id="mtReveal" role="img" aria-label="拖动查看隐藏文字">
+    <div class="face under" id="mtUnder"></div>
+    <div class="face top" id="mtTop"></div>
+    <div class="edge"></div>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    title: "把鼠标划过去",                    // 卡片标题
+    desc: "上面是问题，答案就藏在它底下，光标扫到哪里露到哪里。", // 卡片说明
+    top: "你知道我们最常被问什么吗？",         // 表层文字（问题）
+    under: "「这个效果的 prompt 【怎么写】？」", // 底层文字（答案），【】里的字用强调色
+    restAt: 0,          // 鼠标离开后停在的位置（0–100，百分比）
+  };
+
+  const reveal = document.getElementById('mtReveal');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title; document.getElementById('mtDesc').textContent = CONFIG.desc;
+  document.getElementById('mtTop').textContent = CONFIG.top;
+  const under = document.getElementById('mtUnder');
+  CONFIG.under.split(/(【[^】]*】)/).forEach(p => { if (p.startsWith('【')) { const m = document.createElement('mark'); m.textContent = p.slice(1, -1); under.appendChild(m); } else if (p) under.append(p); });
+  let userTook = false;
+  const setX = (pct, edge) => { reveal.style.setProperty('--x', pct + '%'); reveal.style.setProperty('--edge', edge ? 1 : 0); };
+  reveal.addEventListener('pointermove', (e) => { userTook = true; const r = reveal.getBoundingClientRect(); setX(Math.max(0, Math.min(100, (e.clientX - r.left) / r.width * 100)), true); });
+  reveal.addEventListener('pointerleave', () => setX(CONFIG.restAt, false));
+  setX(CONFIG.restAt, false);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时分界线自己来回扫
+  if (!reduceMotion) {
+    let t = 0, last = performance.now();
+    (function auto(now) {
+      if (userTook) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!document.hidden) { t += dt; setX(50 + Math.sin(t * 0.9) * 50, true); }
+      requestAnimationFrame(auto);
+    })(performance.now());
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

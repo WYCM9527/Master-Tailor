@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乱码悬停卡</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-card: #111118;      /* 卡片底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-glowA: #22d3ee;     /* 光斑渐变色 A */
+    --mt-glowB: #a855f7;     /* 光斑渐变色 B */
+    --mt-radius: 220px;      /* 光斑半径 */
+    --mt-font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; /* 乱码字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+
+  .mt-card {
+    position: relative; width: min(420px, 90vw); aspect-ratio: 1; border-radius: 22px; overflow: hidden; background: var(--mt-card); border: 1px solid rgba(255, 255, 255, 0.1);
+    display: grid; place-items: center; cursor: crosshair; touch-action: none;
+  }
+  /* 乱码层：整张卡铺满随机字符，默认几乎看不见；光标附近用渐变光斑「照亮」它们 */
+  .mt-cipher {
+    position: absolute; inset: 0; padding: 12px; margin: 0; font-family: var(--mt-font); font-size: 11px; line-height: 1.35; letter-spacing: 0.06em;
+    color: var(--mt-color); word-break: break-all; white-space: pre-wrap; overflow: hidden; opacity: 0.06; user-select: none;
+  }
+  .mt-cipher.hi {
+    opacity: 1; color: transparent; -webkit-background-clip: text; background-clip: text;
+    background: linear-gradient(135deg, var(--mt-glowA), var(--mt-glowB));
+    -webkit-mask: radial-gradient(circle var(--mt-radius) at var(--x, 50%) var(--y, 50%), #000 0%, transparent 100%);
+    mask: radial-gradient(circle var(--mt-radius) at var(--x, 50%) var(--y, 50%), #000 0%, transparent 100%);
+    transition: opacity 0.4s;
+  }
+  .mt-card:not(.on) .mt-cipher.hi { opacity: 0; }
+  /* 光斑本体：一团渐变模糊光垫在乱码之下 */
+  .mt-glow { position: absolute; left: var(--x, 50%); top: var(--y, 50%); width: calc(var(--mt-radius) * 1.4); height: calc(var(--mt-radius) * 1.4); border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, color-mix(in srgb, var(--mt-glowA) 16%, transparent), transparent 65%); filter: blur(24px); opacity: 0; transition: opacity 0.4s; pointer-events: none; }
+  .mt-card.on .mt-glow { opacity: 1; }
+  /* 中央徽标：圆形玻璃块 + 文字 */
+  .mt-badge { position: relative; width: 132px; height: 132px; border-radius: 50%; display: grid; place-items: center; background: rgba(10, 10, 15, 0.75); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(6px); color: var(--mt-color); font-family: -apple-system, "PingFang SC", sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 0.04em; }
+  .mt-badge::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 1px dashed rgba(255, 255, 255, 0.18); }
+  .mt-caption { position: absolute; left: 20px; right: 20px; bottom: 18px; font-family: -apple-system, "PingFang SC", sans-serif; font-size: 13px; color: var(--mt-color); opacity: 0.55; }
+  @media (prefers-reduced-motion: reduce) { .mt-cipher.hi, .mt-glow { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-card" id="mtCard">
+  <pre class="mt-cipher" id="mtBase" aria-hidden="true"></pre>
+  <div class="mt-glow" aria-hidden="true"></div>
+  <pre class="mt-cipher hi" id="mtHi" aria-hidden="true"></pre>
+  <div class="mt-badge" id="mtBadge"></div>
+  <p class="mt-caption" id="mtCaption"></p>
+</div>
+<script>
+  const CONFIG = {
+    badge: "SECURE",           // 中央徽标文字
+    caption: "把鼠标移上来：光斑照亮底下的加密字符，字符还在不停变化。", // 底部说明
+    charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?", // 乱码字符表
+    scrambleRate: 30,          // 悬停时每秒换几次乱码
+  };
+
+  const card = document.getElementById('mtCard'), base = document.getElementById('mtBase'), hi = document.getElementById('mtHi');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtBadge').textContent = CONFIG.badge; document.getElementById('mtCaption').textContent = CONFIG.caption;
+  // 生成足够铺满卡片的随机字符串
+  const N = 1800;
+  const rand = () => { let s = ''; for (let i = 0; i < N; i++) s += CONFIG.charset[Math.floor(Math.random() * CONFIG.charset.length)]; return s; };
+  const fill = () => { const s = rand(); base.textContent = s; hi.textContent = s; };
+  fill();
+  let userTook = false, hovering = false, acc = 0, last = performance.now();
+  const moveTo = (x, y) => { card.style.setProperty('--x', x + 'px'); card.style.setProperty('--y', y + 'px'); };
+  card.addEventListener('pointerenter', () => { userTook = true; hovering = true; card.classList.add('on'); });
+  card.addEventListener('pointermove', (e) => { const r = card.getBoundingClientRect(); moveTo(e.clientX - r.left, e.clientY - r.top); });
+  card.addEventListener('pointerleave', () => { hovering = false; card.classList.remove('on'); });
+  // 悬停期间乱码持续刷新，像数据在流
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (document.hidden || reduceMotion || !card.classList.contains('on')) return;
+    acc += dt; if (acc > 1 / CONFIG.scrambleRate) { acc = 0; fill(); }
+  }
+  requestAnimationFrame(frame);
+  moveTo(card.clientWidth / 2, card.clientHeight / 2);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时光斑自己在卡上游走
+  if (!reduceMotion) {
+    let t = 0, lt = performance.now();
+    (function auto(now) {
+      if (userTook) return;
+      const dt = Math.min(0.05, (now - lt) / 1000); lt = now;
+      if (!document.hidden) { t += dt; card.classList.add('on'); const w = card.clientWidth, h = card.clientHeight; moveTo(w / 2 + Math.cos(t * 0.9) * w * 0.32, h / 2 + Math.sin(t * 1.3) * h * 0.32); }
+      requestAnimationFrame(auto);
+    })(performance.now());
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

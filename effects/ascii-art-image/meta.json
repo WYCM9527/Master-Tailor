@@ -1,0 +1,25 @@
+{
+  "slug": "ascii-art-image",
+  "name": "字符画图",
+  "category": "canvas",
+  "sub": "hover",
+  "tags": ["字符画", "ASCII", "复古", "终端"],
+  "summary": "把图片翻译成一格格明暗不同的字符拼成的画，进场时字符随机逐个亮起，鼠标靠近处字符变细变密像放大镜",
+  "params": [
+    { "key": "photo", "label": "图片", "type": "image", "target": "config", "default": "/samples/sample-1.webp" },
+    { "key": "cell", "label": "字符格大小", "type": "range", "target": "config", "min": 5, "max": 18, "step": 1, "default": 9, "unit": "px" },
+    { "key": "charset", "label": "字符表（暗→亮）", "type": "text", "target": "config", "default": " .:-=+*#%@", "maxLength": 20 },
+    { "key": "colored", "label": "按画面着色", "type": "toggle", "target": "config", "default": false },
+    { "key": "color", "label": "单色字符颜色", "type": "color", "target": "config", "default": "#7cf49a" },
+    { "key": "invert", "label": "反转明暗", "type": "toggle", "target": "config", "default": false },
+    { "key": "reveal", "label": "进场随机亮起", "type": "toggle", "target": "config", "default": true },
+    { "key": "magnify", "label": "鼠标放大镜", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "终端绿", "values": {} },
+    { "id": "color", "name": "彩色字符", "values": { "colored": true, "cell": 7, "charset": " .,:;ox%#@" } },
+    { "id": "amber", "name": "琥珀粗格", "values": { "color": "#fbbf24", "cell": 14, "photo": "/samples/sample-4.webp" } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 ASCII Art 一类字符画", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

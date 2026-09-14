@@ -1,0 +1,25 @@
+{
+  "slug": "direction-aware-hover",
+  "name": "方向感知悬停",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["悬停", "方向", "遮罩", "图片卡"],
+  "summary": "一组图片卡，鼠标从哪一边进入，带文字的遮罩就从那一边滑进来盖住图；从哪一边离开就从那一边滑走",
+  "params": [
+    { "key": "slides", "label": "卡片图片", "type": "images", "target": "config", "min": 2, "max": 8, "captions": true, "default": [{"src": "/samples/sample-1.webp", "caption": "山谷晨雾"}, {"src": "/samples/sample-2.webp", "caption": "海边球车"}, {"src": "/samples/sample-3.webp", "caption": "黄昏海滩"}, {"src": "/samples/sample-4.webp", "caption": "林间逆光"}, {"src": "/samples/sample-5.webp", "caption": "雨后街角"}, {"src": "/samples/sample-6.webp", "caption": "旧城屋顶"}] },
+    { "key": "columns", "label": "列数", "type": "range", "target": "config", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "key": "desc", "label": "副文字", "type": "text", "target": "config", "default": "从哪边进来，遮罩就从哪边滑入", "maxLength": 30 },
+    { "key": "duration", "label": "滑动时长", "type": "range", "target": "css", "min": 0.2, "max": 1, "step": 0.05, "default": 0.45, "unit": "s", "displayUnit": " 秒" },
+    { "key": "radius", "label": "卡片圆角", "type": "range", "target": "css", "min": 0, "max": 32, "step": 2, "default": 16, "unit": "px" },
+    { "key": "gap", "label": "卡片间距", "type": "range", "target": "css", "min": 4, "max": 40, "step": 2, "default": 16, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "two", "name": "双列大图", "values": { "columns": 2, "radius": 24, "duration": 0.6 } },
+    { "id": "tight", "name": "紧凑四列", "values": { "columns": 4, "gap": 6, "radius": 6, "duration": 0.3 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Direction Aware Hover 一类方向感知悬停", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

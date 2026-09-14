@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>色散倾斜图</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-radius: 18px;       /* 图片圆角 */
+    --mt-size: 440px;        /* 图片宽度 */
+    --mt-tilt: 10deg;        /* 最大倾斜角 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; perspective: 1000px; }
+
+  /* 三层同图分别只保留红 / 绿 / 蓝通道，用 screen 混合叠回原色；鼠标一动三层错位，边缘就出现彩色分离 */
+  .mt-card {
+    position: relative; width: var(--mt-size); max-width: 90vw; aspect-ratio: 4 / 3; border-radius: var(--mt-radius); overflow: hidden; background: #000;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.15s ease-out; cursor: crosshair; touch-action: none;
+    box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.8);
+  }
+  .mt-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; mix-blend-mode: screen; transition: transform 0.15s ease-out; }
+  .mt-card .r { filter: url(#mtR); transform: translate(calc(var(--dx, 0px) * -1), calc(var(--dy, 0px) * -1)); }
+  .mt-card .g { filter: url(#mtG); }
+  .mt-card .b { filter: url(#mtB); transform: translate(var(--dx, 0px), var(--dy, 0px)); }
+  @media (prefers-reduced-motion: reduce) { .mt-card, .mt-card img { transition: none; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="mtR"><feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/></filter>
+    <filter id="mtG"><feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0"/></filter>
+    <filter id="mtB"><feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"/></filter>
+  </defs>
+</svg>
+<div class="mt-card" id="mtCard" role="img" aria-label="随鼠标倾斜并产生色散的图片">
+  <img class="r" id="mtImgR" alt=""><img class="g" id="mtImgG" alt=""><img class="b" id="mtImgB" alt="">
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-3.webp",  // 图片
+    shift: 14,           // 最大色散错位（px）
+    ease: 0.12,          // 跟随平滑度
+  };
+  const card = document.getElementById('mtCard');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  for (const id of ['mtImgR', 'mtImgG', 'mtImgB']) document.getElementById(id).src = CONFIG.photo;
+  const TILT = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-tilt')) || 10;
+
+  // 目标：鼠标相对卡片中心的 -1..1；当前值平滑逼近；倾斜与错位都由它决定
+  const target = { x: 0, y: 0 }, cur = { x: 0, y: 0 };
+  let userTook = false;
+  card.addEventListener('pointermove', (e) => { userTook = true; const r = card.getBoundingClientRect(); target.x = ((e.clientX - r.left) / r.width) * 2 - 1; target.y = ((e.clientY - r.top) / r.height) * 2 - 1; });
+  card.addEventListener('pointerleave', () => { target.x = 0; target.y = 0; });
+  function frame() {
+    requestAnimationFrame(frame);
+    if (document.hidden) return;
+    const k = reduceMotion ? 1 : CONFIG.ease;
+    cur.x += (target.x - cur.x) * k; cur.y += (target.y - cur.y) * k;
+    card.style.setProperty('--ry', (cur.x * TILT) + 'deg'); card.style.setProperty('--rx', (-cur.y * TILT) + 'deg');
+    card.style.setProperty('--dx', (cur.x * CONFIG.shift) + 'px'); card.style.setProperty('--dy', (cur.y * CONFIG.shift) + 'px');
+  }
+  frame();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时自己缓缓摆动
+  if (!reduceMotion) {
+    let t = 0, last = performance.now();
+    (function auto(now) {
+      if (userTook) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!document.hidden) { t += dt; target.x = Math.sin(t * 1.1) * 0.9; target.y = Math.cos(t * 0.8) * 0.7; }
+      requestAnimationFrame(auto);
+    })(performance.now());
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

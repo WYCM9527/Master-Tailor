@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光标遮罩揭示</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（上层） */
+    --mt-underBg: #f2f3f8;   /* 下层底色（被揭出的那一层） */
+    --mt-color: #f2f3f8;     /* 上层文字颜色 */
+    --mt-underColor: #0a0a0f;/* 下层文字颜色 */
+    --mt-size: 220px;        /* 揭示圆的直径 */
+    --mt-fontSize: 44px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 两层内容完全重叠：下层是反色的另一句话；上层默认全显示，用跟随光标的圆形遮罩「挖」出一个洞露出下层 */
+  .mt-layer { position: fixed; inset: 0; display: grid; place-items: center; padding: 0 24px; text-align: center; }
+  .mt-layer p { margin: 0; max-width: 820px; font-size: var(--mt-fontSize); font-weight: 700; line-height: 1.35; letter-spacing: -0.02em; text-wrap: balance; }
+  .mt-under { background: var(--mt-underBg); color: var(--mt-underColor); }
+  .mt-under mark { background: transparent; color: #d946ef; }
+  .mt-over {
+    background: var(--mt-bg); color: var(--mt-color); cursor: crosshair;
+    -webkit-mask: radial-gradient(circle var(--r) at var(--x) var(--y), transparent 98%, #000 100%);
+    mask: radial-gradient(circle var(--r) at var(--x) var(--y), transparent 98%, #000 100%);
+  }
+  .mt-hint { position: fixed; bottom: 24px; left: 0; right: 0; text-align: center; font-size: 13px; color: var(--mt-color); opacity: 0.4; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="mt-layer mt-under" aria-hidden="true"><p id="mtUnder"></p></div>
+<div class="mt-layer mt-over" id="mtOver"><p id="mtOver_text"></p></div>
+<div class="mt-hint" id="mtHint">移动鼠标，看看底下写了什么</div>
+<script>
+  const CONFIG = {
+    over: "表面上，这只是一段普通的文字。",           // 上层文字
+    under: "底下藏着【另一句话】，只在光标经过时露出来。", // 下层文字，【】里的字用强调色
+    ease: 0.18,                                       // 圆心跟随的平滑度（1 立刻跟上，越小越拖）
+    hideWhenLeave: true,                              // 鼠标离开时圆收缩消失
+  };
+
+  const over = document.getElementById('mtOver'), overText = document.getElementById('mtOver_text'), underText = document.getElementById('mtUnder');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  overText.textContent = CONFIG.over;
+  CONFIG.under.split(/(【[^】]*】)/).forEach(p => { if (p.startsWith('【')) { const m = document.createElement('mark'); m.textContent = p.slice(1, -1); underText.appendChild(m); } else if (p) underText.append(p); });
+  const SIZE = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-size')) || 220;
+
+  // 圆心以「平滑度」的比例逼近光标，半径在进入时长出、离开时收回
+  const target = { x: innerWidth / 2, y: innerHeight / 2, r: 0 }, cur = { x: innerWidth / 2, y: innerHeight / 2, r: 0 };
+  let userTook = false;
+  addEventListener('pointermove', (e) => { userTook = true; target.x = e.clientX; target.y = e.clientY; target.r = SIZE / 2; document.getElementById('mtHint').style.opacity = 0; });
+  addEventListener('pointerleave', () => { if (CONFIG.hideWhenLeave) target.r = 0; });
+  document.documentElement.addEventListener('mouseleave', () => { if (CONFIG.hideWhenLeave) target.r = 0; });
+  function frame() {
+    requestAnimationFrame(frame);
+    if (document.hidden) return;
+    const k = reduceMotion ? 1 : CONFIG.ease;
+    cur.x += (target.x - cur.x) * k; cur.y += (target.y - cur.y) * k; cur.r += (target.r - cur.r) * k;
+    over.style.setProperty('--x', cur.x + 'px'); over.style.setProperty('--y', cur.y + 'px'); over.style.setProperty('--r', Math.max(0, cur.r) + 'px');
+  }
+  frame();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时圆自己在文字上游走
+  if (!reduceMotion) {
+    let t = 0, last = performance.now();
+    (function auto(now) {
+      if (userTook) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!document.hidden) { t += dt; target.x = innerWidth / 2 + Math.cos(t * 0.8) * innerWidth * 0.3; target.y = innerHeight / 2 + Math.sin(t * 1.3) * innerHeight * 0.18; target.r = SIZE / 2; }
+      requestAnimationFrame(auto);
+    })(performance.now());
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

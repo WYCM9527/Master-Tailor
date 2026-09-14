@@ -1,0 +1,26 @@
+{
+  "slug": "wipe-reveal-card",
+  "name": "卡片文字揭示",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["揭示", "擦除", "问答", "卡片"],
+  "summary": "卡片底部一行半透明的「问题」，鼠标从左往右划过，一条发光的竖线跟着光标，线左边露出底下藏着的「答案」",
+  "params": [
+    { "key": "title", "label": "卡片标题", "type": "text", "target": "config", "default": "把鼠标划过去", "maxLength": 20 },
+    { "key": "desc", "label": "卡片说明", "type": "text", "target": "config", "default": "上面是问题，答案就藏在它底下，光标扫到哪里露到哪里。", "maxLength": 60 },
+    { "key": "top", "label": "表层文字", "type": "text", "target": "config", "default": "你知道我们最常被问什么吗？", "maxLength": 30 },
+    { "key": "under", "label": "底层文字", "type": "text", "target": "config", "default": "「这个效果的 prompt 【怎么写】？」", "maxLength": 30, "help": "用【】包住要强调的词" },
+    { "key": "restAt", "label": "离开后停在", "type": "range", "target": "config", "min": 0, "max": 100, "step": 5, "default": 0, "unit": "%" },
+    { "key": "accent", "label": "分界线颜色", "type": "color", "target": "css", "default": "#a855f7" },
+    { "key": "card", "label": "卡片底色", "type": "color", "target": "css", "default": "#16161d" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "half", "name": "停在一半", "values": { "restAt": 50, "accent": "#22d3ee" } },
+    { "id": "warm", "name": "暖色", "values": { "accent": "#f97316", "card": "#1c1410" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Text Reveal Card 一类划过揭示", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

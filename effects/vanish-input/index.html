@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>输入粒子消散</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-field: #16161d;     /* 输入框底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 发送按钮颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-wrap { width: min(560px, 90vw); }
+  .mt-title { margin: 0 0 22px; text-align: center; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .mt-form { position: relative; height: 56px; border-radius: 999px; background: var(--mt-field); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.8); }
+  .mt-form input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0 64px 0 22px; border: 0; background: transparent; color: var(--mt-color); font: inherit; font-size: 16px; outline: none; box-sizing: border-box; border-radius: 999px; }
+  .mt-form input.vanishing { color: transparent; caret-color: transparent; }
+  /* 占位文案：一行行向上翻换 */
+  .mt-ph { position: absolute; left: 22px; right: 64px; top: 0; bottom: 0; display: flex; align-items: center; pointer-events: none; overflow: hidden; font-size: 16px; opacity: 0.45; }
+  .mt-ph span { position: absolute; left: 0; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s; }
+  .mt-ph span.out { transform: translateY(-140%); opacity: 0; } .mt-ph span.in { transform: translateY(140%); opacity: 0; transition: none; }
+  .mt-form.has-text .mt-ph { display: none; }
+  /* 粒子画布盖在输入框上，文字化成的粒子在这里飞 */
+  .mt-form canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; border-radius: 999px; }
+  .mt-send {
+    position: absolute; right: 8px; top: 8px; width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer;
+    background: var(--mt-accent); color: #fff; display: grid; place-items: center; transition: transform 0.2s, opacity 0.2s; opacity: 0.4;
+  }
+  .mt-form.has-text .mt-send { opacity: 1; } .mt-send:active { transform: scale(0.92); }
+  .mt-send svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .mt-log { margin: 18px 0 0; min-height: 22px; text-align: center; font-size: 14px; opacity: 0.55; }
+</style>
+</head>
+<body>
+<div class="mt-wrap">
+  <h1 class="mt-title" id="mtTitle"></h1>
+  <form class="mt-form" id="mtForm" autocomplete="off">
+    <div class="mt-ph" id="mtPh"><span id="mtPhText"></span></div>
+    <input type="text" id="mtInput" aria-label="输入内容">
+    <canvas id="mtCanvas" aria-hidden="true"></canvas>
+    <button type="submit" class="mt-send" aria-label="发送"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </form>
+  <p class="mt-log" id="mtLog"></p>
+</div>
+<script>
+  const CONFIG = {
+    title: "问点什么",                                                     // 标题
+    placeholders: "帮我写一段落地页文案｜把这张图换成暗色风格｜解释一下这个动画怎么做｜给这个按钮加个悬停效果", // 轮播占位文案，用「｜」分隔
+    interval: 3,          // 占位文案切换间隔（秒）
+    density: 1,           // 粒子密度倍率
+    speed: 1,             // 消散速度倍率
+    demoText: "把这段文字变成粒子吹走",   // 演示时自动输入的文字
+  };
+
+  const form = document.getElementById('mtForm'), input = document.getElementById('mtInput'), ph = document.getElementById('mtPhText'), canvas = document.getElementById('mtCanvas'), log = document.getElementById('mtLog');
+  const ctx = canvas.getContext('2d'), reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title;
+  const phs = CONFIG.placeholders.split('｜').map(s => s.trim()).filter(Boolean); let pi = 0; ph.textContent = phs[0] || '';
+  // 占位文案翻换：旧的上移淡出，新的从下面进来
+  setInterval(() => {
+    if (document.hidden || phs.length < 2) return;
+    ph.classList.add('out');
+    setTimeout(() => { pi = (pi + 1) % phs.length; ph.textContent = phs[pi]; ph.classList.remove('out'); ph.classList.add('in'); requestAnimationFrame(() => requestAnimationFrame(() => ph.classList.remove('in'))); }, 400);
+  }, CONFIG.interval * 1000);
+  input.addEventListener('input', () => form.classList.toggle('has-text', input.value.length > 0));
+
+  // 消散：把输入框里的文字画到离屏画布上取样成粒子，再让粒子向右飘散、变淡；同时清空真正的输入
+  let particles = [], raf = 0, busy = false;
+  function vanish() {
+    const text = input.value; if (!text || busy) return; busy = true;
+    const dpr = Math.min(2, devicePixelRatio || 1), W = form.clientWidth, H = form.clientHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const off = document.createElement('canvas'); off.width = W; off.height = H; const oc = off.getContext('2d');
+    const cs = getComputedStyle(input);
+    oc.font = `${cs.fontSize} ${cs.fontFamily}`; oc.fillStyle = '#fff'; oc.textBaseline = 'middle'; oc.fillText(text, 22, H / 2);
+    const data = oc.getImageData(0, 0, W, H).data, step = Math.max(1, Math.round(2 / CONFIG.density));
+    particles = [];
+    for (let y = 0; y < H; y += step) for (let x = 0; x < W; x += step) if (data[(y * W + x) * 4 + 3] > 128) particles.push({ x, y, vx: (0.6 + Math.random() * 1.4) * CONFIG.speed, vy: (Math.random() - 0.5) * 0.8 * CONFIG.speed, a: 1, r: 0.9 + Math.random() * 0.8 });
+    input.classList.add('vanishing');
+    const color = getComputedStyle(document.documentElement).getPropertyValue('--mt-color').trim() || '#fff';
+    cancelAnimationFrame(raf);
+    (function step2() {
+      ctx.clearRect(0, 0, W, H); let alive = 0;
+      for (const p of particles) {
+        if (p.a <= 0) continue; alive++;
+        p.x += p.vx * (1 + (p.x / W) * 4); p.y += p.vy; p.vy += (Math.random() - 0.5) * 0.15; p.a -= (0.006 + p.x / W * 0.02) * CONFIG.speed;
+        ctx.globalAlpha = Math.max(0, p.a); ctx.fillStyle = color; ctx.fillRect(p.x, p.y, p.r, p.r);
+      }
+      ctx.globalAlpha = 1;
+      if (alive) raf = requestAnimationFrame(step2);
+      else { input.value = ''; input.classList.remove('vanishing'); form.classList.remove('has-text'); busy = false; }
+    })();
+    log.textContent = `已发送：${text}`;
+  }
+  form.addEventListener('submit', (e) => { e.preventDefault(); userTook = true; if (reduceMotion) { log.textContent = `已发送：${input.value}`; input.value = ''; form.classList.remove('has-text'); return; } vanish(); });
+  let userTook = false; input.addEventListener('focus', () => (userTook = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动打一句字、发送、消散，循环
+  if (!reduceMotion) {
+    (function demo() {
+      setTimeout(async () => {
+        if (userTook) return;
+        if (!document.hidden) {
+          for (let i = 1; i <= CONFIG.demoText.length; i++) { if (userTook) return; input.value = CONFIG.demoText.slice(0, i); form.classList.add('has-text'); await new Promise(r => setTimeout(r, 70)); }
+          await new Promise(r => setTimeout(r, 600)); if (!userTook) vanish();
+        }
+        demo();
+      }, 3200);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

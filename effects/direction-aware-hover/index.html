@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方向感知悬停</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-overlay: rgba(10, 10, 15, 0.72); /* 遮罩颜色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-duration: 0.45s;    /* 滑入滑出时长 */
+    --mt-radius: 16px;       /* 卡片圆角 */
+    --mt-gap: 16px;          /* 卡片间距 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: var(--mt-gap); width: min(880px, 92vw); }
+  /* 卡片：图 + 一层带文字的遮罩；遮罩默认躲在「鼠标进入的那一侧」外面，进入时从那一侧滑入，离开时从离开的一侧滑出 */
+  .mt-card { position: relative; aspect-ratio: 4 / 3; overflow: hidden; border-radius: var(--mt-radius); cursor: pointer; }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--mt-duration) ease; }
+  .mt-card:hover img { transform: scale(1.06); }
+  .mt-card .cover {
+    position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 18px 20px;
+    background: var(--mt-overlay); backdrop-filter: blur(2px);
+    transform: translate(var(--tx, 0), var(--ty, -101%));
+  }
+  .mt-card .cover.anim { transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mt-card .cover h3 { margin: 0 0 4px; font-size: 18px; }
+  .mt-card .cover p { margin: 0; font-size: 13px; opacity: 0.7; }
+  @media (prefers-reduced-motion: reduce) { .mt-card .cover.anim, .mt-card img { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-grid" id="mtGrid"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"山谷晨雾"},{"src":"/samples/sample-2.webp","caption":"海边球车"},{"src":"/samples/sample-3.webp","caption":"黄昏海滩"},{"src":"/samples/sample-4.webp","caption":"林间逆光"},{"src":"/samples/sample-5.webp","caption":"雨后街角"},{"src":"/samples/sample-6.webp","caption":"旧城屋顶"}], // 卡片图片与标题
+    columns: 3,          // 列数
+    desc: "从哪边进来，遮罩就从哪边滑入",   // 每张卡的副文字
+  };
+
+  const grid = document.getElementById('mtGrid');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  grid.style.setProperty('--cols', CONFIG.columns);
+  let userTook = false;
+
+  // 判定进入 / 离开的方向：把光标位置换到以卡片中心为原点、按宽高归一的坐标，看落在哪个 45° 扇区
+  function side(el, e) {
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left - r.width / 2) / r.width, y = (e.clientY - r.top - r.height / 2) / r.height;
+    const a = Math.atan2(y, x) * 180 / Math.PI;   // -180..180，0 为右
+    return a >= -45 && a < 45 ? 'right' : a >= 45 && a < 135 ? 'bottom' : a >= -135 && a < -45 ? 'top' : 'left';
+  }
+  const offset = { top: ['0', '-101%'], bottom: ['0', '101%'], left: ['-101%', '0'], right: ['101%', '0'] };
+  function place(cover, dir, animate) {
+    cover.classList.toggle('anim', animate);
+    cover.style.setProperty('--tx', offset[dir][0]); cover.style.setProperty('--ty', offset[dir][1]);
+  }
+  CONFIG.slides.forEach((s) => {
+    const card = document.createElement('div'); card.className = 'mt-card';
+    card.innerHTML = `<img alt=""><div class="cover"><h3></h3><p></p></div>`;
+    card.querySelector('img').src = s.src; card.querySelector('h3').textContent = s.caption; card.querySelector('p').textContent = CONFIG.desc;
+    const cover = card.querySelector('.cover');
+    card.addEventListener('pointerenter', (e) => {
+      userTook = true;
+      // 先无动画地把遮罩放到进入侧外面，下一帧再带动画滑到 0
+      place(cover, side(card, e), false);
+      requestAnimationFrame(() => requestAnimationFrame(() => { cover.classList.add('anim'); cover.style.setProperty('--tx', '0'); cover.style.setProperty('--ty', '0'); }));
+    });
+    card.addEventListener('pointerleave', (e) => place(cover, side(card, e), true));
+    grid.appendChild(card);
+  });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流从四个方向演示一张卡
+  if (!reduceMotion) {
+    const dirs = ['left', 'top', 'right', 'bottom']; let i = 0;
+    setInterval(() => {
+      if (userTook || document.hidden) return;
+      const cards = grid.querySelectorAll('.mt-card'), card = cards[i % cards.length], cover = card.querySelector('.cover'), dir = dirs[i % 4]; i++;
+      place(cover, dir, false);
+      requestAnimationFrame(() => requestAnimationFrame(() => { cover.classList.add('anim'); cover.style.setProperty('--tx', '0'); cover.style.setProperty('--ty', '0'); }));
+      setTimeout(() => place(cover, dirs[(i + 1) % 4], true), 1100);
+    }, 1800);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

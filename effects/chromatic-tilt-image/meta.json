@@ -1,0 +1,23 @@
+{
+  "slug": "chromatic-tilt-image",
+  "name": "色散倾斜图",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["色散", "RGB 分离", "倾斜", "图片"],
+  "summary": "图片随鼠标在 3D 里倾斜，同时红蓝两个色版朝相反方向错开，边缘泛出彩色分离，像透过棱镜看照片",
+  "params": [
+    { "key": "photo", "label": "图片", "type": "image", "target": "config", "default": "/samples/sample-3.webp" },
+    { "key": "shift", "label": "色散错位", "type": "range", "target": "config", "min": 2, "max": 40, "step": 1, "default": 14, "unit": "px" },
+    { "key": "ease", "label": "跟随平滑度", "type": "range", "target": "config", "min": 0.03, "max": 1, "step": 0.01, "default": 0.12 },
+    { "key": "tilt", "label": "最大倾斜角", "type": "range", "target": "css", "min": 0, "max": 25, "step": 1, "default": 10, "unit": "deg", "displayUnit": "°" },
+    { "key": "size", "label": "图片宽度", "type": "range", "target": "css", "min": 240, "max": 720, "step": 20, "default": 440, "unit": "px" },
+    { "key": "radius", "label": "圆角", "type": "range", "target": "css", "min": 0, "max": 40, "step": 2, "default": 18, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "strong", "name": "强色散", "values": { "shift": 32, "tilt": 16, "ease": 0.08 } },
+    { "id": "flat", "name": "只色散不倾斜", "values": { "tilt": 0, "shift": 20, "photo": "/samples/sample-8.webp" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Chromatic Image 一类色散倾斜图", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

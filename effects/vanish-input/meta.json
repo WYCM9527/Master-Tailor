@@ -1,0 +1,27 @@
+{
+  "slug": "vanish-input",
+  "name": "输入粒子消散",
+  "category": "button",
+  "sub": "click",
+  "tags": ["输入框", "粒子", "消散", "占位文案"],
+  "summary": "一个胶囊输入框，占位文案一行行向上翻换；按下发送，输进去的文字化成一串细小粒子向右吹散，输入框随之清空",
+  "params": [
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "问点什么", "maxLength": 20 },
+    { "key": "placeholders", "label": "占位文案", "type": "text", "target": "config", "default": "帮我写一段落地页文案｜把这张图换成暗色风格｜解释一下这个动画怎么做｜给这个按钮加个悬停效果", "maxLength": 160, "help": "用「｜」分隔轮播" },
+    { "key": "interval", "label": "翻换间隔", "type": "range", "target": "config", "min": 1.5, "max": 8, "step": 0.5, "default": 3, "displayUnit": " 秒" },
+    { "key": "density", "label": "粒子密度", "type": "range", "target": "config", "min": 0.5, "max": 2, "step": 0.25, "default": 1 },
+    { "key": "speed", "label": "消散速度", "type": "range", "target": "config", "min": 0.4, "max": 3, "step": 0.1, "default": 1 },
+    { "key": "demoText", "label": "演示输入文字", "type": "text", "target": "config", "default": "把这段文字变成粒子吹走", "maxLength": 30 },
+    { "key": "accent", "label": "发送按钮颜色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "field", "label": "输入框底色", "type": "color", "target": "css", "default": "#16161d" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dense", "name": "细密慢散", "values": { "density": 2, "speed": 0.6 } },
+    { "id": "light", "name": "浅色框", "values": { "field": "#f2f3f8", "color": "#111118", "accent": "#111118" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Placeholders And Vanish Input 一类输入消散", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

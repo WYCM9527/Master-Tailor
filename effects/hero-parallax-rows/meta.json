@@ -1,0 +1,27 @@
+{
+  "slug": "hero-parallax-rows",
+  "name": "滚动视差行",
+  "category": "transition",
+  "sub": "scroll",
+  "tags": ["滚动", "视差", "3D", "作品墙"],
+  "summary": "三行作品卡片起初翘起、倾斜、半透明地悬在上方，往下滚动时逐行反向滑动、整体放平对正落到画面中央",
+  "params": [
+    { "key": "slides", "label": "卡片图片", "type": "images", "target": "config", "min": 4, "max": 8, "captions": true, "default": [{"src": "/samples/sample-1.webp", "caption": "作品一"}, {"src": "/samples/sample-2.webp", "caption": "作品二"}, {"src": "/samples/sample-3.webp", "caption": "作品三"}, {"src": "/samples/sample-4.webp", "caption": "作品四"}, {"src": "/samples/sample-5.webp", "caption": "作品五"}, {"src": "/samples/sample-6.webp", "caption": "作品六"}, {"src": "/samples/sample-7.webp", "caption": "作品七"}, {"src": "/samples/sample-8.webp", "caption": "作品八"}] },
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "往下滚，作品墙立起来", "maxLength": 30 },
+    { "key": "sub", "label": "副标题", "type": "text", "target": "config", "default": "三行卡片反向滑动，从翘起到放平", "maxLength": 40 },
+    { "key": "rows", "label": "行数", "type": "range", "target": "config", "min": 2, "max": 4, "step": 1, "default": 3 },
+    { "key": "tiltX", "label": "初始俯仰角", "type": "range", "target": "config", "min": 0, "max": 40, "step": 1, "default": 15, "unit": "deg", "displayUnit": "°" },
+    { "key": "tiltZ", "label": "初始旋转角", "type": "range", "target": "config", "min": 0, "max": 45, "step": 1, "default": 20, "unit": "deg", "displayUnit": "°" },
+    { "key": "slide", "label": "横向滑动距离", "type": "range", "target": "config", "min": 100, "max": 1400, "step": 50, "default": 600, "unit": "px" },
+    { "key": "radius", "label": "卡片圆角", "type": "range", "target": "css", "min": 0, "max": 32, "step": 2, "default": 14, "unit": "px" },
+    { "key": "gap", "label": "卡片间距", "type": "range", "target": "css", "min": 8, "max": 40, "step": 2, "default": 20, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dramatic", "name": "大角度", "values": { "tiltX": 35, "tiltZ": 35, "slide": 1200 } },
+    { "id": "flat", "name": "只平移", "values": { "tiltX": 0, "tiltZ": 0, "slide": 900, "rows": 2 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Hero Parallax 一类滚动视差", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

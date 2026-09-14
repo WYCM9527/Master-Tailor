@@ -1,0 +1,26 @@
+{
+  "slug": "cipher-hover-card",
+  "name": "乱码悬停卡",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["乱码", "加密", "光斑", "悬停"],
+  "summary": "一张铺满隐形乱码的方卡，鼠标移上来，光标处一团青紫渐变的光斑照亮附近的字符，字符还在不停跳变，像在看一段活的密文",
+  "params": [
+    { "key": "badge", "label": "徽标文字", "type": "text", "target": "config", "default": "SECURE", "maxLength": 10 },
+    { "key": "caption", "label": "底部说明", "type": "text", "target": "config", "default": "把鼠标移上来：光斑照亮底下的加密字符，字符还在不停变化。", "maxLength": 60 },
+    { "key": "scrambleRate", "label": "乱码刷新率", "type": "range", "target": "config", "min": 2, "max": 60, "step": 2, "default": 30, "help": "每秒换几次" },
+    { "key": "radius", "label": "光斑半径", "type": "range", "target": "css", "min": 80, "max": 400, "step": 10, "default": 220, "unit": "px" },
+    { "key": "glowA", "label": "光斑色 A", "type": "color", "target": "css", "default": "#22d3ee" },
+    { "key": "glowB", "label": "光斑色 B", "type": "color", "target": "css", "default": "#a855f7" },
+    { "key": "card", "label": "卡片底色", "type": "color", "target": "css", "default": "#111118" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "乱码字体", "type": "font", "target": "css", "default": "jetbrains-mono" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "matrix", "name": "黑客绿", "values": { "glowA": "#22c55e", "glowB": "#a3e635", "scrambleRate": 60, "badge": "ROOT" } },
+    { "id": "slow", "name": "慢刷大光", "values": { "scrambleRate": 6, "radius": 360, "glowA": "#f472b6", "glowB": "#fb923c" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Evervault Card 一类乱码悬停卡", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}
