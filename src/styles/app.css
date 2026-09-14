@@ -719,6 +719,9 @@
   aspect-ratio: 16 / 9;
   max-height: 72vh;
   background: #0a0a0f;
+  /* 网格项默认对齐对带 aspect-ratio 的元素不拉伸：高度被 72vh 顶住时宽度会反过来按 16:9 缩窄、
+     靠左露出网格底色。显式拉满列宽，高度取 min(宽 × 9/16, 72vh)，效果本身是全出血自适应页面 */
+  justify-self: stretch;
 }
 .d-stage iframe {
   position: absolute;
