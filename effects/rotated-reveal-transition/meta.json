@@ -1,0 +1,26 @@
+{
+  "slug": "rotated-reveal-transition",
+  "name": "旋转揭幕转场",
+  "category": "transition",
+  "sub": "keynote",
+  "tags": ["转场", "色板", "斜切", "换页"],
+  "summary": "换页时几块斜着的色板一层接一层从一角扫过整屏，盖满的一瞬换成新页，再顺着同一方向扫出去",
+  "params": [
+    { "key": "imageA", "label": "第一页图片", "type": "image", "target": "config", "default": "/samples/sample-2.webp" },
+    { "key": "imageB", "label": "第二页图片", "type": "image", "target": "config", "default": "/samples/sample-6.webp" },
+    { "key": "titleA", "label": "第一页标题", "type": "text", "target": "config", "default": "序章", "maxLength": 16 },
+    { "key": "titleB", "label": "第二页标题", "type": "text", "target": "config", "default": "第一幕", "maxLength": 16 },
+    { "key": "angle", "label": "色板角度", "type": "range", "target": "config", "min": -90, "max": 90, "step": 5, "default": 35, "unit": "°" },
+    { "key": "colors", "label": "色板颜色", "type": "colors", "target": "config", "min": 1, "max": 5, "default": ["#f2f3f8", "#7c9cff", "#0a0a0f"] },
+    { "key": "stagger", "label": "色板错开", "type": "range", "target": "config", "min": 0, "max": 400, "step": 20, "default": 120, "displayUnit": " 毫秒" },
+    { "key": "hold", "label": "自动换页间隔", "type": "range", "target": "config", "min": 3, "max": 10, "step": 0.5, "default": 4, "displayUnit": " 秒" },
+    { "key": "duration", "label": "单层扫过时长", "type": "range", "target": "css", "min": 0.5, "max": 2.5, "step": 0.1, "default": 1.2, "unit": "s", "displayUnit": " 秒" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "vertical", "name": "竖直单层", "values": { "angle": 0, "colors": ["#f472b6"], "duration": 0.8 } },
+    { "id": "steep", "name": "陡斜四层", "values": { "angle": -60, "colors": ["#fbbf24", "#f97316", "#ef4444", "#0a0a0f"], "stagger": 80 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · RotatedRevealers", "url": "https://github.com/codrops/RotatedRevealers", "license": "MIT（思路参考，代码自写）" }
+}

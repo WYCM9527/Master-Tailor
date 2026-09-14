@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>旋转揭幕转场</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-duration: 1.2s;     /* 单层扫过的时长 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-page { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; cursor: pointer; }
+  .mt-page[hidden] { display: none; }
+  .mt-page img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6); }
+  .mt-page h1 { position: relative; margin: 0; font-size: clamp(32px, 6vw, 72px); letter-spacing: -0.03em; text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6); }
+  .mt-page p { position: relative; margin: 12px 0 0; opacity: 0.7; font-size: 15px; }
+  /* 关掉 View Transitions 的默认交叉淡化：换页发生在色板盖满的时候 */
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+  /* 揭幕层：每层是一个旋转过的容器，内部色板尺寸按角度算到刚好盖住整个视口；色板沿旋转后的轴向滑过 */
+  .mt-revealers { position: fixed; inset: 0; z-index: 10; pointer-events: none; overflow: hidden; }
+  .mt-rev { position: absolute; left: 50%; top: 50%; width: var(--w); height: var(--h); margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2); transform: rotate(var(--angle)); }
+  .mt-rev .panel { position: absolute; inset: 0; background: var(--c); transform: translateY(100%); transition: transform var(--mt-duration) cubic-bezier(0.86, 0, 0.07, 1); transition-delay: var(--d); }
+  .mt-revealers.cover .mt-rev .panel { transform: translateY(0); }
+  .mt-revealers.leave .mt-rev .panel { transform: translateY(-100%); transition-delay: var(--dl); }   /* 离场时最上层先走，露出下一层 */
+  /* @mt:fallback 无 View Transitions API 时直接切换两页的 hidden 属性，色板照常盖住整个过程，观感一致 */
+  @media (prefers-reduced-motion: reduce) { .mt-rev .panel { transition: none; } }
+</style>
+</head>
+<body>
+<main class="mt-page" id="mtA"><img id="mtImgA" alt=""><h1 id="mtTitleA"></h1><p>点击任意处切换</p></main>
+<main class="mt-page" id="mtB" hidden><img id="mtImgB" alt=""><h1 id="mtTitleB"></h1><p>点击任意处切换</p></main>
+<div class="mt-revealers" id="mtRevealers" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    imageA: "/samples/sample-2.webp",  // 第一页图片
+    imageB: "/samples/sample-6.webp",  // 第二页图片
+    titleA: "序章",                     // 第一页标题
+    titleB: "第一幕",                   // 第二页标题
+    angle: 35,           // 色板的旋转角度（0 为纯竖直扫过）
+    colors: ["#f2f3f8", "#7c9cff", "#0a0a0f"],   // 色板颜色，按扫过先后
+    stagger: 120,        // 相邻色板的错开（毫秒）
+    hold: 4,             // 演示：每隔几秒自动换页
+  };
+  const revealers = document.getElementById('mtRevealers'), pages = [document.getElementById('mtA'), document.getElementById('mtB')];
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtImgA').src = CONFIG.imageA; document.getElementById('mtImgB').src = CONFIG.imageB;
+  document.getElementById('mtTitleA').textContent = CONFIG.titleA; document.getElementById('mtTitleB').textContent = CONFIG.titleB;
+  const durMs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-duration')) * 1000 || 1200;
+  // 旋转 θ 的矩形要盖住 W×H 的视口，需要宽 = W|cosθ| + H|sinθ|、高 = W|sinθ| + H|cosθ|
+  function build() {
+    const a = CONFIG.angle * Math.PI / 180, W = innerWidth, H = innerHeight;
+    const w = W * Math.abs(Math.cos(a)) + H * Math.abs(Math.sin(a)), h = W * Math.abs(Math.sin(a)) + H * Math.abs(Math.cos(a));
+    revealers.innerHTML = '';
+    CONFIG.colors.forEach((c, i) => {
+      const rev = document.createElement('div'); rev.className = 'mt-rev';
+      rev.style.setProperty('--w', w + 'px'); rev.style.setProperty('--h', h + 'px'); rev.style.setProperty('--angle', CONFIG.angle + 'deg');
+      const p = document.createElement('div'); p.className = 'panel'; p.style.setProperty('--c', c); p.style.setProperty('--d', i * CONFIG.stagger + 'ms'); p.style.setProperty('--dl', (CONFIG.colors.length - 1 - i) * CONFIG.stagger + 'ms'); p.style.zIndex = i + 1;
+      rev.appendChild(p); revealers.appendChild(rev);
+    });
+  }
+  build(); addEventListener('resize', build);
+  const total = () => durMs + (CONFIG.colors.length - 1) * CONFIG.stagger;
+  let current = 0, busy = false, userTook = false;
+  const swap = () => { pages[current].hidden = true; current = 1 - current; pages[current].hidden = false; };
+  async function go() {
+    if (busy) return; busy = true;
+    if (reduceMotion) { swap(); busy = false; return; }
+    // 1. 色板依次从下方（沿旋转轴）扫入盖满
+    revealers.classList.remove('leave'); revealers.classList.add('cover');
+    await new Promise(r => setTimeout(r, total() + 40));
+    // 2. 盖满时换页（View Transitions 做原子切换，默认动画已关）
+    if (document.startViewTransition) { try { await document.startViewTransition(swap).finished; } catch (_) { /* 已换页 */ } }
+    else swap();   // @mt:fallback
+    // 3. 色板继续沿同一方向扫出，露出新页；结束后无过渡地归位到下方待命
+    revealers.classList.remove('cover'); revealers.classList.add('leave');
+    await new Promise(r => setTimeout(r, total() + 40));
+    revealers.querySelectorAll('.panel').forEach(p => { p.style.transition = 'none'; }); revealers.classList.remove('leave');
+    void revealers.offsetWidth; revealers.querySelectorAll('.panel').forEach(p => { p.style.transition = ''; });
+    busy = false;
+  }
+  pages.forEach(p => p.addEventListener('click', () => { userTook = true; go(); }));
+  addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') go(); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：定时自动换页
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) go(); }, CONFIG.hold * 1000);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

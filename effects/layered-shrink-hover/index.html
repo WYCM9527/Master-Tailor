@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图层重复悬停</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-duration: 0.8s;     /* 过渡时长 */
+    --mt-radius: 4px;        /* 圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 28px; width: min(900px, 92vw); }
+  .mt-item { position: relative; cursor: pointer; }
+  /* 同一张图叠 N 层，全部铺满同一格；最底层放在一个裁切框里、默认放大；上面各层默认原大 */
+  .mt-item .stack { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border-radius: var(--mt-radius); transform-origin: var(--origin); }
+  .mt-item .layer { position: absolute; inset: 0; background: var(--img) center / cover; transform-origin: var(--origin); transition: transform var(--mt-duration) cubic-bezier(0.45, 0, 0.55, 1); transition-delay: var(--d); }
+  .mt-item .layer.base { transform: scale(var(--zoom)); }
+  /* 悬停：上面各层依次缩没（最上层先），底层从放大缩回原大 */
+  .mt-item:hover .layer:not(.base), .mt-item.on .layer:not(.base) { transform: var(--shrink); }
+  .mt-item:hover .layer.base, .mt-item.on .layer.base { transform: scale(1); transition-delay: 0s; }
+  .mt-item .cap { margin-top: 12px; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.6; display: flex; justify-content: space-between; }
+  @media (prefers-reduced-motion: reduce) { .mt-item .layer { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-grid" id="mtGrid"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-4.webp","caption":"林间"},{"src":"/samples/sample-5.webp","caption":"雪线"},{"src":"/samples/sample-7.webp","caption":"棕榈"}], // 图片与说明
+    layers: 4,           // 叠几层（含底层）
+    zoom: 2,             // 底层初始放大倍数
+    origin: "center",    // 收缩中心：center 中心 / bottom 底边 / left 左边（横向收） / right 右边（横向收）
+    stagger: 0.1,        // 相邻层的错开（秒）
+    columns: 3,          // 列数
+  };
+  const grid = document.getElementById('mtGrid');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  grid.style.setProperty('--cols', CONFIG.columns);
+  const origins = { center: ['50% 50%', 'scale(0)'], bottom: ['50% 100%', 'scale(0)'], left: ['0 50%', 'scaleX(0)'], right: ['100% 50%', 'scaleX(0)'] };
+  const [origin, shrink] = origins[CONFIG.origin] || origins.center;
+  CONFIG.slides.forEach((s, i) => {
+    const item = document.createElement('div'); item.className = 'mt-item';
+    const stack = document.createElement('div'); stack.className = 'stack'; stack.style.setProperty('--origin', origin); stack.style.setProperty('--shrink', shrink);
+    for (let k = 0; k < CONFIG.layers; k++) {
+      const l = document.createElement('div'); l.className = 'layer' + (k === 0 ? ' base' : ''); l.style.setProperty('--img', `url("${s.src}")`); l.style.setProperty('--zoom', CONFIG.zoom);
+      // 最上层（k 最大）先缩，越下越晚
+      l.style.setProperty('--d', ((CONFIG.layers - 1 - k) * CONFIG.stagger).toFixed(2) + 's'); stack.appendChild(l);
+    }
+    const cap = document.createElement('div'); cap.className = 'cap'; cap.innerHTML = `<span></span><span>${String(i + 1).padStart(2, '0')}</span>`; cap.firstChild.textContent = s.caption || '';
+    item.append(stack, cap); grid.appendChild(item);
+    item.addEventListener('pointerenter', () => (userTook = true));
+  });
+  let userTook = false;
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流悬停
+  if (!reduceMotion) { let i = 0; const items = grid.querySelectorAll('.mt-item'); setInterval(() => { if (userTook || document.hidden) return; items.forEach(it => it.classList.remove('on')); items[i % items.length].classList.add('on'); i++; }, 2000); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

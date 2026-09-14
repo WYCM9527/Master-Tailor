@@ -1,0 +1,25 @@
+{
+  "slug": "double-image-hover",
+  "name": "双图裁切悬停",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["图片", "裁切", "悬停", "偏色"],
+  "summary": "同一张图叠两份：悬停时上层被抹掉 / 收成圆 / 分四块缩没，露出下层——它从刺眼的偏色高亮回落成正常色、从放大缩回",
+  "params": [
+    { "key": "slides", "label": "图片与说明", "type": "images", "target": "config", "min": 1, "max": 6, "captions": true, "default": [{"src": "/samples/sample-1.webp", "caption": "山谷晨雾"}, {"src": "/samples/sample-3.webp", "caption": "黄昏海滩"}, {"src": "/samples/sample-6.webp", "caption": "街角"}] },
+    { "key": "variant", "label": "揭示方式", "type": "select", "target": "config", "options": [{ "value": "wipe", "label": "从右抹掉" }, { "value": "circle", "label": "圆收缩" }, { "value": "corner", "label": "角落圆缩" }, { "value": "quads", "label": "四块分缩" }, { "value": "blinds", "label": "百叶收薄" }], "default": "wipe" },
+    { "key": "columns", "label": "列数", "type": "range", "target": "config", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "key": "duration", "label": "过渡时长", "type": "range", "target": "css", "min": 0.3, "max": 1.5, "step": 0.1, "default": 0.7, "unit": "s", "displayUnit": " 秒" },
+    { "key": "hue", "label": "初始偏色", "type": "range", "target": "css", "min": 0, "max": 360, "step": 10, "default": 190, "unit": "deg", "displayUnit": "°" },
+    { "key": "radius", "label": "圆角", "type": "range", "target": "css", "min": 0, "max": 24, "step": 2, "default": 6, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "从右抹掉", "values": {} },
+    { "id": "circle", "name": "圆收缩", "values": { "variant": "circle", "hue": 300, "duration": 0.5 } },
+    { "id": "quads", "name": "四块分缩", "values": { "variant": "quads", "hue": 0, "duration": 1 } },
+    { "id": "blinds", "name": "百叶收薄", "values": { "variant": "blinds", "hue": 120, "radius": 0 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · DoubleImageHoverEffects", "url": "https://github.com/codrops/DoubleImageHoverEffects", "license": "MIT（思路参考，代码自写）" }
+}

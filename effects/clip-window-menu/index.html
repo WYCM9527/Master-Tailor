@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>裁切窗菜单</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;        /* 页面底色 */
+    --mt-color: #ffffff;     /* 菜单文字颜色 */
+    --mt-accent: #f0b579;    /* 悬停文字与序号颜色 */
+    --mt-dim: 0.35;          /* 窗外背景的亮度（0 全黑 – 1 原样） */
+    --mt-fontSize: 5vw;      /* 菜单字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
+
+  /* 每个菜单项对应一组背景：全屏压暗的图 + 同一张图被裁成一个「窗」保持原亮度 */
+  .mt-screens { position: fixed; inset: 0; }
+  .mt-screen { position: absolute; inset: 0; opacity: 0; transition: opacity 0.4s ease-out; }
+  .mt-screen.on { opacity: 1; z-index: 1; }
+  .mt-screen .full, .mt-screen .win { position: absolute; inset: 0; background: var(--img) center / cover no-repeat; }
+  .mt-screen .full { opacity: var(--mt-dim); transform: scale(1.07); transition: transform 1.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mt-screen.on .full { transform: scale(1); }
+  .mt-screen .win { clip-path: var(--clip); transition: clip-path 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1.8s cubic-bezier(0.2, 0.8, 0.2, 1); transform: scale(1.07); }
+  .mt-screen.on .win { transform: scale(1); }
+  /* 菜单 */
+  .mt-menu { position: relative; z-index: 5; display: flex; flex-direction: column; justify-content: center; height: 100%; padding: 0 8vw; box-sizing: border-box; gap: 0.15em; }
+  .mt-item { display: flex; align-items: baseline; gap: 1.2em; text-decoration: none; color: inherit; font-size: var(--mt-fontSize); font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; cursor: pointer; transition: color 0.3s; }
+  .mt-item .tag { font-size: 0.28em; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mt-accent); min-width: 3.5em; }
+  .mt-item:hover, .mt-item.on { color: var(--mt-accent); }
+  @media (prefers-reduced-motion: reduce) { .mt-screen, .mt-screen .full, .mt-screen .win { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-screens" id="mtScreens" aria-hidden="true"></div>
+<nav class="mt-menu" id="mtMenu" aria-label="菜单"></nav>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"山谷"},{"src":"/samples/sample-3.webp","caption":"黄昏"},{"src":"/samples/sample-6.webp","caption":"街角"},{"src":"/samples/sample-8.webp","caption":"星云"}], // 菜单项与背景图
+    shape: "slit",       // 窗的形状：slit 竖缝 / band 横带 / diamond 菱形 / circle 圆 / zigzag 折线 / frame 画框
+    tags: "01 山｜02 海｜03 城｜04 空",   // 每项前的小标签，用「｜」分隔
+  };
+  const screens = document.getElementById('mtScreens'), menu = document.getElementById('mtMenu');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const shapes = {
+    slit: 'polygon(37% 15%, 63% 15%, 63% 85%, 37% 85%)',
+    band: 'polygon(0 38%, 100% 38%, 100% 62%, 0 62%)',
+    diamond: 'polygon(50% 8%, 78% 50%, 50% 92%, 22% 50%)',
+    circle: 'circle(26% at 50% 50%)',
+    zigzag: 'polygon(10% 0, 25% 0%, 30% 60%, 50% 35%, 70% 60%, 75% 0, 90% 0, 80% 100%, 50% 60%, 20% 100%)',
+    frame: 'polygon(15% 15%, 85% 15%, 85% 85%, 15% 85%, 15% 18%, 18% 18%, 18% 82%, 82% 82%, 82% 18%, 15% 18%)',
+  };
+  const tags = CONFIG.tags.split('｜');
+  const items = CONFIG.slides.map((s, i) => {
+    const sc = document.createElement('div'); sc.className = 'mt-screen'; sc.style.setProperty('--img', `url("${s.src}")`); sc.style.setProperty('--clip', shapes[CONFIG.shape] || shapes.slit);
+    sc.innerHTML = '<div class="full"></div><div class="win"></div>'; screens.appendChild(sc);
+    const a = document.createElement('a'); a.className = 'mt-item'; a.href = '#'; a.addEventListener('click', e => e.preventDefault());
+    a.innerHTML = `<span class="tag"></span><span class="label"></span>`; a.querySelector('.tag').textContent = tags[i % tags.length] || ''; a.querySelector('.label').textContent = s.caption || `项目 ${i + 1}`;
+    menu.appendChild(a); return { sc, a };
+  });
+  let current = -1, userTook = false;
+  function show(i) {
+    if (i === current) return;
+    items.forEach(({ sc, a }, k) => { sc.classList.toggle('on', k === i); a.classList.toggle('on', k === i); });
+    current = i;
+  }
+  items.forEach(({ a }, i) => { a.addEventListener('pointerenter', () => { userTook = true; show(i); }); a.addEventListener('focus', () => show(i)); });
+  show(0);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流切换
+  if (!reduceMotion) { let i = 0; setInterval(() => { if (userTook || document.hidden) return; i = (i + 1) % items.length; show(i); }, 2400); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

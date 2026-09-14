@@ -1,0 +1,25 @@
+{
+  "slug": "layered-shrink-hover",
+  "name": "图层重复悬停",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["图片", "叠层", "收缩", "悬停"],
+  "summary": "同一张图叠几层，悬停时从最上层开始一层层向中心缩没，露出底下放大两倍的同图再缩回原大，像穿过一叠相同的画",
+  "params": [
+    { "key": "slides", "label": "图片与说明", "type": "images", "target": "config", "min": 1, "max": 6, "captions": true, "default": [{"src": "/samples/sample-4.webp", "caption": "林间"}, {"src": "/samples/sample-5.webp", "caption": "雪线"}, {"src": "/samples/sample-7.webp", "caption": "棕榈"}] },
+    { "key": "layers", "label": "层数", "type": "range", "target": "config", "min": 2, "max": 6, "step": 1, "default": 4 },
+    { "key": "zoom", "label": "底层初始放大", "type": "range", "target": "config", "min": 1.05, "max": 3, "step": 0.05, "default": 2 },
+    { "key": "origin", "label": "收缩中心", "type": "select", "target": "config", "options": [{ "value": "center", "label": "中心" }, { "value": "bottom", "label": "底边" }, { "value": "left", "label": "左边（横向收）" }, { "value": "right", "label": "右边（横向收）" }], "default": "center" },
+    { "key": "stagger", "label": "层间错开", "type": "range", "target": "config", "min": 0, "max": 0.3, "step": 0.02, "default": 0.1, "displayUnit": " 秒" },
+    { "key": "columns", "label": "列数", "type": "range", "target": "config", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "key": "duration", "label": "过渡时长", "type": "range", "target": "css", "min": 0.3, "max": 1.5, "step": 0.1, "default": 0.8, "unit": "s", "displayUnit": " 秒" },
+    { "key": "radius", "label": "圆角", "type": "range", "target": "css", "min": 0, "max": 24, "step": 2, "default": 4, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "中心四层", "values": {} },
+    { "id": "bottom", "name": "底边三层", "values": { "origin": "bottom", "layers": 3, "zoom": 1.5, "stagger": 0.12 } },
+    { "id": "side", "name": "横向五层", "values": { "origin": "left", "layers": 5, "zoom": 1.2, "stagger": 0.06, "duration": 0.5 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · RepetitionHoverEffect", "url": "https://github.com/codrops/RepetitionHoverEffect", "license": "MIT（思路参考，代码自写）" }
+}

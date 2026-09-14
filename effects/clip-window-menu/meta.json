@@ -1,0 +1,25 @@
+{
+  "slug": "clip-window-menu",
+  "name": "裁切窗菜单",
+  "category": "nav",
+  "sub": "hover",
+  "tags": ["菜单", "背景", "裁切", "clip-path"],
+  "summary": "悬停菜单项时整屏换成对应背景：图被压暗，只在中间一个竖缝 / 菱形 / 圆形的「窗」里保持原亮度，并从略放大缩回",
+  "params": [
+    { "key": "slides", "label": "菜单项与背景图", "type": "images", "target": "config", "min": 2, "max": 6, "captions": true, "default": [{"src": "/samples/sample-1.webp", "caption": "山谷"}, {"src": "/samples/sample-3.webp", "caption": "黄昏"}, {"src": "/samples/sample-6.webp", "caption": "街角"}, {"src": "/samples/sample-8.webp", "caption": "星云"}] },
+    { "key": "shape", "label": "窗的形状", "type": "select", "target": "config", "options": [{ "value": "slit", "label": "竖缝" }, { "value": "band", "label": "横带" }, { "value": "diamond", "label": "菱形" }, { "value": "circle", "label": "圆" }, { "value": "zigzag", "label": "折线" }, { "value": "frame", "label": "画框" }], "default": "slit" },
+    { "key": "tags", "label": "小标签", "type": "text", "target": "config", "default": "01 山｜02 海｜03 城｜04 空", "maxLength": 60, "help": "用「｜」分隔，按顺序对应" },
+    { "key": "dim", "label": "窗外亮度", "type": "range", "target": "css", "min": 0, "max": 1, "step": 0.05, "default": 0.35 },
+    { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#f0b579" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 3, "max": 9, "step": 0.5, "default": 5, "unit": "vw" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "竖缝", "values": {} },
+    { "id": "zigzag", "name": "折线", "values": { "shape": "zigzag", "dim": 0.2, "accent": "#faedba" } },
+    { "id": "circle", "name": "圆窗", "values": { "shape": "circle", "dim": 0.5, "accent": "#7c9cff" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · BackgroundScaleHoverEffect", "url": "https://github.com/codrops/BackgroundScaleHoverEffect", "license": "MIT（思路参考，代码自写）" }
+}
