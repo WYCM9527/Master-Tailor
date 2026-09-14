@@ -1,0 +1,26 @@
+{
+  "slug": "petal-fab-menu",
+  "name": "花瓣展开菜单",
+  "category": "nav",
+  "sub": "click",
+  "tags": ["悬浮按钮", "花瓣", "径向菜单", "点击"],
+  "summary": "一颗圆形悬浮按钮，点开时几颗小圆钮像花瓣一样从中心依次弹到四周的圆轨道上，加号转成叉；再点收回",
+  "params": [
+    { "key": "items", "label": "花瓣文字", "type": "text", "target": "config", "default": "写｜画｜拍｜录｜发", "maxLength": 40, "help": "用「｜」分隔，2–8 个" },
+    { "key": "gap", "label": "轨道距离", "type": "range", "target": "config", "min": 8, "max": 80, "step": 4, "default": 28, "unit": "px" },
+    { "key": "spread", "label": "展开角度", "type": "range", "target": "config", "min": 90, "max": 360, "step": 30, "default": 360, "unit": "deg", "displayUnit": "°" },
+    { "key": "startAngle", "label": "起始角度", "type": "range", "target": "config", "min": -180, "max": 180, "step": 15, "default": -90, "unit": "deg", "displayUnit": "°", "help": "-90 为正上方" },
+    { "key": "duration", "label": "展开时长", "type": "range", "target": "css", "min": 0.15, "max": 0.8, "step": 0.05, "default": 0.28, "unit": "s", "displayUnit": " 秒" },
+    { "key": "size", "label": "中心按钮直径", "type": "range", "target": "css", "min": 40, "max": 84, "step": 4, "default": 56, "unit": "px" },
+    { "key": "petalSize", "label": "花瓣直径", "type": "range", "target": "css", "min": 28, "max": 64, "step": 4, "default": 44, "unit": "px" },
+    { "key": "main", "label": "中心按钮颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "petal", "label": "花瓣颜色", "type": "color", "target": "css", "default": "#7c9cff" }
+  ],
+  "presets": [
+    { "id": "default", "name": "整圈", "values": {} },
+    { "id": "half", "name": "上半圆", "values": { "spread": 180, "startAngle": -180, "items": "写｜画｜拍｜录" } },
+    { "id": "quarter", "name": "右上角扇", "values": { "spread": 90, "startAngle": -90, "items": "新建｜上传｜分享", "petal": "#f472b6", "gap": 40 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Animata · Flower Menu", "url": "https://animata.design/docs/fabs/flower-menu", "license": "MIT（思路参考，代码自写）" }
+}

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模糊色团</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-size: 340px;        /* 色团大小 */
+    --mt-blur: 64px;         /* 模糊半径 */
+    --mt-opacity: 0.55;      /* 色团不透明度 */
+    --mt-speed: 9s;          /* 一轮漂移的时长 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 几团大色块：极大的 blur 把方块糊成柔光团；各自按不同节奏放大缩小、来回漂 */
+  .mt-blobs { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+  .mt-blob {
+    position: absolute; left: var(--x); top: var(--y); width: var(--mt-size); height: var(--mt-size); border-radius: 30%;
+    background: var(--c); opacity: var(--mt-opacity); filter: blur(var(--mt-blur)); mix-blend-mode: screen;
+    transform: translate(-50%, -50%);
+    animation: mt-pop var(--mt-speed) ease-in-out infinite alternate; animation-delay: var(--delay);
+  }
+  @keyframes mt-pop {
+    0%   { transform: translate(-50%, -50%) scale(1) translate(0, 0); }
+    33%  { transform: translate(-50%, -50%) scale(1.2) translate(6%, -8%); }
+    66%  { transform: translate(-50%, -50%) scale(0.85) translate(-8%, 6%); }
+    100% { transform: translate(-50%, -50%) scale(1.1) translate(4%, 4%); }
+  }
+  .mt-title { position: relative; margin: 0; padding: 0 24px; text-align: center; color: var(--mt-color); font-size: clamp(28px, 4.5vw, 52px); font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
+  .mt-title small { display: block; margin-top: 10px; font-size: 0.38em; font-weight: 400; opacity: 0.6; letter-spacing: 0; }
+  @media (prefers-reduced-motion: reduce) { .mt-blob { animation: none; } }
+</style>
+</head>
+<body>
+<div class="mt-blobs" id="mtBlobs" aria-hidden="true"></div>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    title: "最省事的氛围背景",              // 标题
+    sub: "几团模糊的颜色，慢慢呼吸、慢慢漂",  // 副标题
+    colors: ["#60a5fa", "#c084fc", "#f472b6"], // 色团颜色（每色一团）
+    spread: 0.7,          // 色团散开范围（0 全部叠在中心 → 1 铺满）
+  };
+  const wrap = document.getElementById('mtBlobs'), title = document.getElementById('mtTitle');
+  title.textContent = CONFIG.title; if (CONFIG.sub) { const s = document.createElement('small'); s.textContent = CONFIG.sub; title.appendChild(s); }
+  // 色团围着中心均匀摆一圈，各自不同的动画延迟让节奏错开
+  CONFIG.colors.forEach((c, i) => {
+    const b = document.createElement('div'); b.className = 'mt-blob';
+    const a = (i / CONFIG.colors.length) * Math.PI * 2 - Math.PI / 2;
+    b.style.setProperty('--x', (50 + Math.cos(a) * 28 * CONFIG.spread) + '%'); b.style.setProperty('--y', (50 + Math.sin(a) * 30 * CONFIG.spread) + '%');
+    b.style.setProperty('--c', c); b.style.setProperty('--delay', (-i * 3.1) + 's');
+    wrap.appendChild(b);
+  });
+  document.addEventListener('visibilitychange', () => wrap.querySelectorAll('.mt-blob').forEach(b => b.style.animationPlayState = document.hidden ? 'paused' : 'running'));
+</script>
+</body>
+</html>

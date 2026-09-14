@@ -1,0 +1,27 @@
+{
+  "slug": "boids-flock",
+  "name": "群鸟聚散",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["群体", "粒子", "boids", "鸟群"],
+  "summary": "上百个小三角像鸟群一样自发地结队、转向、分合，鼠标靠近整群就散开绕行，经典的 boids 群体算法",
+  "params": [
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "一群会躲开你的鸟", "maxLength": 30 },
+    { "key": "sub", "label": "副标题", "type": "text", "target": "config", "default": "分离、对齐、聚合三条规则，鼠标是猛禽", "maxLength": 40 },
+    { "key": "count", "label": "数量", "type": "range", "target": "config", "min": 30, "max": 300, "step": 10, "default": 120 },
+    { "key": "colors", "label": "鸟的颜色", "type": "colors", "target": "config", "min": 1, "max": 6, "default": ["#f5f5f4", "#fde68a", "#93c5fd", "#fca5a5"] },
+    { "key": "perception", "label": "感知半径", "type": "range", "target": "config", "min": 16, "max": 100, "step": 2, "default": 36, "unit": "px", "help": "越大群越大越整齐" },
+    { "key": "maxSpeed", "label": "最高速度", "type": "range", "target": "config", "min": 0.6, "max": 5, "step": 0.2, "default": 1.8 },
+    { "key": "cursorRadius", "label": "鼠标驱散半径", "type": "range", "target": "config", "min": 0, "max": 250, "step": 10, "default": 90, "unit": "px" },
+    { "key": "shape", "label": "形状", "type": "select", "target": "config", "options": [{ "value": "triangle", "label": "小三角" }, { "value": "dot", "label": "圆点" }], "default": "triangle" },
+    { "key": "trail", "label": "拖尾", "type": "range", "target": "config", "min": 0.03, "max": 1, "step": 0.01, "default": 0.13, "help": "越小尾越长，1 为无拖尾" },
+    { "key": "color", "label": "标题颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "swarm", "name": "密集蜂群", "values": { "count": 300, "shape": "dot", "perception": 24, "maxSpeed": 2.6, "colors": ["#fde68a", "#fbbf24"] } },
+    { "id": "calm", "name": "疏朗慢飞", "values": { "count": 50, "perception": 80, "maxSpeed": 1, "trail": 0.06 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Animata · Boids Ecosystem", "url": "https://animata.design/docs/background/boids-ecosystem", "license": "MIT（思路参考，代码自写）" }
+}

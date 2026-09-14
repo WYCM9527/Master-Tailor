@@ -1,0 +1,25 @@
+{
+  "slug": "roll-hover-text",
+  "name": "悬停滚字",
+  "category": "text",
+  "sub": "hover",
+  "tags": ["悬停", "滚动", "菜单", "逐字"],
+  "summary": "菜单文字悬停时每个字向上滚出、同一个字换了颜色从下面滚上来接住，一个字比一个字晚一点，像一排小翻牌",
+  "params": [
+    { "key": "links", "label": "链接文字", "type": "text", "target": "config", "default": "首页｜作品集｜关于我们｜联系方式", "maxLength": 60, "help": "用「｜」分隔" },
+    { "key": "stagger", "label": "错开方式", "type": "select", "target": "config", "options": [{ "value": "character", "label": "按字" }, { "value": "word", "label": "按词" }, { "value": "none", "label": "整体一起" }], "default": "character" },
+    { "key": "staggerMs", "label": "相邻延迟", "type": "range", "target": "config", "min": 0, "max": 120, "step": 4, "default": 32, "displayUnit": " 毫秒" },
+    { "key": "duration", "label": "滚动时长", "type": "range", "target": "css", "min": 0.1, "max": 0.8, "step": 0.05, "default": 0.25, "unit": "s", "displayUnit": " 秒" },
+    { "key": "accent", "label": "滚上来的颜色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 14, "max": 48, "step": 2, "default": 22, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "逐字", "values": {} },
+    { "id": "whole", "name": "整体同色", "values": { "stagger": "none", "accent": "#f2f3f8", "duration": 0.35 } },
+    { "id": "big", "name": "大字慢滚", "values": { "fontSize": 40, "staggerMs": 60, "duration": 0.45, "accent": "#f472b6" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Animata · Roll Text", "url": "https://animata.design/docs/text/roll-text", "license": "MIT（思路参考，代码自写）" }
+}

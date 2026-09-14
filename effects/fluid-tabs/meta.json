@@ -1,0 +1,27 @@
+{
+  "slug": "fluid-tabs",
+  "name": "液态标签页",
+  "category": "nav",
+  "sub": "click",
+  "tags": ["标签页", "指示块", "弹簧", "液态"],
+  "summary": "胶囊标签条上的活动指示块像一滴液体，切换时先拉长、滑到新标签再收拢定住，带弹簧的回弹感；可加粘液滤镜",
+  "params": [
+    { "key": "tabs", "label": "标签", "type": "text", "target": "config", "default": "概览｜效果｜参数｜代码｜设置", "maxLength": 60, "help": "用「｜」分隔" },
+    { "key": "stiffness", "label": "弹簧刚度", "type": "range", "target": "config", "min": 100, "max": 800, "step": 20, "default": 380 },
+    { "key": "damping", "label": "弹簧阻尼", "type": "range", "target": "config", "min": 10, "max": 60, "step": 2, "default": 34, "help": "越小回弹越明显" },
+    { "key": "stretch", "label": "途中拉长", "type": "toggle", "target": "config", "default": true },
+    { "key": "gooey", "label": "粘液滤镜", "type": "toggle", "target": "config", "default": false, "help": "会略微模糊文字" },
+    { "key": "pill", "label": "指示块颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "track", "label": "标签条底色", "type": "color", "target": "css", "default": "#16161d" },
+    { "key": "active", "label": "活动项文字色", "type": "color", "target": "css", "default": "#0a0a0f" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 12, "max": 20, "step": 1, "default": 14, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "bouncy", "name": "弹跳", "values": { "stiffness": 500, "damping": 16 } },
+    { "id": "goo", "name": "粘液蓝", "values": { "gooey": true, "pill": "#3b82f6", "active": "#ffffff", "stiffness": 260, "damping": 26 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Animata · Fluid Tabs / Gooey Tabs", "url": "https://animata.design/docs/tabs/fluid-tabs", "license": "MIT（思路参考，代码自写）" }
+}

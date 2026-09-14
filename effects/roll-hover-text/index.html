@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>悬停滚字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 滚上来的那一层的颜色 */
+    --mt-duration: 0.25s;    /* 每个单位滚动时长 */
+    --mt-fontSize: 22px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-menu { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+  /* 每个链接：1em 高的裁切窗口，里面两层同样的文字上下叠着；悬停时整体上移一层 */
+  .mt-link { display: inline-flex; gap: 0; padding: 6px 0; text-decoration: none; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 600; letter-spacing: -0.01em; line-height: 1; cursor: pointer; }
+  .mt-unit { position: relative; display: inline-block; height: 1em; overflow: hidden; vertical-align: top; }
+  .mt-unit span { display: block; height: 1em; line-height: 1; transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1); transition-delay: var(--d, 0s); white-space: pre; }
+  .mt-unit span:last-child { color: var(--mt-accent); }
+  .mt-link:hover .mt-unit span, .mt-link:focus-visible .mt-unit span, .mt-link.demo .mt-unit span { transform: translateY(-100%); }
+  .mt-link:focus-visible { outline: none; } .mt-link:focus-visible .mt-unit { text-decoration: underline; }
+  @media (prefers-reduced-motion: reduce) { .mt-unit span { transition: none; } }
+</style>
+</head>
+<body>
+<nav class="mt-menu" id="mtMenu" aria-label="示例菜单"></nav>
+<script>
+  const CONFIG = {
+    links: "首页｜作品集｜关于我们｜联系方式",   // 链接文字，用「｜」分隔
+    stagger: "character",   // 错开方式：none 整体一起滚 / word 按词（空格分） / character 按字
+    staggerMs: 32,          // 相邻单位的延迟（毫秒）
+  };
+  const menu = document.getElementById('mtMenu');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 每个链接拆成若干「单位」，每个单位是一个裁切窗口 + 两层文字
+  CONFIG.links.split('｜').map(s => s.trim()).filter(Boolean).forEach((text) => {
+    const a = document.createElement('a'); a.className = 'mt-link'; a.href = '#'; a.setAttribute('aria-label', text); a.addEventListener('click', e => e.preventDefault());
+    const units = CONFIG.stagger === 'none' ? [text] : CONFIG.stagger === 'word' ? text.split(/(\s+)/).filter(Boolean) : [...text];
+    units.forEach((u, i) => {
+      const w = document.createElement('span'); w.className = 'mt-unit'; w.setAttribute('aria-hidden', 'true'); w.style.setProperty('--d', (i * CONFIG.staggerMs) + 'ms');
+      w.innerHTML = '<span></span><span></span>'; w.children[0].textContent = u; w.children[1].textContent = u; a.appendChild(w);
+    });
+    menu.appendChild(a);
+  });
+  let userTook = false; menu.addEventListener('pointerenter', () => (userTook = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时逐个链接示范滚动
+  if (!reduceMotion) {
+    let i = 0; const links = menu.querySelectorAll('.mt-link');
+    setInterval(() => { if (userTook || document.hidden) return; links.forEach(l => l.classList.remove('demo')); links[i % links.length].classList.add('demo'); i++; }, 1300);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

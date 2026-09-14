@@ -1,0 +1,26 @@
+{
+  "slug": "fanned-photo-reveal",
+  "name": "照片扇开揭示",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["照片", "相框", "进场", "Airbnb 风"],
+  "summary": "几张白边照片像随手摊在桌上，各有倾角、层层叠压，进场时从中心依次弹出带过冲；悬停哪张它就转正浮到最上面",
+  "params": [
+    { "key": "slides", "label": "照片", "type": "images", "target": "config", "min": 3, "max": 8, "captions": false, "default": [{"src": "/samples/sample-1.webp", "caption": ""}, {"src": "/samples/sample-2.webp", "caption": ""}, {"src": "/samples/sample-3.webp", "caption": ""}, {"src": "/samples/sample-4.webp", "caption": ""}, {"src": "/samples/sample-5.webp", "caption": ""}] },
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "这次旅行的照片", "maxLength": 24 },
+    { "key": "tilt", "label": "最大倾角", "type": "range", "target": "config", "min": 0, "max": 30, "step": 1, "default": 12, "unit": "deg", "displayUnit": "°" },
+    { "key": "stagger", "label": "进场间隔", "type": "range", "target": "config", "min": 0, "max": 300, "step": 20, "default": 100, "displayUnit": " 毫秒" },
+    { "key": "loop", "label": "演示循环", "type": "toggle", "target": "config", "default": true },
+    { "key": "size", "label": "照片边长", "type": "range", "target": "css", "min": 90, "max": 260, "step": 10, "default": 150, "unit": "px" },
+    { "key": "overlap", "label": "重叠量", "type": "range", "target": "css", "min": 0, "max": 120, "step": 4, "default": 56, "unit": "px" },
+    { "key": "frameWidth", "label": "相框宽度", "type": "range", "target": "css", "min": 0, "max": 14, "step": 1, "default": 6, "unit": "px" },
+    { "key": "frame", "label": "相框颜色", "type": "color", "target": "css", "default": "#ffffff" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "polaroid", "name": "拍立得", "values": { "frameWidth": 10, "frame": "#f5f0e6", "tilt": 20, "size": 180, "overlap": 70 } },
+    { "id": "neat", "name": "整齐排开", "values": { "tilt": 0, "overlap": 16, "frameWidth": 2 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Animata · Images Reveal", "url": "https://animata.design/docs/image/images-reveal", "license": "MIT（思路参考，代码自写）" }
+}

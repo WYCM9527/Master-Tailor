@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>花瓣展开菜单</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-main: #f2f3f8;      /* 中心按钮颜色 */
+    --mt-petal: #7c9cff;     /* 花瓣按钮颜色 */
+    --mt-icon: #0a0a0f;      /* 图标颜色 */
+    --mt-size: 56px;         /* 中心按钮直径 */
+    --mt-petalSize: 44px;    /* 花瓣按钮直径 */
+    --mt-duration: 0.28s;    /* 展开时长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+
+  .mt-fab { position: relative; width: calc(var(--radius) * 2 + var(--mt-petalSize) + 8px); height: calc(var(--radius) * 2 + var(--mt-petalSize) + 8px); }
+  /* 中心按钮：一个加号，展开时转 45° 变叉 */
+  .mt-main {
+    position: absolute; inset: 0; margin: auto; width: var(--mt-size); height: var(--mt-size); border-radius: 50%; border: 0; cursor: pointer; z-index: 2;
+    background: var(--mt-main); color: var(--mt-icon); display: grid; place-items: center; transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+  }
+  .mt-main svg { width: 40%; height: 40%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+  .mt-fab.open .mt-main { transform: rotate(45deg); }
+  /* 花瓣：都藏在中心，展开时各自沿自己的角度「旋转 + 外推」到轨道上；图标反向旋转保持正立 */
+  .mt-petal {
+    position: absolute; inset: 0; margin: auto; width: var(--mt-petalSize); height: var(--mt-petalSize); list-style: none; z-index: 1;
+    transform: rotate(0deg) translateX(0) scale(0.72); opacity: 0;
+    transition: transform var(--mt-duration) cubic-bezier(0.34, 1.4, 0.64, 1), opacity calc(var(--mt-duration) * 0.6);
+    transition-delay: var(--close-delay);
+  }
+  .mt-fab.open .mt-petal { transform: rotate(var(--angle)) translateX(calc(var(--radius) * -1)) scale(1); opacity: 1; transition-delay: var(--open-delay); }
+  .mt-petal button {
+    width: 100%; height: 100%; border-radius: 50%; border: 0; cursor: pointer; background: var(--mt-petal); color: var(--mt-icon);
+    display: grid; place-items: center; transform: rotate(calc(var(--angle) * -1)); transition: transform 0.15s;
+    font: 600 11px -apple-system, "PingFang SC", sans-serif;
+  }
+  .mt-petal button:hover { transform: rotate(calc(var(--angle) * -1)) scale(1.1); }
+  @media (prefers-reduced-motion: reduce) { .mt-main, .mt-petal { transition: none; } }
+</style>
+</head>
+<body>
+<nav class="mt-fab" id="mtFab" aria-label="花瓣菜单">
+  <button type="button" class="mt-main" id="mtMain" aria-expanded="false" aria-label="展开菜单"><svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg></button>
+  <ul id="mtPetals" style="margin:0;padding:0"></ul>
+</nav>
+<script>
+  const CONFIG = {
+    items: "写｜画｜拍｜录｜发",    // 花瓣按钮文字，用「｜」分隔
+    gap: 28,                        // 花瓣轨道离中心按钮的距离（px）
+    spread: 360,                    // 展开的总角度（360 为整圈，180 为半圆）
+    startAngle: -90,                // 起始角度（-90 为正上方）
+  };
+  const fab = document.getElementById('mtFab'), main = document.getElementById('mtMain'), list = document.getElementById('mtPetals');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const items = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
+  const petal = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-petalSize')) || 44;
+  const size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-size')) || 56;
+  fab.style.setProperty('--radius', (size / 2 + petal / 2 + CONFIG.gap) + 'px');
+  // 角度均分：整圈时首尾不重叠，半圆等则含两端
+  const n = items.length, full = CONFIG.spread >= 360;
+  items.forEach((label, i) => {
+    const li = document.createElement('li'); li.className = 'mt-petal';
+    const angle = CONFIG.startAngle + 180 + (full ? i * 360 / n : i * CONFIG.spread / Math.max(1, n - 1));   // translateX(-r) 指向左（180°），所以加 180° 让起点落在 startAngle 方向
+    li.style.setProperty('--angle', angle + 'deg');
+    li.style.setProperty('--open-delay', (i * 35) + 'ms'); li.style.setProperty('--close-delay', ((n - 1 - i) * 25) + 'ms');
+    const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('aria-label', label); b.tabIndex = -1;
+    b.addEventListener('click', () => setOpen(false));
+    li.appendChild(b); list.appendChild(li);
+  });
+  let open = false, userTook = false;
+  function setOpen(v) { open = v; fab.classList.toggle('open', open); main.setAttribute('aria-expanded', String(open)); main.setAttribute('aria-label', open ? '收起菜单' : '展开菜单'); list.querySelectorAll('button').forEach(b => (b.tabIndex = open ? 0 : -1)); }
+  main.addEventListener('click', () => { userTook = true; setOpen(!open); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) setOpen(false); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动开合
+  if (!reduceMotion) { setTimeout(() => { if (!userTook) setOpen(true); }, 600); setInterval(() => { if (!userTook && !document.hidden) setOpen(!open); }, 2200); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

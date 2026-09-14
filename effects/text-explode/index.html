@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文字炸裂</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 56px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+  .mt-text { margin: 0; display: inline-flex; font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 800; letter-spacing: -0.02em; color: var(--mt-color); cursor: pointer; user-select: none; white-space: pre; }
+  .mt-text span { display: inline-block; will-change: transform, opacity; }
+  .mt-hint { position: fixed; bottom: 24px; left: 0; right: 0; text-align: center; font: 13px var(--mt-font); color: var(--mt-color); opacity: 0.4; }
+</style>
+</head>
+<body>
+<h1 class="mt-text" id="mtText" role="button" tabindex="0" aria-label="点击让文字炸开"></h1>
+<div class="mt-hint">点一下文字</div>
+<script>
+  const CONFIG = {
+    text: "砰！",          // 文字
+    trigger: "loop",       // 触发：loop 自动循环 / click 点击 / hover 悬停
+    power: 1,              // 炸开的力度
+    duration: 1.1,         // 炸开过程时长（秒）
+    gap: 1.6,              // 循环模式下两次之间的停顿（秒）
+  };
+  const el = document.getElementById('mtText');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const chars = [...CONFIG.text].map(ch => { const s = document.createElement('span'); s.textContent = ch; el.appendChild(s); return s; });
+  let playing = false, userTook = false;
+  // 三段：先整体缩紧、字符抖动（蓄力）→ 每个字符沿各自方向飞出、旋转、放大、淡出 → 从下方轻轻落回原位
+  async function explode() {
+    if (playing || reduceMotion) return; playing = true;
+    const n = chars.length, D = CONFIG.duration * 1000;
+    const shrink = el.animate([{ transform: 'scale(1)', letterSpacing: '0px' }, { transform: 'scale(0.82)', letterSpacing: '-0.12em' }], { duration: D * 0.28, easing: 'ease-in', fill: 'forwards' });
+    const jitters = chars.map(c => c.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${-3 + Math.random() * 6}px,${-2 + Math.random() * 4}px)` }, { transform: `translate(${3 - Math.random() * 6}px,${2 - Math.random() * 4}px)` }, { transform: 'translate(0,0)' }], { duration: D * 0.28, easing: 'ease-in-out' }));
+    await Promise.all([shrink.finished, ...jitters.map(a => a.finished)]);
+    shrink.cancel();
+    const bursts = chars.map((c, i) => {
+      const dir = Math.random() > 0.5 ? 1 : -1, x = (20 + Math.random() * 60) * n * 0.5 * dir * CONFIG.power, ang = n > 1 ? (i / (n - 1)) * Math.PI : Math.PI / 2;
+      const y = -Math.sin(ang) * (40 + Math.random() * 120) * CONFIG.power, rot = Math.random() * 360 * dir, sc = 1.2 + Math.random() * 1.6;
+      return c.animate([
+        { transform: 'translate(0,0) rotate(0) scale(0.9)', opacity: 1 },
+        { transform: `translate(${x * 0.5}px,${y}px) rotate(${rot * 0.4}deg) scale(1.2)`, opacity: 0.85, offset: 0.35 },
+        { transform: `translate(${x * 0.8}px,${y * 0.2}px) rotate(${rot * 0.8}deg) scale(${sc})`, opacity: 0.4, offset: 0.7 },
+        { transform: `translate(${x}px,${Math.abs(y) * 0.6}px) rotate(${rot}deg) scale(${sc * 1.1})`, opacity: 0 },
+      ], { duration: D * 0.72, easing: 'cubic-bezier(0.2, 0.6, 0.4, 1)', fill: 'forwards' });
+    });
+    await Promise.all(bursts.map(a => a.finished));
+    bursts.forEach(a => a.cancel());
+    // 落回：整体从下方 50px 浮回
+    const back = el.animate([{ transform: 'translateY(50px)', opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }], { duration: 500, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+    await back.finished; playing = false;
+  }
+  if (CONFIG.trigger === 'click') { el.addEventListener('click', () => { userTook = true; explode(); }); el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); explode(); } }); }
+  if (CONFIG.trigger === 'hover') el.addEventListener('pointerenter', () => { userTook = true; explode(); });
+  if (CONFIG.trigger === 'loop') { document.querySelector('.mt-hint').hidden = true; el.addEventListener('click', explode); }
+
+  /* @mt:thumb-start */
+  // 演示：循环模式自动炸；其他模式没人碰时也每隔一阵示范一次
+  if (!reduceMotion) {
+    setTimeout(explode, 700);
+    setInterval(() => { if (document.hidden || playing) return; if (CONFIG.trigger === 'loop' || !userTook) explode(); }, (CONFIG.duration + CONFIG.gap) * 1000 + 500);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>液态标签页</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-track: #16161d;     /* 标签条底色 */
+    --mt-pill: #f2f3f8;      /* 活动指示块颜色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-active: #0a0a0f;    /* 活动项文字颜色 */
+    --mt-fontSize: 14px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-tabs { position: relative; display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--mt-track); border: 1px solid rgba(255, 255, 255, 0.08); }
+  /* 指示块：一个绝对定位的胶囊，用弹簧追到活动标签的位置与宽度；拉伸模式下路上会先变宽再收窄 */
+  .mt-pill { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; border-radius: 999px; background: var(--mt-pill); will-change: left, width; }
+  .mt-tabs.gooey { filter: url(#mtGoo); }
+  .mt-tab {
+    position: relative; z-index: 1; padding: 9px 18px; border: 0; border-radius: 999px; background: transparent; cursor: pointer;
+    color: var(--mt-color); font: inherit; font-size: var(--mt-fontSize); font-weight: 600; white-space: nowrap; transition: color 0.25s, transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); transform: scale(0.98);
+  }
+  .mt-tab[aria-selected="true"] { color: var(--mt-active); transform: scale(1); }
+  .mt-tab:focus-visible { outline: 2px solid var(--mt-pill); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="mtGoo"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="b"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -12"/></filter></defs></svg>
+<nav class="mt-tabs" id="mtTabs" aria-label="标签页"><div class="mt-pill" id="mtPill" aria-hidden="true"></div><div role="tablist" id="mtList" style="display:contents"></div></nav>
+<script>
+  const CONFIG = {
+    tabs: "概览｜效果｜参数｜代码｜设置",   // 标签，用「｜」分隔
+    stiffness: 380,      // 弹簧刚度（越大越快）
+    damping: 34,         // 弹簧阻尼（越小越弹）
+    stretch: true,       // 移动途中指示块拉长（液态感）
+    gooey: false,        // 粘液滤镜：指示块像果冻一样带圆润的融合边（会略微模糊文字）
+  };
+  const tabsEl = document.getElementById('mtTabs'), list = document.getElementById('mtList'), pill = document.getElementById('mtPill');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (CONFIG.gooey) tabsEl.classList.add('gooey');
+  const labels = CONFIG.tabs.split('｜').map(s => s.trim()).filter(Boolean);
+  const btns = labels.map((t, i) => { const b = document.createElement('button'); b.className = 'mt-tab'; b.type = 'button'; b.role = 'tab'; b.textContent = t; b.setAttribute('aria-selected', i === 0 ? 'true' : 'false'); b.tabIndex = i === 0 ? 0 : -1; list.appendChild(b); return b; });
+  let active = 0, userTook = false;
+  // 弹簧状态：位置与宽度各一套
+  const s = { x: 0, vx: 0, w: 0, vw: 0 };
+  const target = () => { const r = btns[active].getBoundingClientRect(), p = tabsEl.getBoundingClientRect(); return { x: r.left - p.left, w: r.width }; };
+  { const t = target(); s.x = t.x; s.w = t.w; }
+  function select(i) { active = (i + btns.length) % btns.length; btns.forEach((b, k) => { b.setAttribute('aria-selected', String(k === active)); b.tabIndex = k === active ? 0 : -1; }); btns[active].focus({ preventScroll: true }); }
+  btns.forEach((b, i) => b.addEventListener('click', () => { userTook = true; select(i); }));
+  list.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') select(active + 1); if (e.key === 'ArrowLeft') select(active - 1); if (e.key === 'Home') select(0); if (e.key === 'End') select(btns.length - 1); });
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.033, (now - last) / 1000); last = now;
+    if (document.hidden) return;
+    const t = target();
+    if (reduceMotion) { s.x = t.x; s.w = t.w; }
+    else {
+      // 半隐式欧拉弹簧：a = -k(x - 目标) - c v；宽度目标在拉伸模式下加上「起点到终点的距离」的一部分
+      const stretchW = CONFIG.stretch ? t.w + Math.min(Math.abs(t.x - s.x) * 0.9, t.w * 1.2) : t.w;
+      s.vx += (-CONFIG.stiffness * (s.x - t.x) - CONFIG.damping * s.vx) * dt; s.x += s.vx * dt;
+      s.vw += (-CONFIG.stiffness * (s.w - stretchW) - CONFIG.damping * s.vw) * dt; s.w += s.vw * dt;
+    }
+    pill.style.left = s.x + 'px'; pill.style.width = s.w + 'px';
+  }
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动轮着选
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) select(active + 1); }, 1500);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

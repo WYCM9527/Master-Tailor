@@ -1,0 +1,30 @@
+{
+  "slug": "hover-effects-set",
+  "name": "悬停效果合集",
+  "category": "button",
+  "sub": "hover",
+  "tags": ["悬停", "按钮", "合集", "纯 CSS"],
+  "summary": "八种最常用的按钮悬停效果放在一起：放大、上浮、摇摆、嗡鸣、向右填充、中心下划线、百叶窗、翘角，纯 CSS，选一种就能用",
+  "params": [
+    { "key": "effect", "label": "显示哪种", "type": "select", "target": "config", "options": [
+      { "value": "all", "label": "八种各一颗" }, { "value": "grow", "label": "放大" }, { "value": "float", "label": "上浮" }, { "value": "wobble", "label": "摇摆" }, { "value": "buzz", "label": "嗡鸣" },
+      { "value": "sweep", "label": "向右填充" }, { "value": "underline", "label": "中心下划线" }, { "value": "shutter", "label": "百叶窗" }, { "value": "curl", "label": "翘角" }
+    ], "default": "all" },
+    { "key": "label", "label": "按钮文字", "type": "text", "target": "config", "default": "悬停试试", "maxLength": 12, "help": "只在单一效果时生效" },
+    { "key": "duration", "label": "过渡时长", "type": "range", "target": "css", "min": 0.1, "max": 0.8, "step": 0.05, "default": 0.3, "unit": "s", "displayUnit": " 秒" },
+    { "key": "strength", "label": "强度", "type": "range", "target": "css", "min": 0.5, "max": 2, "step": 0.1, "default": 1 },
+    { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "btnBg", "label": "按钮底色", "type": "color", "target": "css", "default": "#16161d" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "radius", "label": "圆角", "type": "range", "target": "css", "min": 0, "max": 30, "step": 2, "default": 10, "unit": "px" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 12, "max": 22, "step": 1, "default": 15, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "八种全览", "values": {} },
+    { "id": "sweep", "name": "只要填充", "values": { "effect": "sweep", "label": "立即购买", "accent": "#22c55e", "radius": 30 } },
+    { "id": "float", "name": "只要上浮", "values": { "effect": "float", "label": "了解更多", "strength": 1.5, "duration": 0.2 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Hover.css 经典悬停效果", "url": "https://ianlunn.github.io/Hover/", "license": "MIT（思路参考，代码自写）" }
+}

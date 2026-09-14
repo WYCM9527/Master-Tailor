@@ -1,0 +1,26 @@
+{
+  "slug": "blurry-blobs",
+  "name": "模糊色团",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["色团", "模糊", "氛围", "纯 CSS"],
+  "summary": "三团被大幅模糊的颜色在深色底上缓慢呼吸、漂移、彼此叠出新色，几行 CSS 就有的柔光氛围背景，几乎不耗性能",
+  "params": [
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "最省事的氛围背景", "maxLength": 30 },
+    { "key": "sub", "label": "副标题", "type": "text", "target": "config", "default": "几团模糊的颜色，慢慢呼吸、慢慢漂", "maxLength": 40 },
+    { "key": "colors", "label": "色团颜色", "type": "colors", "target": "config", "min": 1, "max": 6, "default": ["#60a5fa", "#c084fc", "#f472b6"] },
+    { "key": "spread", "label": "散开范围", "type": "range", "target": "config", "min": 0, "max": 1.4, "step": 0.1, "default": 0.7 },
+    { "key": "size", "label": "色团大小", "type": "range", "target": "css", "min": 160, "max": 700, "step": 20, "default": 340, "unit": "px" },
+    { "key": "blur", "label": "模糊半径", "type": "range", "target": "css", "min": 20, "max": 140, "step": 4, "default": 64, "unit": "px" },
+    { "key": "opacity", "label": "不透明度", "type": "range", "target": "css", "min": 0.15, "max": 1, "step": 0.05, "default": 0.55 },
+    { "key": "speed", "label": "一轮时长", "type": "range", "target": "css", "min": 3, "max": 25, "step": 1, "default": 9, "unit": "s", "displayUnit": " 秒" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "蓝紫粉", "values": {} },
+    { "id": "sunset", "name": "日落", "values": { "colors": ["#fb923c", "#f43f5e", "#facc15"], "opacity": 0.5, "size": 420 } },
+    { "id": "mint", "name": "薄荷单团", "values": { "colors": ["#34d399"], "spread": 0, "size": 600, "blur": 120, "opacity": 0.4 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Animata · Blurry Blob", "url": "https://animata.design/docs/background/blurry-blob", "license": "MIT（思路参考，代码自写）" }
+}

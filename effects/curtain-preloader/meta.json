@@ -1,0 +1,27 @@
+{
+  "slug": "curtain-preloader",
+  "name": "揭幕预加载",
+  "category": "loading",
+  "sub": "idle",
+  "tags": ["预加载", "幕布", "揭幕", "进场"],
+  "summary": "整页先被幕布盖住、中间走一条进度线，加载到 100% 时幕布上下对开（或一条条竖幕从中间向两侧抽走），正文从后面浮现",
+  "params": [
+    { "key": "title", "label": "正文标题", "type": "text", "target": "config", "default": "幕布拉开", "maxLength": 20 },
+    { "key": "sub", "label": "正文副标题", "type": "text", "target": "config", "default": "预加载走完，页面从幕布后面露出来", "maxLength": 40 },
+    { "key": "style", "label": "幕布样式", "type": "select", "target": "config", "options": [{ "value": "split", "label": "上下对开" }, { "value": "tiles", "label": "竖条抽走" }], "default": "split" },
+    { "key": "loadTime", "label": "模拟加载时长", "type": "range", "target": "config", "min": 0.5, "max": 4, "step": 0.1, "default": 1.6, "displayUnit": " 秒" },
+    { "key": "tileWidth", "label": "竖条宽度", "type": "range", "target": "config", "min": 24, "max": 160, "step": 8, "default": 64, "unit": "px" },
+    { "key": "stagger", "label": "竖条延迟", "type": "range", "target": "config", "min": 0, "max": 150, "step": 10, "default": 50, "displayUnit": " 毫秒" },
+    { "key": "loop", "label": "演示循环", "type": "toggle", "target": "config", "default": true },
+    { "key": "duration", "label": "抽走时长", "type": "range", "target": "css", "min": 0.3, "max": 1.5, "step": 0.1, "default": 0.7, "unit": "s", "displayUnit": " 秒" },
+    { "key": "curtain", "label": "幕布颜色", "type": "color", "target": "css", "default": "#16161d" },
+    { "key": "accent", "label": "进度颜色", "type": "color", "target": "css", "default": "#7c9cff" }
+  ],
+  "presets": [
+    { "id": "default", "name": "上下对开", "values": {} },
+    { "id": "tiles", "name": "竖条抽走", "values": { "style": "tiles", "tileWidth": 48, "stagger": 40 } },
+    { "id": "light", "name": "浅色幕布", "values": { "curtain": "#f2f3f8", "accent": "#111118", "loadTime": 1 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Animata · Split Reveal / Vertical Tiles", "url": "https://animata.design/docs/preloader/split-reveal", "license": "MIT（思路参考，代码自写）" }
+}

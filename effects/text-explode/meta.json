@@ -1,0 +1,25 @@
+{
+  "slug": "text-explode",
+  "name": "文字炸裂",
+  "category": "text",
+  "sub": "click",
+  "tags": ["炸开", "字符", "iMessage", "点击"],
+  "summary": "一句话先紧缩抖动蓄力，然后每个字朝不同方向飞出、翻滚、消散，再从下方轻轻落回原位，像 iMessage 的「砰」",
+  "params": [
+    { "key": "text", "label": "文字", "type": "text", "target": "config", "default": "砰！", "maxLength": 12 },
+    { "key": "trigger", "label": "触发方式", "type": "select", "target": "config", "options": [{ "value": "loop", "label": "自动循环" }, { "value": "click", "label": "点击" }, { "value": "hover", "label": "悬停" }], "default": "loop" },
+    { "key": "power", "label": "力度", "type": "range", "target": "config", "min": 0.4, "max": 2.5, "step": 0.1, "default": 1 },
+    { "key": "duration", "label": "炸开时长", "type": "range", "target": "config", "min": 0.5, "max": 2.5, "step": 0.1, "default": 1.1, "displayUnit": " 秒" },
+    { "key": "gap", "label": "循环停顿", "type": "range", "target": "config", "min": 0.5, "max": 5, "step": 0.1, "default": 1.6, "displayUnit": " 秒" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 28, "max": 120, "step": 4, "default": 56, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "word", "name": "整句点击", "values": { "text": "点我试试", "trigger": "click", "power": 1.4 } },
+    { "id": "gentle", "name": "轻轻散开", "values": { "power": 0.5, "duration": 1.8, "color": "#fbbf24" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Animata · Text Explode (iMessage)", "url": "https://animata.design/docs/text/text-explode-imessage", "license": "MIT（思路参考，代码自写）" }
+}

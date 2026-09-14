@@ -1,0 +1,26 @@
+{
+  "slug": "door-open-image",
+  "name": "开门揭图",
+  "category": "card",
+  "sub": "idle",
+  "tags": ["揭示", "门板", "图片", "进场"],
+  "summary": "图片被两扇彩色门板盖着，中间一道细缝；门板向两侧（或上下）滑开，图片同时从放大状态缓缓缩回，像推开门看见风景",
+  "params": [
+    { "key": "photo", "label": "图片", "type": "image", "target": "config", "default": "/samples/sample-5.webp" },
+    { "key": "direction", "label": "开门方向", "type": "select", "target": "config", "options": [{ "value": "horizontal", "label": "左右对开" }, { "value": "vertical", "label": "上下对开" }], "default": "horizontal" },
+    { "key": "trigger", "label": "触发方式", "type": "select", "target": "config", "options": [{ "value": "auto", "label": "自动" }, { "value": "click", "label": "点击开合" }, { "value": "hover", "label": "悬停" }], "default": "auto" },
+    { "key": "delay", "label": "自动开门等待", "type": "range", "target": "config", "min": 0, "max": 3, "step": 0.1, "default": 0.6, "displayUnit": " 秒" },
+    { "key": "caption", "label": "说明", "type": "text", "target": "config", "default": "两扇门板向两侧滑开，图片同时从放大状态缩回原位。", "maxLength": 60 },
+    { "key": "door", "label": "门板颜色", "type": "color", "target": "css", "default": "#0ea5e9" },
+    { "key": "duration", "label": "开门时长", "type": "range", "target": "css", "min": 0.3, "max": 2, "step": 0.1, "default": 0.9, "unit": "s", "displayUnit": " 秒" },
+    { "key": "radius", "label": "圆角", "type": "range", "target": "css", "min": 0, "max": 32, "step": 2, "default": 12, "unit": "px" },
+    { "key": "width", "label": "图片宽度", "type": "range", "target": "css", "min": 200, "max": 480, "step": 20, "default": 300, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "左右对开", "values": {} },
+    { "id": "vertical", "name": "上下对开", "values": { "direction": "vertical", "door": "#f59e0b" } },
+    { "id": "hover", "name": "悬停开门", "values": { "trigger": "hover", "door": "#f2f3f8", "duration": 0.6 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Animata · Disclose Image", "url": "https://animata.design/docs/image/disclose-image", "license": "MIT（思路参考，代码自写）" }
+}

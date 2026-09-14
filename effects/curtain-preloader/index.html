@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>揭幕预加载</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-curtain: #16161d;   /* 幕布颜色 */
+    --mt-accent: #7c9cff;    /* 进度与强调色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-duration: 0.7s;     /* 幕布抽走的时长 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
+
+  /* 底下的正文页：幕布抽走后露出 */
+  .mt-page { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; }
+  .mt-page h1 { margin: 0 0 10px; font-size: clamp(32px, 6vw, 64px); letter-spacing: -0.03em; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease 0.3s, transform 0.6s ease 0.3s; }
+  .mt-page p { margin: 0; opacity: 0; font-size: 16px; transition: opacity 0.6s ease 0.5s; }
+  body.revealed .mt-page h1 { opacity: 1; transform: none; } body.revealed .mt-page p { opacity: 0.6; }
+  /* 幕布层 */
+  .mt-curtain { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+  .mt-shutter { position: absolute; left: 0; right: 0; height: 50%; background: var(--mt-curtain); transition: transform var(--mt-duration) cubic-bezier(0.45, 0, 0.55, 1); }
+  .mt-shutter.top { top: 0; } .mt-shutter.bottom { bottom: 0; }
+  body.revealed .mt-shutter.top { transform: translateY(-101%); } body.revealed .mt-shutter.bottom { transform: translateY(101%); }
+  .mt-tile { position: absolute; top: 0; height: 100%; background: var(--mt-curtain); transition: transform var(--mt-duration) cubic-bezier(0.45, 0, 0.55, 1); transition-delay: var(--d); }
+  body.revealed .mt-tile { transform: translateY(101%); }
+  /* 进度：中缝上一条细线与百分比数字 */
+  .mt-progress { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 10px; transition: opacity 0.3s; }
+  body.revealed .mt-progress { opacity: 0; }
+  .mt-track { width: 180px; height: 2px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+  .mt-fill { height: 100%; width: 0; background: var(--mt-accent); transition: width 0.12s linear; }
+  .mt-count { font-size: 13px; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; opacity: 0.8; }
+  @media (prefers-reduced-motion: reduce) { .mt-shutter, .mt-tile, .mt-page h1, .mt-page p { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-page"><div><h1 id="mtTitle"></h1><p id="mtSub"></p></div></div>
+<div class="mt-curtain" id="mtCurtain" aria-hidden="true">
+  <div class="mt-progress"><div class="mt-track"><div class="mt-fill" id="mtFill"></div></div><div class="mt-count" id="mtCount">0%</div></div>
+</div>
+<script>
+  const CONFIG = {
+    title: "幕布拉开",                       // 正文标题
+    sub: "预加载走完，页面从幕布后面露出来",   // 正文副标题
+    style: "split",      // 幕布样式：split 上下对开 / tiles 竖条依次抽走
+    loadTime: 1.6,       // 模拟加载时长（秒）
+    tileWidth: 64,       // tiles 模式下每条的宽度（px）
+    stagger: 50,         // tiles 模式下相邻条的延迟（毫秒）
+    loop: true,          // 演示循环：揭幕后停一会儿再合上重来
+  };
+  const curtain = document.getElementById('mtCurtain'), fill = document.getElementById('mtFill'), count = document.getElementById('mtCount');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title; document.getElementById('mtSub').textContent = CONFIG.sub;
+  // 建幕布：对开两片，或若干竖条（从中间向两侧依次抽走）
+  function build() {
+    curtain.querySelectorAll('.mt-shutter, .mt-tile').forEach(e => e.remove());
+    if (CONFIG.style === 'tiles') {
+      const n = Math.max(3, Math.ceil(innerWidth / CONFIG.tileWidth)), w = innerWidth / n + 1, mid = (n - 1) / 2;
+      for (let i = 0; i < n; i++) { const t = document.createElement('div'); t.className = 'mt-tile'; t.style.left = (i * innerWidth / n) + 'px'; t.style.width = w + 'px'; t.style.setProperty('--d', (Math.abs(i - mid) * CONFIG.stagger) + 'ms'); curtain.prepend(t); }
+    } else {
+      for (const side of ['top', 'bottom']) { const s = document.createElement('div'); s.className = 'mt-shutter ' + side; curtain.prepend(s); }
+    }
+  }
+  build(); addEventListener('resize', build);
+  // 模拟加载：进度数字走到 100 后揭幕
+  let timer = 0;
+  function run() {
+    document.body.classList.remove('revealed'); fill.style.width = '0'; count.textContent = '0%';
+    const t0 = performance.now();
+    (function tick(now) {
+      const k = Math.min(1, (now - t0) / (CONFIG.loadTime * 1000)), e = 1 - Math.pow(1 - k, 2);
+      fill.style.width = (e * 100) + '%'; count.textContent = Math.round(e * 100) + '%';
+      if (k < 1) requestAnimationFrame(tick);
+      else { document.body.classList.add('revealed'); if (CONFIG.loop && !reduceMotion) timer = setTimeout(() => { if (!document.hidden) run(); else timer = setTimeout(run, 2000); }, 3200); }
+    })(t0);
+  }
+  run();
+  document.addEventListener('click', () => { clearTimeout(timer); run(); });
+</script>
+</body>
+</html>

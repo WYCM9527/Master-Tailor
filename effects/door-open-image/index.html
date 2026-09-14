@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开门揭图</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-door: #0ea5e9;      /* 门板颜色 */
+    --mt-duration: 0.9s;     /* 开门时长 */
+    --mt-radius: 12px;       /* 圆角 */
+    --mt-width: 300px;       /* 图片宽度 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-wrap { text-align: center; }
+  /* 图片被两扇「门板」盖着；触发后门板各自滑出（左右或上下），露出图片 */
+  .mt-frame { position: relative; width: var(--mt-width); max-width: 88vw; aspect-ratio: 3 / 4; overflow: hidden; border-radius: var(--mt-radius); background: #1a1a22; margin: 0 auto; cursor: pointer; }
+  .mt-frame img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.12); transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mt-frame.open img { transform: scale(1); }
+  .mt-door { position: absolute; background: var(--mt-door); transition: transform var(--mt-duration) cubic-bezier(0.7, 0, 0.2, 1); }
+  .mt-frame.h .mt-door { top: 0; bottom: 0; width: 50%; } .mt-frame.h .mt-door.a { left: 0; } .mt-frame.h .mt-door.b { right: 0; }
+  .mt-frame.h.open .mt-door.a { transform: translateX(-101%); } .mt-frame.h.open .mt-door.b { transform: translateX(101%); }
+  .mt-frame.v .mt-door { left: 0; right: 0; height: 50%; } .mt-frame.v .mt-door.a { top: 0; } .mt-frame.v .mt-door.b { bottom: 0; }
+  .mt-frame.v.open .mt-door.a { transform: translateY(-101%); } .mt-frame.v.open .mt-door.b { transform: translateY(101%); }
+  /* 门缝：中间一条细亮线，开门时消失 */
+  .mt-seam { position: absolute; background: rgba(255, 255, 255, 0.35); transition: opacity 0.2s; }
+  .mt-frame.h .mt-seam { top: 0; bottom: 0; left: 50%; width: 1px; } .mt-frame.v .mt-seam { left: 0; right: 0; top: 50%; height: 1px; }
+  .mt-frame.open .mt-seam { opacity: 0; }
+  .mt-cap { margin: 16px 0 0; font-size: 14px; opacity: 0.6; }
+  @media (prefers-reduced-motion: reduce) { .mt-door, .mt-frame img { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-wrap">
+  <div class="mt-frame" id="mtFrame" role="img" aria-label="开门揭示的图片">
+    <img id="mtImg" alt="">
+    <div class="mt-door a"></div><div class="mt-door b"></div><div class="mt-seam"></div>
+  </div>
+  <p class="mt-cap" id="mtCap"></p>
+</div>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-5.webp",   // 图片
+    direction: "horizontal",           // 开门方向：horizontal 左右对开 / vertical 上下对开
+    trigger: "auto",                   // 触发：auto 加载后自动开 / click 点击开合 / hover 悬停开
+    delay: 0.6,                        // 自动模式下开门前的等待（秒）
+    caption: "两扇门板向两侧滑开，图片同时从放大状态缩回原位。",  // 说明
+  };
+  const frame = document.getElementById('mtFrame');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtImg').src = CONFIG.photo; document.getElementById('mtCap').textContent = CONFIG.caption;
+  frame.classList.add(CONFIG.direction === 'vertical' ? 'v' : 'h');
+  let userTook = false;
+  const setOpen = (v) => frame.classList.toggle('open', v);
+  if (CONFIG.trigger === 'click') frame.addEventListener('click', () => { userTook = true; setOpen(!frame.classList.contains('open')); });
+  if (CONFIG.trigger === 'hover') { frame.addEventListener('pointerenter', () => { userTook = true; setOpen(true); }); frame.addEventListener('pointerleave', () => setOpen(false)); }
+  if (CONFIG.trigger === 'auto') setTimeout(() => setOpen(true), reduceMotion ? 0 : CONFIG.delay * 1000);
+
+  /* @mt:thumb-start */
+  // 演示：没人操作时定期关上再开
+  if (!reduceMotion) setInterval(() => { if (userTook || document.hidden) return; setOpen(false); setTimeout(() => { if (!userTook) setOpen(true); }, 900); }, 3600);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

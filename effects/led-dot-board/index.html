@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LED 点阵牌</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-board: #111116;     /* 牌面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+  .mt-board { padding: 18px; border-radius: 16px; background: var(--mt-board); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6); cursor: pointer; }
+  canvas { display: block; max-width: 90vw; }
+</style>
+</head>
+<body>
+<div class="mt-board" id="mtBoard" role="img" aria-label="LED 点阵显示的文字"><canvas id="mtCanvas"></canvas></div>
+<script>
+  const CONFIG = {
+    text: "OPEN 24H",       // 显示文字（A–Z、0–9 与少量符号，小写自动转大写）
+    dot: 10,                // 每颗 LED 的间距（px）
+    lit: "#a855f7",         // 亮灯颜色
+    unlit: "#1e1e26",       // 灭灯颜色
+    scan: true,             // 定时从左到右扫过一道亮光
+    flicker: true,          // 亮灯偶尔闪动
+    hoverAll: true,         // 鼠标悬停时全部亮灯呼吸
+  };
+
+  // 5×7 点阵字库：每个字符 5 列，每列一个 7 位数（最低位是最上面一行）
+  const FONT = {
+    ' ': [0, 0, 0, 0, 0], '!': [0, 0, 0x5f, 0, 0], '-': [8, 8, 8, 8, 8], '.': [0, 0x60, 0x60, 0, 0], ':': [0, 0x36, 0x36, 0, 0], '?': [2, 1, 0x51, 9, 6],
+    '0': [0x3e, 0x51, 0x49, 0x45, 0x3e], '1': [0, 0x42, 0x7f, 0x40, 0], '2': [0x42, 0x61, 0x51, 0x49, 0x46], '3': [0x21, 0x41, 0x45, 0x4b, 0x31], '4': [0x18, 0x14, 0x12, 0x7f, 0x10],
+    '5': [0x27, 0x45, 0x45, 0x45, 0x39], '6': [0x3c, 0x4a, 0x49, 0x49, 0x30], '7': [1, 0x71, 9, 5, 3], '8': [0x36, 0x49, 0x49, 0x49, 0x36], '9': [6, 0x49, 0x49, 0x29, 0x1e],
+    A: [0x7e, 0x11, 0x11, 0x11, 0x7e], B: [0x7f, 0x49, 0x49, 0x49, 0x36], C: [0x3e, 0x41, 0x41, 0x41, 0x22], D: [0x7f, 0x41, 0x41, 0x22, 0x1c], E: [0x7f, 0x49, 0x49, 0x49, 0x41],
+    F: [0x7f, 9, 9, 9, 1], G: [0x3e, 0x41, 0x49, 0x49, 0x7a], H: [0x7f, 8, 8, 8, 0x7f], I: [0, 0x41, 0x7f, 0x41, 0], J: [0x20, 0x40, 0x41, 0x3f, 1], K: [0x7f, 8, 0x14, 0x22, 0x41],
+    L: [0x7f, 0x40, 0x40, 0x40, 0x40], M: [0x7f, 2, 0x0c, 2, 0x7f], N: [0x7f, 4, 8, 0x10, 0x7f], O: [0x3e, 0x41, 0x41, 0x41, 0x3e], P: [0x7f, 9, 9, 9, 6], Q: [0x3e, 0x41, 0x51, 0x21, 0x5e],
+    R: [0x7f, 9, 0x19, 0x29, 0x46], S: [0x46, 0x49, 0x49, 0x49, 0x31], T: [1, 1, 0x7f, 1, 1], U: [0x3f, 0x40, 0x40, 0x40, 0x3f], V: [0x1f, 0x20, 0x40, 0x20, 0x1f], W: [0x3f, 0x40, 0x38, 0x40, 0x3f],
+    X: [0x63, 0x14, 8, 0x14, 0x63], Y: [7, 8, 0x70, 8, 7], Z: [0x61, 0x51, 0x49, 0x45, 0x43],
+  };
+  const canvas = document.getElementById('mtCanvas'), ctx = canvas.getContext('2d'), board = document.getElementById('mtBoard');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  // 把文字排成点阵矩阵：每字 5 列 + 1 列间隔，四周各留 2 颗空灯
+  const chars = [...CONFIG.text.toUpperCase()].map(c => FONT[c] || FONT[' ']);
+  const cols = chars.length * 6 + 3, rows = 7 + 4;
+  const lit = new Uint8Array(cols * rows);
+  chars.forEach((glyph, ci) => glyph.forEach((col, x) => { for (let y = 0; y < 7; y++) if (col >> y & 1) lit[(y + 2) * cols + (2 + ci * 6 + x)] = 1; }));
+  const D = CONFIG.dot, W = cols * D, H = rows * D;
+  canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px'; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`; };
+  const litRgb = hexRgb(CONFIG.lit);
+  // 每颗亮灯有自己的闪动相位；扫光是一条从左到右移动的亮带
+  const phase = Float32Array.from({ length: cols * rows }, () => Math.random() * Math.PI * 2);
+  let hover = false, t = 0, scanX = -10, last = performance.now();
+  board.addEventListener('pointerenter', () => (hover = true)); board.addEventListener('pointerleave', () => (hover = false));
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) return;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!reduceMotion) { t += dt; if (CONFIG.scan) { scanX += dt * 28; if (scanX > cols + 14) scanX = -22; } }
+    ctx.clearRect(0, 0, W, H);
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      const i = y * cols + x, cx = x * D + D / 2, cy = y * D + D / 2;
+      if (!lit[i]) { ctx.fillStyle = CONFIG.unlit; ctx.beginPath(); ctx.arc(cx, cy, D * 0.3, 0, Math.PI * 2); ctx.fill(); continue; }
+      // 亮度：基础 0.75；闪动 ±；扫光经过时 +；悬停时整体呼吸
+      let b = 0.75;
+      if (CONFIG.flicker && !reduceMotion) b += Math.sin(t * 3 + phase[i]) * 0.12 * (Math.sin(phase[i] * 7) > 0.6 ? 1 : 0.2);
+      if (CONFIG.scan) { const d = Math.abs(x - scanX); if (d < 4) b += (1 - d / 4) * 0.5; }
+      if (hover && CONFIG.hoverAll) b = 0.9 + Math.sin(t * 2) * 0.1;
+      b = Math.max(0.3, Math.min(1.2, b));
+      ctx.fillStyle = `rgba(${litRgb},${Math.min(1, b)})`;
+      ctx.shadowColor = `rgba(${litRgb},${Math.min(1, b) * 0.9})`; ctx.shadowBlur = D * 0.9 * b;
+      ctx.beginPath(); ctx.arc(cx, cy, D * 0.32, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

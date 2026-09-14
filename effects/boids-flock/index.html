@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>群鸟聚散</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0b0b12;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 标题颜色 */
+    --mt-fontSize: 44px;     /* 标题字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  .mt-title { position: relative; margin: 0; padding: 0 24px; text-align: center; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.03em; pointer-events: none; text-wrap: balance; }
+  .mt-title small { display: block; margin-top: 10px; font-size: 0.38em; font-weight: 400; opacity: 0.55; letter-spacing: 0; }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    title: "一群会躲开你的鸟",          // 标题
+    sub: "分离、对齐、聚合三条规则，鼠标是猛禽",   // 副标题
+    count: 120,           // 鸟的数量
+    colors: ["#f5f5f4", "#fde68a", "#93c5fd", "#fca5a5"], // 鸟的颜色（随机分配）
+    perception: 36,       // 感知半径（px）：只看这么近的同伴
+    maxSpeed: 1.8,        // 最高速度
+    cursorRadius: 90,     // 鼠标驱散半径（px）
+    shape: "triangle",    // 形状：triangle 小三角 / dot 圆点
+    trail: 0.13,          // 拖尾（每帧盖一层底色的不透明度，越小尾越长）
+  };
+
+  const canvas = document.getElementById('mtCanvas'), ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const title = document.getElementById('mtTitle'); title.textContent = CONFIG.title; if (CONFIG.sub) { const s = document.createElement('small'); s.textContent = CONFIG.sub; title.appendChild(s); }
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--mt-bg').trim() || '#0b0b12';
+  const bgRgb = (h => { const n = parseInt(h.slice(1), 16); return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`; })(bg);
+  let W = 0, H = 0, dpr = 1;
+  function resize() { dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); }
+  resize(); addEventListener('resize', resize);
+
+  // 每只鸟：位置、速度、颜色
+  const birds = Array.from({ length: CONFIG.count }, () => { const a = Math.random() * Math.PI * 2, s = 0.6 + Math.random() * 0.6; return { x: Math.random() * W, y: Math.random() * H, vx: Math.cos(a) * s, vy: Math.sin(a) * s, c: CONFIG.colors[Math.floor(Math.random() * CONFIG.colors.length)] }; });
+  const cursor = { x: 0, y: 0, on: false };
+  addEventListener('pointermove', (e) => { cursor.x = e.clientX; cursor.y = e.clientY; cursor.on = true; });
+  document.documentElement.addEventListener('pointerleave', () => (cursor.on = false));
+
+  function frame() {
+    requestAnimationFrame(frame);
+    if (document.hidden) return;
+    // 半透明底色盖一层做拖尾
+    ctx.fillStyle = `rgba(${bgRgb},${CONFIG.trail})`; ctx.fillRect(0, 0, W, H);
+    const P2 = CONFIG.perception * CONFIG.perception;
+    for (const a of birds) {
+      if (!reduceMotion) {
+        // 三条规则：对齐（朝邻居的平均方向）、聚合（朝邻居的中心）、分离（离太近的推开）
+        let ax = 0, ay = 0, cx = 0, cy = 0, sx = 0, sy = 0, n = 0;
+        for (const b of birds) {
+          if (a === b) continue;
+          const dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
+          if (d2 < P2) { ax += b.vx; ay += b.vy; cx += b.x; cy += b.y; n++; if (d2 < 324 && d2 > 1e-4) { const d = Math.sqrt(d2); sx -= dx / d; sy -= dy / d; } }
+        }
+        if (n) { a.vx += (ax / n - a.vx) * 0.04; a.vy += (ay / n - a.vy) * 0.04; a.vx += (cx / n - a.x) * 0.0006; a.vy += (cy / n - a.y) * 0.0006; a.vx += sx * 0.06; a.vy += sy * 0.06; }
+        // 鼠标：半径内的鸟被推开，越近推力越大
+        if (cursor.on) { const dx = a.x - cursor.x, dy = a.y - cursor.y, d = Math.hypot(dx, dy); if (d < CONFIG.cursorRadius && d > 0) { const f = (CONFIG.cursorRadius - d) / CONFIG.cursorRadius; a.vx += dx / d * f * 0.6; a.vy += dy / d * f * 0.6; } }
+        const sp = Math.hypot(a.vx, a.vy); if (sp > CONFIG.maxSpeed) { a.vx = a.vx / sp * CONFIG.maxSpeed; a.vy = a.vy / sp * CONFIG.maxSpeed; }
+        a.x += a.vx; a.y += a.vy;
+        if (a.x < 0) a.x += W; if (a.x > W) a.x -= W; if (a.y < 0) a.y += H; if (a.y > H) a.y -= H;   // 穿墙到对面
+      }
+      ctx.fillStyle = a.c; ctx.globalAlpha = 0.88;
+      if (CONFIG.shape === 'dot') { ctx.beginPath(); ctx.arc(a.x, a.y, 1.8, 0, Math.PI * 2); ctx.fill(); }
+      else { ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(Math.atan2(a.vy, a.vx)); ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, 3); ctx.lineTo(-4, -3); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  frame();
+</script>
+</body>
+</html>

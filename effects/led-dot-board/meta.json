@@ -1,0 +1,25 @@
+{
+  "slug": "led-dot-board",
+  "name": "LED 点阵牌",
+  "category": "text",
+  "sub": "hover",
+  "tags": ["LED", "点阵", "招牌", "复古"],
+  "summary": "一块深色点阵板，文字由一颗颗发光的圆点拼出，亮灯微微闪动、一道亮光定时扫过；鼠标悬停整块牌全亮呼吸",
+  "params": [
+    { "key": "text", "label": "文字", "type": "text", "target": "config", "default": "OPEN 24H", "maxLength": 16, "help": "支持 A–Z、0–9 与 ! ? . - :" },
+    { "key": "dot", "label": "灯珠间距", "type": "range", "target": "config", "min": 6, "max": 20, "step": 1, "default": 10, "unit": "px" },
+    { "key": "lit", "label": "亮灯颜色", "type": "color", "target": "config", "default": "#a855f7" },
+    { "key": "unlit", "label": "灭灯颜色", "type": "color", "target": "config", "default": "#1e1e26" },
+    { "key": "scan", "label": "定时扫光", "type": "toggle", "target": "config", "default": true },
+    { "key": "flicker", "label": "亮灯闪动", "type": "toggle", "target": "config", "default": true },
+    { "key": "hoverAll", "label": "悬停全亮呼吸", "type": "toggle", "target": "config", "default": true },
+    { "key": "board", "label": "牌面底色", "type": "color", "target": "css", "default": "#111116" }
+  ],
+  "presets": [
+    { "id": "default", "name": "紫灯", "values": {} },
+    { "id": "red", "name": "红色跑马牌", "values": { "lit": "#ef4444", "unlit": "#241416", "board": "#0f0a0a", "text": "SALE -50%" } },
+    { "id": "green", "name": "绿色终端", "values": { "lit": "#22c55e", "unlit": "#14201a", "dot": 8, "text": "SYSTEM OK", "scan": false } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Animata · LED Board", "url": "https://animata.design/docs/card/led-board", "license": "MIT（思路参考，代码自写；点阵字库为自绘 5×7）" }
+}
