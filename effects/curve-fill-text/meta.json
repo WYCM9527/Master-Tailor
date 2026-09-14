@@ -1,0 +1,25 @@
+{
+  "slug": "curve-fill-text",
+  "name": "曲线填充字",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["填充", "曲线", "流动", "Canvas"],
+  "summary": "几十条彩色波浪线在字形内部持续流动，文字本身就是它们的窗口，笔画之外一片漆黑",
+  "params": [
+    { "key": "text", "label": "文字", "type": "text", "target": "config", "default": "FLOW", "maxLength": 10 },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "config", "min": 80, "max": 320, "step": 10, "default": 200, "unit": "px" },
+    { "key": "lines", "label": "曲线数量", "type": "range", "target": "config", "min": 6, "max": 60, "step": 2, "default": 28 },
+    { "key": "thickness", "label": "线宽", "type": "range", "target": "config", "min": 1, "max": 8, "step": 0.5, "default": 3, "unit": "px" },
+    { "key": "speed", "label": "流动速度", "type": "range", "target": "config", "min": 0.2, "max": 3, "step": 0.1, "default": 1 },
+    { "key": "amplitude", "label": "波幅", "type": "range", "target": "config", "min": 5, "max": 120, "step": 5, "default": 40, "unit": "px" },
+    { "key": "colors", "label": "线的颜色", "type": "colors", "target": "config", "min": 1, "max": 6, "default": ["#22d3ee", "#a855f7", "#f472b6", "#fbbf24"] },
+    { "key": "outline", "label": "字形描边", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dense", "name": "细密单色", "values": { "lines": 60, "thickness": 1.5, "colors": ["#ffffff", "#9ca3af"], "amplitude": 20 } },
+    { "id": "cn", "name": "中文粗体", "values": { "text": "流动", "fontSize": 240, "lines": 20, "thickness": 5, "amplitude": 60 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Canvas Text 一类曲线填充文字", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

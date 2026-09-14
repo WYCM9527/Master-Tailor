@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>曲线填充字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+  canvas { display: block; max-width: 96vw; }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" role="img" aria-label="由流动彩线填充的文字"></canvas>
+<script>
+  const CONFIG = {
+    text: "FLOW",         // 文字
+    fontSize: 200,        // 字号（px）
+    fontWeight: 900,      // 字重
+    lines: 28,            // 曲线数量
+    thickness: 3,         // 线宽（px）
+    speed: 1,             // 流动速度
+    amplitude: 40,        // 波幅（px）
+    colors: ["#22d3ee", "#a855f7", "#f472b6", "#fbbf24"], // 线的颜色（循环使用）
+    outline: true,        // 字形外描一圈细边
+  };
+
+  const canvas = document.getElementById('mtCanvas'), ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const font = `${CONFIG.fontWeight} ${CONFIG.fontSize}px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`;
+  let W = 0, H = 0;
+  function size() {
+    ctx.font = font;
+    const m = ctx.measureText(CONFIG.text);
+    W = Math.ceil(m.width + CONFIG.fontSize * 0.3); H = Math.ceil(CONFIG.fontSize * 1.3);
+    canvas.width = W * dpr; canvas.height = H * dpr; canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  size();
+
+  // 每条线：一条横贯画布的正弦曲线，各自有相位、频率、垂直位置；整体随时间向右流
+  const waves = Array.from({ length: CONFIG.lines }, (_, i) => ({
+    y: (i + 0.5) / CONFIG.lines * H, phase: Math.random() * Math.PI * 2, freq: 0.008 + Math.random() * 0.01, amp: CONFIG.amplitude * (0.5 + Math.random()),
+    color: CONFIG.colors[i % CONFIG.colors.length], drift: 0.6 + Math.random() * 0.8,
+  }));
+  let t = reduceMotion ? 5 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!reduceMotion) t += dt * CONFIG.speed;
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.lineWidth = CONFIG.thickness; ctx.lineCap = 'round';
+    for (const w of waves) {
+      ctx.strokeStyle = w.color; ctx.beginPath();
+      for (let x = -10; x <= W + 10; x += 6) {
+        const y = w.y + Math.sin(x * w.freq + w.phase + t * 2 * w.drift) * w.amp + Math.sin(x * w.freq * 2.3 - t * 1.3) * w.amp * 0.3;
+        x === -10 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    // 用文字当「模板」：只保留文字笔画内的像素，曲线就被裁进了字形
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.font = font; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000';
+    ctx.fillText(CONFIG.text, W / 2, H / 2);
+    if (CONFIG.outline) {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.strokeText(CONFIG.text, W / 2, H / 2);
+    }
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

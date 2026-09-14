@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动隐现导航</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-navBg: rgba(20, 20, 28, 0.85); /* 导航底色 */
+    --mt-navBorder: rgba(255, 255, 255, 0.14); /* 导航描边 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 按钮颜色 */
+    --mt-duration: 0.35s;    /* 隐现过渡时长 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
+  .mt-page { height: 100vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .mt-page::-webkit-scrollbar { display: none; }
+
+  /* 悬浮胶囊导航：向下滚时整体上移出屏并淡出，向上滚时回来 */
+  .mt-nav {
+    position: fixed; top: 20px; left: 50%; z-index: 10; transform: translate(-50%, 0);
+    display: flex; align-items: center; gap: 22px; padding: 10px 10px 10px 22px; border-radius: 999px;
+    background: var(--mt-navBg); border: 1px solid var(--mt-navBorder); backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+    transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1), opacity var(--mt-duration);
+  }
+  .mt-nav.hidden { transform: translate(-50%, -140%); opacity: 0; }
+  .mt-nav a { color: inherit; text-decoration: none; font-size: 14px; opacity: 0.8; }
+  .mt-nav a:hover { opacity: 1; }
+  .mt-nav .cta { padding: 8px 16px; border-radius: 999px; background: var(--mt-accent); color: #fff; font-size: 13px; font-weight: 600; opacity: 1; }
+  .mt-content { max-width: 640px; margin: 0 auto; padding: 120px 24px 40vh; }
+  .mt-content h1 { font-size: 40px; letter-spacing: -0.03em; margin: 0 0 16px; }
+  .mt-content p { line-height: 1.8; opacity: 0.65; margin: 0 0 20px; }
+  .mt-content .block { height: 180px; border-radius: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); margin: 0 0 20px; }
+  @media (prefers-reduced-motion: reduce) { .mt-nav { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-page" id="mtPage">
+  <nav class="mt-nav" id="mtNav" aria-label="主导航"><span id="mtLinks"></span><a class="cta" href="#" id="mtCta"></a></nav>
+  <main class="mt-content" id="mtContent"></main>
+</div>
+<script>
+  const CONFIG = {
+    links: "产品｜定价｜文档｜博客",   // 导航项，用「｜」分隔
+    cta: "开始使用",                  // 右侧按钮文字
+    threshold: 8,                     // 触发隐现的最小滚动量（px），过滤抖动
+    showAtTop: true,                  // 滚回顶部附近一定显示
+  };
+
+  const page = document.getElementById('mtPage'), nav = document.getElementById('mtNav');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const links = document.getElementById('mtLinks');
+  CONFIG.links.split('｜').map(s => s.trim()).filter(Boolean).forEach((t, i, arr) => { const a = document.createElement('a'); a.href = '#'; a.textContent = t; a.addEventListener('click', e => e.preventDefault()); links.appendChild(a); if (i < arr.length - 1) links.append(' \u00a0\u00a0 '); });
+  document.getElementById('mtCta').textContent = CONFIG.cta;
+  // 占位正文
+  const content = document.getElementById('mtContent');
+  content.innerHTML = '<h1>往下滚，导航让路；往上滚，它又回来</h1><p>阅读时把顶部让给内容，想操作时一个回滚的手势就够了。这是很多产品官网与文档站的默认行为。</p>' + '<div class="block"></div><p>正文占位：这里是一段段普通的内容，用来把页面撑长，方便试滚动。</p>'.repeat(6);
+
+  // 方向判定：与上次位置相差超过阈值才算一次有效滚动，向下隐藏、向上显示
+  let lastY = page.scrollTop;
+  page.addEventListener('scroll', () => {
+    const y = page.scrollTop, dy = y - lastY;
+    if (Math.abs(dy) < CONFIG.threshold) return;
+    if (CONFIG.showAtTop && y < 40) nav.classList.remove('hidden');
+    else nav.classList.toggle('hidden', dy > 0);
+    lastY = y;
+  }, { passive: true });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动往返滚动（下滚快、上滚慢，能看出隐现），用户一滚就停
+  if (!reduceMotion) {
+    let userTook = false, dir = 1;
+    for (const ev of ['wheel', 'pointerdown', 'keydown', 'touchstart']) page.addEventListener(ev, () => (userTook = true), { passive: true, once: true });
+    (function auto() {
+      if (userTook) return;
+      if (!document.hidden) { const max = page.scrollHeight - page.clientHeight; page.scrollTop += dir * (dir > 0 ? 5 : 3); if (page.scrollTop >= max - 1) dir = -1; if (page.scrollTop <= 1) dir = 1; }
+      requestAnimationFrame(auto);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

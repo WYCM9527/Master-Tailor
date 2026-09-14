@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多步加载</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #4ade80;    /* 完成步骤的勾与文字颜色 */
+    --mt-fontSize: 20px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  /* 列表整体随当前步骤上移，当前步始终停在视线高度；上下用遮罩渐隐 */
+  .mt-loader { height: 240px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent); }
+  .mt-list { display: flex; flex-direction: column; gap: 14px; padding-top: 100px; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mt-step { display: flex; align-items: center; gap: 12px; font-size: var(--mt-fontSize); opacity: 0.45; transition: opacity 0.4s, color 0.4s, transform 0.4s; }
+  .mt-step .icon { width: 1.3em; height: 1.3em; flex: none; }
+  .mt-step .icon circle { fill: none; stroke: currentColor; stroke-width: 1.6; }
+  .mt-step .icon path { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 24; stroke-dashoffset: 24; }
+  .mt-step.done { opacity: 0.7; color: var(--mt-accent); }
+  .mt-step.done .icon circle { fill: color-mix(in srgb, var(--mt-accent) 18%, transparent); }
+  .mt-step.done .icon path { animation: mt-check 0.35s ease-out both; }
+  .mt-step.active { opacity: 1; color: var(--mt-accent); transform: scale(1.04); transform-origin: left center; }
+  .mt-step.active .icon circle { stroke-dasharray: 3 5; animation: mt-spin 1.2s linear infinite; transform-origin: 50% 50%; }
+  @keyframes mt-check { to { stroke-dashoffset: 0; } }
+  @keyframes mt-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .mt-list, .mt-step { transition: none; } .mt-step.active .icon circle { animation: none; } }
+</style>
+</head>
+<body>
+<div class="mt-loader" role="status" aria-live="polite"><div class="mt-list" id="mtList"></div></div>
+<script>
+  const CONFIG = {
+    steps: "读取项目结构｜分析组件依赖｜生成中文 prompt｜校验作者契约｜打包单文件 HTML｜完成，准备预览", // 步骤，用「｜」分隔
+    duration: 1.4,       // 每步耗时（秒）
+    loop: true,          // 全部完成后从头再来
+  };
+
+  const list = document.getElementById('mtList');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const steps = CONFIG.steps.split('｜').map(s => s.trim()).filter(Boolean);
+  const els = steps.map((t) => {
+    const li = document.createElement('div'); li.className = 'mt-step';
+    li.innerHTML = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.2 3.2L17 9"/></svg><span></span>`;
+    li.querySelector('span').textContent = t; list.appendChild(li); return li;
+  });
+  const GAP = 14;
+  let cur = 0, timer = 0;
+  function render() {
+    els.forEach((el, i) => { el.classList.toggle('done', i < cur); el.classList.toggle('active', i === cur); });
+    // 让当前步骤停在容器中线：整个列表向上平移已完成步骤的总高度
+    const h = els[0].offsetHeight + GAP;
+    list.style.transform = `translateY(${-Math.min(cur, els.length - 1) * h}px)`;
+  }
+  function tick() {
+    cur++;
+    if (cur >= els.length) { if (!CONFIG.loop) { cur = els.length; render(); return; } cur = 0; }
+    render();
+    timer = setTimeout(tick, CONFIG.duration * 1000);
+  }
+  render();
+  timer = setTimeout(tick, CONFIG.duration * 1000);
+  document.addEventListener('visibilitychange', () => { clearTimeout(timer); if (!document.hidden) timer = setTimeout(tick, CONFIG.duration * 1000); });
+</script>
+</body>
+</html>

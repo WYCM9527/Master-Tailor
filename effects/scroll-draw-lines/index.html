@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动描线</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-lineWidth: 2px;     /* 线宽 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
+  .mt-page { height: 100vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .mt-page::-webkit-scrollbar { display: none; }
+  /* 一段很长的滚动区，里面的画面 sticky 定住：滚动量只用来推进线条的描画进度 */
+  .mt-track { height: 320vh; }
+  .mt-stage { position: sticky; top: 0; height: 100vh; display: grid; place-items: center; overflow: hidden; }
+  .mt-stage svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .mt-stage path { fill: none; stroke-width: var(--mt-lineWidth); stroke-linecap: round; filter: drop-shadow(0 0 6px currentColor); }
+  .mt-copy { position: relative; text-align: center; padding: 0 24px; transition: opacity 0.3s; }
+  .mt-copy h1 { margin: 0 0 10px; font-size: clamp(28px, 5vw, 56px); letter-spacing: -0.03em; }
+  .mt-copy p { margin: 0; font-size: 16px; opacity: 0.6; }
+  .mt-hint { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 13px; opacity: 0.45; animation: mt-bob 1.6s ease-in-out infinite; }
+  @keyframes mt-bob { 50% { transform: translate(-50%, 6px); } }
+  @media (prefers-reduced-motion: reduce) { .mt-hint { animation: none; } }
+</style>
+</head>
+<body>
+<div class="mt-page" id="mtPage">
+  <div class="mt-track">
+    <div class="mt-stage">
+      <svg id="mtSvg" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+      <div class="mt-copy" id="mtCopy"><h1 id="mtTitle"></h1><p id="mtSub"></p></div>
+      <div class="mt-hint" id="mtHint">向下滚动</div>
+    </div>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    title: "一路向下，线就画出来",          // 标题
+    sub: "五条彩线随滚动从左到右徐徐描出",   // 副标题
+    colors: ["#ffb7c5", "#ffddb7", "#b1c5ff", "#4fabff", "#076eff"], // 线的颜色（从上到下）
+    spread: 1,            // 线条上下散开程度
+    fadeText: true,       // 描线时标题逐渐淡出
+  };
+
+  const page = document.getElementById('mtPage'), svg = document.getElementById('mtSvg'), copy = document.getElementById('mtCopy'), hint = document.getElementById('mtHint');
+  const NS = 'http://www.w3.org/2000/svg';
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtTitle').textContent = CONFIG.title; document.getElementById('mtSub').textContent = CONFIG.sub;
+
+  // 五条线：都从左边出发、在画面中央附近交汇成一束、再向右分开，像被一只手拢过去
+  const paths = CONFIG.colors.map((c, i) => {
+    const n = CONFIG.colors.length, k = (i - (n - 1) / 2) / ((n - 1) / 2) * CONFIG.spread;   // -1..1
+    const y0 = 300 + k * 220, yMid = 300 + k * 40, y1 = 300 + k * 200;
+    const d = `M -20 ${y0} C 300 ${y0}, 520 ${yMid}, 720 ${yMid + k * 10} S 1140 ${y1}, 1470 ${y1 - k * 30}`;
+    const p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); p.setAttribute('stroke', c); p.style.color = c; svg.appendChild(p);
+    const len = p.getTotalLength(); p.style.strokeDasharray = len; p.style.strokeDashoffset = len;
+    return { p, len, delay: i * 0.06 };
+  });
+
+  // 滚动进度 0–1 → 每条线的 dashoffset；各线略微错开，越靠下的越晚开始
+  function update() {
+    const max = page.scrollHeight - page.clientHeight, k = max > 0 ? page.scrollTop / max : 0;
+    for (const { p, len, delay } of paths) {
+      const t = Math.max(0, Math.min(1, (k - delay) / (1 - delay * 2)));
+      p.style.strokeDashoffset = len * (1 - t);
+    }
+    if (CONFIG.fadeText) copy.style.opacity = 1 - Math.min(1, k * 1.6);
+    hint.style.opacity = k > 0.05 ? 0 : 0.45;
+  }
+  update(); page.addEventListener('scroll', update, { passive: true });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动往返滚动，用户一滚就停
+  if (!reduceMotion) {
+    let userTook = false, dir = 1;
+    for (const ev of ['wheel', 'pointerdown', 'keydown', 'touchstart']) page.addEventListener(ev, () => (userTook = true), { passive: true, once: true });
+    (function auto() {
+      if (userTook) return;
+      if (!document.hidden) { const max = page.scrollHeight - page.clientHeight; page.scrollTop += dir * 4; if (page.scrollTop >= max - 1) dir = -1; if (page.scrollTop <= 1) dir = 1; }
+      requestAnimationFrame(auto);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

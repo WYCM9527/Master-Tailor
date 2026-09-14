@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>波纹扭曲字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 96px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+  /* 文字套一个 SVG 位移滤镜：湍流噪声决定每个像素往哪偏，噪声随时间换种子就一直在扭 */
+  .mt-text {
+    margin: 0; padding: 0.2em 0.3em; font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 800; letter-spacing: -0.02em; line-height: 1.2;
+    color: var(--mt-color); text-align: center; white-space: pre-wrap; filter: url(#mtSquiggle);
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="mtSquiggle" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence id="mtTurb" type="turbulence" baseFrequency="0.02" numOctaves="2" seed="1" result="noise"/>
+      <feDisplacementMap id="mtDisp" in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+<h1 class="mt-text" id="mtText"></h1>
+<script>
+  const CONFIG = {
+    text: "水波一样\n扭动的字",   // 文字（\n 换行）
+    amplitude: 8,        // 扭曲幅度（px）
+    frequency: 0.02,     // 波纹密度（越大褶皱越细）
+    speed: 8,            // 抖动速度（每秒换几次噪声）
+    smooth: true,        // 平滑过渡（关闭则一格一格地跳，像手绘逐帧动画）
+  };
+
+  const text = document.getElementById('mtText'), turb = document.getElementById('mtTurb'), disp = document.getElementById('mtDisp');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  text.textContent = CONFIG.text.replace(/\\n/g, '\n');
+  disp.setAttribute('scale', CONFIG.amplitude);
+  turb.setAttribute('baseFrequency', CONFIG.frequency);
+
+  // 平滑模式：连续缓慢地改变 baseFrequency 的 y 分量与幅度，波纹像在流动；逐帧模式：定时换 seed，噪声整体跳变
+  let t = 0, last = performance.now(), seedTimer = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden || reduceMotion) return;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+    if (CONFIG.smooth) {
+      const f = CONFIG.frequency, fy = f * (1 + 0.35 * Math.sin(t * CONFIG.speed * 0.5)), fx = f * (1 + 0.35 * Math.cos(t * CONFIG.speed * 0.37));
+      turb.setAttribute('baseFrequency', `${fx.toFixed(4)} ${fy.toFixed(4)}`);
+      disp.setAttribute('scale', (CONFIG.amplitude * (0.8 + 0.2 * Math.sin(t * CONFIG.speed * 0.8))).toFixed(2));
+    } else {
+      seedTimer += dt;
+      if (seedTimer > 1 / CONFIG.speed) { seedTimer = 0; turb.setAttribute('seed', Math.floor(Math.random() * 1000)); }
+    }
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

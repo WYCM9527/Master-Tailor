@@ -1,0 +1,25 @@
+{
+  "slug": "scroll-trace-beam",
+  "name": "滚动描迹光束",
+  "category": "loading",
+  "sub": "scroll",
+  "tags": ["滚动", "光束", "时间线", "长文"],
+  "summary": "正文左侧一条竖向轨道，随着往下滚，一束青紫渐变的光沿轨道向下描画、跟着阅读位置走，像进度条长在了文章旁边",
+  "params": [
+    { "key": "sections", "label": "段落内容", "type": "text", "target": "config", "default": "第一步｜选一个效果｜在图鉴里挑出你喜欢的那一个，看看它动起来的样子。｜第二步｜调成你要的样子｜拖滑块、换颜色，预览随手实时更新。｜第三步｜复制 prompt｜把中文 prompt 粘给任何 AI 编程工具，它就会照着做出来。｜第四步｜放进你的项目｜也可以直接下载参数写死的单文件 HTML。", "maxLength": 400, "help": "每段三项：标签｜标题｜正文" },
+    { "key": "lead", "label": "光头位置", "type": "range", "target": "config", "min": 0.1, "max": 0.9, "step": 0.05, "default": 0.35, "help": "光束头部在视口中的高度比例" },
+    { "key": "length", "label": "光束长度", "type": "range", "target": "config", "min": 0.1, "max": 1.5, "step": 0.1, "default": 0.5, "help": "占视口高的比例" },
+    { "key": "colorA", "label": "头部色", "type": "color", "target": "css", "default": "#18ccfc" },
+    { "key": "colorB", "label": "中段色", "type": "color", "target": "css", "default": "#6344f5" },
+    { "key": "colorC", "label": "尾部色", "type": "color", "target": "css", "default": "#ae48ff" },
+    { "key": "color", "label": "正文颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "long", "name": "长光束", "values": { "length": 1.2, "lead": 0.5 } },
+    { "id": "warm", "name": "暖色短光", "values": { "colorA": "#fbbf24", "colorB": "#f97316", "colorC": "#ef4444", "length": 0.25 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Tracing Beam 一类滚动光束", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

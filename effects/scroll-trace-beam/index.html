@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动描迹光束</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-rail: rgba(255, 255, 255, 0.12); /* 轨道线颜色 */
+    --mt-colorA: #18ccfc;    /* 光束头部色 */
+    --mt-colorB: #6344f5;    /* 光束中段色 */
+    --mt-colorC: #ae48ff;    /* 光束尾部色 */
+    --mt-color: #f2f3f8;     /* 正文颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
+  .mt-page { height: 100vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .mt-page::-webkit-scrollbar { display: none; }
+  .mt-wrap { position: relative; max-width: 640px; margin: 0 auto; padding: 18vh 24px 30vh 72px; }
+  /* 轨道：贴着正文左侧的一条竖向 SVG 路径，光束长度随滚动增长 */
+  .mt-rail { position: absolute; left: 28px; top: 0; height: 100%; width: 24px; overflow: visible; }
+  .mt-rail path { fill: none; stroke-width: 2; stroke-linecap: round; }
+  .mt-rail .bg { stroke: var(--mt-rail); }
+  .mt-rail .beam { stroke: url(#mtBeamGrad); stroke-width: 3; }
+  /* 起点的小圆点：滚动开始后变实 */
+  .mt-dot { position: absolute; left: 33px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--mt-rail); background: var(--mt-bg); box-sizing: border-box; transition: background 0.3s, border-color 0.3s; }
+  .mt-dot.on { background: var(--mt-colorA); border-color: var(--mt-colorA); box-shadow: 0 0 12px var(--mt-colorA); }
+  .mt-section { margin: 0 0 12vh; }
+  .mt-section h2 { margin: 0 0 8px; font-size: 24px; }
+  .mt-section p { margin: 0; font-size: 15px; line-height: 1.8; opacity: 0.7; }
+  .mt-section .tag { display: inline-block; margin-bottom: 10px; padding: 3px 10px; border-radius: 999px; font-size: 12px; background: rgba(255, 255, 255, 0.08); }
+</style>
+</head>
+<body>
+<div class="mt-page" id="mtPage">
+  <div class="mt-wrap" id="mtWrap">
+    <svg class="mt-rail" id="mtRail" aria-hidden="true">
+      <defs><linearGradient id="mtBeamGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="0"><stop offset="0" style="stop-color:var(--mt-colorA)" stop-opacity="0"/><stop offset="0.3" style="stop-color:var(--mt-colorA)"/><stop offset="0.7" style="stop-color:var(--mt-colorB)"/><stop offset="1" style="stop-color:var(--mt-colorC)"/></linearGradient></defs>
+      <path class="bg" id="mtBg"/><path class="beam" id="mtBeam"/>
+    </svg>
+    <div class="mt-dot" id="mtDot"></div>
+    <div id="mtSections"></div>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    sections: "第一步｜选一个效果｜在图鉴里挑出你喜欢的那一个，看看它动起来的样子。｜第二步｜调成你要的样子｜拖滑块、换颜色，预览随手实时更新。｜第三步｜复制 prompt｜把中文 prompt 粘给任何 AI 编程工具，它就会照着做出来。｜第四步｜放进你的项目｜也可以直接下载参数写死的单文件 HTML。", // 每段三项：标签｜标题｜正文，用「｜」分隔
+    lead: 0.35,          // 光束头部领先视口的位置（0 顶部 → 1 底部）
+    length: 0.5,         // 光束可见长度（占视口高的比例）
+  };
+
+  const page = document.getElementById('mtPage'), wrap = document.getElementById('mtWrap'), rail = document.getElementById('mtRail');
+  const bgPath = document.getElementById('mtBg'), beam = document.getElementById('mtBeam'), grad = document.getElementById('mtBeamGrad'), dot = document.getElementById('mtDot');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const parts = CONFIG.sections.split('｜').map(s => s.trim());
+  const box = document.getElementById('mtSections');
+  for (let i = 0; i + 2 < parts.length; i += 3) {
+    const s = document.createElement('section'); s.className = 'mt-section';
+    s.innerHTML = `<span class="tag"></span><h2></h2><p></p>`;
+    s.querySelector('.tag').textContent = parts[i]; s.querySelector('h2').textContent = parts[i + 1]; s.querySelector('p').textContent = parts[i + 2];
+    box.appendChild(s);
+  }
+
+  // 轨道路径：从第一段标题处竖直向下到最后一段；带一点左右的弯，让光束有「描迹」的感觉
+  let total = 0, top0 = 0, H = 0;
+  function layout() {
+    const secs = [...box.children]; if (!secs.length) return;
+    top0 = secs[0].offsetTop + 14; const y1 = secs[secs.length - 1].offsetTop + secs[secs.length - 1].offsetHeight;
+    H = wrap.offsetHeight; rail.setAttribute('viewBox', `0 0 24 ${H}`); rail.style.height = H + 'px';
+    let d = `M 12 ${top0}`;
+    secs.forEach((s, i) => { const y = s.offsetTop + s.offsetHeight / 2, ny = (secs[i + 1] ? secs[i + 1].offsetTop : y1); d += ` C 12 ${y}, ${i % 2 ? 4 : 20} ${y}, 12 ${ny}`; });
+    bgPath.setAttribute('d', d); beam.setAttribute('d', d);
+    total = beam.getTotalLength(); dot.style.top = (top0 - 7) + 'px';
+    update();
+  }
+  // 滚动：光束头部 = 视口中「领先线」对应的页面位置在路径上的长度；用 dasharray 只显示头部之前一段
+  function update() {
+    const headY = page.scrollTop + page.clientHeight * CONFIG.lead;                // 页面坐标
+    const k = Math.max(0, Math.min(1, (headY - top0) / Math.max(1, H - top0 - page.clientHeight * 0.3)));
+    const head = total * k, len = page.clientHeight * CONFIG.length, tail = Math.max(0, head - len);
+    beam.style.strokeDasharray = `${head - tail} ${total}`; beam.style.strokeDashoffset = -tail;
+    const pH = beam.getPointAtLength(head), pT = beam.getPointAtLength(tail);
+    grad.setAttribute('x1', pT.x); grad.setAttribute('y1', pT.y); grad.setAttribute('x2', pH.x); grad.setAttribute('y2', pH.y);
+    dot.classList.toggle('on', k > 0.01);
+  }
+  layout(); addEventListener('resize', layout); page.addEventListener('scroll', update, { passive: true });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：自动往返滚动，用户一滚就停
+  if (!reduceMotion) {
+    let userTook = false, dir = 1;
+    for (const ev of ['wheel', 'pointerdown', 'keydown', 'touchstart']) page.addEventListener(ev, () => (userTook = true), { passive: true, once: true });
+    (function auto() {
+      if (userTook) return;
+      if (!document.hidden) { const max = page.scrollHeight - page.clientHeight; page.scrollTop += dir * 3; if (page.scrollTop >= max - 1) dir = -1; if (page.scrollTop <= 1) dir = 1; }
+      requestAnimationFrame(auto);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

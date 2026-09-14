@@ -1,0 +1,25 @@
+{
+  "slug": "squiggle-text",
+  "name": "波纹扭曲字",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["扭曲", "湍流", "手绘", "SVG 滤镜"],
+  "summary": "文字的笔画像映在水面上一样持续扭动、起皱，也可以切成一格格跳变的手绘逐帧感",
+  "params": [
+    { "key": "text", "label": "文字", "type": "text", "target": "config", "default": "水波一样\\n扭动的字", "maxLength": 30, "help": "用 \\n 换行" },
+    { "key": "amplitude", "label": "扭曲幅度", "type": "range", "target": "config", "min": 1, "max": 30, "step": 1, "default": 8, "unit": "px" },
+    { "key": "frequency", "label": "波纹密度", "type": "range", "target": "config", "min": 0.005, "max": 0.08, "step": 0.005, "default": 0.02, "help": "越大褶皱越细" },
+    { "key": "speed", "label": "抖动速度", "type": "range", "target": "config", "min": 1, "max": 24, "step": 1, "default": 8 },
+    { "key": "smooth", "label": "平滑流动", "type": "toggle", "target": "config", "default": true, "help": "关闭则一格一格跳变" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 32, "max": 160, "step": 4, "default": 96, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "水面", "values": {} },
+    { "id": "sketch", "name": "手绘逐帧", "values": { "smooth": false, "speed": 6, "amplitude": 4, "frequency": 0.035 } },
+    { "id": "melt", "name": "大幅融化", "values": { "amplitude": 24, "frequency": 0.01, "speed": 3, "color": "#f472b6" } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Squiggly Text 一类湍流位移文字", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

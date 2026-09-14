@@ -1,0 +1,25 @@
+{
+  "slug": "hide-on-scroll-nav",
+  "name": "滚动隐现导航",
+  "category": "nav",
+  "sub": "scroll",
+  "tags": ["导航", "滚动", "悬浮", "胶囊"],
+  "summary": "悬浮在顶部的胶囊导航：往下滚它向上滑出屏幕让位给内容，稍微往上滚一下就滑回来",
+  "params": [
+    { "key": "links", "label": "导航项", "type": "text", "target": "config", "default": "产品｜定价｜文档｜博客", "maxLength": 40, "help": "用「｜」分隔" },
+    { "key": "cta", "label": "按钮文字", "type": "text", "target": "config", "default": "开始使用", "maxLength": 10 },
+    { "key": "threshold", "label": "触发阈值", "type": "range", "target": "config", "min": 2, "max": 40, "step": 2, "default": 8, "unit": "px", "help": "小于此滚动量不触发，过滤抖动" },
+    { "key": "showAtTop", "label": "顶部附近始终显示", "type": "toggle", "target": "config", "default": true },
+    { "key": "duration", "label": "隐现时长", "type": "range", "target": "css", "min": 0.15, "max": 0.8, "step": 0.05, "default": 0.35, "unit": "s", "displayUnit": " 秒" },
+    { "key": "accent", "label": "按钮颜色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "snappy", "name": "干脆", "values": { "duration": 0.18, "threshold": 4 } },
+    { "id": "lazy", "name": "迟钝", "values": { "duration": 0.6, "threshold": 30, "accent": "#f472b6" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Floating Navbar 一类滚动隐现导航", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

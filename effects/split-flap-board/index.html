@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>翻牌字板</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-tile: #1c1c24;      /* 牌面颜色 */
+    --mt-color: #f2f3f8;     /* 字符颜色 */
+    --mt-accent: #fbbf24;    /* 高亮牌面颜色（用于【】里的字） */
+    --mt-size: 56px;         /* 牌面高度 */
+    --mt-gap: 6px;           /* 牌与牌的间距 */
+    --mt-font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, "PingFang SC", monospace; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-board { display: flex; flex-direction: column; gap: var(--mt-gap); padding: 16px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); }
+  .mt-row { display: flex; gap: var(--mt-gap); }
+  /* 一块牌：上下两半各显示半个字符；翻页时上半合下、新字的上半在后面等着；下半用翻转的新半页盖上来 */
+  .mt-flap { position: relative; width: calc(var(--mt-size) * 0.72); height: var(--mt-size); perspective: 300px; }
+  .mt-flap .half {
+    position: absolute; left: 0; width: 100%; height: 50%; overflow: hidden; background: var(--mt-tile); color: var(--mt-color);
+    font-size: calc(var(--mt-size) * 0.66); font-weight: 700; line-height: var(--mt-size); text-align: center; backface-visibility: hidden;
+  }
+  .mt-flap.hi .half { background: var(--mt-accent); color: #111; }
+  .mt-flap .top { top: 0; border-radius: 4px 4px 0 0; transform-origin: 50% 100%; }
+  .mt-flap .bottom { bottom: 0; border-radius: 0 0 4px 4px; transform-origin: 50% 0; }
+  .mt-flap .bottom span { display: block; transform: translateY(-50%); }
+  .mt-flap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, 0.6); z-index: 5; }
+  /* 翻动中的两片：上半从 0 转到 -90°，下半从 90° 转到 0，各占半个周期 */
+  .mt-flap .flip-top { z-index: 3; animation: mt-fold var(--dur) ease-in both; }
+  .mt-flap .flip-bottom { z-index: 4; transform: rotateX(90deg); animation: mt-unfold var(--dur) ease-out both; animation-delay: var(--dur); }
+  @keyframes mt-fold { from { transform: rotateX(0); } to { transform: rotateX(-90deg); } }
+  @keyframes mt-unfold { from { transform: rotateX(90deg); } to { transform: rotateX(0); } }
+  .mt-flap .static-top { z-index: 1; } .mt-flap .static-bottom { z-index: 2; }
+</style>
+</head>
+<body>
+<div class="mt-board" id="mtBoard" aria-live="polite"></div>
+<script>
+  const CONFIG = {
+    messages: "WELCOME ABOARD｜FLIGHT 【MT 164】｜GATE 【B12】 ON TIME｜界面 缝好 出发", // 轮播的句子，用「｜」分隔；【】里的字用高亮牌
+    columns: 14,          // 每行牌数
+    flipTime: 80,         // 翻一下用时（毫秒）
+    hold: 2.6,            // 每句停留（秒）
+    charset: " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",  // 翻牌经过的字符序列（中文等不在表里的字直接翻到）
+  };
+
+  const board = document.getElementById('mtBoard');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const messages = CONFIG.messages.split('｜').map(s => s.trim()).filter(Boolean);
+  // 解析【】：得到每格的字符与是否高亮
+  function parse(msg) {
+    const cells = []; let hi = false;
+    for (const ch of msg) { if (ch === '【') { hi = true; continue; } if (ch === '】') { hi = false; continue; } cells.push({ ch: ch.toUpperCase(), hi }); }
+    while (cells.length < CONFIG.columns) cells.push({ ch: ' ', hi: false });
+    return cells.slice(0, CONFIG.columns);
+  }
+  // 建一行牌
+  const row = document.createElement('div'); row.className = 'mt-row'; board.appendChild(row);
+  const flaps = Array.from({ length: CONFIG.columns }, () => {
+    const f = document.createElement('div'); f.className = 'mt-flap'; f.style.setProperty('--dur', CONFIG.flipTime + 'ms');
+    f.innerHTML = '<div class="half top static-top"></div><div class="half bottom static-bottom"><span></span></div>';
+    f.dataset.ch = ' '; row.appendChild(f); return f;
+  });
+  const setStatic = (f, ch) => { f.querySelector('.static-top').textContent = ch; f.querySelector('.static-bottom span').textContent = ch; f.dataset.ch = ch; };
+
+  // 翻一格：从当前字符沿字符表逐个翻到目标（不在表里的字符一步翻到）；每一步插入两片临时的翻动半页
+  function flipTo(f, target, hi) {
+    const cs = CONFIG.charset, from = f.dataset.ch;
+    let seq = [];
+    if (cs.includes(from) && cs.includes(target)) { let i = cs.indexOf(from); while (cs[i] !== target) { i = (i + 1) % cs.length; seq.push(cs[i]); } }
+    else seq = [target];
+    if (!seq.length) { f.classList.toggle('hi', hi); return; }
+    if (reduceMotion) { setStatic(f, target); f.classList.toggle('hi', hi); return; }
+    let k = 0;
+    const step = () => {
+      const next = seq[k], cur = f.dataset.ch;
+      // 新字的上半先垫在底下，下半保持旧字；再叠上「旧字上半（合下）」与「新字下半（掀起）」两片翻动页
+      f.querySelector('.static-top').textContent = next;
+      const ft = document.createElement('div'); ft.className = 'half top flip-top'; ft.textContent = cur;
+      const fb = document.createElement('div'); fb.className = 'half bottom flip-bottom'; fb.innerHTML = `<span>${next === ' ' ? '&nbsp;' : next}</span>`;
+      f.append(ft, fb);
+      fb.addEventListener('animationend', () => { ft.remove(); fb.remove(); setStatic(f, next); k++; if (k < seq.length) step(); else f.classList.toggle('hi', hi); }, { once: true });
+    };
+    step();
+  }
+  let idx = 0;
+  function show(i) { const cells = parse(messages[i]); flaps.forEach((f, c) => setTimeout(() => flipTo(f, cells[c].ch, cells[c].hi), c * 40)); }
+  show(0);
+  if (messages.length > 1) setInterval(() => { if (document.hidden) return; idx = (idx + 1) % messages.length; show(idx); }, CONFIG.hold * 1000 + CONFIG.columns * 40 + CONFIG.flipTime * 12);
+</script>
+</body>
+</html>

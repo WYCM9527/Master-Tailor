@@ -1,0 +1,23 @@
+{
+  "slug": "outline-glow-hover-text",
+  "name": "描边渐变悬停字",
+  "category": "text",
+  "sub": "hover",
+  "tags": ["描边", "渐变", "悬停", "x.ai 风"],
+  "summary": "空心细描边的大标题，鼠标扫过哪里，那一块的描边就变成粗粗的彩色渐变并随光标游走，像手电照亮霓虹管",
+  "params": [
+    { "key": "text", "label": "文字", "type": "text", "target": "config", "default": "HOVER ME", "maxLength": 16 },
+    { "key": "colors", "label": "渐变颜色", "type": "colors", "target": "config", "min": 2, "max": 5, "default": ["#eab308", "#ef4444", "#3b82f6", "#22d3ee", "#a855f7"] },
+    { "key": "radius", "label": "发光范围", "type": "range", "target": "config", "min": 60, "max": 400, "step": 10, "default": 140, "unit": "px" },
+    { "key": "softness", "label": "边缘柔和度", "type": "range", "target": "config", "min": 0, "max": 0.9, "step": 0.05, "default": 0.35 },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 48, "max": 160, "step": 4, "default": 120, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "mono", "name": "单色青光", "values": { "colors": ["#22d3ee", "#67e8f9"], "radius": 220, "softness": 0.6 } },
+    { "id": "cn", "name": "中文标题", "values": { "text": "裁缝大师", "fontSize": 140, "colors": ["#f472b6", "#a855f7", "#3b82f6"] } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Text Hover Effect（源自 x.ai）一类描边悬停", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

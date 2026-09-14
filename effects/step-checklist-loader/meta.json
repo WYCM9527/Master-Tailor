@@ -1,0 +1,24 @@
+{
+  "slug": "step-checklist-loader",
+  "name": "多步加载",
+  "category": "loading",
+  "sub": "idle",
+  "tags": ["加载", "步骤", "清单", "打勾"],
+  "summary": "一列步骤依次完成：当前步旋转等待并放大高亮，完成后画上一个勾，整列向上滚动让下一步接到视线中央",
+  "params": [
+    { "key": "steps", "label": "步骤列表", "type": "text", "target": "config", "default": "读取项目结构｜分析组件依赖｜生成中文 prompt｜校验作者契约｜打包单文件 HTML｜完成，准备预览", "maxLength": 200, "help": "用「｜」分隔" },
+    { "key": "duration", "label": "每步耗时", "type": "range", "target": "config", "min": 0.4, "max": 4, "step": 0.2, "default": 1.4, "displayUnit": " 秒" },
+    { "key": "loop", "label": "完成后循环", "type": "toggle", "target": "config", "default": true },
+    { "key": "accent", "label": "完成色", "type": "color", "target": "css", "default": "#4ade80" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 14, "max": 32, "step": 1, "default": 20, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "fast", "name": "快速蓝勾", "values": { "duration": 0.6, "accent": "#60a5fa" } },
+    { "id": "once", "name": "只跑一遍", "values": { "loop": false, "steps": "连接服务器｜验证身份｜同步数据｜完成", "duration": 1 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Multi Step Loader 一类步骤加载", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

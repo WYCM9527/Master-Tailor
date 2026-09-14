@@ -1,0 +1,25 @@
+{
+  "slug": "scroll-draw-lines",
+  "name": "滚动描线",
+  "category": "loading",
+  "sub": "scroll",
+  "tags": ["滚动", "描线", "SVG", "Gemini 风"],
+  "summary": "画面定住不动，往下滚动时五条彩色曲线从左到右徐徐画出、在中央拢成一束再散开，标题随之淡去",
+  "params": [
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "一路向下，线就画出来", "maxLength": 30 },
+    { "key": "sub", "label": "副标题", "type": "text", "target": "config", "default": "五条彩线随滚动从左到右徐徐描出", "maxLength": 40 },
+    { "key": "colors", "label": "线的颜色", "type": "colors", "target": "config", "min": 2, "max": 7, "default": ["#ffb7c5", "#ffddb7", "#b1c5ff", "#4fabff", "#076eff"] },
+    { "key": "spread", "label": "散开程度", "type": "range", "target": "config", "min": 0.3, "max": 1.6, "step": 0.1, "default": 1 },
+    { "key": "fadeText", "label": "标题随滚动淡出", "type": "toggle", "target": "config", "default": true },
+    { "key": "lineWidth", "label": "线宽", "type": "range", "target": "css", "min": 1, "max": 6, "step": 0.5, "default": 2, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "mono", "name": "单色三线", "values": { "colors": ["#22d3ee", "#67e8f9", "#a5f3fc"], "lineWidth": 3, "spread": 0.6 } },
+    { "id": "wide", "name": "七彩宽幅", "values": { "colors": ["#f472b6", "#fb923c", "#facc15", "#4ade80", "#22d3ee", "#60a5fa", "#a78bfa"], "spread": 1.5 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Google Gemini Effect 一类滚动描线", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

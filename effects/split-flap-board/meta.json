@@ -1,0 +1,27 @@
+{
+  "slug": "split-flap-board",
+  "name": "翻牌字板",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["翻牌", "机场", "复古", "轮播"],
+  "summary": "机场航班牌那种一格一字的翻牌板：换句子时每格哗啦啦翻过一串字母停在目标字上，带高亮牌与机械感",
+  "params": [
+    { "key": "messages", "label": "轮播句子", "type": "text", "target": "config", "default": "WELCOME ABOARD｜FLIGHT 【MT 164】｜GATE 【B12】 ON TIME｜界面 缝好 出发", "maxLength": 160, "help": "用「｜」分隔，【】里的字用高亮牌" },
+    { "key": "columns", "label": "每行牌数", "type": "range", "target": "config", "min": 6, "max": 24, "step": 1, "default": 14 },
+    { "key": "flipTime", "label": "翻一下用时", "type": "range", "target": "config", "min": 40, "max": 200, "step": 10, "default": 80, "displayUnit": " 毫秒" },
+    { "key": "hold", "label": "每句停留", "type": "range", "target": "config", "min": 1, "max": 6, "step": 0.2, "default": 2.6, "displayUnit": " 秒" },
+    { "key": "size", "label": "牌面高度", "type": "range", "target": "css", "min": 32, "max": 96, "step": 4, "default": 56, "unit": "px" },
+    { "key": "gap", "label": "牌间距", "type": "range", "target": "css", "min": 2, "max": 14, "step": 1, "default": 6, "unit": "px" },
+    { "key": "tile", "label": "牌面颜色", "type": "color", "target": "css", "default": "#1c1c24" },
+    { "key": "color", "label": "字符颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "accent", "label": "高亮牌颜色", "type": "color", "target": "css", "default": "#fbbf24" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "jetbrains-mono" }
+  ],
+  "presets": [
+    { "id": "default", "name": "航班牌", "values": {} },
+    { "id": "station", "name": "车站白牌", "values": { "tile": "#e8e8ea", "color": "#111118", "accent": "#ef4444", "flipTime": 60 } },
+    { "id": "big", "name": "大牌慢翻", "values": { "size": 84, "columns": 8, "flipTime": 140, "messages": "OPEN｜【SOLD OUT】｜NEXT 【0930】" } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Text Flipping Board（Vestaboard 风格）", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

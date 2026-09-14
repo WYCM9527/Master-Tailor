@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>描边渐变悬停字</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-outline: rgba(255, 255, 255, 0.28); /* 默认细描边颜色 */
+    --mt-fontSize: 120px;    /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+  svg { width: min(92vw, 900px); height: calc(var(--mt-fontSize) * 1.5); overflow: visible; cursor: crosshair; }
+  text { font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 800; letter-spacing: -0.02em; fill: none; }
+  /* 底层：细灰描边，加载时像一笔笔画出来 */
+  .base { stroke: var(--mt-outline); stroke-width: 1; animation: mt-draw 2.4s ease-out both; }
+  @keyframes mt-draw { from { stroke-dasharray: 0 1000; } to { stroke-dasharray: 1000 0; } }
+  /* 上层：渐变描边更粗，用跟随光标的圆形遮罩只露出附近一块 */
+  .glow { stroke: url(#mtGrad); stroke-width: 2.5; mask: url(#mtMask); }
+  @media (prefers-reduced-motion: reduce) { .base { animation: none; } }
+</style>
+</head>
+<body>
+<svg id="mtSvg" viewBox="0 0 900 180" preserveAspectRatio="xMidYMid meet" role="img" aria-label="悬停时描边发光的标题">
+  <defs>
+    <linearGradient id="mtGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="900" y2="0">
+      <stop offset="0" id="mtS0"/><stop offset="0.25" id="mtS1"/><stop offset="0.5" id="mtS2"/><stop offset="0.75" id="mtS3"/><stop offset="1" id="mtS4"/>
+    </linearGradient>
+    <radialGradient id="mtSpot" gradientUnits="userSpaceOnUse" cx="450" cy="90" r="0">
+      <stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/>
+    </radialGradient>
+    <mask id="mtMask"><rect width="100%" height="100%" fill="url(#mtSpot)"/></mask>
+  </defs>
+  <text class="base" x="50%" y="50%" text-anchor="middle" dominant-baseline="central" id="mtBase"></text>
+  <text class="glow" x="50%" y="50%" text-anchor="middle" dominant-baseline="central" id="mtGlow"></text>
+</svg>
+<script>
+  const CONFIG = {
+    text: "HOVER ME",                       // 文字
+    colors: ["#eab308", "#ef4444", "#3b82f6", "#22d3ee", "#a855f7"], // 渐变描边的颜色
+    radius: 140,                             // 发光范围半径（px）
+    softness: 0.35,                          // 光斑边缘柔和度（0 硬边 → 1 很柔）
+  };
+
+  const svg = document.getElementById('mtSvg'), spot = document.getElementById('mtSpot');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('mtBase').textContent = CONFIG.text; document.getElementById('mtGlow').textContent = CONFIG.text;
+  CONFIG.colors.forEach((c, i) => { const s = document.getElementById('mtS' + i); if (s) s.setAttribute('stop-color', c); });
+  for (let i = CONFIG.colors.length; i < 5; i++) document.getElementById('mtS' + i).setAttribute('stop-color', CONFIG.colors[CONFIG.colors.length - 1]);
+  // 遮罩里的径向渐变：中心白（露出）→ 边缘黑（遮住）；柔和度决定白到黑的过渡从哪开始
+  spot.querySelector('stop').setAttribute('offset', 1 - CONFIG.softness);
+  let userTook = false;
+
+  // 光标位置换算到 SVG 坐标系（viewBox 900×180，按 meet 缩放）
+  function toSvg(cx, cy) {
+    const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, k = Math.min(r.width / vb.width, r.height / vb.height);
+    const ox = (r.width - vb.width * k) / 2, oy = (r.height - vb.height * k) / 2;
+    return [(cx - r.left - ox) / k, (cy - r.top - oy) / k, k];
+  }
+  function moveTo(x, y, k) { spot.setAttribute('cx', x); spot.setAttribute('cy', y); spot.setAttribute('r', CONFIG.radius / (k || 1)); }
+  svg.addEventListener('pointermove', (e) => { userTook = true; const [x, y, k] = toSvg(e.clientX, e.clientY); moveTo(x, y, k); });
+  svg.addEventListener('pointerleave', () => spot.setAttribute('r', 0));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时光斑自己沿文字来回扫
+  if (!reduceMotion) {
+    let t = 0, last = performance.now();
+    (function auto(now) {
+      if (userTook) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!document.hidden) { t += dt; const k = svg.getBoundingClientRect().width / 900; moveTo(450 + Math.sin(t * 0.9) * 330, 90 + Math.cos(t * 1.7) * 30, k); }
+      requestAnimationFrame(auto);
+    })(performance.now());
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
