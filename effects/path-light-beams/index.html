@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>路径光束</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 标题颜色 */
+    --mt-fontSize: 48px;     /* 标题字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+  svg { position: fixed; inset: 0; width: 100%; height: 100%; }
+  svg path { fill: none; stroke-linecap: round; }
+  .mt-title { position: relative; margin: 0; padding: 0 24px; text-align: center; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
+  .mt-title small { display: block; margin-top: 12px; font-size: 0.34em; font-weight: 400; opacity: 0.55; letter-spacing: 0; }
+</style>
+</head>
+<body>
+<svg id="mtSvg" aria-hidden="true"><defs id="mtDefs"></defs></svg>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    title: "光沿着看不见的轨道流过",   // 标题（留空则不显示）
+    sub: "背景里的每条曲线上都有一束光在跑",  // 副标题
+    count: 12,            // 路径数量
+    colorA: "#18ccfc",    // 光束起始色
+    colorB: "#6344f5",    // 光束中段色
+    colorC: "#ae48ff",    // 光束末端色
+    lineOpacity: 0.16,    // 底线不透明度
+    lineWidth: 1.2,       // 线宽（px）
+    minDuration: 2,       // 一束光最短用时（秒）
+    maxDuration: 6,       // 一束光最长用时（秒）
+  };
+
+  const svg = document.getElementById('mtSvg'), defs = document.getElementById('mtDefs');
+  const NS = 'http://www.w3.org/2000/svg';
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const title = document.getElementById('mtTitle');
+  title.textContent = CONFIG.title; if (CONFIG.sub) { const s = document.createElement('small'); s.textContent = CONFIG.sub; title.appendChild(s); }
+  if (!CONFIG.title && !CONFIG.sub) title.hidden = true;
+
+  // 路径：从左上方一带出发、经两个控制点弯向右下，整体像一束束平行又各自弯曲的轨道
+  const beams = [];
+  function build() {
+    svg.innerHTML = ''; svg.appendChild(defs); defs.innerHTML = ''; beams.length = 0;
+    const W = innerWidth, H = innerHeight;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    for (let i = 0; i < CONFIG.count; i++) {
+      const t = i / Math.max(1, CONFIG.count - 1);
+      const x0 = -W * 0.1 + t * W * 0.7, y0 = -H * 0.1 + t * H * 0.35;
+      const x3 = W * 0.4 + t * W * 0.7, y3 = H * 1.1;
+      const c1x = x0 + W * 0.25, c1y = y0 + H * 0.05 + t * H * 0.2, c2x = x3 - W * 0.3, c2y = y3 - H * 0.55 + t * H * 0.1;
+      const d = `M ${x0} ${y0} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x3} ${y3}`;
+      const base = document.createElementNS(NS, 'path');
+      base.setAttribute('d', d); base.setAttribute('stroke', CONFIG.colorA); base.setAttribute('stroke-opacity', CONFIG.lineOpacity); base.setAttribute('stroke-width', CONFIG.lineWidth);
+      // 光束：同一条路径用移动渐变描边，渐变只占路径一小段
+      const id = 'mtG' + i;
+      const g = document.createElementNS(NS, 'linearGradient'); g.id = id; g.setAttribute('gradientUnits', 'userSpaceOnUse');
+      g.innerHTML = `<stop offset="0" stop-color="${CONFIG.colorA}" stop-opacity="0"/><stop offset="0.35" stop-color="${CONFIG.colorA}"/><stop offset="0.7" stop-color="${CONFIG.colorB}"/><stop offset="1" stop-color="${CONFIG.colorC}" stop-opacity="0"/>`;
+      defs.appendChild(g);
+      const glow = document.createElementNS(NS, 'path');
+      glow.setAttribute('d', d); glow.setAttribute('stroke', `url(#${id})`); glow.setAttribute('stroke-width', CONFIG.lineWidth * 1.6);
+      svg.append(base, glow);
+      const dur = CONFIG.minDuration + Math.random() * (CONFIG.maxDuration - CONFIG.minDuration);
+      beams.push({ path: glow, grad: g, len: glow.getTotalLength(), dur, t: -Math.random() * dur * 1.5 });
+    }
+  }
+  build(); addEventListener('resize', build);
+
+  // 每帧：沿路径取当前点与稍后一点，把渐变的两端钉在这两点上——光束就沿着曲线走
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!document.hidden) for (const b of beams) {
+      if (!reduceMotion) { b.t += dt; if (b.t > b.dur * 1.4) b.t = -Math.random() * b.dur; }   // 跑完后随机歇一会儿再来
+      const k = reduceMotion ? 0.5 : Math.max(0, Math.min(1.2, b.t / b.dur));
+      const head = b.len * k, tail = Math.max(0, head - b.len * 0.22);
+      const p1 = b.path.getPointAtLength(Math.min(b.len, head)), p0 = b.path.getPointAtLength(tail);
+      b.grad.setAttribute('x1', p0.x); b.grad.setAttribute('y1', p0.y); b.grad.setAttribute('x2', p1.x); b.grad.setAttribute('y2', p1.y);
+      b.path.style.opacity = b.t < 0 || k >= 1.2 ? 0 : 1;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

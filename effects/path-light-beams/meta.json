@@ -1,0 +1,27 @@
+{
+  "slug": "path-light-beams",
+  "name": "路径光束",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["光束", "曲线", "SVG", "首屏"],
+  "summary": "背景里十来条平行弯曲的细轨道，每条上都有一束渐变的光沿着曲线滑过，快慢不一、此起彼伏",
+  "params": [
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "光沿着看不见的轨道流过", "maxLength": 30 },
+    { "key": "sub", "label": "副标题", "type": "text", "target": "config", "default": "背景里的每条曲线上都有一束光在跑", "maxLength": 40 },
+    { "key": "count", "label": "路径数量", "type": "range", "target": "config", "min": 3, "max": 24, "step": 1, "default": 12 },
+    { "key": "colorA", "label": "光束起始色", "type": "color", "target": "config", "default": "#18ccfc" },
+    { "key": "colorB", "label": "光束中段色", "type": "color", "target": "config", "default": "#6344f5" },
+    { "key": "colorC", "label": "光束末端色", "type": "color", "target": "config", "default": "#ae48ff" },
+    { "key": "lineOpacity", "label": "底线不透明度", "type": "range", "target": "config", "min": 0, "max": 0.5, "step": 0.02, "default": 0.16 },
+    { "key": "lineWidth", "label": "线宽", "type": "range", "target": "config", "min": 0.5, "max": 4, "step": 0.1, "default": 1.2, "unit": "px" },
+    { "key": "minDuration", "label": "最快一束用时", "type": "range", "target": "config", "min": 1, "max": 6, "step": 0.5, "default": 2, "displayUnit": " 秒" },
+    { "key": "maxDuration", "label": "最慢一束用时", "type": "range", "target": "config", "min": 2, "max": 12, "step": 0.5, "default": 6, "displayUnit": " 秒" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dense", "name": "密集快流", "values": { "count": 24, "minDuration": 1, "maxDuration": 3, "lineOpacity": 0.06 } },
+    { "id": "gold", "name": "金线", "values": { "colorA": "#ffd319", "colorB": "#ff9f1c", "colorC": "#ff2975", "count": 8, "lineWidth": 2 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Background Beams 一类路径光束", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>云层飘移</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（WebGL 不可用时兜底） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    skyTop: "#0b1a3a",       // 天空顶部颜色
+    skyBottom: "#3b6fb6",    // 天空底部颜色
+    cloud: "#ffffff",        // 云的颜色
+    shadow: "#6f86b8",       // 云底阴影颜色
+    speed: 1,                // 飘移速度
+    coverage: 0.5,           // 云量（0 稀疏 → 1 密布）
+    softness: 0.35,          // 云边柔和度
+    scale: 1.6,              // 云团大小（越大越大块）
+  };
+
+  const canvas = document.getElementById('mtCanvas');
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const RENDER_SCALE = 0.7;   // 云是低频柔和画面，降采样渲染再拉伸几乎无损
+
+  const VS = `attribute vec2 aPos; void main() { gl_Position = vec4(aPos, 0.0, 1.0); }`;
+  // 片元：两层 fbm 噪声叠成云的密度图；密度对「云量」阈值做 smoothstep 得到云的不透明度，
+  // 再用略微偏移采样的密度差近似「顶亮底暗」的体积感
+  const FS = `
+    precision highp float;
+    uniform float uTime, uSpeed, uCover, uSoft, uScale;
+    uniform vec2 uRes;
+    uniform vec3 uTop, uBottom, uCloud, uShadow;
+    vec2 hash2(vec2 p) { p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3))); return -1.0 + 2.0 * fract(sin(p) * 43758.5453123); }
+    float noise(vec2 p) {
+      vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
+      return mix(mix(dot(hash2(i), f), dot(hash2(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+                 mix(dot(hash2(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)), dot(hash2(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x), u.y);
+    }
+    float fbm(vec2 p) {
+      float v = 0.0, a = 0.5;
+      mat2 r = mat2(0.8, 0.6, -0.6, 0.8);
+      for (int i = 0; i < 6; i++) { v += a * noise(p); p = r * p * 2.05; a *= 0.5; }
+      return v;
+    }
+    float density(vec2 uv, float t) {
+      // 两层不同速度、不同尺度的噪声：大团决定形状，小团加细节
+      vec2 p = uv * uScale;
+      float big = fbm(p + vec2(t * 0.08, t * 0.01));
+      float small = fbm(p * 2.7 + vec2(t * 0.15, -t * 0.02) + big * 0.8);
+      float d = big * 0.75 + small * 0.35 + 0.5;
+      float th = 0.95 - uCover * 0.6;                  // 云量越大阈值越低，云越多
+      return smoothstep(th - uSoft * 0.5, th + uSoft * 0.5, d);
+    }
+    void main() {
+      vec2 uv = gl_FragCoord.xy / uRes;
+      vec2 p = vec2(uv.x * uRes.x / uRes.y, uv.y);
+      float t = uTime * uSpeed;
+      vec3 sky = mix(uBottom, uTop, smoothstep(0.0, 1.0, uv.y));
+      float d = density(p, t);
+      float dUp = density(p + vec2(0.0, 0.06), t);      // 上方一点的密度：比自己厚说明在云底 → 偏阴影色
+      float shade = clamp((dUp - d) * 2.5 + 0.3, 0.0, 1.0);
+      vec3 cloudCol = mix(uCloud, uShadow, shade);
+      vec3 col = mix(sky, cloudCol, d);
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+  function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos'); gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const dpr = Math.min(2, devicePixelRatio || 1) * RENDER_SCALE;
+  function resize() { canvas.width = Math.floor(innerWidth * dpr); canvas.height = Math.floor(innerHeight * dpr); gl.viewport(0, 0, canvas.width, canvas.height); gl.uniform2f(U('uRes'), canvas.width, canvas.height); }
+  resize(); addEventListener('resize', resize);
+  gl.uniform1f(U('uSpeed'), CONFIG.speed); gl.uniform1f(U('uCover'), CONFIG.coverage); gl.uniform1f(U('uSoft'), CONFIG.softness); gl.uniform1f(U('uScale'), CONFIG.scale);
+  gl.uniform3fv(U('uTop'), hexRgb(CONFIG.skyTop)); gl.uniform3fv(U('uBottom'), hexRgb(CONFIG.skyBottom));
+  gl.uniform3fv(U('uCloud'), hexRgb(CONFIG.cloud)); gl.uniform3fv(U('uShadow'), hexRgb(CONFIG.shadow));
+  const uTime = U('uTime');
+
+  let time = reduceMotion ? 20 : 0, last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = now; return; }
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!reduceMotion) time += dt;
+    gl.uniform1f(uTime, time);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

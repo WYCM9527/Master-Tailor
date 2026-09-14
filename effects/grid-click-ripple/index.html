@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>格子涟漪</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-line: rgba(255, 255, 255, 0.08); /* 格线颜色 */
+    --mt-cell: 48px;         /* 格子大小 */
+    --mt-accent: #6366f1;    /* 涟漪亮色 */
+    --mt-color: #f2f3f8;     /* 标题颜色 */
+    --mt-fontSize: 40px;     /* 标题字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 格子层：铺满视口的等大方格，每格一个 div，靠 background 变色做涟漪 */
+  .mt-grid { position: fixed; inset: 0; display: grid; grid-template-columns: repeat(var(--cols), var(--mt-cell)); grid-auto-rows: var(--mt-cell); justify-content: center; align-content: center; cursor: crosshair; }
+  .mt-cell { box-shadow: inset 0 0 0 0.5px var(--mt-line); background: transparent; transition: background 0.25s; }
+  .mt-cell:hover { background: color-mix(in srgb, var(--mt-accent) 35%, transparent); transition: none; }
+  .mt-title { position: relative; margin: 0; pointer-events: none; text-align: center; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; padding: 0 24px; }
+  .mt-title small { display: block; margin-top: 10px; font-size: 0.4em; font-weight: 400; opacity: 0.5; }
+</style>
+</head>
+<body>
+<div class="mt-grid" id="mtGrid" aria-hidden="true"></div>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    title: "点一下，让格子荡起来",   // 标题
+    sub: "涟漪从点击处一圈圈向外传",  // 副标题
+    speed: 1.4,          // 涟漪传播速度（格 / 100ms）
+    width: 2.5,          // 涟漪波峰宽度（格）
+    fade: 0.7,           // 淡回时长（秒）
+  };
+
+  const grid = document.getElementById('mtGrid'), title = document.getElementById('mtTitle');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  title.textContent = CONFIG.title; if (CONFIG.sub) { const s = document.createElement('small'); s.textContent = CONFIG.sub; title.appendChild(s); }
+  const cell = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-cell')) || 48;
+  let cols = 0, rows = 0, cells = [];
+  function build() {
+    cols = Math.ceil(innerWidth / cell) + 1; rows = Math.ceil(innerHeight / cell) + 1;
+    grid.style.setProperty('--cols', cols); grid.innerHTML = ''; cells = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const d = document.createElement('div'); d.className = 'mt-cell'; d.dataset.c = c; d.dataset.r = r; grid.appendChild(d); cells.push(d); }
+  }
+  build(); addEventListener('resize', build);
+  let userTook = false;
+
+  // 涟漪：以点击格为中心，第 d 圈的格子延迟 d / 速度 亮起，然后在 fade 秒内淡回；波峰宽度决定同时亮着几圈
+  function ripple(cx, cy) {
+    if (reduceMotion) return;
+    const maxD = Math.hypot(cols, rows);
+    for (const el of cells) {
+      const d = Math.hypot(el.dataset.c - cx, el.dataset.r - cy);
+      const delay = d / CONFIG.speed * 100, strength = Math.max(0.15, 1 - d / maxD);
+      el.animate([
+        { background: 'transparent', offset: 0 },
+        { background: `color-mix(in srgb, var(--mt-accent) ${Math.round(75 * strength)}%, transparent)`, offset: 0.2 },
+        { background: 'transparent', offset: 1 },
+      ], { duration: CONFIG.width * (100 / CONFIG.speed) + CONFIG.fade * 300, delay, easing: 'ease-out' });   // 时长 ≈ 波峰宽度 × 每圈间隔 + 淡回，才是一道环而不是一整片
+    }
+  }
+  grid.addEventListener('pointerdown', (e) => {
+    userTook = true;
+    const t = e.target.closest('.mt-cell'); if (!t) return;
+    ripple(+t.dataset.c, +t.dataset.r);
+  });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：每 2.6 秒在随机位置点一下
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) ripple(Math.floor(cols * (0.2 + Math.random() * 0.6)), Math.floor(rows * (0.2 + Math.random() * 0.6))); }, 2600);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

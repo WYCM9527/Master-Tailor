@@ -1,0 +1,24 @@
+{
+  "slug": "dot-follow-highlight",
+  "name": "点阵跟随高亮",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["点阵", "跟随", "荧光底", "首屏"],
+  "summary": "满屏淡点阵，鼠标周围一圈点变成亮色跟着走；标题里的关键词被一道荧光底从左到右划亮",
+  "params": [
+    { "key": "text", "label": "标题", "type": "text", "target": "config", "default": "把复杂留给我们，把【一眼就懂】留给你的用户。", "maxLength": 60, "help": "用【】包住要划荧光底的词" },
+    { "key": "accent", "label": "高亮颜色", "type": "color", "target": "css", "default": "#6366f1" },
+    { "key": "radius", "label": "提亮半径", "type": "range", "target": "css", "min": 80, "max": 500, "step": 10, "default": 220, "unit": "px" },
+    { "key": "gap", "label": "点阵间距", "type": "range", "target": "css", "min": 8, "max": 40, "step": 1, "default": 16, "unit": "px" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 24, "max": 72, "step": 2, "default": 40, "unit": "px" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "wide", "name": "大范围绿光", "values": { "accent": "#22c55e", "radius": 420, "gap": 22 } },
+    { "id": "fine", "name": "细密粉点", "values": { "accent": "#f472b6", "gap": 10, "radius": 160 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Hero Highlight 一类首屏效果", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

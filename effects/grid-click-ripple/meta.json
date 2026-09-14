@@ -1,0 +1,25 @@
+{
+  "slug": "grid-click-ripple",
+  "name": "格子涟漪",
+  "category": "background",
+  "sub": "click",
+  "tags": ["网格", "涟漪", "点击", "扩散"],
+  "summary": "满屏方格背景，点哪里，亮色就以那一格为中心一圈圈向外传开、再依次淡回，像往格子池里丢了颗石子",
+  "params": [
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "点一下，让格子荡起来", "maxLength": 30 },
+    { "key": "sub", "label": "副标题", "type": "text", "target": "config", "default": "涟漪从点击处一圈圈向外传", "maxLength": 40 },
+    { "key": "speed", "label": "传播速度", "type": "range", "target": "config", "min": 0.4, "max": 4, "step": 0.2, "default": 1.4, "help": "每 100 毫秒传几格" },
+    { "key": "width", "label": "波峰宽度", "type": "range", "target": "config", "min": 1, "max": 6, "step": 0.5, "default": 2.5, "help": "同时亮着几圈" },
+    { "key": "fade", "label": "淡回时长", "type": "range", "target": "config", "min": 0.3, "max": 2, "step": 0.1, "default": 0.7, "displayUnit": " 秒" },
+    { "key": "cell", "label": "格子大小", "type": "range", "target": "css", "min": 24, "max": 96, "step": 4, "default": 48, "unit": "px" },
+    { "key": "accent", "label": "涟漪颜色", "type": "color", "target": "css", "default": "#6366f1" },
+    { "key": "color", "label": "标题颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "fast", "name": "快速细格", "values": { "cell": 28, "speed": 3, "width": 4, "fade": 0.5, "accent": "#22d3ee" } },
+    { "id": "slow", "name": "慢波大格", "values": { "cell": 80, "speed": 0.6, "width": 1.5, "fade": 1.4, "accent": "#f59e0b" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Background Ripple Effect 一类格子涟漪", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

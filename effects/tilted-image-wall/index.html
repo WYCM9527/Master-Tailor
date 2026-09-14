@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D 图墙</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-tiltX: 55deg;       /* 俯视倾角 */
+    --mt-tiltZ: -45deg;      /* 平面旋转角 */
+    --mt-speed: 24s;         /* 一列滚完一轮的时长 */
+    --mt-gap: 14px;          /* 图片间距 */
+    --mt-radius: 10px;       /* 图片圆角 */
+    --mt-dim: 0.55;          /* 图墙压暗程度（0 不压暗） */
+    --mt-color: #f2f3f8;     /* 标题颜色 */
+    --mt-fontSize: 48px;     /* 标题字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 舞台：一张巨大的图片网格，整体在 3D 里俯视 + 旋转，像铺在桌面上斜着看 */
+  .mt-stage { position: fixed; inset: 0; perspective: 1200px; overflow: hidden; }
+  .mt-wall {
+    position: absolute; left: 50%; top: 50%; width: 200vmax; height: 200vmax;
+    transform: translate(-50%, -50%) rotateX(var(--mt-tiltX)) rotateZ(var(--mt-tiltZ));
+    display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: var(--mt-gap); transform-style: preserve-3d;
+  }
+  /* 每一列上下两半内容相同，平移半个高度即无缝；相邻列方向相反 */
+  .mt-col { overflow: hidden; }
+  .mt-track { display: flex; flex-direction: column; gap: var(--mt-gap); animation: mt-scroll var(--mt-speed) linear infinite; }
+  .mt-col:nth-child(even) .mt-track { animation-direction: reverse; }
+  @keyframes mt-scroll { from { transform: translateY(0); } to { transform: translateY(calc(-50% - var(--mt-gap) / 2)); } }
+  .mt-track img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border-radius: var(--mt-radius); }
+  .mt-shade { position: fixed; inset: 0; background: rgba(0, 0, 0, var(--mt-dim)); pointer-events: none; }
+  .mt-title { position: relative; margin: 0; padding: 0 24px; text-align: center; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 800; letter-spacing: -0.03em; text-wrap: balance; text-shadow: 0 4px 30px rgba(0, 0, 0, 0.7); }
+  .mt-title small { display: block; margin-top: 12px; font-size: 0.36em; font-weight: 400; opacity: 0.65; letter-spacing: 0; }
+
+  /* 用户开启「减少动态效果」时：图墙静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-track { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" aria-hidden="true"><div class="mt-wall" id="mtWall"></div></div>
+<div class="mt-shade" aria-hidden="true"></div>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    title: "作品墙",                    // 标题
+    sub: "一面斜着铺开、缓缓流动的图片墙", // 副标题
+    cols: 6,                            // 列数
+  };
+  const wall = document.getElementById('mtWall'), title = document.getElementById('mtTitle');
+  title.textContent = CONFIG.title; if (CONFIG.sub) { const s = document.createElement('small'); s.textContent = CONFIG.sub; title.appendChild(s); }
+  wall.style.setProperty('--cols', CONFIG.cols);
+  // 每列从不同起点取图，避免相邻列同图并排；每列放两份同样的序列供无缝循环
+  const srcs = CONFIG.slides.map(s => s.src), per = Math.max(6, srcs.length);
+  for (let c = 0; c < CONFIG.cols; c++) {
+    const col = document.createElement('div'); col.className = 'mt-col';
+    const track = document.createElement('div'); track.className = 'mt-track';
+    const seq = Array.from({ length: per }, (_, i) => srcs[(i + c * 3) % srcs.length]);
+    for (const src of [...seq, ...seq]) { const img = document.createElement('img'); img.src = src; img.alt = ''; img.loading = 'lazy'; track.appendChild(img); }
+    track.style.animationDelay = (-c * 3.7) + 's';
+    col.appendChild(track); wall.appendChild(col);
+  }
+  document.addEventListener('visibilitychange', () => wall.querySelectorAll('.mt-track').forEach(t => t.style.animationPlayState = document.hidden ? 'paused' : 'running'));
+</script>
+</body>
+</html>

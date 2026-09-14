@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>光束撞击</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-floor: rgba(255, 255, 255, 0.08); /* 地面颜色 */
+    --mt-color: #f2f3f8;     /* 标题颜色 */
+    --mt-fontSize: 44px;     /* 标题字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  /* 地面：光束落到这里爆开 */
+  .mt-floor { position: fixed; left: 0; right: 0; bottom: 12%; height: 1px; background: var(--mt-floor); box-shadow: 0 -30px 40px -20px rgba(255, 255, 255, 0.06); }
+  .mt-title { position: relative; margin: 0 0 8vh; padding: 0 24px; text-align: center; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<div class="mt-floor" aria-hidden="true"></div>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    title: "每一束光落地都会炸开",   // 标题（留空则不显示）
+    count: 7,             // 同时下落的光束数量
+    colorA: "#6366f1",    // 光束颜色 A
+    colorB: "#a855f7",    // 光束颜色 B
+    minSpeed: 220,        // 最慢下落速度（px/s）
+    maxSpeed: 560,        // 最快下落速度（px/s）
+    beamLength: 120,      // 光束长度（px）
+    sparks: 22,           // 每次撞击的火花数量
+  };
+
+  const canvas = document.getElementById('mtCanvas'), ctx = canvas.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const title = document.getElementById('mtTitle'); title.textContent = CONFIG.title; if (!CONFIG.title) title.hidden = true;
+  const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`; };
+  const colors = [hexRgb(CONFIG.colorA), hexRgb(CONFIG.colorB)];
+  let W = 0, H = 0, dpr = 1, floorY = 0;
+  function resize() { dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); floorY = H * 0.88; }
+  resize(); addEventListener('resize', resize);
+
+  // 光束：一条竖向渐变的细条，从屏幕上方随机位置以随机速度落下；落到地面即换新、并在落点炸出火花
+  const beams = Array.from({ length: CONFIG.count }, (_, i) => spawn(true));
+  function spawn(anywhere) {
+    return { x: 20 + Math.random() * (W - 40), y: anywhere ? -Math.random() * H : -CONFIG.beamLength - Math.random() * 200,
+             v: CONFIG.minSpeed + Math.random() * (CONFIG.maxSpeed - CONFIG.minSpeed), c: colors[Math.floor(Math.random() * colors.length)], w: 2 + Math.random() * 2 };
+  }
+  const sparks = [];
+  function explode(x, c) {
+    for (let i = 0; i < CONFIG.sparks; i++) {
+      // 火花朝上半平面随机方向飞出，受重力回落，1 秒内熄灭
+      const a = -Math.PI * (0.15 + Math.random() * 0.7), s = 120 + Math.random() * 260;
+      sparks.push({ x, y: floorY, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.6 + Math.random() * 0.5, age: 0, c, r: 1 + Math.random() * 2 });
+    }
+  }
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!document.hidden) {
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < beams.length; i++) {
+        const b = beams[i];
+        if (!reduceMotion) b.y += b.v * dt;
+        if (b.y >= floorY) { explode(b.x, b.c); beams[i] = spawn(false); continue; }
+        // 光束：头部亮、尾部透明的竖向渐变；再叠一层更宽更淡的辉光
+        const top = b.y - CONFIG.beamLength;
+        const g = ctx.createLinearGradient(0, top, 0, b.y);
+        g.addColorStop(0, `rgba(${b.c},0)`); g.addColorStop(1, `rgba(${b.c},1)`);
+        ctx.fillStyle = g; ctx.fillRect(b.x - b.w / 2, top, b.w, CONFIG.beamLength);
+        ctx.fillStyle = `rgba(${b.c},0.12)`; ctx.fillRect(b.x - b.w * 2, top, b.w * 4, CONFIG.beamLength);
+        ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.arc(b.x, b.y - 2, b.w * 0.9, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+      }
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        if (!reduceMotion) { s.age += dt; s.vy += 900 * dt; s.x += s.vx * dt; s.y += s.vy * dt; }
+        const k = 1 - s.age / s.life;
+        if (k <= 0) { sparks.splice(i, 1); continue; }
+        ctx.fillStyle = `rgba(${s.c},${k})`; ctx.beginPath(); ctx.arc(s.x, s.y, s.r * k, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

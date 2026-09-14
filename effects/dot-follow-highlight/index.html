@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>点阵跟随高亮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-dot: rgba(255, 255, 255, 0.16); /* 底层点阵颜色 */
+    --mt-accent: #6366f1;    /* 高亮点阵与荧光底的颜色 */
+    --mt-radius: 220px;      /* 鼠标周围提亮的半径 */
+    --mt-gap: 16px;          /* 点阵间距 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 40px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 两层点阵：底层灰点铺满；上层同样的点阵换成强调色，用一个跟着鼠标的圆形遮罩只露出光标附近 */
+  .mt-dots, .mt-dots-hi {
+    position: fixed; inset: 0; pointer-events: none;
+    background-image: radial-gradient(circle, var(--dot) 1.2px, transparent 1.6px);
+    background-size: var(--mt-gap) var(--mt-gap);
+  }
+  .mt-dots { --dot: var(--mt-dot); }
+  .mt-dots-hi {
+    --dot: var(--mt-accent); opacity: 0;
+    -webkit-mask-image: radial-gradient(var(--mt-radius) circle at var(--x) var(--y), #000 0%, transparent 100%);
+    mask-image: radial-gradient(var(--mt-radius) circle at var(--x) var(--y), #000 0%, transparent 100%);
+    transition: opacity 0.3s;
+  }
+  body.on .mt-dots-hi { opacity: 1; }
+
+  .mt-title { position: relative; margin: 0; padding: 0 24px; max-width: 760px; text-align: center; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 700; line-height: 1.35; letter-spacing: -0.02em; text-wrap: balance; }
+  /* 荧光底：关键词背景从 0 宽长到全宽，像用荧光笔从左到右划过 */
+  .mt-title mark {
+    color: inherit; padding: 2px 6px; border-radius: 6px;
+    background: linear-gradient(to right, color-mix(in srgb, var(--mt-accent) 70%, transparent), color-mix(in srgb, var(--mt-accent) 40%, #a855f7));
+    background-repeat: no-repeat; background-size: 0% 100%;
+    animation: mt-highlight 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both 0.6s;
+  }
+  @keyframes mt-highlight { to { background-size: 100% 100%; } }
+
+  /* 用户开启「减少动态效果」时：荧光底直接满格 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-title mark { animation: none; background-size: 100% 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-dots" aria-hidden="true"></div>
+<div class="mt-dots-hi" id="mtHi" aria-hidden="true"></div>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    text: "把复杂留给我们，把【一眼就懂】留给你的用户。", // 标题，用【】包住要划荧光底的词
+  };
+  const title = document.getElementById('mtTitle'), hi = document.getElementById('mtHi');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  CONFIG.text.split(/(【[^】]*】)/).forEach(p => {
+    if (p.startsWith('【')) { const m = document.createElement('mark'); m.textContent = p.slice(1, -1); title.appendChild(m); } else if (p) title.append(p);
+  });
+  let userTook = false;
+  const moveTo = (x, y) => { hi.style.setProperty('--x', x + 'px'); hi.style.setProperty('--y', y + 'px'); };
+  addEventListener('pointermove', (e) => { userTook = true; document.body.classList.add('on'); moveTo(e.clientX, e.clientY); });
+  addEventListener('pointerleave', () => document.body.classList.remove('on'));
+  moveTo(innerWidth / 2, innerHeight / 2);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时高亮圈自己在标题附近慢慢游走
+  if (!reduceMotion) {
+    let t = 0, last = performance.now();
+    (function auto(now) {
+      if (userTook) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!document.hidden) { t += dt; document.body.classList.add('on'); moveTo(innerWidth / 2 + Math.cos(t * 0.7) * innerWidth * 0.3, innerHeight / 2 + Math.sin(t * 1.1) * innerHeight * 0.25); }
+      requestAnimationFrame(auto);
+    })(performance.now());
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

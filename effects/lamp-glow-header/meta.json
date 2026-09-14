@@ -1,0 +1,26 @@
+{
+  "slug": "lamp-glow-header",
+  "name": "灯管标题",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["灯管", "光锥", "标题", "Linear 风"],
+  "summary": "一根细亮的横向灯管向上张开一片柔和的光锥，标题从灯下升起，Linear 官网那种一盏灯照亮整个章节的开场",
+  "params": [
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "把灯打开\\n就能看清界面", "maxLength": 40, "help": "用 \\n 换行" },
+    { "key": "sub", "label": "副标题", "type": "text", "target": "config", "default": "一根灯管，一束光，一句标题", "maxLength": 40 },
+    { "key": "glow", "label": "灯光颜色", "type": "color", "target": "css", "default": "#22d3ee" },
+    { "key": "spread", "label": "光锥宽度", "type": "range", "target": "css", "min": 16, "max": 48, "step": 2, "default": 30, "unit": "rem" },
+    { "key": "height", "label": "光锥高度", "type": "range", "target": "css", "min": 6, "max": 24, "step": 1, "default": 14, "unit": "rem" },
+    { "key": "intensity", "label": "光强", "type": "range", "target": "css", "min": 0.3, "max": 1, "step": 0.05, "default": 1 },
+    { "key": "fontSize", "label": "标题字号", "type": "range", "target": "css", "min": 28, "max": 96, "step": 4, "default": 52, "unit": "px" },
+    { "key": "color", "label": "标题颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "青色灯管", "values": {} },
+    { "id": "warm", "name": "暖白台灯", "values": { "glow": "#ffd9a0", "spread": 24, "height": 10, "intensity": 0.8 } },
+    { "id": "violet", "name": "紫光宽幕", "values": { "glow": "#a78bfa", "spread": 44, "height": 18, "fontSize": 64 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Lamp 一类章节灯光", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

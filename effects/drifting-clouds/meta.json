@@ -1,0 +1,26 @@
+{
+  "slug": "drifting-clouds",
+  "name": "云层飘移",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["云", "天空", "GLSL", "程序化"],
+  "summary": "程序生成的柔软云层在渐变天空上缓缓飘过，云顶亮、云底带阴影，云量、大小、柔和度、天空与云的颜色都能调",
+  "params": [
+    { "key": "skyTop", "label": "天空顶部", "type": "color", "target": "config", "default": "#0b1a3a" },
+    { "key": "skyBottom", "label": "天空底部", "type": "color", "target": "config", "default": "#3b6fb6" },
+    { "key": "cloud", "label": "云的颜色", "type": "color", "target": "config", "default": "#ffffff" },
+    { "key": "shadow", "label": "云底阴影", "type": "color", "target": "config", "default": "#6f86b8" },
+    { "key": "speed", "label": "飘移速度", "type": "range", "target": "config", "min": 0, "max": 4, "step": 0.1, "default": 1 },
+    { "key": "coverage", "label": "云量", "type": "range", "target": "config", "min": 0.1, "max": 0.9, "step": 0.05, "default": 0.5 },
+    { "key": "softness", "label": "云边柔和度", "type": "range", "target": "config", "min": 0.05, "max": 0.6, "step": 0.05, "default": 0.35 },
+    { "key": "scale", "label": "云团大小", "type": "range", "target": "config", "min": 0.6, "max": 4, "step": 0.1, "default": 1.6, "help": "数值越小云团越大" }
+  ],
+  "presets": [
+    { "id": "default", "name": "夜空薄云", "values": {} },
+    { "id": "day", "name": "白日晴空", "values": { "skyTop": "#3d8bff", "skyBottom": "#b9dcff", "shadow": "#8fb3e0", "coverage": 0.45, "scale": 1.3 } },
+    { "id": "sunset", "name": "黄昏", "values": { "skyTop": "#3a1f5d", "skyBottom": "#ff8c5a", "cloud": "#ffd9c2", "shadow": "#8a4c6e", "coverage": 0.6, "speed": 0.6 } },
+    { "id": "storm", "name": "阴云密布", "values": { "skyTop": "#11151c", "skyBottom": "#3a4451", "cloud": "#9aa3b2", "shadow": "#3c434f", "coverage": 0.85, "softness": 0.5, "speed": 1.8 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 Cloud Shader 一类程序化云层", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+}

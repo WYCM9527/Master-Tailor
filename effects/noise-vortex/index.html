@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>粒子涡旋</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 标题颜色 */
+    --mt-fontSize: 48px;     /* 标题字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  .mt-title { position: relative; margin: 0; padding: 0 24px; text-align: center; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6); }
+  .mt-title small { display: block; margin-top: 12px; font-size: 0.36em; font-weight: 400; opacity: 0.6; letter-spacing: 0; }
+</style>
+</head>
+<body>
+<canvas id="mtCanvas" aria-hidden="true"></canvas>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    title: "看不见的风，看得见的路",     // 标题
+    sub: "几百个粒子顺着同一片噪声场流动",  // 副标题
+    count: 700,           // 粒子数量
+    baseHue: 220,         // 基准色相（0–360）
+    hueRange: 100,        // 色相跨度
+    speed: 1,             // 流速
+    swirl: 3,             // 涡旋强度（噪声决定的转向幅度）
+    trail: 0.12,          // 拖尾长度（每帧擦除的强度，越小尾越长）
+    glow: true,           // 叠加一层柔光
+  };
+
+  const canvas = document.getElementById('mtCanvas'), view = canvas.getContext('2d');
+  // 轨迹画在离屏画布上累积；可见画布每帧由「轨迹 + 模糊后的轨迹」合成，柔光不会反馈叠加到发白
+  const off = document.createElement('canvas'), ctx = off.getContext('2d');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const title = document.getElementById('mtTitle'); title.textContent = CONFIG.title; if (CONFIG.sub) { const s = document.createElement('small'); s.textContent = CONFIG.sub; title.appendChild(s); }
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--mt-bg').trim() || '#0a0a0f';
+  const bgRgb = (h => { const n = parseInt(h.slice(1), 16); return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`; })(bg);
+  let W = 0, H = 0;
+  function resize() { W = canvas.width = off.width = innerWidth; H = canvas.height = off.height = innerHeight; ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); }
+  resize(); addEventListener('resize', resize);
+
+  // ---- 三维值噪声（x, y, 时间）：决定每个位置、每个时刻的风向 ----
+  const hash = (x, y, z) => { let h = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return h - Math.floor(h); };
+  const sm = (t) => t * t * (3 - 2 * t);
+  function noise3(x, y, z) {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = sm(x - xi), yf = sm(y - yi), zf = sm(z - zi);
+    const l = (a, b, t) => a + (b - a) * t;
+    const n = (dx, dy, dz) => hash(xi + dx, yi + dy, zi + dz);
+    return l(l(l(n(0, 0, 0), n(1, 0, 0), xf), l(n(0, 1, 0), n(1, 1, 0), xf), yf), l(l(n(0, 0, 1), n(1, 0, 1), xf), l(n(0, 1, 1), n(1, 1, 1), xf), yf), zf);
+  }
+  // 粒子：位置、寿命、速度、色相；寿命尽或跑出屏幕就在随机位置重生
+  const P = [];
+  const spawn = (p = {}) => { p.x = Math.random() * W; p.y = H * 0.5 + (Math.random() - 0.5) * H * 0.7; p.vx = 0; p.vy = 0; p.life = 0; p.ttl = 60 + Math.random() * 140; p.speed = 0.6 + Math.random() * 1.4; p.hue = CONFIG.baseHue + Math.random() * CONFIG.hueRange; return p; };
+  for (let i = 0; i < CONFIG.count; i++) P.push(spawn());
+
+  let t = 0;
+  function frame() {
+    requestAnimationFrame(frame);
+    if (document.hidden || reduceMotion) return;
+    t += 0.0035 * CONFIG.speed;
+    // 半透明底色盖一层：旧轨迹逐渐变暗形成拖尾
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = `rgba(${bgRgb},${CONFIG.trail})`; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+    for (const p of P) {
+      // 噪声值 → 风向角；粒子按风向加速并带惯性，走出一条平滑的曲线
+      const a = noise3(p.x * 0.00125, p.y * 0.00125, t) * Math.PI * 2 * CONFIG.swirl;
+      p.vx = p.vx * 0.5 + Math.cos(a) * p.speed * CONFIG.speed * 0.5; p.vy = p.vy * 0.5 + Math.sin(a) * p.speed * CONFIG.speed * 0.5;
+      const nx = p.x + p.vx * 2, ny = p.y + p.vy * 2;
+      // 生命周期内先亮后暗
+      const k = p.life / p.ttl, alpha = Math.sin(k * Math.PI) * 0.9;
+      ctx.strokeStyle = `hsla(${p.hue}, 100%, 65%, ${alpha})`; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(nx, ny); ctx.stroke();
+      p.x = nx; p.y = ny; p.life++;
+      if (p.life > p.ttl || p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) spawn(p);
+    }
+    // 合成到可见画布：先画轨迹，再叠一层模糊过的轨迹当柔光
+    view.globalCompositeOperation = 'source-over'; view.filter = 'none'; view.globalAlpha = 1;
+    view.drawImage(off, 0, 0);
+    if (CONFIG.glow) { view.globalCompositeOperation = 'lighter'; view.filter = 'blur(8px)'; view.globalAlpha = 0.7; view.drawImage(off, 0, 0); view.filter = 'none'; view.globalAlpha = 1; }
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>
