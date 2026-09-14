@@ -1,0 +1,28 @@
+{
+  "slug": "rain-on-glass",
+  "name": "雨滴玻璃",
+  "category": "background",
+  "sub": "idle",
+  "tags": ["雨", "玻璃", "折射", "WebGL"],
+  "summary": "隔着一块起雾的玻璃看窗外：雨滴落在玻璃上、越积越大、滑落合并、留下拖痕，每颗水珠里都是一枚倒映着清晰景色的小凸透镜",
+  "params": [
+    { "key": "photo", "label": "窗外的景", "type": "image", "target": "config", "default": "/samples/sample-1.webp" },
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "窗外在下雨", "maxLength": 20 },
+    { "key": "sub", "label": "副标题", "type": "text", "target": "config", "default": "玻璃上的水珠会滑落、合并、留下拖痕", "maxLength": 40 },
+    { "key": "rain", "label": "雨量", "type": "range", "target": "config", "min": 0.05, "max": 1, "step": 0.05, "default": 0.25 },
+    { "key": "minR", "label": "最小雨滴", "type": "range", "target": "config", "min": 4, "max": 20, "step": 1, "default": 10, "unit": "px" },
+    { "key": "maxR", "label": "最大雨滴", "type": "range", "target": "config", "min": 20, "max": 80, "step": 2, "default": 40, "unit": "px" },
+    { "key": "trails", "label": "拖痕密度", "type": "range", "target": "config", "min": 0, "max": 2, "step": 0.1, "default": 1 },
+    { "key": "fog", "label": "玻璃雾化", "type": "range", "target": "config", "min": 0, "max": 30, "step": 1, "default": 10, "unit": "px" },
+    { "key": "refraction", "label": "折射强度", "type": "range", "target": "config", "min": 0.2, "max": 2.5, "step": 0.1, "default": 1 },
+    { "key": "parallax", "label": "鼠标视差", "type": "toggle", "target": "config", "default": true }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "storm", "name": "暴雨", "values": { "rain": 0.9, "maxR": 56, "trails": 1.6, "fog": 14, "photo": "/samples/sample-3.webp" } },
+    { "id": "drizzle", "name": "毛毛雨", "values": { "rain": 0.1, "minR": 5, "maxR": 22, "trails": 0.4, "fog": 6, "photo": "/samples/sample-4.webp" } },
+    { "id": "clear", "name": "干净玻璃", "values": { "fog": 0, "refraction": 1.6, "rain": 0.25 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Codrops · RainEffect（Lucas Bebber）", "url": "https://github.com/codrops/RainEffect", "license": "MIT（思路参考，代码自写；雨滴精灵为程序生成）" }
+}

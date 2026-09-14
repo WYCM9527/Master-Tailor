@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雨滴玻璃</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色（WebGL 不可用时兜底） */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 44px;     /* 标题字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+  canvas.gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .mt-title { position: relative; margin: 0; padding: 0 24px; text-align: center; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.02em; text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5); pointer-events: none; text-wrap: balance; }
+  .mt-title small { display: block; margin-top: 10px; font-size: 0.36em; font-weight: 400; opacity: 0.7; letter-spacing: 0; }
+</style>
+</head>
+<body>
+<canvas class="gl" id="mtGL" aria-hidden="true"></canvas>
+<h1 class="mt-title" id="mtTitle"></h1>
+<script>
+  const CONFIG = {
+    photo: "/samples/sample-1.webp",  // 窗外的景（背景图）
+    title: "窗外在下雨",               // 标题（留空则不显示）
+    sub: "玻璃上的水珠会滑落、合并、留下拖痕",  // 副标题
+    rain: 0.25,          // 雨量（每帧新雨滴的概率）
+    minR: 10,            // 最小雨滴半径（px）
+    maxR: 40,            // 最大雨滴半径（px）
+    trails: 1,           // 拖痕密度倍率（滑落时留下的小水珠）
+    fog: 10,             // 玻璃雾化程度（背景模糊半径 px）
+    refraction: 1,       // 水珠里的折射强度倍率
+    brightness: 1.04,    // 水珠里的亮度
+    parallax: true,      // 鼠标轻微视差
+  };
+
+  const glCanvas = document.getElementById('mtGL');
+  const gl = glCanvas.getContext('webgl', { alpha: false, antialias: false });
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const title = document.getElementById('mtTitle'); title.textContent = CONFIG.title; if (CONFIG.sub) { const s = document.createElement('small'); s.textContent = CONFIG.sub; title.appendChild(s); } if (!CONFIG.title && !CONFIG.sub) title.hidden = true;
+  const rnd = (a = 1, b, curve) => { if (b === undefined) { b = a; a = 0; } let n = Math.random(); if (curve) n = curve(n); return a + n * (b - a); };
+  const chance = (p) => Math.random() <= p;
+
+  // =========================== 一、雨滴模拟（画到一张「水图」上） ===========================
+  // 水图每个像素：R/G = 该处水面的法线方向（决定折射偏移），B = 水的厚度，A = 有没有水
+  const SIM_SCALE = 1;   // 模拟画布相对 CSS 像素的比例；1 已足够，重的是着色器
+  let W = 0, H = 0;
+  const water = document.createElement('canvas'), wctx = water.getContext('2d');
+  const droplets = document.createElement('canvas'), dctx = droplets.getContext('2d');   // 静态小水珠层（会被大水珠滑过时擦掉）
+  const SPRITE = 64, LEVELS = 48, sprites = [];
+  // 按厚度分级预生成雨滴精灵：法线球面 + 软边 alpha，B 通道写厚度
+  (function buildSprites() {
+    for (let l = 0; l < LEVELS; l++) {
+      const c = document.createElement('canvas'); c.width = c.height = SPRITE; const ctx = c.getContext('2d'); const img = ctx.createImageData(SPRITE, SPRITE); const d = img.data;
+      for (let y = 0; y < SPRITE; y++) for (let x = 0; x < SPRITE; x++) {
+        const nx = (x + 0.5) / SPRITE * 2 - 1, ny = (y + 0.5) / SPRITE * 2 - 1, rr = nx * nx + ny * ny, i = (y * SPRITE + x) * 4;
+        if (rr > 1) { d[i + 3] = 0; continue; }
+        const z = Math.sqrt(1 - rr);                        // 球面高度
+        const bulge = Math.pow(1 - z, 0.65);                // 边缘折射强、中心弱
+        d[i] = Math.round((nx * bulge * 0.5 + 0.5) * 255); d[i + 1] = Math.round((ny * bulge * 0.5 + 0.5) * 255);
+        d[i + 2] = Math.round(l / (LEVELS - 1) * 255 * (0.35 + 0.65 * z));   // 厚度：越大的水珠越厚，中心比边缘厚
+        d[i + 3] = Math.round(255 * Math.min(1, (1 - rr) * 6));             // 软边
+      }
+      ctx.putImageData(img, 0, 0); sprites.push(c);
+    }
+  })();
+  const clearBrush = document.createElement('canvas'); clearBrush.width = clearBrush.height = 128; { const c = clearBrush.getContext('2d'); c.fillStyle = '#000'; c.beginPath(); c.arc(64, 64, 64, 0, Math.PI * 2); c.fill(); }
+
+  const OPT = { maxDrops: 900, rainLimit: 3, dropletsRate: 50, dropletsSize: [2, 4], cleanMul: 0.43, spawnArea: [-0.1, 0.95], trailScale: [0.2, 0.5], collisionRadius: 0.65, collisionRadiusInc: 0.01, collisionBoostMul: 0.05, collisionBoost: 1 };
+  let drops = [], dropletsCounter = 0;
+  const deltaR = () => CONFIG.maxR - CONFIG.minR;
+  const areaMul = () => Math.sqrt((W * H) / (1024 * 768));
+  const newDrop = (o) => (drops.length >= OPT.maxDrops * areaMul() ? null : Object.assign({ x: 0, y: 0, r: 0, spreadX: 0, spreadY: 0, momentum: 0, momentumX: 0, lastSpawn: 0, nextSpawn: 0, parent: null, isNew: true, killed: false, shrink: 0 }, o));
+  function drawDrop(ctx, d) {
+    // 厚度等级由半径决定；铺开（spread）越大越薄；纵向拉长 1.5 倍成水滴形
+    let t = Math.max(0, Math.min(1, (d.r - CONFIG.minR) / deltaR() * 0.9)); t *= 1 / ((d.spreadX + d.spreadY) * 0.5 + 1);
+    const s = sprites[Math.floor(t * (LEVELS - 1))], sx = 1, sy = 1.5;
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(s, (d.x - d.r * sx * (d.spreadX + 1)) * SIM_SCALE, (d.y - d.r * sy * (d.spreadY + 1)) * SIM_SCALE, d.r * 2 * sx * (d.spreadX + 1) * SIM_SCALE, d.r * 2 * sy * (d.spreadY + 1) * SIM_SCALE);
+  }
+  function clearDroplets(x, y, r) { dctx.globalCompositeOperation = 'destination-out'; dctx.drawImage(clearBrush, (x - r) * SIM_SCALE, (y - r) * SIM_SCALE, r * 2 * SIM_SCALE, r * 2 * SIM_SCALE * 1.5); }
+  function updateDroplets(ts) {
+    // 静态小水珠：随机撒；被滑落的大水珠擦掉
+    dropletsCounter += OPT.dropletsRate * ts * areaMul() * CONFIG.trails;
+    while (dropletsCounter-- > 0) drawDrop(dctx, { x: rnd(W), y: rnd(H), r: rnd(OPT.dropletsSize[0], OPT.dropletsSize[1], n => n * n), spreadX: 0, spreadY: 0 });
+    wctx.drawImage(droplets, 0, 0);
+  }
+  function updateRain(ts) {
+    const out = [], limit = OPT.rainLimit * ts * areaMul(); let count = 0;
+    while (chance(CONFIG.rain * ts * areaMul()) && count < limit) {
+      count++;
+      const r = rnd(CONFIG.minR, CONFIG.maxR, n => n * n * n);   // 小雨滴多、大雨滴少
+      const d = newDrop({ x: rnd(W), y: rnd(H * OPT.spawnArea[0], H * OPT.spawnArea[1]), r, momentum: 1 + (r - CONFIG.minR) * 0.1 + rnd(2), spreadX: 1.5, spreadY: 1.5 });
+      if (d) out.push(d);
+    }
+    return out;
+  }
+  function step(ts) {
+    wctx.clearRect(0, 0, water.width, water.height);
+    updateDroplets(ts);
+    let next = updateRain(ts);
+    drops.sort((a, b) => (a.y * W + a.x) - (b.y * W + b.x));
+    drops.forEach((d, i) => {
+      if (d.killed) return;
+      // 大水珠更容易「爬」下来
+      if (chance((d.r - CONFIG.minR) * (0.1 / deltaR()) * ts)) d.momentum += rnd(d.r / CONFIG.maxR * 4);
+      if (d.r <= CONFIG.minR && chance(0.05 * ts)) d.shrink += 0.01;    // 小水珠慢慢蒸发
+      d.r -= d.shrink * ts; if (d.r <= 0) { d.killed = true; return; }
+      // 滑落时按动量留下拖痕小珠，自己略变小
+      d.lastSpawn += d.momentum * ts * CONFIG.trails;
+      if (d.lastSpawn > d.nextSpawn) {
+        const t = newDrop({ x: d.x + rnd(-d.r, d.r) * 0.1, y: d.y - d.r * 0.01, r: d.r * rnd(OPT.trailScale[0], OPT.trailScale[1]), spreadY: d.momentum * 0.1, parent: d });
+        if (t) { next.push(t); d.r *= Math.pow(0.97, ts); d.lastSpawn = 0; d.nextSpawn = rnd(CONFIG.minR, CONFIG.maxR) - d.momentum * 2 * CONFIG.trails + (CONFIG.maxR - d.r); }
+      }
+      d.spreadX *= Math.pow(0.4, ts); d.spreadY *= Math.pow(0.7, ts);
+      const moved = d.momentum > 0;
+      if (moved) { d.y += d.momentum; d.x += d.momentumX; if (d.y > H + d.r) { d.killed = true; return; } }
+      // 碰撞合并：只与排序后附近的 70 颗比较
+      if (moved || d.isNew) {
+        d.isNew = false;
+        for (let j = i + 1; j < Math.min(drops.length, i + 70); j++) {
+          const o = drops[j];
+          if (o === d || d.r <= o.r || d.parent === o || o.parent === d || o.killed) continue;
+          const dx = o.x - d.x, dy = o.y - d.y, dist = Math.hypot(dx, dy);
+          if (dist < (d.r + o.r) * (OPT.collisionRadius + d.momentum * OPT.collisionRadiusInc * ts)) {
+            const a1 = Math.PI * d.r * d.r, a2 = Math.PI * o.r * o.r;
+            d.r = Math.min(CONFIG.maxR * 1.2, Math.sqrt((a1 + a2 * 0.8) / Math.PI));
+            d.momentumX += dx * 0.1; d.spreadX = 0; d.spreadY = 0; o.killed = true;
+            d.momentum = Math.max(o.momentum, Math.min(40, d.momentum + d.r * OPT.collisionBoostMul + OPT.collisionBoost));
+          }
+        }
+      }
+      d.momentum -= Math.max(1, CONFIG.minR * 0.5 - d.momentum) * 0.1 * ts; if (d.momentum < 0) d.momentum = 0;
+      d.momentumX *= Math.pow(0.7, ts);
+      next.push(d);
+      if (moved) clearDroplets(d.x, d.y, d.r * OPT.cleanMul);
+      drawDrop(wctx, d);
+    });
+    drops = next;
+  }
+
+  // =========================== 二、WebGL 着色：玻璃外的雾化景 + 水珠里的折射清晰景 ===========================
+  const VS = `attribute vec2 aPos; void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }`;
+  const FS = `
+    precision mediump float;
+    uniform sampler2D uWater, uSharp, uBlur;
+    uniform vec2 uRes, uParallax; uniform float uTexRatio, uRefract, uBright;
+    vec2 texCoord() { return vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y) / uRes; }
+    // 背景按 cover 铺满
+    vec2 coverCoord(vec2 uv) {
+      float ratio = uRes.x / uRes.y, d = ratio - uTexRatio; vec2 scale = vec2(1.0), off = vec2(0.0);
+      if (d >= 0.0) { scale.y = 1.0 + d; off.y = d / 2.0; } else { scale.x = 1.0 - d; off.x = -d / 2.0; }
+      return (uv + off) / scale;
+    }
+    void main() {
+      vec2 px = 1.0 / uRes, uv = texCoord();
+      vec4 w = texture2D(uWater, uv + uParallax * px * 20.0);
+      float thick = w.b, a = clamp(w.a * 20.0 - 5.0, 0.0, 1.0);      // 把软边切硬一点，水珠边缘才清楚
+      vec2 refr = (w.rg - 0.5) * 2.0;
+      // 玻璃外：雾化的景 + 轻微视差
+      vec3 bg = texture2D(uBlur, coverCoord(uv + uParallax * px * 5.0)).rgb;
+      // 水珠里：清晰的景按法线方向偏移采样（大水珠偏得多，成了一枚小凸透镜）
+      vec2 rp = coverCoord(uv + px * refr * (256.0 + thick * 256.0) * uRefract + uParallax * px * -15.0);
+      vec3 inside = texture2D(uSharp, rp).rgb * uBright;
+      // 高光：法线朝左上方的那一小片更亮
+      float spec = pow(max(0.0, dot(normalize(vec3(-refr, 0.6)), normalize(vec3(-0.45, -0.75, 0.5)))), 24.0) * thick;
+      inside += spec * 0.35;
+      // 水珠下缘一点阴影，显出厚度
+      float shadowA = clamp(texture2D(uWater, uv - vec2(0.0, thick * 6.0) * px).a * 20.0 - 5.5, 0.0, 1.0) * 0.2;
+      vec3 col = mix(bg, bg * (1.0 - shadowA), 1.0);
+      col = mix(col, inside, a);
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+  const compile = (t, s) => { const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh); return sh; };
+  const prog = gl.createProgram(); gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos'); gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(prog, n);
+  function makeTex(unit) { const t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); return t; }
+  const texWater = makeTex(0), texSharp = makeTex(1), texBlur = makeTex(2);
+  gl.uniform1i(U('uWater'), 0); gl.uniform1i(U('uSharp'), 1); gl.uniform1i(U('uBlur'), 2);
+  gl.uniform1f(U('uRefract'), CONFIG.refraction); gl.uniform1f(U('uBright'), CONFIG.brightness);
+  const upload = (unit, tex, src) => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src); };
+
+  const dpr = Math.min(1.5, devicePixelRatio || 1);
+  function resize() {
+    W = innerWidth; H = innerHeight;
+    water.width = droplets.width = Math.floor(W * SIM_SCALE); water.height = droplets.height = Math.floor(H * SIM_SCALE);
+    glCanvas.width = Math.floor(W * dpr); glCanvas.height = Math.floor(H * dpr); gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+    gl.uniform2f(U('uRes'), glCanvas.width, glCanvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+
+  // 背景两份：清晰一份给水珠里用，模糊一份（canvas filter）当雾玻璃
+  let ready = false;
+  const img = new Image(); img.src = CONFIG.photo;
+  img.onload = () => {
+    const w = Math.min(1600, img.width), h = Math.round(w * img.height / img.width);
+    const sharp = document.createElement('canvas'); sharp.width = w; sharp.height = h; sharp.getContext('2d').drawImage(img, 0, 0, w, h);
+    const blur = document.createElement('canvas'); blur.width = w; blur.height = h; const bc = blur.getContext('2d'); bc.filter = `blur(${CONFIG.fog}px) brightness(0.9)`; bc.drawImage(img, -CONFIG.fog, -CONFIG.fog, w + CONFIG.fog * 2, h + CONFIG.fog * 2);
+    upload(1, texSharp, sharp); upload(2, texBlur, blur); gl.uniform1f(U('uTexRatio'), w / h); ready = true;
+  };
+  const target = { x: 0, y: 0 }, par = { x: 0, y: 0 };
+  addEventListener('pointermove', (e) => { if (!CONFIG.parallax) return; target.x = (e.clientX / W - 0.5) * 2; target.y = (e.clientY / H - 0.5) * 2; });
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden || !ready) { last = now; return; }
+    let ts = Math.min(1.1, (now - last) / (1000 / 60)); last = now;    // 以 60fps 为 1 的时间倍率
+    if (!reduceMotion) step(ts);
+    par.x += (target.x - par.x) * 0.05; par.y += (target.y - par.y) * 0.05;
+    upload(0, texWater, water);
+    gl.uniform2f(U('uParallax'), par.x, par.y);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>
