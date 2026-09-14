@@ -1,0 +1,26 @@
+{
+  "slug": "link-underline-styles",
+  "name": "链接下划线合集",
+  "category": "text",
+  "sub": "hover",
+  "tags": ["链接", "下划线", "悬停", "纯 CSS"],
+  "summary": "八种链接悬停下划线：左划入、双线相向、加粗双线、文字换位、中线横穿、色块盖过、双线浮起、手绘描画，一处切换",
+  "params": [
+    { "key": "variant", "label": "下划线样式", "type": "select", "target": "config", "options": [{ "value": "slide", "label": "左划入" }, { "value": "double", "label": "双线相向" }, { "value": "thick", "label": "加粗双线" }, { "value": "swap", "label": "文字换位" }, { "value": "strike", "label": "中线横穿" }, { "value": "cover", "label": "色块盖过" }, { "value": "twin", "label": "双线浮起" }, { "value": "scribble", "label": "手绘描画" }], "default": "slide" },
+    { "key": "items", "label": "链接文字", "type": "text", "target": "config", "default": "首页｜作品集｜关于我们｜联系方式", "maxLength": 60, "help": "用「｜」分隔" },
+    { "key": "line", "label": "线条颜色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "thickness", "label": "线条粗细", "type": "range", "target": "css", "min": 1, "max": 6, "step": 1, "default": 2, "unit": "px" },
+    { "key": "duration", "label": "动画时长", "type": "range", "target": "css", "min": 0.15, "max": 0.8, "step": 0.05, "default": 0.3, "unit": "s", "displayUnit": " 秒" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 16, "max": 56, "step": 2, "default": 28, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "左划入", "values": {} },
+    { "id": "swap", "name": "文字换位", "values": { "variant": "swap", "line": "#f472b6" } },
+    { "id": "cover", "name": "色块盖过", "values": { "variant": "cover", "line": "#fbbf24", "thickness": 3 } },
+    { "id": "scribble", "name": "手绘描画", "values": { "variant": "scribble", "line": "#22d3ee", "thickness": 3, "duration": 0.5 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · LineHoverStyles", "url": "https://github.com/codrops/LineHoverStyles", "license": "MIT（思路参考，代码自写）" }
+}

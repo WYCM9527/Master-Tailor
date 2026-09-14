@@ -1,0 +1,24 @@
+{
+  "slug": "infinite-loop-menu",
+  "name": "无限循环菜单",
+  "category": "nav",
+  "sub": "scroll",
+  "tags": ["菜单", "无限滚动", "循环", "大字"],
+  "summary": "一列大字菜单，滚到底会无缝接回开头、滚到顶接回末尾，永远滚不完；悬停项右移变色并亮出一道短横",
+  "params": [
+    { "key": "items", "label": "菜单项", "type": "text", "target": "config", "default": "首页｜作品集｜关于｜服务｜日志｜联系", "maxLength": 80, "help": "用「｜」分隔" },
+    { "key": "drift", "label": "自动漂移速度", "type": "range", "target": "config", "min": 0, "max": 4, "step": 0.5, "default": 1, "help": "无人操作时每帧滚动的像素" },
+    { "key": "numbered", "label": "显示序号", "type": "toggle", "target": "config", "default": true },
+    { "key": "accent", "label": "悬停颜色", "type": "color", "target": "css", "default": "#f472b6" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 32, "max": 140, "step": 4, "default": 72, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "still", "name": "不漂移", "values": { "drift": 0, "accent": "#7c9cff" } },
+    { "id": "huge", "name": "超大字", "values": { "fontSize": 120, "numbered": false, "drift": 1.5, "accent": "#fbbf24" } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": { "kind": "reference", "name": "Codrops · ScrollLoopMenu", "url": "https://github.com/codrops/ScrollLoopMenu", "license": "MIT（思路参考，代码自写）" }
+}

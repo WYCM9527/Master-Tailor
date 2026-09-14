@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>链接下划线合集</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-line: #7c9cff;      /* 线条颜色 */
+    --mt-thickness: 2px;     /* 线条粗细 */
+    --mt-duration: 0.3s;     /* 动画时长 */
+    --mt-fontSize: 28px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-list { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+  .mt-link { position: relative; display: inline-block; text-decoration: none; color: inherit; font-size: var(--mt-fontSize); font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; white-space: nowrap; cursor: pointer; }
+  .mt-link span { display: inline-block; position: relative; }
+  /* 所有变体共用：::before 是主线，::after 是副线；默认线宽 = 参数 */
+  .mt-link::before, .mt-link::after { content: ''; position: absolute; left: 0; width: 100%; height: var(--mt-thickness); background: var(--mt-line); top: 100%; pointer-events: none; }
+  .mt-link::after { display: none; }
+
+  /* slide：从左划入、离开时向右缩走 */
+  .mt-list.slide .mt-link::before { transform-origin: 100% 50%; transform: scaleX(0); transition: transform var(--mt-duration) cubic-bezier(0.7, 0, 0.2, 1); }
+  .mt-list.slide .mt-link:hover::before, .mt-list.slide .mt-link.demo::before { transform-origin: 0 50%; transform: scaleX(1); }
+  /* double：两根线相向划入 */
+  .mt-list.double .mt-link::before { transform-origin: 100% 50%; transform: scaleX(0); transition: transform var(--mt-duration) cubic-bezier(0.7, 0, 0.2, 1); }
+  .mt-list.double .mt-link::after { display: block; top: calc(100% + var(--mt-thickness) + 3px); transform-origin: 0 50%; transform: scaleX(0); transition: transform var(--mt-duration) cubic-bezier(0.7, 0, 0.2, 1); }
+  .mt-list.double .mt-link:hover::before, .mt-list.double .mt-link.demo::before { transform-origin: 0 50%; transform: scaleX(1); }
+  .mt-list.double .mt-link:hover::after, .mt-list.double .mt-link.demo::after { transform-origin: 100% 50%; transform: scaleX(1); }
+  /* thick：主线划入并加粗成两倍，副线晚 0.1s 跟上 */
+  .mt-list.thick .mt-link::before { transform-origin: 100% 50%; transform: scale(0, 1); transition: transform var(--mt-duration) cubic-bezier(0.2, 1, 0.8, 1); }
+  .mt-list.thick .mt-link::after { display: block; top: calc(100% + var(--mt-thickness) * 2 + 3px); transform-origin: 100% 50%; transform: scaleX(0); transition: transform calc(var(--mt-duration) + 0.1s) 0.1s cubic-bezier(0.2, 1, 0.8, 1); }
+  .mt-list.thick .mt-link:hover::before, .mt-list.thick .mt-link.demo::before { transform-origin: 0 50%; transform: scale(1, 2); }
+  .mt-list.thick .mt-link:hover::after, .mt-list.thick .mt-link.demo::after { transform-origin: 0 50%; transform: scaleX(1); }
+  /* swap：文字向左滑出、同一份副本从右滑入，底下划线跟着划入 */
+  .mt-list.swap .mt-link { overflow: hidden; line-height: 1.6; }
+  .mt-list.swap .mt-link::before { top: calc(100% - 4px); transform-origin: 100% 50%; transform: scaleX(0); transition: transform var(--mt-duration) cubic-bezier(0.5, 0.5, 0.3, 1); }
+  .mt-list.swap .mt-link:hover::before, .mt-list.swap .mt-link.demo::before { transform-origin: 0 50%; transform: scaleX(1); }
+  .mt-list.swap .mt-link span { transition: transform var(--mt-duration) cubic-bezier(0.5, 0.5, 0.3, 1); }
+  .mt-list.swap .mt-link .copy { position: absolute; left: 0; top: 0; transform: translateX(150%); color: var(--mt-line); }
+  .mt-list.swap .mt-link:hover span:not(.copy), .mt-list.swap .mt-link.demo span:not(.copy) { transform: translateX(-150%); }
+  .mt-list.swap .mt-link:hover .copy, .mt-list.swap .mt-link.demo .copy { transform: translateX(0); }
+  /* strike：一根线从中间横穿，文字微放大 */
+  .mt-list.strike .mt-link { padding: 0 10px; }
+  .mt-list.strike .mt-link::before { top: 50%; transform-origin: 100% 50%; transform: scaleX(0); transition: transform var(--mt-duration) cubic-bezier(0.4, 1, 0.8, 1); }
+  .mt-list.strike .mt-link:hover::before, .mt-list.strike .mt-link.demo::before { transform-origin: 0 50%; transform: scaleX(1); }
+  .mt-list.strike .mt-link span { transition: transform var(--mt-duration) cubic-bezier(0.4, 1, 0.8, 1); }
+  .mt-list.strike .mt-link:hover span, .mt-list.strike .mt-link.demo span { transform: scale(1.1); }
+  /* cover：一块色从底线长满整行再从上收走，露出换了色的文字 */
+  .mt-list.cover .mt-link::before { top: 0; height: 100%; opacity: 0; }
+  .mt-list.cover .mt-link:hover::before, .mt-list.cover .mt-link.demo::before { opacity: 1; animation: mt-cover var(--mt-duration) ease forwards; }
+  .mt-list.cover .mt-link::after { display: block; transition: opacity var(--mt-duration); }
+  .mt-list.cover .mt-link:hover::after, .mt-list.cover .mt-link.demo::after { opacity: 0; }
+  .mt-list.cover .mt-link span { transition: color 0.1s var(--mt-duration); }
+  .mt-list.cover .mt-link:hover span, .mt-list.cover .mt-link.demo span { color: var(--mt-line); }
+  @keyframes mt-cover { 0% { transform-origin: 50% 100%; transform: scaleY(0.045); } 50% { transform-origin: 50% 100%; transform: scaleY(1); } 51% { transform-origin: 50% 0; transform: scaleY(1); } 100% { transform-origin: 50% 0; transform: scaleY(0.045); } }
+  /* twin：两根线一长一短从下方浮起、先后淡入 */
+  .mt-list.twin .mt-link::before, .mt-list.twin .mt-link::after { display: block; opacity: 0; transform: translateY(3px); transition: transform var(--mt-duration) cubic-bezier(0.2, 1, 0.8, 1), opacity var(--mt-duration); }
+  .mt-list.twin .mt-link::after { top: calc(100% + var(--mt-thickness) + 3px); width: 70%; left: 15%; }
+  .mt-list.twin .mt-link::before { transition-delay: 0.1s; }
+  .mt-list.twin .mt-link:hover::before, .mt-list.twin .mt-link.demo::before { transition-delay: 0s; }
+  .mt-list.twin .mt-link:hover::after, .mt-list.twin .mt-link.demo::after { transition-delay: 0.1s; }
+  .mt-list.twin .mt-link:hover::before, .mt-list.twin .mt-link:hover::after, .mt-list.twin .mt-link.demo::before, .mt-list.twin .mt-link.demo::after { opacity: 1; transform: none; }
+  /* scribble：一条手绘感的波浪线从左往右画出来（SVG 描边） */
+  .mt-list.scribble .mt-link::before { display: none; }
+  .mt-list.scribble .mt-link svg { position: absolute; left: 0; top: 100%; width: 100%; height: 12px; overflow: visible; pointer-events: none; }
+  .mt-list.scribble .mt-link svg path { fill: none; stroke: var(--mt-line); stroke-width: var(--mt-thickness); stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset calc(var(--mt-duration) * 2) cubic-bezier(0.7, 0, 0.3, 1); }
+  .mt-list.scribble .mt-link:hover svg path, .mt-list.scribble .mt-link.demo svg path { stroke-dashoffset: 0; transition-timing-function: cubic-bezier(0.8, 1, 0.7, 1); transition-duration: var(--mt-duration); }
+  @media (prefers-reduced-motion: reduce) { .mt-link::before, .mt-link::after, .mt-link span, .mt-link svg path { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<nav class="mt-list" id="mtList" aria-label="链接列表"></nav>
+<script>
+  const CONFIG = {
+    variant: "slide",     // 下划线样式：slide 左划入 / double 双线相向 / thick 加粗双线 / swap 文字换位 / strike 中线横穿 / cover 色块盖过 / twin 双线浮起 / scribble 手绘描画
+    items: "首页｜作品集｜关于我们｜联系方式",   // 链接文字，用「｜」分隔
+  };
+  const list = document.getElementById('mtList');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  list.classList.add(CONFIG.variant);
+  CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean).forEach((t) => {
+    const a = document.createElement('a'); a.className = 'mt-link'; a.href = '#'; a.addEventListener('click', e => e.preventDefault());
+    const s = document.createElement('span'); s.textContent = t; a.appendChild(s);
+    if (CONFIG.variant === 'swap') { const c = document.createElement('span'); c.className = 'copy'; c.textContent = t; c.setAttribute('aria-hidden', 'true'); a.appendChild(c); }
+    if (CONFIG.variant === 'scribble') {
+      // 按文字宽度生成一条随机起伏的波浪路径，pathLength=1 方便用 dashoffset 画线
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', '0 0 100 12'); svg.setAttribute('preserveAspectRatio', 'none');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); let d = 'M0 6'; for (let x = 12; x <= 100; x += 12) d += ` Q${x - 6} ${x % 24 ? 0 : 12} ${x} 6`;
+      path.setAttribute('d', d); path.setAttribute('pathLength', '1'); path.setAttribute('vector-effect', 'non-scaling-stroke'); svg.appendChild(path); a.appendChild(svg);
+    }
+    a.addEventListener('pointerenter', () => (userTook = true));
+    list.appendChild(a);
+  });
+  let userTook = false;
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流悬停
+  if (!reduceMotion) { let i = 0; const links = list.querySelectorAll('.mt-link'); setInterval(() => { if (userTook || document.hidden) return; links.forEach(l => l.classList.remove('demo')); links[i % links.length].classList.add('demo'); i++; }, 1400); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

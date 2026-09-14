@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素碎片提示框</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #d7dbe4;     /* 正文颜色 */
+    --mt-tipBg: #4d25b0;     /* 提示框颜色 */
+    --mt-tipColor: #c6f542;  /* 提示框文字颜色 */
+    --mt-width: 220px;       /* 提示框宽度 */
+    --mt-height: 250px;      /* 提示框高度 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-text { width: min(620px, 88vw); font-size: 18px; line-height: 1.9; }
+  .mt-text p { margin: 0 0 1em; }
+  /* 触发词：虚线底、悬停变色 */
+  .mt-trigger { color: var(--mt-tipColor); text-decoration: underline dotted; text-underline-offset: 4px; cursor: help; transition: color 0.2s; }
+  .mt-trigger:hover { color: var(--mt-tipBg); }
+  /* 提示框：背景是 rows×cols 个碎块的网格，内容叠在上面；跟随光标 */
+  .mt-tip { position: fixed; left: 0; top: 0; width: var(--mt-width); height: var(--mt-height); display: grid; grid-template-areas: 'tip'; pointer-events: none; z-index: 10; visibility: hidden; }
+  .mt-tip.open { visibility: visible; }
+  .mt-tip .cells { grid-area: tip; display: grid; grid-template-columns: repeat(var(--cols), 1fr); grid-template-rows: repeat(var(--rows), 1fr); }
+  .mt-tip .cells i { display: block; background: var(--mt-tipBg); outline: 1px solid var(--mt-tipBg); opacity: 0; }
+  .mt-tip.gooey .cells { filter: url(#mtTipGoo); }
+  .mt-tip .content { grid-area: tip; position: relative; padding: 1.2em; color: var(--mt-tipColor); font-size: 13px; line-height: 1.6; opacity: 0; }
+  .mt-tip .content h4 { margin: 0 0 0.6em; font-size: 15px; letter-spacing: 0.02em; }
+  .mt-tip .content small { display: block; margin-top: 1em; opacity: 0.7; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="mtTipGoo"><feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/><feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -7"/></filter></defs></svg>
+<div class="mt-text" id="mtText"></div>
+<div class="mt-tip" id="mtTip" role="tooltip"><div class="cells" id="mtCells"></div><div class="content" id="mtContent"><h4></h4><p></p><small></small></div></div>
+<script>
+  const CONFIG = {
+    text: "在《同步纪元 2085》里，我把这些念头记在自己的[回路壳]中——那是尚未接入的心智最后的庇护所。他们说[以太域]是解放，可我呼吸的空气像是借来的，阳光不过是一片 LED 的暖意。我们不再以触碰交流，而是通过[链带]，让情绪经过接口过滤。", // 正文，用 [ ] 括起要弹提示的词
+    tips: "回路壳=一种个人计算外壳，隔绝网络的最后手段。=装备｜以太域=覆盖全球的共享意识网络。=地点｜链带=腕部佩戴的情绪同步设备。=装备",   // 每个词的提示「词=说明=类别」，用「｜」分隔
+    variant: "sequence",   // 碎块出现顺序：sequence 从左上依次 / center 从中心向外 / random 随机 / edges 中心出现边缘消失 / gooey 随机 + 粘液融合
+    rows: 8,               // 碎块行数
+    cols: 6,               // 碎块列数
+    speed: 12,             // 相邻碎块的错开（毫秒）
+  };
+  const text = document.getElementById('mtText'), tip = document.getElementById('mtTip'), cellsEl = document.getElementById('mtCells'), content = document.getElementById('mtContent');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 词典
+  const dict = {}; CONFIG.tips.split('｜').forEach(s => { const [w, d = '', c = ''] = s.split('=').map(x => x.trim()); if (w) dict[w] = { d, c }; });
+  // 正文：[词] → 触发元素
+  const p = document.createElement('p');
+  CONFIG.text.split(/(\[[^\]]+\])/).forEach(part => {
+    const m = part.match(/^\[([^\]]+)\]$/);
+    if (!m) { p.append(part); return; }
+    const t = document.createElement('span'); t.className = 'mt-trigger'; t.textContent = m[1]; t.tabIndex = 0; p.appendChild(t);
+  });
+  text.appendChild(p);
+  // 碎块网格
+  tip.style.setProperty('--rows', CONFIG.rows); tip.style.setProperty('--cols', CONFIG.cols); tip.classList.toggle('gooey', CONFIG.variant === 'gooey');
+  const cells = []; for (let r = 0; r < CONFIG.rows; r++) for (let c = 0; c < CONFIG.cols; c++) { const i = document.createElement('i'); i.dataset.r = r; i.dataset.c = c; cellsEl.appendChild(i); cells.push(i); }
+  const cr = (CONFIG.rows - 1) / 2, cc = (CONFIG.cols - 1) / 2, maxD = Math.hypot(cr, cc) || 1;
+  // 每个碎块的「档位」（决定延迟）：按变体计算，opening 与 closing 可以不同
+  function order(cell, opening) {
+    const r = +cell.dataset.r, c = +cell.dataset.c, idx = r * CONFIG.cols + c, n = cells.length;
+    switch (CONFIG.variant) {
+      case 'center': return Math.hypot(r - cr, c - cc) / maxD * n * 0.6;
+      case 'random': case 'gooey': return cell._rnd * n;
+      case 'edges': return (opening ? Math.hypot(r - cr, c - cc) / maxD : 1 - Math.hypot(r - cr, c - cc) / maxD) * n * 0.6;
+      default: return opening ? idx : n - 1 - idx;
+    }
+  }
+  cells.forEach(c => (c._rnd = Math.random()));
+  const ease = 'cubic-bezier(0.16, 1, 0.3, 1)';
+  const cellFrames = { sequence: [{ opacity: 0 }, { opacity: 1 }], center: [{ opacity: 0, transform: 'scale(0)' }, { opacity: 1, transform: 'scale(1)' }], random: [{ opacity: 0, transform: 'scaleX(0.8)' }, { opacity: 1, transform: 'scaleX(1)' }], edges: [{ opacity: 0, transform: 'scale(0)' }, { opacity: 1, transform: 'scale(1)' }], gooey: [{ opacity: 0, transform: 'scale(0.3)' }, { opacity: 1, transform: 'scale(1)' }] };
+  let open = false, anims = [];
+  function animateCells(opening) {
+    anims.forEach(a => a.cancel()); anims = [];
+    const frames = cellFrames[CONFIG.variant] || cellFrames.sequence, dur = CONFIG.variant === 'gooey' ? 500 : 120;
+    cells.forEach(cell => {
+      const kf = opening ? frames : [...frames].reverse();
+      const a = cell.animate(kf, { duration: reduceMotion ? 0 : dur, delay: reduceMotion ? 0 : order(cell, opening) * CONFIG.speed, easing: ease, fill: 'forwards' }); anims.push(a);
+    });
+    const total = cells.length * CONFIG.speed * 0.6;
+    anims.push(content.animate([{ opacity: opening ? 0 : 1 }, { opacity: opening ? 1 : 0 }], { duration: reduceMotion ? 0 : 200, delay: reduceMotion ? 0 : (opening ? total : 0), fill: 'forwards' }));
+    if (!opening) Promise.all(anims.map(a => a.finished)).then(() => { if (!open) tip.classList.remove('open'); }).catch(() => {});
+  }
+  function place(x, y) {
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(0, Math.min(innerWidth - w, x + 16)) + 'px'; tip.style.top = Math.max(0, Math.min(innerHeight - h, y + 16)) + 'px';
+  }
+  function show(trigger, x, y) {
+    const info = dict[trigger.textContent] || { d: '', c: '' };
+    content.querySelector('h4').textContent = trigger.textContent; content.querySelector('p').textContent = info.d; content.querySelector('small').textContent = info.c;
+    place(x, y); open = true; tip.classList.add('open'); animateCells(true);
+  }
+  function hide() { open = false; animateCells(false); }
+  let userTook = false;
+  text.querySelectorAll('.mt-trigger').forEach(t => {
+    t.addEventListener('pointerenter', (e) => { userTook = true; show(t, e.clientX, e.clientY); });
+    t.addEventListener('pointermove', (e) => { if (open) place(e.clientX, e.clientY); });
+    t.addEventListener('pointerleave', hide);
+    t.addEventListener('focus', () => { const r = t.getBoundingClientRect(); show(t, r.left, r.bottom); });
+    t.addEventListener('blur', hide);
+  });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流弹出每个词的提示
+  if (!reduceMotion) { let i = 0; const ts = text.querySelectorAll('.mt-trigger'); setInterval(() => { if (userTook || document.hidden || !ts.length) return; const t = ts[i % ts.length]; i++; const r = t.getBoundingClientRect(); show(t, r.left + r.width / 2, r.bottom - 8); setTimeout(() => { if (!userTook) hide(); }, 1800); }, 3000); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

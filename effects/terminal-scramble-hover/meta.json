@@ -1,0 +1,26 @@
+{
+  "slug": "terminal-scramble-hover",
+  "name": "终端行悬停",
+  "category": "text",
+  "sub": "hover",
+  "tags": ["终端", "乱码", "等宽", "悬停"],
+  "summary": "等宽字体的列表行，悬停时字符从左到右逐个被随机符号替换几次再还原，像终端刷新；光标块、扫线、填色、彩色四种花样",
+  "params": [
+    { "key": "rows", "label": "行内容", "type": "text", "target": "config", "default": "01,山谷晨雾,2024-03,JPG｜02,海边球车,2024-05,RAW｜03,黄昏海滩,2024-06,JPG｜04,林间逆光,2024-08,TIFF｜05,城市夜色,2024-11,RAW", "maxLength": 200, "help": "每行「序号,名称,日期,格式」，行间用「｜」" },
+    { "key": "variant", "label": "变体", "type": "select", "target": "config", "options": [{ "value": "plain", "label": "只乱码" }, { "value": "cursor", "label": "光标块" }, { "value": "sweep", "label": "扫线" }, { "value": "box", "label": "填色" }, { "value": "colors", "label": "随机彩色" }], "default": "cursor" },
+    { "key": "speed", "label": "字符错开", "type": "range", "target": "config", "min": 20, "max": 150, "step": 10, "default": 60, "displayUnit": " 毫秒" },
+    { "key": "flips", "label": "换几次乱码", "type": "range", "target": "config", "min": 1, "max": 6, "step": 1, "default": 3 },
+    { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#7cff9c" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#d7dbe4" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 12, "max": 24, "step": 1, "default": 15, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "jetbrains-mono" }
+  ],
+  "presets": [
+    { "id": "default", "name": "光标块", "values": {} },
+    { "id": "sweep", "name": "扫线", "values": { "variant": "sweep", "accent": "#7c9cff" } },
+    { "id": "colors", "name": "随机彩色", "values": { "variant": "colors", "flips": 4, "speed": 80 } },
+    { "id": "box", "name": "填色", "values": { "variant": "box", "accent": "#f5c451", "speed": 40 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · LineTextHoverAnimations", "url": "https://github.com/codrops/LineTextHoverAnimations", "license": "MIT（思路参考，代码自写）" }
+}

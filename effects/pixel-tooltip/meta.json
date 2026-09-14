@@ -1,0 +1,28 @@
+{
+  "slug": "pixel-tooltip",
+  "name": "像素碎片提示框",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["提示框", "像素", "碎块", "悬停"],
+  "summary": "悬停正文里的关键词，一块提示框由几十个碎块按顺序、从中心、随机或黏连着拼出来，跟着光标走，移开时按相反顺序碎掉",
+  "params": [
+    { "key": "text", "label": "正文", "type": "text", "target": "config", "default": "在《同步纪元 2085》里，我把这些念头记在自己的[回路壳]中——那是尚未接入的心智最后的庇护所。他们说[以太域]是解放，可我呼吸的空气像是借来的，阳光不过是一片 LED 的暖意。我们不再以触碰交流，而是通过[链带]，让情绪经过接口过滤。", "maxLength": 200, "help": "用 [ ] 括起要弹提示的词" },
+    { "key": "tips", "label": "提示内容", "type": "text", "target": "config", "default": "回路壳=一种个人计算外壳，隔绝网络的最后手段。=装备｜以太域=覆盖全球的共享意识网络。=地点｜链带=腕部佩戴的情绪同步设备。=装备", "maxLength": 200, "help": "「词=说明=类别」，用「｜」分隔" },
+    { "key": "variant", "label": "拼合顺序", "type": "select", "target": "config", "options": [{ "value": "sequence", "label": "从左上依次" }, { "value": "center", "label": "从中心向外" }, { "value": "random", "label": "随机" }, { "value": "edges", "label": "中心出现·边缘消失" }, { "value": "gooey", "label": "随机 + 粘液融合" }], "default": "sequence" },
+    { "key": "rows", "label": "碎块行数", "type": "range", "target": "config", "min": 1, "max": 14, "step": 1, "default": 8 },
+    { "key": "cols", "label": "碎块列数", "type": "range", "target": "config", "min": 1, "max": 14, "step": 1, "default": 6 },
+    { "key": "speed", "label": "碎块错开", "type": "range", "target": "config", "min": 4, "max": 40, "step": 2, "default": 12, "displayUnit": " 毫秒" },
+    { "key": "tipBg", "label": "提示框颜色", "type": "color", "target": "css", "default": "#4d25b0" },
+    { "key": "tipColor", "label": "提示框文字", "type": "color", "target": "css", "default": "#c6f542" },
+    { "key": "width", "label": "提示框宽度", "type": "range", "target": "css", "min": 160, "max": 320, "step": 10, "default": 220, "unit": "px" },
+    { "key": "height", "label": "提示框高度", "type": "range", "target": "css", "min": 120, "max": 360, "step": 10, "default": 250, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "从左上依次", "values": {} },
+    { "id": "center", "name": "从中心向外", "values": { "variant": "center", "rows": 10, "cols": 8, "tipBg": "#94ad24", "tipColor": "#2e3023" } },
+    { "id": "strips", "name": "横条随机", "values": { "variant": "random", "rows": 1, "cols": 14, "speed": 30, "tipBg": "#f472b6", "tipColor": "#1a0a12" } },
+    { "id": "gooey", "name": "粘液融合", "values": { "variant": "gooey", "rows": 5, "cols": 3, "speed": 40, "tipBg": "#22d3ee", "tipColor": "#062a2f" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · PixelGooeyTooltip", "url": "https://github.com/codrops/PixelGooeyTooltip", "license": "MIT（思路参考，代码自写）" }
+}

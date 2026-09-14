@@ -1,0 +1,26 @@
+{
+  "slug": "figure-caption-hover",
+  "name": "图说悬停合集",
+  "category": "card",
+  "sub": "hover",
+  "tags": ["图片说明", "悬停", "合集", "纯 CSS"],
+  "summary": "图片说明悬停的六种经典做法：斜光扫过、内框收拢、渐变浮起、缩回内框、光环收缩、图片右移，一处切换",
+  "params": [
+    { "key": "slides", "label": "图片与标题", "type": "images", "target": "config", "min": 1, "max": 6, "captions": true, "default": [{"src": "/samples/sample-1.webp", "caption": "山谷 晨雾"}, {"src": "/samples/sample-2.webp", "caption": "海边 球车"}, {"src": "/samples/sample-3.webp", "caption": "黄昏 海滩"}] },
+    { "key": "variant", "label": "样式", "type": "select", "target": "config", "options": [{ "value": "sweep", "label": "斜光扫过" }, { "value": "frame", "label": "内框收拢" }, { "value": "gradient", "label": "渐变浮起" }, { "value": "shrink", "label": "缩回内框" }, { "value": "ring", "label": "光环收缩" }, { "value": "slide", "label": "图片右移" }], "default": "sweep" },
+    { "key": "desc", "label": "说明文字", "type": "text", "target": "config", "default": "悬停查看这组照片背后的故事。", "maxLength": 60 },
+    { "key": "columns", "label": "列数", "type": "range", "target": "config", "min": 1, "max": 4, "step": 1, "default": 3 },
+    { "key": "tint", "label": "衬色", "type": "color", "target": "css", "default": "#7c9cff", "help": "图片变淡时透出的底色" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#ffffff" },
+    { "key": "duration", "label": "过渡时长", "type": "range", "target": "css", "min": 0.2, "max": 0.8, "step": 0.05, "default": 0.35, "unit": "s", "displayUnit": " 秒" },
+    { "key": "radius", "label": "圆角", "type": "range", "target": "css", "min": 0, "max": 24, "step": 2, "default": 10, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "斜光扫过", "values": {} },
+    { "id": "frame", "name": "内框收拢", "values": { "variant": "frame", "tint": "#9e5406" } },
+    { "id": "gradient", "name": "渐变浮起", "values": { "variant": "gradient", "radius": 0 } },
+    { "id": "ring", "name": "光环收缩", "values": { "variant": "ring", "tint": "#030c17" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · HoverEffectIdeas", "url": "https://github.com/codrops/HoverEffectIdeas", "license": "MIT（思路参考，代码自写）" }
+}

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>终端行悬停</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #d7dbe4;     /* 文字颜色 */
+    --mt-accent: #7cff9c;    /* 强调色（光标块 / 扫过的线） */
+    --mt-fontSize: 15px;     /* 字号 */
+    --mt-font: "JetBrains Mono", ui-monospace, SFMono-Regular, Consolas, monospace; /* 字体（等宽） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-list { width: min(760px, 92vw); font-size: var(--mt-fontSize); text-transform: uppercase; }
+  .mt-row { position: relative; display: grid; grid-template-columns: 3em 1fr auto auto; gap: 2em; padding: 0.55em 0.4em; border-top: 1px solid color-mix(in srgb, var(--mt-color) 14%, transparent); cursor: pointer; }
+  .mt-row:last-child { border-bottom: 1px solid color-mix(in srgb, var(--mt-color) 14%, transparent); }
+  .mt-row .cell { white-space: nowrap; overflow: hidden; }
+  .mt-row .ch { display: inline-block; position: relative; min-width: 0.6em; text-align: center; }
+  /* cursor 变体：每个字符替换时背后短暂亮起一块强调色 */
+  .mt-list.cursor .ch::before { content: ''; position: absolute; inset: 0 -1px; background: var(--mt-accent); opacity: var(--opa, 0); }
+  .mt-list.cursor .ch.hot { color: var(--mt-bg); }
+  .mt-list.cursor .ch.hot::before { opacity: 1; }
+  /* sweep 变体：一根强调色的线沿着整行从左扫到右并淡出 */
+  .mt-list.sweep .mt-row::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--mt-accent); opacity: 0; transform: translateX(calc(var(--anim, 0) * var(--w, 700px))); }
+  .mt-list.sweep .mt-row.sweeping::after { opacity: calc(1 - var(--anim, 0)); }
+  /* box 变体：整行背景被强调色从左往右填满再退去 */
+  .mt-list.box .mt-row::before { content: ''; position: absolute; inset: 0; background: var(--mt-accent); transform-origin: 0 50%; transform: scaleX(var(--anim, 0)); opacity: 0.15; pointer-events: none; }
+  .mt-row .cell.dim { opacity: 0.5; }
+  @media (prefers-reduced-motion: reduce) { .mt-list.sweep .mt-row::after, .mt-list.box .mt-row::before { display: none; } }
+</style>
+</head>
+<body>
+<div class="mt-list" id="mtList" role="list"></div>
+<script>
+  const CONFIG = {
+    rows: "01,山谷晨雾,2024-03,JPG｜02,海边球车,2024-05,RAW｜03,黄昏海滩,2024-06,JPG｜04,林间逆光,2024-08,TIFF｜05,城市夜色,2024-11,RAW",  // 每行「序号,名称,日期,格式」，行之间用「｜」分隔
+    variant: "cursor",     // 变体：plain 只乱码 / cursor 光标块 / sweep 扫线 / box 填色 / colors 随机彩色
+    speed: 60,             // 相邻字符的错开（毫秒）
+    flips: 3,              // 每个字符换几次乱码再还原
+    charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*-_+=;:<>,./?", // 乱码字符集
+  };
+  const list = document.getElementById('mtList');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  list.classList.add(CONFIG.variant);
+  const palette = ['#22a3a9', '#7cff9c', '#f5c451', '#f472b6'];
+  const rows = CONFIG.rows.split('｜').map(r => r.split(',').map(s => s.trim())).filter(r => r.length);
+  const rowEls = rows.map((cells) => {
+    const row = document.createElement('div'); row.className = 'mt-row'; row.setAttribute('role', 'listitem');
+    cells.forEach((text, i) => {
+      const cell = document.createElement('span'); cell.className = 'cell' + (i === 0 || i === 2 ? ' dim' : '');
+      // 逐字拆开，每个字符一个 span，记住原字符
+      [...text].forEach(c => { const ch = document.createElement('span'); ch.className = 'ch'; ch.textContent = c; ch.dataset.o = c; cell.appendChild(ch); });
+      row.appendChild(cell);
+    });
+    list.appendChild(row); return row;
+  });
+  const rand = () => CONFIG.charset[Math.floor(Math.random() * CONFIG.charset.length)];
+  // 一次「刷新」：从左到右每个字符依次进入乱码，每次换一个随机字符，flips 次后放回原字符
+  function scramble(row) {
+    const chars = row.querySelectorAll('.ch'); const timers = row._timers || (row._timers = []);
+    timers.forEach(clearTimeout); timers.length = 0;
+    chars.forEach((ch, i) => {
+      ch.textContent = ch.dataset.o; ch.classList.remove('hot'); ch.style.color = '';
+      for (let k = 0; k <= CONFIG.flips; k++) {
+        timers.push(setTimeout(() => {
+          if (k < CONFIG.flips) {
+            ch.textContent = ch.dataset.o === ' ' ? ' ' : rand();
+            if (CONFIG.variant === 'colors') ch.style.color = palette[Math.floor(Math.random() * palette.length)];
+            ch.classList.toggle('hot', k === 0);
+          } else { ch.textContent = ch.dataset.o; ch.classList.remove('hot'); ch.style.color = ''; }
+        }, (i + 1) * CONFIG.speed + k * 70));
+      }
+    });
+    // 扫线 / 填色：一个 0→1 的进度变量，用 rAF 推 1 秒（expo 出）
+    if (CONFIG.variant === 'sweep' || CONFIG.variant === 'box') {
+      row.style.setProperty('--w', row.offsetWidth + 'px'); row.classList.add('sweeping');
+      const t0 = performance.now(); cancelAnimationFrame(row._raf);
+      (function step(now) { const k = Math.min(1, (now - t0) / 1000), e = 1 - Math.pow(2, -10 * k); row.style.setProperty('--anim', CONFIG.variant === 'box' ? (k < 0.5 ? e : 1 - (k - 0.5) * 2) : e); if (k < 1) row._raf = requestAnimationFrame(step); else row.classList.remove('sweeping'); })(t0);
+    }
+  }
+  let userTook = false;
+  rowEls.forEach(row => row.addEventListener('pointerenter', () => { userTook = true; if (!reduceMotion) scramble(row); }));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流刷新一行
+  if (!reduceMotion) { let i = 0; setInterval(() => { if (userTook || document.hidden) return; scramble(rowEls[i % rowEls.length]); i++; }, 1500); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

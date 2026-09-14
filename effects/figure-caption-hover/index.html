@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图说悬停合集</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-tint: #7c9cff;      /* 图片底下的衬色（图片变淡时透出来） */
+    --mt-color: #ffffff;     /* 文字颜色 */
+    --mt-duration: 0.35s;    /* 过渡时长 */
+    --mt-radius: 10px;       /* 圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 20px; width: min(960px, 94vw); }
+  .mt-fig { position: relative; margin: 0; overflow: hidden; aspect-ratio: 4 / 3; background: var(--mt-tint); border-radius: var(--mt-radius); cursor: pointer; }
+  .mt-fig img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .mt-fig figcaption { position: absolute; inset: 0; padding: 2em; font-size: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .mt-fig h2 { margin: 0; font-size: 1.6em; font-weight: 300; letter-spacing: -0.01em; }
+  .mt-fig h2 b { font-weight: 800; }
+  .mt-fig p { margin: 0; font-size: 0.85em; letter-spacing: 0.08em; line-height: 1.6; }
+  .mt-fig img, .mt-fig figcaption::before, .mt-fig figcaption::after, .mt-fig h2, .mt-fig p { transition: opacity var(--mt-duration), transform var(--mt-duration), color var(--mt-duration); }
+  .mt-fig figcaption::before, .mt-fig figcaption::after { content: ''; position: absolute; pointer-events: none; }
+  .mt-fig figcaption::after { content: none; }
+
+  /* sweep：一道半透明斜光带从左上扫到右下，图片同时缩回、变淡；说明在右下淡入 */
+  .mt-grid.sweep img { opacity: 0.95; transform: scale(1.05); }
+  .mt-grid.sweep figcaption::before { inset: 0; background: rgba(255, 255, 255, 0.5); transition: transform calc(var(--mt-duration) * 1.7); transform: scale(1.9, 1.4) rotate(45deg) translateY(-100%); }
+  .mt-grid.sweep p { position: absolute; right: 0; bottom: 0; margin: 2.5em; padding: 0 1em; max-width: 160px; border-right: 4px solid var(--mt-color); text-align: right; opacity: 0; }
+  .mt-grid.sweep .on img { opacity: 0.6; transform: none; }
+  .mt-grid.sweep .on figcaption::before { transform: scale(1.9, 1.4) rotate(45deg) translateY(100%); }
+  .mt-grid.sweep .on p { opacity: 1; transition-delay: 0.1s; }
+  /* frame：上下两条线横向长出、左右两条线纵向长出，围成内框；标题下沉、说明上浮 */
+  .mt-grid.frame img { opacity: 0.7; }
+  .mt-grid.frame figcaption::before, .mt-grid.frame figcaption::after { content: ''; inset: 30px; opacity: 0; }
+  .mt-grid.frame figcaption::before { border-top: 1px solid var(--mt-color); border-bottom: 1px solid var(--mt-color); transform: scale(0, 1); }
+  .mt-grid.frame figcaption::after { border-left: 1px solid var(--mt-color); border-right: 1px solid var(--mt-color); transform: scale(1, 0); }
+  .mt-grid.frame h2 { padding-top: 22%; text-align: center; transform: translateY(-20px); }
+  .mt-grid.frame p { padding: 16px 2.5em; text-align: center; opacity: 0; transform: translateY(20px); }
+  .mt-grid.frame .on img { opacity: 0.4; }
+  .mt-grid.frame .on figcaption::before, .mt-grid.frame .on figcaption::after { opacity: 1; transform: scale(1); }
+  .mt-grid.frame .on h2, .mt-grid.frame .on p { opacity: 1; transform: none; }
+  /* gradient：底部渐变从下方浮起，标题从正中上移、说明淡入 */
+  .mt-grid.gradient figcaption::before { inset: 0; background: linear-gradient(to bottom, transparent 0%, rgba(20, 22, 40, 0.85) 75%); opacity: 0; transform: translateY(50%); }
+  .mt-grid.gradient h2 { position: absolute; top: 50%; left: 0; width: 100%; text-align: center; transform: translateY(-50%); }
+  .mt-grid.gradient p { position: absolute; bottom: 0; left: 0; width: 100%; padding: 2em; box-sizing: border-box; text-align: center; opacity: 0; transform: translateY(10px); }
+  .mt-grid.gradient .on figcaption::before, .mt-grid.gradient .on p { opacity: 1; transform: none; }
+  .mt-grid.gradient .on h2 { transform: translateY(-50%) translateY(-40px); }
+  /* shrink：图片从放大缩回，内框从略大收拢到位，说明从大缩小 */
+  .mt-grid.shrink img { transform: scale(1.12); }
+  .mt-grid.shrink figcaption::before { inset: 30px; border: 1px solid var(--mt-color); transform: scale(1.1); opacity: 0; }
+  .mt-grid.shrink h2 { padding: 18% 0 16px; text-align: center; }
+  .mt-grid.shrink p { margin: 0 auto; max-width: 200px; text-align: center; opacity: 0; transform: scale(1.5); }
+  .mt-grid.shrink .on img { opacity: 0.5; transform: none; }
+  .mt-grid.shrink .on figcaption::before, .mt-grid.shrink .on p { opacity: 1; transform: none; }
+  /* ring：一个带宽晕的边框从 1.4 倍收缩到位，标题略缩、说明从大缩小 */
+  .mt-grid.ring img { opacity: 0.9; }
+  .mt-grid.ring figcaption::before { inset: 30px; border: 2px solid var(--mt-color); box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.2); opacity: 0; transform: scale(1.4); }
+  .mt-grid.ring h2 { margin: 18% 0 10px; text-align: center; }
+  .mt-grid.ring p { padding: 1em; text-align: center; opacity: 0; transform: scale(1.5); }
+  .mt-grid.ring .on img { opacity: 0.4; }
+  .mt-grid.ring .on h2 { transform: scale(0.9); }
+  .mt-grid.ring .on figcaption::before, .mt-grid.ring .on p { opacity: 1; transform: none; }
+  /* slide：图片比框宽 50px、默认偏左，悬停右移归位；标题与说明从下方滑入 */
+  .mt-grid.slide img { width: calc(100% + 50px); max-width: none; opacity: 0.7; transform: translateX(-40px); }
+  .mt-grid.slide figcaption { text-align: left; }
+  .mt-grid.slide .box { position: absolute; left: 0; bottom: 0; width: 100%; height: 50%; padding: 2em; box-sizing: border-box; }
+  .mt-grid.slide h2, .mt-grid.slide p { transform: translateY(40px); }
+  .mt-grid.slide p { opacity: 0; transition-duration: 0.2s; transition-property: opacity, transform; }
+  .mt-grid.slide .on img { opacity: 1; transform: none; }
+  .mt-grid.slide .on h2, .mt-grid.slide .on p { opacity: 1; transform: none; }
+  .mt-grid.slide .on p { transition-duration: var(--mt-duration); transition-delay: 0.05s; }
+  @media (prefers-reduced-motion: reduce) { .mt-fig * , .mt-fig figcaption::before, .mt-fig figcaption::after { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="mt-grid" id="mtGrid"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"山谷 晨雾"},{"src":"/samples/sample-2.webp","caption":"海边 球车"},{"src":"/samples/sample-3.webp","caption":"黄昏 海滩"}], // 图片与标题（标题里的空格后半段会加粗）
+    variant: "sweep",    // 样式：sweep 斜光扫过 / frame 内框收拢 / gradient 渐变浮起 / shrink 缩回内框 / ring 光环收缩 / slide 图片右移
+    desc: "悬停查看这组照片背后的故事。",   // 说明文字
+    columns: 3,          // 列数
+  };
+  const grid = document.getElementById('mtGrid');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  grid.classList.add(CONFIG.variant); grid.style.setProperty('--cols', CONFIG.columns);
+  CONFIG.slides.forEach((s) => {
+    const fig = document.createElement('figure'); fig.className = 'mt-fig';
+    const [a, ...rest] = (s.caption || '').split(' ');
+    const h2 = document.createElement('h2'); h2.append(a + (rest.length ? ' ' : '')); if (rest.length) { const b = document.createElement('b'); b.textContent = rest.join(' '); h2.appendChild(b); }
+    const p = document.createElement('p'); p.textContent = CONFIG.desc;
+    const cap = document.createElement('figcaption');
+    if (CONFIG.variant === 'slide') { const box = document.createElement('div'); box.className = 'box'; box.append(h2, p); cap.appendChild(box); } else cap.append(h2, p);
+    const img = document.createElement('img'); img.src = s.src; img.alt = s.caption || '';
+    fig.append(img, cap); grid.appendChild(fig);
+    fig.addEventListener('pointerenter', () => { userTook = true; fig.classList.add('on'); });
+    fig.addEventListener('pointerleave', () => fig.classList.remove('on'));
+  });
+  let userTook = false;
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流悬停
+  if (!reduceMotion) { let i = 0; const figs = grid.querySelectorAll('.mt-fig'); setInterval(() => { if (userTook || document.hidden) return; figs.forEach(f => f.classList.remove('on')); figs[i % figs.length].classList.add('on'); i++; }, 1600); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

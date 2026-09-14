@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>无限循环菜单</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #f472b6;    /* 悬停颜色 */
+    --mt-fontSize: 72px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
+
+  /* 菜单本身就是滚动容器；到底时无缝跳回顶部、到顶时跳到底部，永远滚不完 */
+  .mt-menu { position: fixed; inset: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; padding: 0; margin: 0; list-style: none; }
+  .mt-menu::-webkit-scrollbar { display: none; }
+  .mt-item { display: flex; align-items: center; height: calc(var(--mt-fontSize) * 1.5); padding: 0 6vw; }
+  .mt-item a { position: relative; display: inline-block; text-decoration: none; color: inherit; font-size: var(--mt-fontSize); font-weight: 800; letter-spacing: -0.03em; line-height: 1; transition: transform 0.2s, color 0.2s; }
+  .mt-item a::before { content: ''; position: absolute; left: -1em; top: 50%; width: 0.6em; height: 4px; margin-top: -2px; background: var(--mt-accent); opacity: 0; transition: opacity 0.2s; }
+  .mt-item a:hover, .mt-item a.demo { transform: translateX(2rem); color: var(--mt-accent); }
+  .mt-item a:hover::before, .mt-item a.demo::before { opacity: 1; }
+  .mt-item a sup { position: absolute; top: 0; right: -1.2em; font-size: 0.25em; font-weight: 400; letter-spacing: 0; opacity: 0.6; }
+  .mt-hint { position: fixed; right: 20px; bottom: 16px; font-size: 12px; opacity: 0.45; letter-spacing: 0.1em; }
+  @media (prefers-reduced-motion: reduce) { .mt-item a { transition: none; } }
+</style>
+</head>
+<body>
+<ul class="mt-menu" id="mtMenu" aria-label="菜单"></ul>
+<div class="mt-hint">滚动 · 永不到底</div>
+<script>
+  const CONFIG = {
+    items: "首页｜作品集｜关于｜服务｜日志｜联系",   // 菜单项，用「｜」分隔
+    drift: 1,            // 无人操作时的自动漂移速度（px/帧，0 为不漂移）
+    numbered: true,      // 显示序号
+  };
+  const menu = document.getElementById('mtMenu');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const names = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean);
+  function makeItem(name, i, clone) {
+    const li = document.createElement('li'); li.className = 'mt-item' + (clone ? ' clone' : ''); if (clone) li.setAttribute('aria-hidden', 'true');
+    const a = document.createElement('a'); a.href = '#'; a.textContent = name; a.addEventListener('click', e => e.preventDefault());
+    if (CONFIG.numbered) { const s = document.createElement('sup'); s.textContent = String(i + 1).padStart(2, '0'); a.appendChild(s); }
+    a.addEventListener('pointerenter', () => (userTook = true));
+    li.appendChild(a); return li;
+  }
+  names.forEach((n, i) => menu.appendChild(makeItem(n, i, false)));
+  // 克隆：把开头「够铺满一屏」的那几项接在末尾，滚到克隆区就等于回到了开头
+  let clonesHeight = 0, total = 0;
+  function build() {
+    menu.querySelectorAll('.clone').forEach(c => c.remove());
+    const itemH = menu.firstElementChild.offsetHeight, fit = Math.ceil(innerHeight / itemH);
+    let n = 0; for (let i = 0; i < names.length && i < fit; i++) { menu.appendChild(makeItem(names[i], i, true)); n++; }
+    clonesHeight = n * itemH; total = menu.scrollHeight; if (menu.scrollTop <= 0) menu.scrollTop = 1;
+  }
+  build(); addEventListener('resize', build);
+  // 每帧检查：越过克隆区 → 跳回 1px；到顶 → 跳到「真实末尾」的位置
+  function loop() {
+    const y = menu.scrollTop;
+    if (clonesHeight + y >= total) menu.scrollTop = 1;
+    else if (y <= 0) menu.scrollTop = total - clonesHeight;
+  }
+  let userTook = false;
+  menu.addEventListener('scroll', loop, { passive: true });
+  menu.addEventListener('pointerdown', () => (userTook = true));
+  menu.addEventListener('wheel', () => (userTook = true), { passive: true });
+  addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { userTook = true; menu.scrollTop += e.key === 'ArrowDown' ? 80 : -80; } });
+
+  /* @mt:thumb-start */
+  // 演示：无人操作时慢慢向下漂移，展示永远滚不完
+  (function drift() { requestAnimationFrame(drift); if (reduceMotion || !CONFIG.drift || document.hidden || userTook) return; menu.scrollTop += CONFIG.drift; loop(); })();
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
