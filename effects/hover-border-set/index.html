@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>边框过渡合集</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-btnBg: #16161d;     /* 按钮底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 边框强调色 */
+    --mt-thickness: 3px;     /* 边框粗细 */
+    --mt-duration: 0.3s;     /* 过渡时长 */
+    --mt-radius: 10px;       /* 圆角 */
+    --mt-fontSize: 15px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-row { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 760px; padding: 24px; }
+  .mt-btn {
+    position: relative; display: inline-block; padding: 12px 24px; border: 0; border-radius: var(--mt-radius); background: var(--mt-btnBg); color: var(--mt-color);
+    font: inherit; font-size: var(--mt-fontSize); font-weight: 600; cursor: pointer; box-shadow: inset 0 0 0 var(--mt-thickness) rgba(255, 255, 255, 0.12);
+    transition: box-shadow var(--mt-duration) ease, background-color var(--mt-duration) ease, border-radius var(--mt-duration) ease, color var(--mt-duration) ease;
+  }
+  .mt-btn span { position: relative; z-index: 1; }
+  .mt-btn::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+  /* border-fade：内描边渐变成强调色 */
+  .mt-btn.border-fade:hover, .mt-btn.border-fade.demo { box-shadow: inset 0 0 0 var(--mt-thickness) var(--mt-accent); }
+  /* hollow：底色抽空只剩描边 */
+  .mt-btn.hollow { box-shadow: inset 0 0 0 var(--mt-thickness) var(--mt-accent); }
+  .mt-btn.hollow:hover, .mt-btn.hollow.demo { background-color: transparent; }
+  /* trim：内侧再浮出一圈细边 */
+  .mt-btn.trim::before { inset: calc(var(--mt-thickness) + 3px); border: var(--mt-thickness) solid var(--mt-accent); border-radius: calc(var(--mt-radius) - 4px); opacity: 0; transition: opacity var(--mt-duration); }
+  .mt-btn.trim:hover::before, .mt-btn.trim.demo::before { opacity: 1; }
+  /* ripple-out：一圈边框向外扩散淡去 */
+  .mt-btn.ripple-out::before { border: var(--mt-thickness) solid var(--mt-accent); }
+  .mt-btn.ripple-out:hover::before, .mt-btn.ripple-out.demo::before { animation: mt-ripple-out calc(var(--mt-duration) * 2) linear forwards; }
+  @keyframes mt-ripple-out { 100% { inset: -12px; opacity: 0; } }
+  /* ripple-in：一圈边框从外向内收拢到位 */
+  .mt-btn.ripple-in::before { border: var(--mt-thickness) solid var(--mt-accent); inset: -12px; opacity: 0; }
+  .mt-btn.ripple-in:hover::before, .mt-btn.ripple-in.demo::before { animation: mt-ripple-in calc(var(--mt-duration) * 2) linear forwards; }
+  @keyframes mt-ripple-in { 100% { inset: 0; opacity: 1; } }
+  /* outline-out：一圈外框向外撑开一截并停住 */
+  .mt-btn.outline-out::before { border: var(--mt-thickness) solid var(--mt-accent); transition: inset var(--mt-duration) ease; }
+  .mt-btn.outline-out:hover::before, .mt-btn.outline-out.demo::before { inset: -8px; }
+  /* round：直角按钮悬停变成胶囊 */
+  .mt-btn.round { border-radius: 2px; }
+  .mt-btn.round:hover, .mt-btn.round.demo { border-radius: 999px; box-shadow: inset 0 0 0 var(--mt-thickness) var(--mt-accent); }
+  /* underline-left：下划线从左划入 */
+  .mt-btn.underline-left::before { inset: auto 0 0 0; height: var(--mt-thickness); background: var(--mt-accent); border-radius: 0; transform: scaleX(0); transform-origin: 0 50%; transition: transform var(--mt-duration) ease-out; }
+  .mt-btn.underline-left:hover::before, .mt-btn.underline-left.demo::before { transform: scaleX(1); }
+  /* overline-reveal：一条上划线从上方滑落进来 */
+  .mt-btn.overline-reveal { overflow: hidden; }
+  .mt-btn.overline-reveal::before { inset: 0 0 auto 0; height: var(--mt-thickness); background: var(--mt-accent); border-radius: 0; transform: translateY(-100%); transition: transform var(--mt-duration) ease-out; }
+  .mt-btn.overline-reveal:hover::before, .mt-btn.overline-reveal.demo::before { transform: translateY(0); }
+  /* reveal：四边边框瞬间长出 */
+  .mt-btn.reveal::before { border: 0 solid var(--mt-accent); transition: border-width 0.1s ease-out; }
+  .mt-btn.reveal:hover::before, .mt-btn.reveal.demo::before { border-width: var(--mt-thickness); }
+  .mt-label { width: 100%; text-align: center; margin: 0 0 4px; color: var(--mt-color); opacity: 0.5; font-size: 13px; }
+  @media (prefers-reduced-motion: reduce) { .mt-btn, .mt-btn::before { transition: none; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="mt-row" id="mtRow"><p class="mt-label" id="mtLabel"></p></div>
+<script>
+  const CONFIG = {
+    effect: "all",         // 显示哪种：all 十种各一颗 / border-fade 描边渐色 / hollow 抽空留边 / trim 内圈细边 / ripple-out 边框外扩 / ripple-in 边框内收 / outline-out 外框撑开 / round 直角变胶囊 / underline-left 左划下划线 / overline-reveal 上划线滑落 / reveal 四边长出
+    label: "悬停试试",     // 单一效果时按钮文字
+  };
+  const NAMES = { 'border-fade': '描边渐色', hollow: '抽空留边', trim: '内圈细边', 'ripple-out': '边框外扩', 'ripple-in': '边框内收', 'outline-out': '外框撑开', round: '直角变胶囊', 'underline-left': '左划下划线', 'overline-reveal': '上划线滑落', reveal: '四边长出' };
+  const row = document.getElementById('mtRow'), label = document.getElementById('mtLabel');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const kinds = CONFIG.effect === 'all' ? Object.keys(NAMES) : [CONFIG.effect];
+  label.textContent = CONFIG.effect === 'all' ? '十种边框过渡：把鼠标移到按钮上' : NAMES[CONFIG.effect] || '';
+  const btns = kinds.map((k) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'mt-btn ' + k; b.innerHTML = '<span></span>'; b.firstChild.textContent = CONFIG.effect === 'all' ? NAMES[k] : CONFIG.label; row.appendChild(b); return b; });
+  let userTook = false; row.addEventListener('pointerenter', () => (userTook = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流给每颗按钮加上悬停态
+  if (!reduceMotion) { let i = 0; setInterval(() => { if (userTook || document.hidden) return; btns.forEach(b => b.classList.remove('demo')); const b = btns[i % btns.length]; void b.offsetWidth; b.classList.add('demo'); i++; }, 1100); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

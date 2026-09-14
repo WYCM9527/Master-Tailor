@@ -1,0 +1,167 @@
+{
+  "slug": "hover-shadow-bubble-set",
+  "name": "阴影气泡合集",
+  "category": "button",
+  "sub": "hover",
+  "tags": [
+    "按钮",
+    "悬停",
+    "阴影",
+    "气泡"
+  ],
+  "summary": "按钮悬停的十种阴影与气泡变化：投影、放大投影、光晕、浮起留影、上下弧影、气泡尖角、上浮下探、卷角",
+  "params": [
+    {
+      "key": "effect",
+      "label": "显示哪种",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "all",
+          "label": "十种各一颗"
+        },
+        {
+          "value": "shadow",
+          "label": "投影"
+        },
+        {
+          "value": "grow-shadow",
+          "label": "放大投影"
+        },
+        {
+          "value": "glow",
+          "label": "光晕"
+        },
+        {
+          "value": "float-shadow",
+          "label": "浮起留影"
+        },
+        {
+          "value": "shadow-radial",
+          "label": "上下弧影"
+        },
+        {
+          "value": "bubble-top",
+          "label": "顶部尖角"
+        },
+        {
+          "value": "bubble-float-bottom",
+          "label": "上浮下探"
+        },
+        {
+          "value": "bubble-right",
+          "label": "右侧尖角"
+        },
+        {
+          "value": "curl-tr",
+          "label": "右上卷角"
+        },
+        {
+          "value": "curl-bl",
+          "label": "左下卷角"
+        }
+      ],
+      "default": "all"
+    },
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "悬停试试",
+      "maxLength": 12,
+      "help": "只显示单一效果时生效"
+    },
+    {
+      "key": "accent",
+      "label": "光晕 / 卷角色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "btnBg",
+      "label": "按钮底色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#0a0a0f"
+    },
+    {
+      "key": "duration",
+      "label": "过渡时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.15,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.3,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "default": 8,
+      "unit": "px"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 22,
+      "step": 1,
+      "default": 15,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "十种各一颗",
+      "values": {}
+    },
+    {
+      "id": "glow",
+      "name": "光晕",
+      "values": {
+        "effect": "glow",
+        "accent": "#f472b6",
+        "btnBg": "#16161d",
+        "color": "#f2f3f8"
+      }
+    },
+    {
+      "id": "bubble",
+      "name": "上浮下探",
+      "values": {
+        "effect": "bubble-float-bottom",
+        "btnBg": "#fbbf24",
+        "label": "提示"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Hover.css 阴影 / 气泡 / 卷角系列",
+    "url": "https://ianlunn.github.io/Hover/",
+    "license": "MIT（个人 / 开源许可；思路参考，代码自写）"
+  }
+}

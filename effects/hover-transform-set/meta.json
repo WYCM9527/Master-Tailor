@@ -1,0 +1,176 @@
+{
+  "slug": "hover-transform-set",
+  "name": "2D 变换合集",
+  "category": "button",
+  "sub": "hover",
+  "tags": [
+    "按钮",
+    "悬停",
+    "变换",
+    "合集"
+  ],
+  "summary": "按钮悬停整颗动起来的十三种方式：脉动、按下、弹起、弹性放大、微转、下沉、轻点、斜切、前倾、上下晃、抖动停",
+  "params": [
+    {
+      "key": "effect",
+      "label": "显示哪种",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "all",
+          "label": "十三种各一颗"
+        },
+        {
+          "value": "pulse",
+          "label": "脉动"
+        },
+        {
+          "value": "push",
+          "label": "按下"
+        },
+        {
+          "value": "pop",
+          "label": "弹起"
+        },
+        {
+          "value": "bounce-in",
+          "label": "弹性放大"
+        },
+        {
+          "value": "rotate",
+          "label": "微转"
+        },
+        {
+          "value": "grow-rotate",
+          "label": "放大微转"
+        },
+        {
+          "value": "sink",
+          "label": "下沉"
+        },
+        {
+          "value": "bob",
+          "label": "浮起轻点"
+        },
+        {
+          "value": "hang",
+          "label": "下沉轻点"
+        },
+        {
+          "value": "skew",
+          "label": "斜切"
+        },
+        {
+          "value": "skew-forward",
+          "label": "前倾"
+        },
+        {
+          "value": "wobble-v",
+          "label": "上下晃"
+        },
+        {
+          "value": "buzz-out",
+          "label": "抖动停"
+        }
+      ],
+      "default": "all"
+    },
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "悬停试试",
+      "maxLength": 12,
+      "help": "只显示单一效果时生效"
+    },
+    {
+      "key": "strength",
+      "label": "强度",
+      "type": "range",
+      "target": "css",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "key": "accent",
+      "label": "悬停描边色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "btnBg",
+      "label": "按钮底色",
+      "type": "color",
+      "target": "css",
+      "default": "#16161d"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "default": 10,
+      "unit": "px"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 22,
+      "step": 1,
+      "default": 15,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "十三种各一颗",
+      "values": {}
+    },
+    {
+      "id": "bounce",
+      "name": "弹性放大",
+      "values": {
+        "effect": "bounce-in",
+        "strength": 1.4,
+        "label": "点我"
+      }
+    },
+    {
+      "id": "buzz",
+      "name": "抖动停",
+      "values": {
+        "effect": "buzz-out",
+        "strength": 1.6,
+        "accent": "#f472b6"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Hover.css 2D 变换系列",
+    "url": "https://ianlunn.github.io/Hover/",
+    "license": "MIT（个人 / 开源许可；思路参考，代码自写）"
+  }
+}

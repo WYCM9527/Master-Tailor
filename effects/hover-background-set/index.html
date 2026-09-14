@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>背景过渡合集</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-btnBg: #16161d;     /* 按钮底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 填充色 */
+    --mt-onAccent: #0a0a0f;  /* 填充后的文字颜色 */
+    --mt-duration: 0.3s;     /* 过渡时长 */
+    --mt-radius: 10px;       /* 圆角 */
+    --mt-fontSize: 15px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; max-width: 760px; padding: 24px; }
+  .mt-btn {
+    position: relative; display: inline-block; padding: 12px 24px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: var(--mt-radius);
+    background: var(--mt-btnBg); color: var(--mt-color); font: inherit; font-size: var(--mt-fontSize); font-weight: 600; cursor: pointer; overflow: hidden; isolation: isolate;
+    transition: color var(--mt-duration) ease, background-color var(--mt-duration) ease;
+  }
+  .mt-btn span { position: relative; z-index: 1; }
+  /* 填充层：所有变体共用一个 ::before，变体只改初始变换与曲线 */
+  .mt-btn::before { content: ""; position: absolute; inset: 0; background: var(--mt-accent); transition: transform var(--mt-duration) ease-out; z-index: 0; }
+  .mt-btn:hover, .mt-btn.demo { color: var(--mt-onAccent); }
+  /* fade：整块渐变换色 */
+  .mt-btn.fade::before { display: none; }
+  .mt-btn.fade:hover, .mt-btn.fade.demo { background-color: var(--mt-accent); }
+  /* pulse：换色后底色持续脉动 */
+  .mt-btn.pulse::before { display: none; }
+  .mt-btn.pulse:hover, .mt-btn.pulse.demo { background-color: var(--mt-accent); animation: mt-back-pulse 1s linear 0.5s infinite; }
+  @keyframes mt-back-pulse { 50% { background-color: color-mix(in srgb, var(--mt-accent) 70%, var(--mt-btnBg)); } }
+  /* sweep-down：从上向下扫满 */
+  .mt-btn.sweep-down::before { transform: scaleY(0); transform-origin: 50% 0; }
+  .mt-btn.sweep-down:hover::before, .mt-btn.sweep-down.demo::before { transform: scaleY(1); }
+  /* sweep-left：从右向左扫满 */
+  .mt-btn.sweep-left::before { transform: scaleX(0); transform-origin: 100% 50%; }
+  .mt-btn.sweep-left:hover::before, .mt-btn.sweep-left.demo::before { transform: scaleX(1); }
+  /* bounce-right：从左扫入并过冲回弹 */
+  .mt-btn.bounce-right::before { transform: scaleX(0); transform-origin: 0 50%; transition-duration: calc(var(--mt-duration) * 1.6); }
+  .mt-btn.bounce-right:hover::before, .mt-btn.bounce-right.demo::before { transform: scaleX(1); transition-timing-function: cubic-bezier(0.52, 1.64, 0.37, 0.66); }
+  /* radial-out：从中心圆形扩散铺满 */
+  .mt-btn.radial-out::before { border-radius: 100%; transform: scale(0); }
+  .mt-btn.radial-out:hover::before, .mt-btn.radial-out.demo::before { transform: scale(2); }
+  /* radial-in：底色先满，一个圆从外向中心收走，露出填充色 */
+  .mt-btn.radial-in { background: var(--mt-accent); }
+  .mt-btn.radial-in::before { background: var(--mt-btnBg); border-radius: 100%; transform: scale(2); }
+  .mt-btn.radial-in:hover::before, .mt-btn.radial-in.demo::before { transform: scale(0); }
+  /* rect-out：矩形从中心长满 */
+  .mt-btn.rect-out::before { transform: scale(0); }
+  .mt-btn.rect-out:hover::before, .mt-btn.rect-out.demo::before { transform: scale(1); }
+  /* shutter-in：底色从中间向上下收成一条线消失 */
+  .mt-btn.shutter-in { background: var(--mt-accent); }
+  .mt-btn.shutter-in::before { background: var(--mt-btnBg); transform: scaleY(1); transform-origin: 50% 50%; }
+  .mt-btn.shutter-in:hover::before, .mt-btn.shutter-in.demo::before { transform: scaleY(0); }
+  /* shutter-out-h：填充从中间向左右展开 */
+  .mt-btn.shutter-out-h::before { transform: scaleX(0); transform-origin: 50% 50%; }
+  .mt-btn.shutter-out-h:hover::before, .mt-btn.shutter-out-h.demo::before { transform: scaleX(1); }
+  .mt-label { width: 100%; text-align: center; margin: 0 0 4px; color: var(--mt-color); opacity: 0.5; font-size: 13px; }
+  @media (prefers-reduced-motion: reduce) { .mt-btn, .mt-btn::before { transition: none; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="mt-row" id="mtRow"><p class="mt-label" id="mtLabel"></p></div>
+<script>
+  const CONFIG = {
+    effect: "all",         // 显示哪种：all 十种各一颗 / fade 渐变换色 / pulse 底色脉动 / sweep-down 向下扫满 / sweep-left 向左扫满 / bounce-right 回弹扫入 / radial-out 圆形扩散 / radial-in 圆形收走 / rect-out 矩形长满 / shutter-in 上下合拢 / shutter-out-h 左右展开
+    label: "悬停试试",     // 单一效果时按钮文字
+  };
+  const NAMES = { fade: '渐变换色', pulse: '底色脉动', 'sweep-down': '向下扫满', 'sweep-left': '向左扫满', 'bounce-right': '回弹扫入', 'radial-out': '圆形扩散', 'radial-in': '圆形收走', 'rect-out': '矩形长满', 'shutter-in': '上下合拢', 'shutter-out-h': '左右展开' };
+  const row = document.getElementById('mtRow'), label = document.getElementById('mtLabel');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const kinds = CONFIG.effect === 'all' ? Object.keys(NAMES) : [CONFIG.effect];
+  label.textContent = CONFIG.effect === 'all' ? '十种背景过渡：把鼠标移到按钮上' : NAMES[CONFIG.effect] || '';
+  const btns = kinds.map((k) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'mt-btn ' + k; b.innerHTML = '<span></span>'; b.firstChild.textContent = CONFIG.effect === 'all' ? NAMES[k] : CONFIG.label; row.appendChild(b); return b; });
+  let userTook = false; row.addEventListener('pointerenter', () => (userTook = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流给每颗按钮加上悬停态
+  if (!reduceMotion) { let i = 0; setInterval(() => { if (userTook || document.hidden) return; btns.forEach(b => b.classList.remove('demo')); const b = btns[i % btns.length]; void b.offsetWidth; b.classList.add('demo'); i++; }, 1100); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

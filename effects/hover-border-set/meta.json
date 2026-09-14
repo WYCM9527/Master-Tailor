@@ -1,0 +1,178 @@
+{
+  "slug": "hover-border-set",
+  "name": "边框过渡合集",
+  "category": "button",
+  "sub": "hover",
+  "tags": [
+    "按钮",
+    "悬停",
+    "边框",
+    "合集"
+  ],
+  "summary": "按钮悬停边框变化的十种经典方式：描边渐色、抽空留边、内圈细边、边框外扩 / 内收、撑开、变胶囊、划线、四边长出",
+  "params": [
+    {
+      "key": "effect",
+      "label": "显示哪种",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "all",
+          "label": "十种各一颗"
+        },
+        {
+          "value": "border-fade",
+          "label": "描边渐色"
+        },
+        {
+          "value": "hollow",
+          "label": "抽空留边"
+        },
+        {
+          "value": "trim",
+          "label": "内圈细边"
+        },
+        {
+          "value": "ripple-out",
+          "label": "边框外扩"
+        },
+        {
+          "value": "ripple-in",
+          "label": "边框内收"
+        },
+        {
+          "value": "outline-out",
+          "label": "外框撑开"
+        },
+        {
+          "value": "round",
+          "label": "直角变胶囊"
+        },
+        {
+          "value": "underline-left",
+          "label": "左划下划线"
+        },
+        {
+          "value": "overline-reveal",
+          "label": "上划线滑落"
+        },
+        {
+          "value": "reveal",
+          "label": "四边长出"
+        }
+      ],
+      "default": "all"
+    },
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "悬停试试",
+      "maxLength": 12,
+      "help": "只显示单一效果时生效"
+    },
+    {
+      "key": "accent",
+      "label": "边框强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "thickness",
+      "label": "边框粗细",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 3,
+      "unit": "px"
+    },
+    {
+      "key": "btnBg",
+      "label": "按钮底色",
+      "type": "color",
+      "target": "css",
+      "default": "#16161d"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "duration",
+      "label": "过渡时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.15,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.3,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "default": 10,
+      "unit": "px"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 22,
+      "step": 1,
+      "default": 15,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "十种各一颗",
+      "values": {}
+    },
+    {
+      "id": "ripple",
+      "name": "边框外扩",
+      "values": {
+        "effect": "ripple-out",
+        "accent": "#34d399",
+        "label": "确认"
+      }
+    },
+    {
+      "id": "thick",
+      "name": "粗边抽空",
+      "values": {
+        "effect": "hollow",
+        "thickness": 5,
+        "accent": "#fbbf24",
+        "radius": 0
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Hover.css 边框过渡系列",
+    "url": "https://ianlunn.github.io/Hover/",
+    "license": "MIT（个人 / 开源许可；思路参考，代码自写）"
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "slug": "hover-background-set",
+  "name": "背景过渡合集",
+  "category": "button",
+  "sub": "hover",
+  "tags": [
+    "按钮",
+    "悬停",
+    "填充",
+    "合集"
+  ],
+  "summary": "按钮悬停底色变化的十种经典方式：渐变、脉动、扫满、回弹扫入、圆形扩散 / 收走、矩形长满、合拢、展开",
+  "params": [
+    {
+      "key": "effect",
+      "label": "显示哪种",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "all",
+          "label": "十种各一颗"
+        },
+        {
+          "value": "fade",
+          "label": "渐变换色"
+        },
+        {
+          "value": "pulse",
+          "label": "底色脉动"
+        },
+        {
+          "value": "sweep-down",
+          "label": "向下扫满"
+        },
+        {
+          "value": "sweep-left",
+          "label": "向左扫满"
+        },
+        {
+          "value": "bounce-right",
+          "label": "回弹扫入"
+        },
+        {
+          "value": "radial-out",
+          "label": "圆形扩散"
+        },
+        {
+          "value": "radial-in",
+          "label": "圆形收走"
+        },
+        {
+          "value": "rect-out",
+          "label": "矩形长满"
+        },
+        {
+          "value": "shutter-in",
+          "label": "上下合拢"
+        },
+        {
+          "value": "shutter-out-h",
+          "label": "左右展开"
+        }
+      ],
+      "default": "all"
+    },
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "悬停试试",
+      "maxLength": 12,
+      "help": "只显示单一效果时生效"
+    },
+    {
+      "key": "accent",
+      "label": "填充色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "onAccent",
+      "label": "填充后文字色",
+      "type": "color",
+      "target": "css",
+      "default": "#0a0a0f"
+    },
+    {
+      "key": "btnBg",
+      "label": "按钮底色",
+      "type": "color",
+      "target": "css",
+      "default": "#16161d"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "duration",
+      "label": "过渡时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.15,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.3,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "default": 10,
+      "unit": "px"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 22,
+      "step": 1,
+      "default": 15,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "十种各一颗",
+      "values": {}
+    },
+    {
+      "id": "radial",
+      "name": "圆形扩散",
+      "values": {
+        "effect": "radial-out",
+        "accent": "#f472b6",
+        "label": "开始"
+      }
+    },
+    {
+      "id": "bounce",
+      "name": "回弹扫入",
+      "values": {
+        "effect": "bounce-right",
+        "accent": "#fbbf24",
+        "duration": 0.4,
+        "radius": 30
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Hover.css 背景过渡系列",
+    "url": "https://ianlunn.github.io/Hover/",
+    "license": "MIT（个人 / 开源许可；思路参考，代码自写）"
+  }
+}

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2D 变换合集</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-btnBg: #16161d;     /* 按钮底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 悬停描边色 */
+    --mt-strength: 1;        /* 强度倍率（缩放量、位移量、角度） */
+    --mt-radius: 10px;       /* 圆角 */
+    --mt-fontSize: 15px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-row { display: flex; flex-wrap: wrap; gap: 18px; justify-content: center; max-width: 760px; padding: 24px; }
+  .mt-btn {
+    position: relative; display: inline-block; padding: 12px 24px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: var(--mt-radius);
+    background: var(--mt-btnBg); color: var(--mt-color); font: inherit; font-size: var(--mt-fontSize); font-weight: 600; cursor: pointer;
+    transition: transform 0.3s ease, border-color 0.3s ease; transform: translateZ(0);
+  }
+  .mt-btn:hover, .mt-btn.demo { border-color: var(--mt-accent); }
+  /* pulse：持续一大一小地脉动 */
+  .mt-btn.pulse:hover, .mt-btn.pulse.demo { animation: mt-pulse 1s linear infinite; }
+  @keyframes mt-pulse { 25% { transform: scale(calc(1 + 0.1 * var(--mt-strength))); } 75% { transform: scale(calc(1 - 0.1 * var(--mt-strength))); } }
+  /* push：被按下去一下再弹回 */
+  .mt-btn.push:hover, .mt-btn.push.demo { animation: mt-push 0.3s linear 1; }
+  @keyframes mt-push { 50% { transform: scale(calc(1 - 0.2 * var(--mt-strength))); } 100% { transform: scale(1); } }
+  /* pop：弹大一下再回来 */
+  .mt-btn.pop:hover, .mt-btn.pop.demo { animation: mt-pop 0.3s linear 1; }
+  @keyframes mt-pop { 50% { transform: scale(calc(1 + 0.2 * var(--mt-strength))); } 100% { transform: scale(1); } }
+  /* bounce-in：放大并带弹性过冲 */
+  .mt-btn.bounce-in { transition-duration: 0.5s; }
+  .mt-btn.bounce-in:hover, .mt-btn.bounce-in.demo { transform: scale(calc(1 + 0.2 * var(--mt-strength))); transition-timing-function: cubic-bezier(0.47, 2.02, 0.31, -0.36); }
+  /* rotate：整颗微微转一个角度 */
+  .mt-btn.rotate:hover, .mt-btn.rotate.demo { transform: rotate(calc(4deg * var(--mt-strength))); }
+  /* grow-rotate：放大同时转一点 */
+  .mt-btn.grow-rotate:hover, .mt-btn.grow-rotate.demo { transform: scale(calc(1 + 0.1 * var(--mt-strength))) rotate(calc(4deg * var(--mt-strength))); }
+  /* sink：往下沉一点 */
+  .mt-btn.sink:hover, .mt-btn.sink.demo { transform: translateY(calc(8px * var(--mt-strength))); }
+  /* bob：先浮起，然后在高处上下轻点 */
+  .mt-btn.bob:hover, .mt-btn.bob.demo { animation: mt-bob-float 0.3s ease-out forwards, mt-bob 1.5s ease-in-out 0.3s infinite alternate; }
+  @keyframes mt-bob-float { 100% { transform: translateY(calc(-8px * var(--mt-strength))); } }
+  @keyframes mt-bob { 0% { transform: translateY(calc(-8px * var(--mt-strength))); } 50% { transform: translateY(calc(-4px * var(--mt-strength))); } 100% { transform: translateY(calc(-8px * var(--mt-strength))); } }
+  /* hang：先下沉，然后在低处上下轻点 */
+  .mt-btn.hang:hover, .mt-btn.hang.demo { animation: mt-hang-sink 0.3s ease-out forwards, mt-hang 1.5s ease-in-out 0.3s infinite alternate; }
+  @keyframes mt-hang-sink { 100% { transform: translateY(calc(8px * var(--mt-strength))); } }
+  @keyframes mt-hang { 0% { transform: translateY(calc(8px * var(--mt-strength))); } 50% { transform: translateY(calc(4px * var(--mt-strength))); } 100% { transform: translateY(calc(8px * var(--mt-strength))); } }
+  /* skew：整体斜切 */
+  .mt-btn.skew:hover, .mt-btn.skew.demo { transform: skew(calc(-10deg * var(--mt-strength))); }
+  /* skew-forward：以左下角为轴向前倾 */
+  .mt-btn.skew-forward { transform-origin: 0 100%; }
+  .mt-btn.skew-forward:hover, .mt-btn.skew-forward.demo { transform: skew(calc(-10deg * var(--mt-strength))); }
+  /* wobble-v：上下晃几下衰减停止 */
+  .mt-btn.wobble-v:hover, .mt-btn.wobble-v.demo { animation: mt-wobble-v 1s ease-in-out 1; }
+  @keyframes mt-wobble-v { 16.65% { transform: translateY(calc(8px * var(--mt-strength))); } 33.3% { transform: translateY(calc(-6px * var(--mt-strength))); } 49.95% { transform: translateY(calc(4px * var(--mt-strength))); } 66.6% { transform: translateY(calc(-2px * var(--mt-strength))); } 83.25% { transform: translateY(calc(1px * var(--mt-strength))); } 100% { transform: translateY(0); } }
+  /* buzz-out：剧烈抖动后停下 */
+  .mt-btn.buzz-out:hover, .mt-btn.buzz-out.demo { animation: mt-buzz-out 0.75s linear 1; }
+  @keyframes mt-buzz-out { 10% { transform: translateX(calc(3px * var(--mt-strength))) rotate(2deg); } 20% { transform: translateX(calc(-3px * var(--mt-strength))) rotate(-2deg); } 30% { transform: translateX(calc(3px * var(--mt-strength))) rotate(2deg); } 40% { transform: translateX(calc(-3px * var(--mt-strength))) rotate(-2deg); } 50% { transform: translateX(calc(2px * var(--mt-strength))) rotate(1deg); } 60% { transform: translateX(calc(-2px * var(--mt-strength))) rotate(-1deg); } 70% { transform: translateX(calc(2px * var(--mt-strength))) rotate(1deg); } 80% { transform: translateX(calc(-2px * var(--mt-strength))) rotate(-1deg); } 90% { transform: translateX(calc(1px * var(--mt-strength))) rotate(0); } 100% { transform: translateX(calc(-1px * var(--mt-strength))) rotate(0); } }
+  .mt-label { width: 100%; text-align: center; margin: 0 0 4px; color: var(--mt-color); opacity: 0.5; font-size: 13px; }
+  @media (prefers-reduced-motion: reduce) { .mt-btn { transition: none; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="mt-row" id="mtRow"><p class="mt-label" id="mtLabel"></p></div>
+<script>
+  const CONFIG = {
+    effect: "all",         // 显示哪种：all 十二种各一颗 / pulse 脉动 / push 按下 / pop 弹起 / bounce-in 弹性放大 / rotate 微转 / grow-rotate 放大微转 / sink 下沉 / bob 浮起轻点 / hang 下沉轻点 / skew 斜切 / skew-forward 前倾 / wobble-v 上下晃 / buzz-out 抖动停
+    label: "悬停试试",     // 单一效果时按钮文字
+  };
+  const NAMES = { pulse: '脉动', push: '按下', pop: '弹起', 'bounce-in': '弹性放大', rotate: '微转', 'grow-rotate': '放大微转', sink: '下沉', bob: '浮起轻点', hang: '下沉轻点', skew: '斜切', 'skew-forward': '前倾', 'wobble-v': '上下晃', 'buzz-out': '抖动停' };
+  const row = document.getElementById('mtRow'), label = document.getElementById('mtLabel');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const kinds = CONFIG.effect === 'all' ? Object.keys(NAMES) : [CONFIG.effect];
+  label.textContent = CONFIG.effect === 'all' ? '十三种 2D 变换：把鼠标移到按钮上' : NAMES[CONFIG.effect] || '';
+  const btns = kinds.map((k) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'mt-btn ' + k; b.textContent = CONFIG.effect === 'all' ? NAMES[k] : CONFIG.label; row.appendChild(b); return b; });
+  let userTook = false; row.addEventListener('pointerenter', () => (userTook = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流给每颗按钮加上悬停态
+  if (!reduceMotion) { let i = 0; setInterval(() => { if (userTook || document.hidden) return; btns.forEach(b => b.classList.remove('demo')); const b = btns[i % btns.length]; void b.offsetWidth; b.classList.add('demo'); i++; }, 1100); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

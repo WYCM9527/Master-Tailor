@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阴影气泡合集</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-btnBg: #f2f3f8;     /* 按钮底色 */
+    --mt-color: #0a0a0f;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 光晕 / 气泡尖角颜色 */
+    --mt-duration: 0.3s;     /* 过渡时长 */
+    --mt-radius: 8px;        /* 圆角 */
+    --mt-fontSize: 15px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-row { display: flex; flex-wrap: wrap; gap: 26px 20px; justify-content: center; max-width: 760px; padding: 28px; }
+  .mt-btn {
+    position: relative; display: inline-block; padding: 12px 24px; border: 0; border-radius: var(--mt-radius); background: var(--mt-btnBg); color: var(--mt-color);
+    font: inherit; font-size: var(--mt-fontSize); font-weight: 600; cursor: pointer; transition: transform var(--mt-duration) ease, box-shadow var(--mt-duration) ease;
+  }
+  .mt-btn::before, .mt-btn::after { content: ""; position: absolute; pointer-events: none; }
+  .mt-btn::after { content: none; }
+  /* shadow：底下浮出一片投影 */
+  .mt-btn.shadow:hover, .mt-btn.shadow.demo { box-shadow: 0 10px 14px -8px rgba(0, 0, 0, 0.8); }
+  /* grow-shadow：放大并带投影 */
+  .mt-btn.grow-shadow:hover, .mt-btn.grow-shadow.demo { transform: scale(1.1); box-shadow: 0 10px 14px -8px rgba(0, 0, 0, 0.8); }
+  /* glow：四周泛出彩色光晕 */
+  .mt-btn.glow:hover, .mt-btn.glow.demo { box-shadow: 0 0 14px 2px var(--mt-accent); }
+  /* float-shadow：按钮浮起，脚下一团模糊椭圆影子留在原地 */
+  .mt-btn.float-shadow::before { top: 100%; left: 5%; width: 90%; height: 10px; background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 0%, transparent 80%); opacity: 0; transition: transform var(--mt-duration) ease, opacity var(--mt-duration) ease; }
+  .mt-btn.float-shadow:hover, .mt-btn.float-shadow.demo { transform: translateY(-5px); }
+  .mt-btn.float-shadow:hover::before, .mt-btn.float-shadow.demo::before { opacity: 1; transform: translateY(5px); }
+  /* shadow-radial：上下两侧同时浮出弧形阴影 */
+  .mt-btn.shadow-radial::before, .mt-btn.shadow-radial::after { content: ""; left: 0; width: 100%; height: 6px; opacity: 0; transition: opacity var(--mt-duration) ease; }
+  .mt-btn.shadow-radial::before { bottom: 100%; background: radial-gradient(ellipse at 50% 150%, rgba(0, 0, 0, 0.8) 0%, transparent 80%); }
+  .mt-btn.shadow-radial::after { top: 100%; background: radial-gradient(ellipse at 50% -50%, rgba(0, 0, 0, 0.8) 0%, transparent 80%); }
+  .mt-btn.shadow-radial:hover::before, .mt-btn.shadow-radial:hover::after, .mt-btn.shadow-radial.demo::before, .mt-btn.shadow-radial.demo::after { opacity: 1; }
+  /* bubble-top：顶部冒出一个气泡尖角 */
+  .mt-btn.bubble-top::before { left: calc(50% - 10px); top: 0; border: 10px solid transparent; border-top: 0; border-bottom-color: var(--mt-btnBg); transition: transform var(--mt-duration) ease; }
+  .mt-btn.bubble-top:hover::before, .mt-btn.bubble-top.demo::before { transform: translateY(-10px); }
+  /* bubble-float-bottom：整颗上浮，底部尖角向下探出 */
+  .mt-btn.bubble-float-bottom::before { left: calc(50% - 10px); bottom: 0; border: 10px solid transparent; border-bottom: 0; border-top-color: var(--mt-btnBg); transition: transform var(--mt-duration) ease; }
+  .mt-btn.bubble-float-bottom:hover, .mt-btn.bubble-float-bottom.demo { transform: translateY(-10px); }
+  .mt-btn.bubble-float-bottom:hover::before, .mt-btn.bubble-float-bottom.demo::before { transform: translateY(10px); }
+  /* bubble-right：右侧探出尖角 */
+  .mt-btn.bubble-right::before { top: calc(50% - 10px); right: 0; border: 10px solid transparent; border-right: 0; border-left-color: var(--mt-btnBg); transition: transform var(--mt-duration) ease; }
+  .mt-btn.bubble-right:hover::before, .mt-btn.bubble-right.demo::before { transform: translateX(10px); }
+  /* curl-top-right：右上角卷起一角 */
+  .mt-btn.curl-tr { overflow: hidden; }
+  .mt-btn.curl-tr::before { top: 0; right: 0; width: 0; height: 0; background: linear-gradient(225deg, var(--mt-bg) 45%, color-mix(in srgb, var(--mt-accent) 70%, #fff) 50%, var(--mt-accent) 56%, color-mix(in srgb, var(--mt-btnBg) 80%, #000) 80%); box-shadow: -1px 1px 2px rgba(0, 0, 0, 0.4); transition: width var(--mt-duration) ease-out, height var(--mt-duration) ease-out; }
+  .mt-btn.curl-tr:hover::before, .mt-btn.curl-tr.demo::before { width: 26px; height: 26px; }
+  /* curl-bottom-left：左下角卷起 */
+  .mt-btn.curl-bl { overflow: hidden; }
+  .mt-btn.curl-bl::before { bottom: 0; left: 0; width: 0; height: 0; background: linear-gradient(45deg, var(--mt-bg) 45%, color-mix(in srgb, var(--mt-accent) 70%, #fff) 50%, var(--mt-accent) 56%, color-mix(in srgb, var(--mt-btnBg) 80%, #000) 80%); box-shadow: 1px -1px 2px rgba(0, 0, 0, 0.4); transition: width var(--mt-duration) ease-out, height var(--mt-duration) ease-out; }
+  .mt-btn.curl-bl:hover::before, .mt-btn.curl-bl.demo::before { width: 26px; height: 26px; }
+  .mt-label { width: 100%; text-align: center; margin: 0 0 4px; color: #f2f3f8; opacity: 0.5; font-size: 13px; }
+  @media (prefers-reduced-motion: reduce) { .mt-btn, .mt-btn::before, .mt-btn::after { transition: none; } }
+</style>
+</head>
+<body>
+<div class="mt-row" id="mtRow"><p class="mt-label" id="mtLabel"></p></div>
+<script>
+  const CONFIG = {
+    effect: "all",         // 显示哪种：all 十种各一颗 / shadow 投影 / grow-shadow 放大投影 / glow 光晕 / float-shadow 浮起留影 / shadow-radial 上下弧影 / bubble-top 顶部尖角 / bubble-float-bottom 上浮下探 / bubble-right 右侧尖角 / curl-tr 右上卷角 / curl-bl 左下卷角
+    label: "悬停试试",     // 单一效果时按钮文字
+  };
+  const NAMES = { shadow: '投影', 'grow-shadow': '放大投影', glow: '光晕', 'float-shadow': '浮起留影', 'shadow-radial': '上下弧影', 'bubble-top': '顶部尖角', 'bubble-float-bottom': '上浮下探', 'bubble-right': '右侧尖角', 'curl-tr': '右上卷角', 'curl-bl': '左下卷角' };
+  const row = document.getElementById('mtRow'), label = document.getElementById('mtLabel');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const kinds = CONFIG.effect === 'all' ? Object.keys(NAMES) : [CONFIG.effect];
+  label.textContent = CONFIG.effect === 'all' ? '十种阴影与气泡：把鼠标移到按钮上' : NAMES[CONFIG.effect] || '';
+  const btns = kinds.map((k) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'mt-btn ' + k; b.textContent = CONFIG.effect === 'all' ? NAMES[k] : CONFIG.label; row.appendChild(b); return b; });
+  let userTook = false; row.addEventListener('pointerenter', () => (userTook = true));
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流给每颗按钮加上悬停态
+  if (!reduceMotion) { let i = 0; setInterval(() => { if (userTook || document.hidden) return; btns.forEach(b => b.classList.remove('demo')); const b = btns[i % btns.length]; void b.offsetWidth; b.classList.add('demo'); i++; }, 1100); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
