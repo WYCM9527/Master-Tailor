@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚动图片内视差</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-width: 420px;       /* 图框宽度 */
+    --mt-radius: 4px;        /* 圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); font-family: var(--mt-font); color: var(--mt-color); overflow-x: hidden; }
+
+  .mt-list { display: flex; flex-direction: column; align-items: center; gap: 22vh; padding: 30vh 6vw 40vh; perspective: 1200px; }
+  .mt-item { position: relative; width: min(var(--mt-width), 88vw); }
+  .mt-item:nth-child(even) { align-self: flex-end; } .mt-item:nth-child(3n) { align-self: flex-start; }
+  /* 图框裁切，里面的图比框高一截（上下各多出 overflow），滚动时在框内反向移动形成内视差 */
+  .mt-item .frame { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border-radius: var(--mt-radius); transform-origin: 50% 100%; will-change: transform; }
+  .mt-item .frame img { position: absolute; left: 0; top: calc(var(--ov) * -1); width: 100%; height: calc(100% + var(--ov) * 2); object-fit: cover; will-change: transform; }
+  .mt-item h2 { position: absolute; left: -0.1em; bottom: -0.35em; margin: 0; font-size: clamp(40px, 8vw, 110px); font-weight: 800; letter-spacing: -0.04em; line-height: 1; mix-blend-mode: difference; pointer-events: none; will-change: transform; }
+  .mt-item .meta { margin-top: 12px; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.5; }
+</style>
+</head>
+<body>
+<main class="mt-list" id="mtList"></main>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"山谷"},{"src":"/samples/sample-2.webp","caption":"海边"},{"src":"/samples/sample-3.webp","caption":"黄昏"},{"src":"/samples/sample-4.webp","caption":"林间"},{"src":"/samples/sample-6.webp","caption":"街角"}], // 图片与标题
+    variant: "shift",    // 内视差方式：shift 图在框内上下移 / zoom 图缓慢放大 / tilt 框随滚动前后倾 / drift 图移 + 框轻转
+    overflow: 60,        // 图比框多出的高度（px），决定能移动多远
+    titleShift: 80,      // 标题反向移动的幅度（px）
+    smooth: 0.1,         // 跟随平滑度（越小越绵）
+  };
+  const list = document.getElementById('mtList');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const items = CONFIG.slides.map((s, i) => {
+    const el = document.createElement('article'); el.className = 'mt-item';
+    el.innerHTML = `<div class="frame" style="--ov:${CONFIG.overflow}px"><img alt=""></div><h2></h2><div class="meta"></div>`;
+    el.querySelector('img').src = s.src; el.querySelector('h2').textContent = s.caption || ''; el.querySelector('.meta').textContent = `${String(i + 1).padStart(2, '0')} — ${s.caption || ''}`;
+    list.appendChild(el);
+    return { el, frame: el.querySelector('.frame'), img: el.querySelector('img'), title: el.querySelector('h2'), v: 0, cur: 0 };
+  });
+  const map = (x, a, b, c, d) => c + (x - a) * (d - c) / (b - a);
+  // 每帧：算每项在视口中的位置（顶边从视口底 → 项完全滚出顶部 → -1..1），插值平滑后按变体写样式
+  function tick() {
+    requestAnimationFrame(tick); if (document.hidden) return;
+    const vh = innerHeight;
+    items.forEach((it) => {
+      const r = it.el.getBoundingClientRect();
+      it.v = Math.max(-1, Math.min(1, map(r.top, vh, -r.height, -1, 1)));
+      it.cur = reduceMotion ? it.v : it.cur + (it.v - it.cur) * CONFIG.smooth;
+      const p = it.cur;
+      if (CONFIG.variant === 'zoom') { it.img.style.transform = `scale(${(1 + (p + 1) * 0.25).toFixed(3)})`; }
+      else { it.img.style.transform = `translateY(${(p * CONFIG.overflow).toFixed(1)}px)`; }
+      if (CONFIG.variant === 'tilt') it.frame.style.transform = `rotate3d(1, 0, 0, ${(p * -14).toFixed(2)}deg)`;
+      else if (CONFIG.variant === 'drift') it.frame.style.transform = `rotate(${(p * 4).toFixed(2)}deg)`;
+      it.title.style.transform = `translateY(${(-p * CONFIG.titleShift).toFixed(1)}px)`;
+    });
+  }
+  tick();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人滚时自动来回慢滚
+  let userTook = false; addEventListener('wheel', () => (userTook = true), { passive: true }); addEventListener('touchstart', () => (userTook = true), { passive: true });
+  if (!reduceMotion) { let t = 0; (function auto() { requestAnimationFrame(auto); if (userTook || document.hidden) return; t += 0.003; const max = document.documentElement.scrollHeight - innerHeight; scrollTo(0, (0.5 - 0.5 * Math.cos(t)) * max); })(); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

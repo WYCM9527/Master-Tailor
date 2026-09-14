@@ -1,0 +1,26 @@
+{
+  "slug": "morphing-blob-scroll",
+  "name": "滚动形变色块",
+  "category": "background",
+  "sub": "scroll",
+  "tags": ["SVG", "形变", "滚动", "色块"],
+  "summary": "页面背后一大块颜色随滚动在几个不规则形状之间连续变形、换色、缓缓转动，每一屏停下时正好是一种姿态",
+  "params": [
+    { "key": "sections", "label": "各屏文案", "type": "text", "target": "config", "default": "第一章=一块颜色，跟着你的滚动慢慢换形状。｜第二章=它没有固定的样子，只在几个姿态之间流动。｜第三章=每一屏对应一种形状和一种颜色。｜第四章=滚回去，它也会原路变回来。", "maxLength": 200, "help": "每屏「标题=正文」，用「｜」分隔" },
+    { "key": "colors", "label": "各屏颜色", "type": "colors", "target": "config", "min": 2, "max": 6, "default": ["#7c9cff", "#f472b6", "#fbbf24", "#34d399"] },
+    { "key": "irregular", "label": "不规则程度", "type": "range", "target": "config", "min": 0, "max": 1, "step": 0.05, "default": 0.45 },
+    { "key": "points", "label": "控制点数", "type": "range", "target": "config", "min": 4, "max": 14, "step": 1, "default": 8 },
+    { "key": "rotate", "label": "总转角", "type": "range", "target": "config", "min": 0, "max": 360, "step": 10, "default": 40, "unit": "°" },
+    { "key": "smooth", "label": "跟随平滑度", "type": "range", "target": "config", "min": 0.04, "max": 0.4, "step": 0.02, "default": 0.12 },
+    { "key": "size", "label": "色块大小", "type": "range", "target": "css", "min": 30, "max": 120, "step": 5, "default": 70, "unit": "vmin" },
+    { "key": "bg", "label": "页面底色", "type": "color", "target": "css", "default": "#f4f1ea" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#1b1b1f" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dark", "name": "深色大块", "values": { "bg": "#0a0a0f", "color": "#f2f3f8", "size": 110, "colors": ["#3b2fbf", "#7c3aed", "#db2777", "#f59e0b"], "irregular": 0.7 } },
+    { "id": "poly", "name": "少点多边", "values": { "points": 5, "irregular": 0.9, "rotate": 180, "colors": ["#22d3ee", "#a3e635"] } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · MorphingBackgroundShapes", "url": "https://github.com/codrops/MorphingBackgroundShapes", "license": "MIT（思路参考，代码自写；路径插值自实现）" }
+}

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>线条菜单合集</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #8a8f9c;     /* 普通项颜色 */
+    --mt-hover: #f2f3f8;     /* 悬停项颜色 */
+    --mt-accent: #d94f5c;    /* 当前项与线条颜色 */
+    --mt-thickness: 2px;     /* 线条粗细 */
+    --mt-fontSize: 15px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-menu { position: relative; display: flex; align-items: stretch; margin: 0; padding: 0; list-style: none; }
+  .mt-item { position: relative; margin: 0 0.6em; }
+  .mt-link { position: relative; display: block; padding: 1em 1.2em; text-decoration: none; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; transition: color 0.3s; cursor: pointer; }
+  .mt-link:hover, .mt-link:focus-visible { color: var(--mt-hover); outline: none; }
+  .mt-item.current .mt-link { color: var(--mt-accent); }
+  .mt-link::before, .mt-link::after, .mt-item::before, .mt-item::after { content: ''; position: absolute; background: var(--mt-accent); pointer-events: none; }
+  /* slide：一根线条在项与项之间滑动，带过冲 */
+  .mt-menu.slide .mt-item { margin: 0; }
+  .mt-menu.slide .mt-link::before, .mt-menu.slide .mt-link::after, .mt-menu.slide .mt-item::before, .mt-menu.slide .mt-item::after { display: none; }
+  .mt-menu.slide .mt-line { position: absolute; left: 0; top: 100%; height: var(--mt-thickness); width: var(--w); background: var(--mt-accent); transform: translateX(var(--x)); transition: transform 0.5s cubic-bezier(1, 0.01, 0, 1.22), width 0.5s cubic-bezier(1, 0.01, 0, 1.22); }
+  /* bracket：上下两条线从相反方向长出 */
+  .mt-menu.bracket .mt-link::before, .mt-menu.bracket .mt-link::after { left: 0; width: 100%; height: var(--mt-thickness); transform: scaleX(0); transition: transform 0.2s; }
+  .mt-menu.bracket .mt-link::before { top: 0; transform-origin: 0 50%; }
+  .mt-menu.bracket .mt-link::after { bottom: 0; transform-origin: 100% 50%; }
+  .mt-menu.bracket .mt-item.current .mt-link::before, .mt-menu.bracket .mt-item.current .mt-link::after { transform: scaleX(1); transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1); }
+  /* box：四条线依次沿边框画一圈 */
+  .mt-menu.box .mt-item::before, .mt-menu.box .mt-item::after { top: 0; width: var(--mt-thickness); height: 100%; transform: scaleY(0); transition: transform 0.2s; }
+  .mt-menu.box .mt-item::before { left: 0; transform-origin: 50% 100%; }
+  .mt-menu.box .mt-item::after { right: 0; transform-origin: 50% 0; }
+  .mt-menu.box .mt-link::before, .mt-menu.box .mt-link::after { left: 0; width: 100%; height: var(--mt-thickness); transform: scaleX(0); transition: transform 0.2s; }
+  .mt-menu.box .mt-link::before { top: 0; transform-origin: 0 50%; }
+  .mt-menu.box .mt-link::after { bottom: 0; transform-origin: 100% 50%; }
+  .mt-menu.box .mt-item.current::before, .mt-menu.box .mt-item.current::after, .mt-menu.box .mt-item.current .mt-link::before, .mt-menu.box .mt-item.current .mt-link::after { transform: scale(1); }
+  .mt-menu.box .mt-item.current::before { transition-delay: 0s; } .mt-menu.box .mt-item.current .mt-link::before { transition-delay: 0.2s; } .mt-menu.box .mt-item.current::after { transition-delay: 0.4s; } .mt-menu.box .mt-item.current .mt-link::after { transition-delay: 0.6s; }
+  /* strike：一根线从文字正中横穿并变粗，文字上浮 */
+  .mt-menu.strike .mt-link::before { left: 0; top: 50%; width: 100%; height: var(--mt-thickness); margin-top: calc(var(--mt-thickness) / -2); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1); }
+  .mt-menu.strike .mt-link::after, .mt-menu.strike .mt-item::before, .mt-menu.strike .mt-item::after { display: none; }
+  .mt-menu.strike .mt-link span { display: inline-block; transition: transform 0.3s cubic-bezier(0.2, 1, 0.3, 1); }
+  .mt-menu.strike .mt-item.current .mt-link::before { transform: scaleX(1) scaleY(3); }
+  .mt-menu.strike .mt-item.current .mt-link span { transform: translateY(-0.5em); }
+  /* pillar：项两侧各一根竖线从中间长满全高 */
+  .mt-menu.pillar .mt-item::before, .mt-menu.pillar .mt-item::after { top: 50%; height: 0; width: var(--mt-thickness); margin-top: 0; transition: top 0.3s, height 0.3s; }
+  .mt-menu.pillar .mt-item::before { left: 0; } .mt-menu.pillar .mt-item::after { right: 0; }
+  .mt-menu.pillar .mt-link::before, .mt-menu.pillar .mt-link::after { display: none; }
+  .mt-menu.pillar .mt-item.current::before, .mt-menu.pillar .mt-item.current::after { top: 0; height: 100%; }
+  @media (prefers-reduced-motion: reduce) { .mt-link, .mt-link::before, .mt-link::after, .mt-item::before, .mt-item::after, .mt-line, .mt-link span { transition: none !important; } }
+</style>
+</head>
+<body>
+<nav aria-label="菜单"><ul class="mt-menu" id="mtMenu"></ul></nav>
+<script>
+  const CONFIG = {
+    items: "首页｜作品｜关于｜日志｜联系",   // 菜单项，用「｜」分隔
+    variant: "slide",      // 样式：slide 滑动线 / bracket 上下夹线 / box 画框 / strike 中线横穿 / pillar 两侧竖线
+    hoverPreview: true,    // 悬停即切换当前项（关掉则只在点击时切换）
+  };
+  const menu = document.getElementById('mtMenu');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  menu.classList.add(CONFIG.variant);
+  const items = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean).map((t, i) => {
+    const li = document.createElement('li'); li.className = 'mt-item' + (i === 0 ? ' current' : '');
+    const a = document.createElement('a'); a.className = 'mt-link'; a.href = '#'; a.innerHTML = '<span></span>'; a.firstChild.textContent = t;
+    a.addEventListener('click', (e) => { e.preventDefault(); userTook = true; setCurrent(i); });
+    if (CONFIG.hoverPreview) a.addEventListener('pointerenter', () => { userTook = true; setCurrent(i); });
+    li.appendChild(a); menu.appendChild(li); return li;
+  });
+  let line = null;
+  if (CONFIG.variant === 'slide') { line = document.createElement('li'); line.className = 'mt-line'; line.setAttribute('aria-hidden', 'true'); menu.appendChild(line); }
+  let current = 0, userTook = false;
+  function setCurrent(i) {
+    current = i; items.forEach((li, k) => { li.classList.toggle('current', k === i); li.querySelector('a').setAttribute('aria-current', k === i ? 'page' : 'false'); });
+    if (line) { const li = items[i]; line.style.setProperty('--x', li.offsetLeft + 'px'); line.style.setProperty('--w', li.offsetWidth + 'px'); }
+  }
+  setCurrent(0); addEventListener('resize', () => setCurrent(current));
+  addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') setCurrent((current + 1) % items.length); if (e.key === 'ArrowLeft') setCurrent((current - 1 + items.length) % items.length); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时轮流切换当前项
+  if (!reduceMotion) setInterval(() => { if (userTook || document.hidden) return; setCurrent((current + 1) % items.length); }, 1400);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "slug": "line-menu-styles",
+  "name": "线条菜单合集",
+  "category": "nav",
+  "sub": "hover",
+  "tags": ["菜单", "线条", "当前项", "纯 CSS"],
+  "summary": "横向菜单的当前项用线条标出：一根线在项之间带过冲滑动、上下夹线、四边画框、中线横穿、两侧竖线，五种一处切换",
+  "params": [
+    { "key": "items", "label": "菜单项", "type": "text", "target": "config", "default": "首页｜作品｜关于｜日志｜联系", "maxLength": 60, "help": "用「｜」分隔" },
+    { "key": "variant", "label": "样式", "type": "select", "target": "config", "options": [{ "value": "slide", "label": "滑动线" }, { "value": "bracket", "label": "上下夹线" }, { "value": "box", "label": "画框" }, { "value": "strike", "label": "中线横穿" }, { "value": "pillar", "label": "两侧竖线" }], "default": "slide" },
+    { "key": "hoverPreview", "label": "悬停即切换", "type": "toggle", "target": "config", "default": true },
+    { "key": "accent", "label": "线条 / 当前色", "type": "color", "target": "css", "default": "#d94f5c" },
+    { "key": "color", "label": "普通项颜色", "type": "color", "target": "css", "default": "#8a8f9c" },
+    { "key": "hover", "label": "悬停项颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "thickness", "label": "线条粗细", "type": "range", "target": "css", "min": 1, "max": 6, "step": 1, "default": 2, "unit": "px" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 12, "max": 24, "step": 1, "default": 15, "unit": "px" },
+    { "key": "font", "label": "字体", "type": "font", "target": "css", "default": "system-sans" }
+  ],
+  "presets": [
+    { "id": "default", "name": "滑动线", "values": {} },
+    { "id": "box", "name": "画框", "values": { "variant": "box", "accent": "#7c9cff" } },
+    { "id": "strike", "name": "中线横穿", "values": { "variant": "strike", "accent": "#fbbf24", "thickness": 1 } },
+    { "id": "pillar", "name": "两侧竖线", "values": { "variant": "pillar", "accent": "#34d399", "hoverPreview": false } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · LineMenuStyles", "url": "https://github.com/codrops/LineMenuStyles", "license": "MIT（思路参考，代码自写）" }
+}

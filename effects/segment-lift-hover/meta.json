@@ -1,0 +1,26 @@
+{
+  "slug": "segment-lift-hover",
+  "name": "图片分段浮起",
+  "category": "background",
+  "sub": "hover",
+  "tags": ["背景", "切片", "3D", "视差"],
+  "summary": "整屏背景图被切出几块矩形碎片，悬停时碎片一块块从画面里浮起、投下阴影，随鼠标做不同深度的视差；移开又贴回去",
+  "params": [
+    { "key": "photo", "label": "背景图", "type": "image", "target": "config", "default": "/samples/sample-6.webp" },
+    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "把一张图切开，让它们浮起来", "maxLength": 24 },
+    { "key": "layout", "label": "碎片布局", "type": "select", "target": "config", "options": [{ "value": "preset", "label": "预设四块" }, { "value": "random", "label": "随机" }, { "value": "strips", "label": "横向条带" }, { "value": "grid", "label": "田字格" }], "default": "preset" },
+    { "key": "pieces", "label": "碎片数量", "type": "range", "target": "config", "min": 2, "max": 8, "step": 1, "default": 4, "help": "随机 / 条带布局时生效" },
+    { "key": "lift", "label": "最大浮起", "type": "range", "target": "config", "min": 10, "max": 150, "step": 5, "default": 65, "unit": "px" },
+    { "key": "parallax", "label": "鼠标视差", "type": "range", "target": "config", "min": 0, "max": 80, "step": 5, "default": 30, "unit": "px" },
+    { "key": "stagger", "label": "碎片错开", "type": "range", "target": "config", "min": 0, "max": 200, "step": 20, "default": 60, "displayUnit": " 毫秒" },
+    { "key": "duration", "label": "浮起时长", "type": "range", "target": "css", "min": 0.4, "max": 2.5, "step": 0.1, "default": 1.2, "unit": "s", "displayUnit": " 秒" },
+    { "key": "shadow", "label": "阴影浓度", "type": "range", "target": "css", "min": 0, "max": 1, "step": 0.05, "default": 0.5 }
+  ],
+  "presets": [
+    { "id": "default", "name": "预设四块", "values": {} },
+    { "id": "random", "name": "随机六块", "values": { "layout": "random", "pieces": 6, "lift": 100, "photo": "/samples/sample-3.webp" } },
+    { "id": "strips", "name": "五条横带", "values": { "layout": "strips", "pieces": 5, "parallax": 50, "photo": "/samples/sample-1.webp" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "reference", "name": "Codrops · SegmentEffect", "url": "https://github.com/codrops/SegmentEffect", "license": "MIT（思路参考，代码自写）" }
+}
