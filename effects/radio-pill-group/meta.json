@@ -1,0 +1,26 @@
+{
+  "slug": "radio-pill-group",
+  "name": "单选胶囊组",
+  "category": "button",
+  "sub": "click",
+  "tags": ["单选", "分段控件", "表单", "胶囊"],
+  "summary": "一排并列选项，一颗白色胶囊在轨道里滑到被选中的那一项后面，滑动中先被拉长再回弹，选中项文字反色并亮起小圆点",
+  "params": [
+    { "key": "options", "label": "选项", "type": "text", "target": "config", "default": "日｜周｜月｜年", "maxLength": 60, "help": "用「｜」分隔" },
+    { "key": "selected", "label": "初始选中第几项", "type": "range", "target": "config", "min": 1, "max": 8, "step": 1, "default": 2 },
+    { "key": "showDot", "label": "选中项小圆点", "type": "toggle", "target": "config", "default": true },
+    { "key": "pill", "label": "胶囊颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "trackBg", "label": "轨道底色", "type": "color", "target": "css", "default": "#16161d" },
+    { "key": "active", "label": "选中文字色", "type": "color", "target": "css", "default": "#0a0a0f" },
+    { "key": "color", "label": "未选中文字色", "type": "color", "target": "css", "default": "#9aa0ad" },
+    { "key": "duration", "label": "滑动时长", "type": "range", "target": "css", "min": 0.2, "max": 1, "step": 0.05, "default": 0.45, "unit": "s", "displayUnit": " 秒" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 12, "max": 22, "step": 1, "default": 15, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "blue", "name": "蓝胶囊", "values": { "pill": "#7c9cff", "active": "#ffffff", "options": "全部｜进行中｜已完成｜已归档", "selected": 1 } },
+    { "id": "big", "name": "大号无点", "values": { "fontSize": 20, "showDot": false, "pill": "#fbbf24", "duration": 0.6 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

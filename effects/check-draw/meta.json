@@ -1,0 +1,26 @@
+{
+  "slug": "check-draw",
+  "name": "勾选动画",
+  "category": "button",
+  "sub": "click",
+  "tags": ["复选框", "表单", "勾选", "划线"],
+  "summary": "一组待办复选框：点一下方框被颜色弹性填满、白色对勾一笔描画出来、四周迸出几粒小点，文字划线变淡",
+  "params": [
+    { "key": "items", "label": "选项文字", "type": "text", "target": "config", "default": "写完这一批效果｜校验并推送｜更新清单｜休息一下", "maxLength": 80, "help": "用「｜」分隔" },
+    { "key": "strike", "label": "选中后划线", "type": "toggle", "target": "config", "default": true },
+    { "key": "sparks", "label": "迸出小点数", "type": "range", "target": "config", "min": 0, "max": 12, "step": 1, "default": 8 },
+    { "key": "checkedIndex", "label": "初始勾选第几项", "type": "range", "target": "config", "min": 0, "max": 6, "step": 1, "default": 0, "help": "0 为都不勾" },
+    { "key": "accent", "label": "勾选颜色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "color", "label": "文字颜色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "boxSize", "label": "方框大小", "type": "range", "target": "css", "min": 18, "max": 40, "step": 2, "default": 26, "unit": "px" },
+    { "key": "duration", "label": "动画时长", "type": "range", "target": "css", "min": 0.2, "max": 0.8, "step": 0.05, "default": 0.4, "unit": "s", "displayUnit": " 秒" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 13, "max": 24, "step": 1, "default": 17, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "green", "name": "绿色大框", "values": { "accent": "#34d399", "boxSize": 34, "sparks": 12, "fontSize": 20 } },
+    { "id": "plain", "name": "不划线不迸", "values": { "strike": false, "sparks": 0, "accent": "#f472b6" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

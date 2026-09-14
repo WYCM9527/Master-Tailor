@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>液态开关</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-off: #3a3d4a;       /* 关闭时的滑块 / 轨道色 */
+    --mt-on: #34d399;        /* 打开时的颜色 */
+    --mt-size: 110px;        /* 开关宽度 */
+    --mt-duration: 0.55s;    /* 切换时长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; }
+
+  .mt-row { display: flex; gap: 40px; align-items: center; }
+  /* 开关：轨道 + 套着粘液滤镜的液滴组。滑块移动时被拉长，尾巴上留一颗小液滴，两者在滤镜下黏成一体再分离 */
+  .mt-toggle { position: relative; width: var(--mt-size); height: calc(var(--mt-size) * 0.5); border: 0; padding: 0; border-radius: 999px; background: color-mix(in srgb, var(--mt-off) 40%, transparent); cursor: pointer; transition: background-color var(--mt-duration); }
+  .mt-toggle * { pointer-events: none; }
+  .mt-toggle.on { background: color-mix(in srgb, var(--mt-on) 30%, transparent); }
+  .mt-goo { position: absolute; inset: -20px; filter: url(#mtGoo); }
+  .mt-knob, .mt-tail { position: absolute; top: 50%; border-radius: 50%; background: var(--mt-off); transition: transform var(--mt-duration) cubic-bezier(0.2, 0.9, 0.3, 1.1), background-color var(--mt-duration); }
+  .mt-knob { left: calc(20px + var(--mt-size) * 0.06); width: calc(var(--mt-size) * 0.38); aspect-ratio: 1; margin-top: calc(var(--mt-size) * -0.19); transform-origin: 50% 50%; }
+  .mt-tail { left: calc(20px + var(--mt-size) * 0.25); width: calc(var(--mt-size) * 0.16); aspect-ratio: 1; margin-top: calc(var(--mt-size) * -0.08); transition-duration: calc(var(--mt-duration) * 1.4); transition-timing-function: cubic-bezier(0.3, 0.7, 0.3, 1); }
+  .mt-toggle.on .mt-knob { transform: translateX(calc(var(--mt-size) * 0.5)); background: var(--mt-on); }
+  .mt-toggle.on .mt-tail { transform: translateX(calc(var(--mt-size) * 0.5)); background: var(--mt-on); }
+  /* 移动过程中把滑块横向拉长：用动画在中途拉伸再复原 */
+  .mt-toggle.moving .mt-knob { animation: mt-stretch var(--mt-duration) ease-in-out 1; }
+  @keyframes mt-stretch { 40% { scale: 1.45 0.8; } 100% { scale: 1 1; } }
+  .mt-toggle:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+  .mt-text { color: #f2f3f8; font: 600 15px -apple-system, "PingFang SC", sans-serif; letter-spacing: 0.05em; opacity: 0.7; min-width: 3em; }
+  @media (prefers-reduced-motion: reduce) { .mt-knob, .mt-tail, .mt-toggle { transition: none; animation: none !important; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="mtGoo"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/><feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" result="goo"/><feComposite in="SourceGraphic" in2="goo" operator="atop"/></filter></defs></svg>
+<div class="mt-row">
+  <button type="button" class="mt-toggle" id="mtToggle" role="switch" aria-checked="false" aria-label="液态开关"><span class="mt-goo"><span class="mt-tail"></span><span class="mt-knob"></span></span></button>
+  <span class="mt-text" id="mtText"></span>
+</div>
+<script>
+  const CONFIG = {
+    startOn: false,        // 初始为打开
+    labels: "关｜开",       // 两个状态的文字，用「｜」分隔
+    showLabel: true,       // 显示状态文字
+  };
+  const toggle = document.getElementById('mtToggle'), text = document.getElementById('mtText');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [offText = '关', onText = '开'] = CONFIG.labels.split('｜').map(s => s.trim());
+  if (!CONFIG.showLabel) text.hidden = true;
+  let on = CONFIG.startOn, userTook = false, timer = 0;
+  function render(animate) {
+    toggle.classList.toggle('on', on); toggle.setAttribute('aria-checked', String(on)); text.textContent = on ? onText : offText;
+    if (animate && !reduceMotion) { toggle.classList.remove('moving'); void toggle.offsetWidth; toggle.classList.add('moving'); clearTimeout(timer); timer = setTimeout(() => toggle.classList.remove('moving'), 700); }
+  }
+  render(false);
+  toggle.addEventListener('click', () => { userTook = true; on = !on; render(true); });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人点时定期切换
+  if (!reduceMotion) setInterval(() => { if (userTook || document.hidden) return; on = !on; render(true); }, 1800);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

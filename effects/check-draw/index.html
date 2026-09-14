@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勾选动画</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #7c9cff;    /* 勾选颜色 */
+    --mt-boxSize: 26px;      /* 勾选框大小 */
+    --mt-duration: 0.4s;     /* 动画时长 */
+    --mt-fontSize: 17px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); }
+
+  .mt-list { display: flex; flex-direction: column; gap: 16px; }
+  .mt-item { position: relative; display: flex; align-items: center; gap: 14px; cursor: pointer; font-size: var(--mt-fontSize); user-select: none; }
+  .mt-item input { position: absolute; opacity: 0; width: 0; height: 0; }
+  /* 勾选框：描边方块；选中时先被强调色填满，勾再沿路径描画出来，四周迸出几粒小点 */
+  .mt-box { position: relative; width: var(--mt-boxSize); height: var(--mt-boxSize); flex: none; border-radius: 26%; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35); transition: box-shadow var(--mt-duration), transform 0.2s; }
+  .mt-item:hover .mt-box { box-shadow: inset 0 0 0 2px var(--mt-accent); }
+  .mt-box .fill { position: absolute; inset: 0; border-radius: inherit; background: var(--mt-accent); transform: scale(0); transition: transform var(--mt-duration) cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .mt-box svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .mt-box svg path { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset calc(var(--mt-duration) * 0.7) ease-out calc(var(--mt-duration) * 0.3); }
+  .mt-box .spark { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: var(--mt-accent); opacity: 0; transform: rotate(var(--a)) translateX(0); }
+  .mt-item input:checked ~ .mt-box { box-shadow: inset 0 0 0 2px var(--mt-accent); }
+  .mt-item input:checked ~ .mt-box .fill { transform: scale(1); }
+  .mt-item input:checked ~ .mt-box svg path { stroke-dashoffset: 0; }
+  .mt-item input:checked ~ .mt-box .spark { animation: mt-spark calc(var(--mt-duration) * 1.5) ease-out 1; }
+  @keyframes mt-spark { 0% { opacity: 1; transform: rotate(var(--a)) translateX(calc(var(--mt-boxSize) * 0.5)) scale(1); } 100% { opacity: 0; transform: rotate(var(--a)) translateX(calc(var(--mt-boxSize) * 1.1)) scale(0.2); } }
+  .mt-item:active .mt-box { transform: scale(0.9); }
+  .mt-item input:focus-visible ~ .mt-box { outline: 2px solid var(--mt-accent); outline-offset: 3px; }
+  /* 文字：选中后划线并变淡 */
+  .mt-text { position: relative; transition: opacity var(--mt-duration); }
+  .mt-text::after { content: ''; position: absolute; left: 0; top: 55%; height: 2px; width: 100%; background: currentColor; transform: scaleX(0); transform-origin: 0 50%; transition: transform var(--mt-duration) ease-out; }
+  .mt-list.strike .mt-item input:checked ~ .mt-text { opacity: 0.45; }
+  .mt-list.strike .mt-item input:checked ~ .mt-text::after { transform: scaleX(1); }
+  @media (prefers-reduced-motion: reduce) { .mt-box, .mt-box .fill, .mt-box svg path, .mt-text, .mt-text::after { transition: none; } .mt-box .spark { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="mt-list" id="mtList" role="group" aria-label="待办"></div>
+<script>
+  const CONFIG = {
+    items: "写完这一批效果｜校验并推送｜更新清单｜休息一下",   // 选项文字，用「｜」分隔
+    strike: true,          // 选中后给文字划线变淡
+    sparks: 8,             // 迸出的小点数量
+    checkedIndex: 0,       // 初始已勾选第几项（从 1 起；0 为都不勾）
+  };
+  const list = document.getElementById('mtList');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  list.classList.toggle('strike', CONFIG.strike);
+  const items = CONFIG.items.split('｜').map(s => s.trim()).filter(Boolean).map((t, i) => {
+    const label = document.createElement('label'); label.className = 'mt-item';
+    const input = document.createElement('input'); input.type = 'checkbox'; input.checked = i + 1 === CONFIG.checkedIndex;
+    const box = document.createElement('span'); box.className = 'mt-box';
+    box.innerHTML = `<span class="fill"></span>` + Array.from({ length: CONFIG.sparks }, (_, k) => `<i class="spark" style="--a:${Math.round(k * 360 / CONFIG.sparks)}deg"></i>`).join('') + `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4 4 9-9" pathLength="1"/></svg>`;
+    const text = document.createElement('span'); text.className = 'mt-text'; text.textContent = t;
+    label.append(input, box, text); list.appendChild(label);
+    input.addEventListener('change', () => (userTook = true));
+    return input;
+  });
+  let userTook = false;
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人点时依次勾上、再依次取消
+  if (!reduceMotion) { let i = 0, dir = 1; setInterval(() => { if (userTook || document.hidden || !items.length) return; items[i].checked = dir > 0; i += dir; if (i >= items.length) { i = items.length - 1; dir = -1; } else if (i < 0) { i = 0; dir = 1; } }, 900); }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

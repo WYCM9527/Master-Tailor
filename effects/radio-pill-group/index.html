@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单选胶囊组</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-trackBg: #16161d;   /* 轨道底色 */
+    --mt-color: #9aa0ad;     /* 未选中文字 */
+    --mt-active: #0a0a0f;    /* 选中文字 */
+    --mt-pill: #f2f3f8;      /* 滑动胶囊颜色 */
+    --mt-duration: 0.45s;    /* 滑动时长 */
+    --mt-fontSize: 15px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 一组单选：轨道里一颗胶囊滑到被选中的那一项后面，滑动时先被拉长再回弹 */
+  .mt-group { position: relative; display: inline-flex; padding: 5px; border-radius: 999px; background: var(--mt-trackBg); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+  .mt-pill { position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; border-radius: 999px; background: var(--mt-pill); box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.6); transition: transform var(--mt-duration) cubic-bezier(0.3, 1.4, 0.4, 1), width var(--mt-duration) cubic-bezier(0.3, 1.4, 0.4, 1); transform: translateX(var(--x, 0px)); }
+  .mt-group.moving .mt-pill { animation: mt-squash var(--mt-duration) ease-in-out 1; }
+  @keyframes mt-squash { 40% { scale: 1.12 0.86; } 100% { scale: 1 1; } }
+  .mt-opt { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 999px; cursor: pointer; color: var(--mt-color); font-size: var(--mt-fontSize); font-weight: 600; white-space: nowrap; transition: color var(--mt-duration); user-select: none; }
+  .mt-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .mt-opt:hover { color: var(--mt-pill); }
+  .mt-opt.on { color: var(--mt-active); }
+  .mt-opt input:focus-visible ~ span { outline: 2px solid var(--mt-pill); outline-offset: 6px; border-radius: 999px; }
+  .mt-opt .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0; transform: scale(0); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s; }
+  .mt-opt.on .dot { opacity: 1; transform: scale(1); }
+  .mt-group.no-dot .dot { display: none; }
+  @media (prefers-reduced-motion: reduce) { .mt-pill, .mt-opt, .mt-opt .dot { transition: none; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="mt-group" id="mtGroup" role="radiogroup" aria-label="选项"><span class="mt-pill" id="mtPill" aria-hidden="true"></span></div>
+<script>
+  const CONFIG = {
+    options: "日｜周｜月｜年",   // 选项，用「｜」分隔
+    selected: 2,           // 初始选中第几项（从 1 起）
+    showDot: true,         // 选中项前显示一个小圆点
+  };
+  const group = document.getElementById('mtGroup'), pill = document.getElementById('mtPill');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  group.classList.toggle('no-dot', !CONFIG.showDot);
+  const name = 'mt-radio-' + Math.random().toString(36).slice(2, 7);
+  const opts = CONFIG.options.split('｜').map(s => s.trim()).filter(Boolean).map((t, i) => {
+    const label = document.createElement('label'); label.className = 'mt-opt';
+    const input = document.createElement('input'); input.type = 'radio'; input.name = name; input.value = t;
+    const span = document.createElement('span'); span.style.display = 'inline-flex'; span.style.alignItems = 'center'; span.style.gap = '6px'; span.innerHTML = '<i class="dot"></i><b style="font-weight:inherit"></b>'; span.querySelector('b').textContent = t;
+    label.append(input, span); group.appendChild(label);
+    input.addEventListener('change', () => { userTook = true; select(i, true); });
+    return { label, input };
+  });
+  let current = -1, userTook = false, timer = 0;
+  function select(i, animate) {
+    if (i === current) return; current = i;
+    opts.forEach((o, k) => { o.label.classList.toggle('on', k === i); o.input.checked = k === i; });
+    const el = opts[i].label; pill.style.setProperty('--x', el.offsetLeft + 'px'); pill.style.width = el.offsetWidth + 'px';
+    if (animate && !reduceMotion) { group.classList.remove('moving'); void group.offsetWidth; group.classList.add('moving'); clearTimeout(timer); timer = setTimeout(() => group.classList.remove('moving'), 600); }
+  }
+  select(Math.max(0, Math.min(opts.length - 1, CONFIG.selected - 1)), false);
+  addEventListener('resize', () => { const el = opts[current].label; pill.style.setProperty('--x', el.offsetLeft + 'px'); pill.style.width = el.offsetWidth + 'px'; });
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人点时轮流选中
+  if (!reduceMotion) setInterval(() => { if (userTook || document.hidden) return; select((current + 1) % opts.length, true); }, 1500);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

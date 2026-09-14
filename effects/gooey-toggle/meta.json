@@ -1,0 +1,24 @@
+{
+  "slug": "gooey-toggle",
+  "name": "液态开关",
+  "category": "button",
+  "sub": "click",
+  "tags": ["开关", "表单", "粘液", "液体"],
+  "summary": "一枚开关，滑块像一滴液体：移动时被拉长、拖着一颗小液滴，两者黏连成一体再分开落回圆形；打开变绿",
+  "params": [
+    { "key": "startOn", "label": "初始为打开", "type": "toggle", "target": "config", "default": false },
+    { "key": "labels", "label": "状态文字", "type": "text", "target": "config", "default": "关｜开", "maxLength": 12, "help": "「关闭文字｜打开文字」" },
+    { "key": "showLabel", "label": "显示状态文字", "type": "toggle", "target": "config", "default": true },
+    { "key": "size", "label": "开关宽度", "type": "range", "target": "css", "min": 60, "max": 220, "step": 10, "default": 110, "unit": "px" },
+    { "key": "on", "label": "打开颜色", "type": "color", "target": "css", "default": "#34d399" },
+    { "key": "off", "label": "关闭颜色", "type": "color", "target": "css", "default": "#3a3d4a" },
+    { "key": "duration", "label": "切换时长", "type": "range", "target": "css", "min": 0.2, "max": 1.2, "step": 0.05, "default": 0.55, "unit": "s", "displayUnit": " 秒" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "pink", "name": "粉色慢滴", "values": { "on": "#f472b6", "off": "#4a3a44", "duration": 0.9, "size": 160 } },
+    { "id": "mini", "name": "小号无字", "values": { "size": 70, "showLabel": false, "on": "#7c9cff" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

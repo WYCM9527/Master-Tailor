@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>浮动标签输入框</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 输入文字颜色 */
+    --mt-muted: #7d8290;     /* 标签与底线的默认颜色 */
+    --mt-accent: #7c9cff;    /* 聚焦颜色 */
+    --mt-ok: #34d399;        /* 校验通过颜色 */
+    --mt-duration: 0.3s;     /* 过渡时长 */
+    --mt-fontSize: 17px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  .mt-form { display: flex; flex-direction: column; gap: 30px; width: min(360px, 86vw); }
+  /* 字段：输入框 + 浮动标签 + 两条底线（灰底线常驻，彩色线从中间向两侧画出） */
+  .mt-field { position: relative; padding-top: 18px; }
+  .mt-field input { width: 100%; box-sizing: border-box; padding: 8px 32px 10px 0; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--mt-muted) 45%, transparent); background: transparent; color: var(--mt-color); font: inherit; font-size: var(--mt-fontSize); outline: none; }
+  .mt-field label { position: absolute; left: 0; top: 26px; color: var(--mt-muted); font-size: var(--mt-fontSize); pointer-events: none; transform-origin: 0 0; transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1), color var(--mt-duration); }
+  .mt-field .line { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--mt-accent); transform: scaleX(0); transition: transform var(--mt-duration) cubic-bezier(0.2, 0.8, 0.2, 1), background-color var(--mt-duration); }
+  /* 聚焦或已有内容：标签上浮缩小 */
+  .mt-field input:focus ~ label, .mt-field input:not(:placeholder-shown) ~ label { transform: translateY(-24px) scale(0.76); }
+  .mt-field input:focus ~ label { color: var(--mt-accent); }
+  .mt-field input:focus ~ .line { transform: scaleX(1); }
+  /* 校验通过：右侧画一个对勾，线与标签变绿 */
+  .mt-field .ok { position: absolute; right: 0; bottom: 8px; width: 22px; height: 22px; }
+  .mt-field .ok path { fill: none; stroke: var(--mt-ok); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 0.4s ease-out; }
+  .mt-field.valid .ok path { stroke-dashoffset: 0; }
+  .mt-field.valid input:not(:focus) ~ label { color: var(--mt-ok); }
+  .mt-field.valid .line { transform: scaleX(1); background: var(--mt-ok); }
+  /* 出错：底线变红并左右抖一下 */
+  .mt-field.error .line { transform: scaleX(1); background: #f87171; }
+  .mt-field.error label { color: #f87171; }
+  .mt-field.error input { animation: mt-shake 0.4s ease-in-out 1; }
+  @keyframes mt-shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+  .mt-hint { margin: 0; font-size: 12px; color: var(--mt-muted); letter-spacing: 0.1em; text-align: center; }
+  @media (prefers-reduced-motion: reduce) { .mt-field label, .mt-field .line, .mt-field .ok path { transition: none; } .mt-field.error input { animation: none; } }
+</style>
+</head>
+<body>
+<form class="mt-form" id="mtForm" autocomplete="off" novalidate><p class="mt-hint">点进输入框试试</p></form>
+<script>
+  const CONFIG = {
+    fields: "姓名=text｜邮箱=email｜手机=tel",   // 每个字段「标签=类型」，类型可为 text / email / tel / password
+    validate: true,        // 输入合规时显示对勾、不合规时抖动
+    demoText: "张三｜hi@example.com｜13800000000",   // 演示时自动输入的内容，按字段顺序
+  };
+  const form = document.getElementById('mtForm');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rules = { email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, tel: /^1\d{10}$|^\+?\d{7,15}$/, text: /^.{2,}$/, password: /^.{6,}$/ };
+  const fields = CONFIG.fields.split('｜').map(s => s.trim()).filter(Boolean).map((s, i) => {
+    const [label, type = 'text'] = s.split('=').map(x => x.trim());
+    const wrap = document.createElement('div'); wrap.className = 'mt-field';
+    const id = 'mt-f' + i;
+    wrap.innerHTML = `<input id="${id}" type="${type}" placeholder=" "><label for="${id}"></label><span class="line"></span><svg class="ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1"/></svg>`;
+    wrap.querySelector('label').textContent = label; form.appendChild(wrap);
+    const input = wrap.querySelector('input');
+    const check = () => { if (!CONFIG.validate) return; const v = input.value.trim(); wrap.classList.toggle('valid', !!v && (rules[type] || rules.text).test(v)); wrap.classList.remove('error'); };
+    input.addEventListener('input', () => { userTook = true; check(); });
+    input.addEventListener('blur', () => { check(); if (CONFIG.validate && input.value.trim() && !wrap.classList.contains('valid')) { wrap.classList.remove('error'); void input.offsetWidth; wrap.classList.add('error'); } });
+    return { wrap, input, check };
+  });
+  let userTook = false;
+
+  /* @mt:thumb-start */
+  // 缩略图演示：没人操作时模拟依次聚焦、逐字输入、失焦
+  if (!reduceMotion) {
+    const demo = CONFIG.demoText.split('｜');
+    (async function loop() {
+      while (true) {
+        for (let i = 0; i < fields.length; i++) {
+          if (userTook || document.hidden) { await new Promise(r => setTimeout(r, 800)); continue; }
+          const { input, check } = fields[i], text = demo[i] || '示例'; input.focus(); input.value = '';
+          for (const ch of text) { if (userTook) break; input.value += ch; check(); await new Promise(r => setTimeout(r, 90)); }
+          await new Promise(r => setTimeout(r, 700)); input.blur();
+        }
+        await new Promise(r => setTimeout(r, 1500)); if (!userTook) fields.forEach(({ input, wrap }) => { input.value = ''; wrap.classList.remove('valid', 'error'); });
+      }
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

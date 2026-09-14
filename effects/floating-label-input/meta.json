@@ -1,0 +1,26 @@
+{
+  "slug": "floating-label-input",
+  "name": "浮动标签输入框",
+  "category": "button",
+  "sub": "click",
+  "tags": ["输入框", "表单", "浮动标签", "校验"],
+  "summary": "点进输入框，占位标签缩小上浮到框顶，一条彩色底线从中间向两侧画出；输入合规时右侧描出绿色对勾，不合规失焦时底线变红抖动",
+  "params": [
+    { "key": "fields", "label": "字段", "type": "text", "target": "config", "default": "姓名=text｜邮箱=email｜手机=tel", "maxLength": 80, "help": "「标签=类型」，类型 text / email / tel / password，用「｜」分隔" },
+    { "key": "validate", "label": "输入校验", "type": "toggle", "target": "config", "default": true },
+    { "key": "demoText", "label": "演示输入内容", "type": "text", "target": "config", "default": "张三｜hi@example.com｜13800000000", "maxLength": 80, "help": "按字段顺序，用「｜」分隔" },
+    { "key": "accent", "label": "聚焦颜色", "type": "color", "target": "css", "default": "#7c9cff" },
+    { "key": "ok", "label": "通过颜色", "type": "color", "target": "css", "default": "#34d399" },
+    { "key": "muted", "label": "默认标签色", "type": "color", "target": "css", "default": "#7d8290" },
+    { "key": "color", "label": "输入文字色", "type": "color", "target": "css", "default": "#f2f3f8" },
+    { "key": "duration", "label": "过渡时长", "type": "range", "target": "css", "min": 0.15, "max": 0.6, "step": 0.05, "default": 0.3, "unit": "s", "displayUnit": " 秒" },
+    { "key": "fontSize", "label": "字号", "type": "range", "target": "css", "min": 14, "max": 22, "step": 1, "default": 17, "unit": "px" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "pink", "name": "粉色不校验", "values": { "accent": "#f472b6", "validate": false, "fields": "昵称=text｜签名=text" } },
+    { "id": "login", "name": "登录表单", "values": { "fields": "邮箱=email｜密码=password", "demoText": "me@example.com｜secret123", "accent": "#fbbf24" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

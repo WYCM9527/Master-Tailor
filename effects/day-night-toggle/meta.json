@@ -1,0 +1,26 @@
+{
+  "slug": "day-night-toggle",
+  "name": "日夜切换开关",
+  "category": "button",
+  "sub": "click",
+  "tags": ["开关", "表单", "日夜", "主题"],
+  "summary": "一枚胶囊形开关：白天是蓝天白云和一颗太阳，点一下太阳滑到右边变成月牙、云沉下去、星星升起来、天空转成深蓝",
+  "params": [
+    { "key": "startNight", "label": "初始为夜间", "type": "toggle", "target": "config", "default": false },
+    { "key": "labels", "label": "状态文字", "type": "text", "target": "config", "default": "白天｜夜晚", "maxLength": 12, "help": "「白天文字｜夜晚文字」" },
+    { "key": "stars", "label": "星星数量", "type": "range", "target": "config", "min": 3, "max": 14, "step": 1, "default": 7 },
+    { "key": "size", "label": "开关宽度", "type": "range", "target": "css", "min": 60, "max": 240, "step": 10, "default": 120, "unit": "px" },
+    { "key": "day", "label": "白天天空", "type": "color", "target": "css", "default": "#4fb2ff" },
+    { "key": "night", "label": "夜晚天空", "type": "color", "target": "css", "default": "#1b1f4a" },
+    { "key": "sun", "label": "太阳颜色", "type": "color", "target": "css", "default": "#ffcc33" },
+    { "key": "moon", "label": "月亮颜色", "type": "color", "target": "css", "default": "#e8e9f3" },
+    { "key": "duration", "label": "切换时长", "type": "range", "target": "css", "min": 0.2, "max": 1.2, "step": 0.1, "default": 0.6, "unit": "s", "displayUnit": " 秒" }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "big", "name": "大号慢切", "values": { "size": 200, "duration": 1, "stars": 12 } },
+    { "id": "dusk", "name": "黄昏配色", "values": { "day": "#ff9a5c", "night": "#2a1738", "sun": "#fff0a8", "moon": "#ffd9e8" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}
