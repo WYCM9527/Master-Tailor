@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>沙漏翻转</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 沙漏颜色 */
+    --mt-size: 64px;         /* 尺寸 */
+    --mt-speed: 1.6s;        /* 一轮时长 */
+    --mt-turns: 3;           /* 每轮转几个半圈 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  /* 沙漏 = 上下两个三角形（用边框画），整体先加速转再减速停，中途一次停顿 */
+  .mt-hg { width: var(--mt-size); height: var(--mt-size); position: relative; animation: mt-turn var(--mt-speed) infinite; }
+  .mt-hg::before, .mt-hg::after { content: ""; position: absolute; left: 50%; width: 0; height: 0; transform: translateX(-50%); border-style: solid; border-color: transparent; }
+  .mt-hg::before { top: 0; border-width: calc(var(--mt-size) / 2) calc(var(--mt-size) / 2.6) 0; border-top-color: var(--mt-color); }
+  .mt-hg::after { bottom: 0; border-width: 0 calc(var(--mt-size) / 2.6) calc(var(--mt-size) / 2); border-bottom-color: var(--mt-color); }
+  @keyframes mt-turn {
+    0%   { transform: rotate(0); animation-timing-function: cubic-bezier(0.55, 0.06, 0.68, 0.19); }
+    50%  { transform: rotate(calc(180deg * var(--mt-turns))); animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1); }
+    100% { transform: rotate(calc(360deg * var(--mt-turns))); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation-play-state: paused !important; } }
+</style>
+</head>
+<body>
+<div class="mt-hg" role="status" aria-label="加载中"></div>
+<script>
+  const CONFIG = {
+    // 本效果全部参数由 CSS 变量控制，无需脚本配置
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+
+</script>
+</body>
+</html>

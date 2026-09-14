@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拆字上翻按钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-accent: #fbbf24;    /* 翻转后颜色 */
+    --mt-btnBg: #16161d;     /* 按钮底色 */
+    --mt-duration: 0.4s;     /* 翻转时长 */
+    --mt-fontSize: 18px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mt-btn { display: inline-flex; padding: 14px 30px; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; background: var(--mt-btnBg); cursor: pointer; font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: 0.06em; perspective: 300px; }
+  /* 每个字一个小翻牌：正面朝前、背面预先转好 -180° 藏在后面；悬停时整块绕 X 轴转半圈 */
+  .mt-flip { position: relative; display: inline-block; width: 1.1em; height: 1.3em; font-style: normal; transform-style: preserve-3d; transition: transform var(--mt-duration) cubic-bezier(0.34, 1.3, 0.64, 1); transition-delay: var(--d); }
+  .mt-flip span { position: absolute; inset: 0; display: grid; place-items: center; backface-visibility: hidden; color: var(--mt-color); }
+  .mt-flip span.back { transform: rotateX(180deg); color: var(--mt-accent); }
+  .mt-btn:hover .mt-flip, .mt-btn:focus-visible .mt-flip, .mt-btn.demo .mt-flip { transform: rotateX(180deg); }
+  .mt-btn:focus-visible { outline: 2px solid var(--mt-accent); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { .mt-flip { transition: none; } }
+</style>
+</head>
+<body>
+<button type="button" class="mt-btn" id="mtBtn"></button>
+<script>
+  const CONFIG = {
+    front: "了解更多",   // 正面文字
+    back: "点击进入",    // 翻转后文字
+    stagger: 40,         // 逐字延迟（毫秒）
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  const btn = document.getElementById('mtBtn');
+  const f = [...CONFIG.front], b = [...CONFIG.back], n = Math.max(f.length, b.length);
+  btn.setAttribute('aria-label', CONFIG.front);
+  for (let i = 0; i < n; i++) { const w = document.createElement('i'); w.className = 'mt-flip'; w.style.setProperty('--d', (i * CONFIG.stagger) + 'ms'); w.setAttribute('aria-hidden', 'true'); w.innerHTML = '<span class="front"></span><span class="back"></span>'; w.children[0].textContent = f[i] || ''; w.children[1].textContent = b[i] || ''; btn.appendChild(w); }
+  let userTook = false; document.addEventListener('pointermove', () => (userTook = true), { once: true });
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时按钮自己进出悬停态
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) document.getElementById('mtBtn').classList.toggle('demo'); }, 1400);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

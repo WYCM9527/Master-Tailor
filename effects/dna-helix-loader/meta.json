@@ -1,0 +1,109 @@
+{
+  "slug": "dna-helix-loader",
+  "name": "DNA 螺旋",
+  "category": "loading",
+  "sub": "idle",
+  "tags": [
+    "加载",
+    "螺旋",
+    "DNA",
+    "圆点"
+  ],
+  "summary": "两排圆点按正弦上下起伏、彼此相位相反，靠前的大而亮、靠后的小而暗，转出一条旋转的双螺旋",
+  "params": [
+    {
+      "key": "colorA",
+      "label": "链 A 颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "colorB",
+      "label": "链 B 颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f472b6"
+    },
+    {
+      "key": "count",
+      "label": "每链圆点数",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 20,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "key": "size",
+      "label": "圆点大小",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 16,
+      "step": 1,
+      "default": 8,
+      "unit": "px"
+    },
+    {
+      "key": "amplitude",
+      "label": "起伏幅度",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 40,
+      "step": 2,
+      "default": 18,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.8,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.6,
+      "unit": "s",
+      "displayUnit": " 秒"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "green",
+      "name": "绿色实验室",
+      "values": {
+        "colorA": "#34d399",
+        "colorB": "#a3e635",
+        "count": 16,
+        "size": 6
+      }
+    },
+    {
+      "id": "big",
+      "name": "大珠慢转",
+      "values": {
+        "count": 8,
+        "size": 14,
+        "amplitude": 26,
+        "speed": 2.4
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的 DNA 螺旋加载",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

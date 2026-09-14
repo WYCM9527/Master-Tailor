@@ -1,0 +1,121 @@
+{
+  "slug": "border-run-button",
+  "name": "边框跑光按钮",
+  "category": "button",
+  "sub": "hover",
+  "tags": [
+    "按钮",
+    "边框",
+    "光带",
+    "旋转"
+  ],
+  "summary": "按钮边框上有一段亮色光带绕着轮廓不停地跑，悬停时跑得更快、光带更长，像被一圈追光灯环绕",
+  "params": [
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "限时开放",
+      "maxLength": 12
+    },
+    {
+      "key": "glow",
+      "label": "光带颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#a855f7"
+    },
+    {
+      "key": "glow2",
+      "label": "光带第二色",
+      "type": "color",
+      "target": "css",
+      "default": "#22d3ee"
+    },
+    {
+      "key": "btnBg",
+      "label": "按钮底色",
+      "type": "color",
+      "target": "css",
+      "default": "#0f0f16"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "border",
+      "label": "边框宽度",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 2,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一圈时长",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 6,
+      "step": 0.5,
+      "default": 3,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "紫青",
+      "values": {}
+    },
+    {
+      "id": "gold",
+      "name": "金色单色",
+      "values": {
+        "glow": "#fbbf24",
+        "glow2": "#fbbf24",
+        "border": 3,
+        "speed": 2
+      }
+    },
+    {
+      "id": "pill",
+      "name": "胶囊红",
+      "values": {
+        "glow": "#ef4444",
+        "glow2": "#f97316",
+        "radius": 30,
+        "speed": 4
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的边框跑光按钮",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

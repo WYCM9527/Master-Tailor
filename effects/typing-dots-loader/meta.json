@@ -1,0 +1,104 @@
+{
+  "slug": "typing-dots-loader",
+  "name": "打字加载",
+  "category": "loading",
+  "sub": "idle",
+  "tags": [
+    "加载",
+    "打字",
+    "光标",
+    "文字"
+  ],
+  "summary": "「加载中」几个字被一个个打出来，末尾的省略号一点一点追加，光标一直在闪，打完停一下再从头来",
+  "params": [
+    {
+      "key": "text",
+      "label": "文字",
+      "type": "text",
+      "target": "config",
+      "default": "加载中",
+      "maxLength": 12
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 14,
+      "max": 48,
+      "step": 2,
+      "default": 22,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "每字用时",
+      "type": "range",
+      "target": "config",
+      "min": 60,
+      "max": 400,
+      "step": 20,
+      "default": 140,
+      "displayUnit": " 毫秒"
+    },
+    {
+      "key": "dots",
+      "label": "省略号点数",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "font",
+      "label": "字体",
+      "type": "font",
+      "target": "css",
+      "default": "system-sans"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "en",
+      "name": "英文等宽",
+      "values": {
+        "text": "Loading",
+        "speed": 90,
+        "font": "jetbrains-mono"
+      }
+    },
+    {
+      "id": "slow",
+      "name": "慢速大字",
+      "values": {
+        "fontSize": 36,
+        "speed": 260,
+        "dots": 5,
+        "color": "#7c9cff"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的打字机加载",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

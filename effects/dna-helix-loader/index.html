@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNA 螺旋</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-colorA: #7c9cff;    /* 链 A 颜色 */
+    --mt-colorB: #f472b6;    /* 链 B 颜色 */
+    --mt-size: 8px;          /* 圆点大小 */
+    --mt-amplitude: 18px;    /* 起伏幅度 */
+    --mt-speed: 1.6s;        /* 一轮时长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mt-dna { display: flex; gap: calc(var(--mt-size) * 0.9); height: calc(var(--mt-amplitude) * 2 + var(--mt-size) * 2); align-items: center; }
+  .mt-col { position: relative; width: var(--mt-size); height: 100%; }
+  /* 每列两颗点：A 在上时 B 在下，位置按正弦起伏；靠近观者（y 大）时更大更亮，形成前后深度 */
+  .mt-col i { position: absolute; left: 0; top: 50%; width: var(--mt-size); height: var(--mt-size); margin-top: calc(var(--mt-size) / -2); border-radius: 50%; animation: mt-wave var(--mt-speed) ease-in-out infinite; animation-delay: var(--d); }
+  .mt-col .a { background: var(--mt-colorA); } .mt-col .b { background: var(--mt-colorB); animation-delay: calc(var(--d) - var(--mt-speed) / 2); }
+  @keyframes mt-wave {
+    0%, 100% { transform: translateY(calc(var(--mt-amplitude) * -1)) scale(0.55); opacity: 0.45; }
+    50% { transform: translateY(var(--mt-amplitude)) scale(1.15); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation-play-state: paused !important; } }
+</style>
+</head>
+<body>
+<div class="mt-dna" id="mtDna" role="status" aria-label="加载中"></div>
+<script>
+  const CONFIG = {
+    count: 12,   // 每链圆点数
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  const dna = document.getElementById('mtDna');
+  for (let i = 0; i < CONFIG.count; i++) { const c = document.createElement('div'); c.className = 'mt-col'; c.style.setProperty('--d', (-i * 0.12) + 's'); c.innerHTML = '<i class="a"></i><i class="b"></i>'; dna.appendChild(c); }
+</script>
+</body>
+</html>

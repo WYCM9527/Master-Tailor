@@ -1,0 +1,92 @@
+{
+  "slug": "newton-cradle-loader",
+  "name": "牛顿摆",
+  "category": "loading",
+  "sub": "idle",
+  "tags": [
+    "加载",
+    "牛顿摆",
+    "摆动",
+    "物理"
+  ],
+  "summary": "四颗悬着的小球，最左边一颗甩出去撞回来，动量传到最右边一颗甩出去再撞回，两端交替摆动，中间两颗纹丝不动",
+  "params": [
+    {
+      "key": "color",
+      "label": "小球颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "size",
+      "label": "整体尺寸",
+      "type": "range",
+      "target": "css",
+      "min": 40,
+      "max": 160,
+      "step": 4,
+      "default": 72,
+      "unit": "px"
+    },
+    {
+      "key": "angle",
+      "label": "摆动角度",
+      "type": "range",
+      "target": "css",
+      "min": 30,
+      "max": 80,
+      "step": 5,
+      "default": 60,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.8,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.4,
+      "unit": "s",
+      "displayUnit": " 秒"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "gold",
+      "name": "金球慢摆",
+      "values": {
+        "color": "#fbbf24",
+        "size": 110,
+        "angle": 45,
+        "speed": 2.2
+      }
+    },
+    {
+      "id": "quick",
+      "name": "快摆",
+      "values": {
+        "angle": 75,
+        "speed": 0.9,
+        "color": "#22d3ee"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的牛顿摆加载",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

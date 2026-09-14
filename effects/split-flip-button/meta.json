@@ -1,0 +1,122 @@
+{
+  "slug": "split-flip-button",
+  "name": "拆字上翻按钮",
+  "category": "button",
+  "sub": "hover",
+  "tags": [
+    "按钮",
+    "翻转",
+    "逐字",
+    "悬停"
+  ],
+  "summary": "按钮文字被拆成一个个字，悬停时从左到右依次向上翻半圈，翻过来是另一句话，像一排小翻牌",
+  "params": [
+    {
+      "key": "front",
+      "label": "正面文字",
+      "type": "text",
+      "target": "config",
+      "default": "了解更多",
+      "maxLength": 12
+    },
+    {
+      "key": "back",
+      "label": "翻转后文字",
+      "type": "text",
+      "target": "config",
+      "default": "点击进入",
+      "maxLength": 12,
+      "help": "与正面字数相同效果最好"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "accent",
+      "label": "翻转后颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#fbbf24"
+    },
+    {
+      "key": "btnBg",
+      "label": "按钮底色",
+      "type": "color",
+      "target": "css",
+      "default": "#16161d"
+    },
+    {
+      "key": "stagger",
+      "label": "逐字延迟",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "default": 40,
+      "displayUnit": " 毫秒"
+    },
+    {
+      "key": "duration",
+      "label": "翻转时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.2,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.4,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 28,
+      "step": 1,
+      "default": 18,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "en",
+      "name": "英文",
+      "values": {
+        "front": "HOVER",
+        "back": "CLICK",
+        "stagger": 30,
+        "accent": "#22d3ee"
+      }
+    },
+    {
+      "id": "slow",
+      "name": "慢翻大字",
+      "values": {
+        "duration": 0.7,
+        "stagger": 90,
+        "fontSize": 26
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的逐字翻转按钮",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

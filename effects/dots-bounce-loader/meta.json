@@ -1,0 +1,105 @@
+{
+  "slug": "dots-bounce-loader",
+  "name": "三点跳动",
+  "category": "loading",
+  "sub": "idle",
+  "tags": [
+    "加载",
+    "圆点",
+    "跳动",
+    "纯 CSS"
+  ],
+  "summary": "三颗圆点依次向上弹起再落下，像在等对方回消息，最常见也最耐看的加载提示",
+  "params": [
+    {
+      "key": "color",
+      "label": "圆点颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "size",
+      "label": "圆点大小",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 24,
+      "step": 1,
+      "default": 12,
+      "unit": "px"
+    },
+    {
+      "key": "gap",
+      "label": "圆点间距",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 24,
+      "step": 1,
+      "default": 10,
+      "unit": "px"
+    },
+    {
+      "key": "height",
+      "label": "弹起高度",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 40,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.4,
+      "max": 2,
+      "step": 0.1,
+      "default": 0.9,
+      "unit": "s",
+      "displayUnit": " 秒"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "chat",
+      "name": "聊天气泡",
+      "values": {
+        "size": 8,
+        "gap": 6,
+        "height": 8,
+        "speed": 1.2,
+        "color": "#9ca3af"
+      }
+    },
+    {
+      "id": "big",
+      "name": "大而慢",
+      "values": {
+        "size": 20,
+        "gap": 18,
+        "height": 30,
+        "speed": 1.4,
+        "color": "#7c9cff"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的三点跳动加载",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

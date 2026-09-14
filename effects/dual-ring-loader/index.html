@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>双环交错</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-colorA: #f2f3f8;    /* 外环颜色 */
+    --mt-colorB: #7c9cff;    /* 内环颜色 */
+    --mt-size: 64px;         /* 尺寸 */
+    --mt-thickness: 4px;     /* 线宽 */
+    --mt-speed: 1.2s;        /* 一转时长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mt-rings { position: relative; width: var(--mt-size); height: var(--mt-size); }
+  /* 两个圆：只给上下两边上色（左右透明）得到两段对称圆弧，外环顺时针、内环逆时针且略快 */
+  .mt-rings i { position: absolute; border-radius: 50%; border: var(--mt-thickness) solid transparent; box-sizing: border-box; }
+  .mt-rings .a { inset: 0; border-top-color: var(--mt-colorA); border-bottom-color: var(--mt-colorA); animation: mt-spin var(--mt-speed) linear infinite; }
+  .mt-rings .b { inset: calc(var(--mt-thickness) * 2.2); border-left-color: var(--mt-colorB); border-right-color: var(--mt-colorB); animation: mt-spin calc(var(--mt-speed) * 0.7) linear infinite reverse; }
+  @keyframes mt-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { * { animation-play-state: paused !important; } }
+</style>
+</head>
+<body>
+<div class="mt-rings" role="status" aria-label="加载中"><i class="a"></i><i class="b"></i></div>
+<script>
+  const CONFIG = {
+    // 本效果全部参数由 CSS 变量控制，无需脚本配置
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+
+</script>
+</body>
+</html>

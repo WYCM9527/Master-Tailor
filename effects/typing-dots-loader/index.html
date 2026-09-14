@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>打字加载</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-fontSize: 22px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mt-type { display: inline-flex; align-items: baseline; font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 600; letter-spacing: 0.04em; color: var(--mt-color); }
+  /* 光标：一条竖线以 step-end 闪烁 */
+  .mt-type .caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 3px; background: var(--mt-color); transform: translateY(0.15em); animation: mt-blink 0.9s step-end infinite; }
+  @keyframes mt-blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { * { animation-play-state: paused !important; } }
+</style>
+</head>
+<body>
+<div class="mt-type" role="status" aria-live="polite"><span id="mtOut"></span><i class="caret" aria-hidden="true"></i></div>
+<script>
+  const CONFIG = {
+    text: "加载中",   // 文字
+    speed: 140,       // 每字用时（毫秒）
+    dots: 3,          // 省略号点数
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  const out = document.getElementById('mtOut');
+  const full = [...CONFIG.text, ...Array(CONFIG.dots).fill('.')];
+  let i = 0, dir = 1;
+  // 打字：逐字追加；打完停 900ms；再逐字删掉；删空停 400ms 重来
+  function tick() {
+    if (reduceMotion) { out.textContent = full.join(''); return; }
+    if (document.hidden) return setTimeout(tick, 400);
+    i += dir; out.textContent = full.slice(0, i).join('');
+    let wait = CONFIG.speed;
+    if (i >= full.length) { dir = -1; wait = 900; } else if (i <= 0) { dir = 1; wait = 400; } else if (dir < 0) wait = CONFIG.speed * 0.5;
+    setTimeout(tick, wait);
+  }
+  tick();
+</script>
+</body>
+</html>

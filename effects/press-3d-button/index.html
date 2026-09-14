@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D 按压按钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-face: #7c9cff;      /* 键面颜色 */
+    --mt-side: #3b4fb8;      /* 侧面颜色 */
+    --mt-color: #ffffff;     /* 文字颜色 */
+    --mt-depth: 6px;         /* 厚度 */
+    --mt-radius: 12px;       /* 圆角 */
+    --mt-fontSize: 16px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  /* 厚度靠 box-shadow 的 y 偏移画出「侧面」；抬起时偏移加大，按下时偏移归零且键面下移同样距离 */
+  .mt-btn {
+    padding: 14px 36px; border: 0; border-radius: var(--mt-radius); cursor: pointer; background: var(--mt-face); color: var(--mt-color);
+    font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 800; letter-spacing: 0.04em;
+    box-shadow: 0 var(--mt-depth) 0 var(--mt-side), 0 calc(var(--mt-depth) + 6px) 14px -6px rgba(0, 0, 0, 0.6);
+    transform: translateY(0); transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s;
+  }
+  .mt-btn:hover, .mt-btn:focus-visible, .mt-btn.demo { transform: translateY(-2px); box-shadow: 0 calc(var(--mt-depth) + 2px) 0 var(--mt-side), 0 calc(var(--mt-depth) + 10px) 18px -6px rgba(0, 0, 0, 0.6); filter: brightness(1.06); outline: none; }
+  .mt-btn:active, .mt-btn.pressed { transform: translateY(var(--mt-depth)); box-shadow: 0 0 0 var(--mt-side), 0 2px 6px -2px rgba(0, 0, 0, 0.6); filter: brightness(0.95); transition-duration: 0.06s; }
+  @media (prefers-reduced-motion: reduce) { .mt-btn { transition: none; } }
+</style>
+</head>
+<body>
+<button type="button" class="mt-btn" id="mtBtn"></button>
+<script>
+  const CONFIG = {
+    label: "按我一下",   // 按钮文字
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  const btn = document.getElementById('mtBtn'); btn.textContent = CONFIG.label;
+  let userTook = false; btn.addEventListener('pointerdown', () => (userTook = true));
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时自己按一下松开
+  if (!reduceMotion) setInterval(() => { if (userTook || document.hidden) return; btn.classList.add('pressed'); setTimeout(() => btn.classList.remove('pressed'), 180); }, 1600);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

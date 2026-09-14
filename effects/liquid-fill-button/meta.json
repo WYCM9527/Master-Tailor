@@ -1,0 +1,114 @@
+{
+  "slug": "liquid-fill-button",
+  "name": "液体填充按钮",
+  "category": "button",
+  "sub": "hover",
+  "tags": [
+    "按钮",
+    "液体",
+    "波浪",
+    "悬停"
+  ],
+  "summary": "悬停时一层带波浪顶面的液体从按钮底部涨上来灌满整颗按钮，波纹一直在左右荡，文字随之反色",
+  "params": [
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "立即加入",
+      "maxLength": 12
+    },
+    {
+      "key": "liquid",
+      "label": "液体颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#3b82f6"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "onLiquid",
+      "label": "灌满后文字色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "waveSpeed",
+      "label": "波浪速度",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 6,
+      "step": 0.5,
+      "default": 3,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "波浪来回一轮的时长"
+    },
+    {
+      "key": "fill",
+      "label": "灌满时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 1.5,
+      "step": 0.1,
+      "default": 0.6,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "default": 10,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "蓝色",
+      "values": {}
+    },
+    {
+      "id": "lava",
+      "name": "熔岩",
+      "values": {
+        "liquid": "#f97316",
+        "onLiquid": "#1a0a00",
+        "waveSpeed": 2
+      }
+    },
+    {
+      "id": "pill",
+      "name": "胶囊绿",
+      "values": {
+        "liquid": "#22c55e",
+        "radius": 30,
+        "fill": 0.9
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的液体填充按钮",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "slug": "tetris-stack-loader",
+  "name": "俄罗斯方块",
+  "category": "loading",
+  "sub": "idle",
+  "tags": [
+    "加载",
+    "方块",
+    "堆叠",
+    "游戏"
+  ],
+  "summary": "小方块一块块从上方落下、在底部堆成一排，堆满一行就整行消掉再来，像在玩一局永远打不完的俄罗斯方块",
+  "params": [
+    {
+      "key": "color",
+      "label": "方块颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "accent",
+      "label": "满行闪光色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "cell",
+      "label": "格子大小",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 28,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    },
+    {
+      "key": "cols",
+      "label": "每行格数",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 8,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "key": "speed",
+      "label": "每块下落用时",
+      "type": "range",
+      "target": "config",
+      "min": 0.15,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.3,
+      "displayUnit": " 秒"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "wide",
+      "name": "宽行",
+      "values": {
+        "cols": 8,
+        "cell": 10,
+        "speed": 0.2,
+        "color": "#34d399"
+      }
+    },
+    {
+      "id": "big",
+      "name": "大格",
+      "values": {
+        "cols": 3,
+        "cell": 24,
+        "speed": 0.45,
+        "color": "#fbbf24"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的方块堆叠加载",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

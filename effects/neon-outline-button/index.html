@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>霓虹描边按钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-neon: #22d3ee;      /* 霓虹颜色 */
+    --mt-color: #f2f3f8;     /* 默认文字颜色 */
+    --mt-glow: 18px;         /* 光雾范围 */
+    --mt-radius: 8px;        /* 圆角 */
+    --mt-fontSize: 16px;     /* 字号 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mt-btn {
+    padding: 14px 34px; border: 2px solid rgba(255, 255, 255, 0.25); border-radius: var(--mt-radius); background: transparent; cursor: pointer;
+    color: var(--mt-color); font-family: var(--mt-font); font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    transition: color 0.25s, border-color 0.25s, box-shadow 0.25s, text-shadow 0.25s;
+  }
+  /* 点亮：边框与文字变霓虹色，外发光 + 内发光 + 文字发光；开着闪烁时先用关键帧闪两下再稳定 */
+  .mt-btn:hover, .mt-btn:focus-visible, .mt-btn.demo {
+    color: var(--mt-neon); border-color: var(--mt-neon); outline: none;
+    box-shadow: 0 0 var(--mt-glow) color-mix(in srgb, var(--mt-neon) 70%, transparent), inset 0 0 calc(var(--mt-glow) / 2) color-mix(in srgb, var(--mt-neon) 35%, transparent);
+    text-shadow: 0 0 8px var(--mt-neon), 0 0 calc(var(--mt-glow) * 1.2) var(--mt-neon);
+  }
+  .mt-btn.flicker:hover, .mt-btn.flicker:focus-visible, .mt-btn.flicker.demo { animation: mt-flicker 0.7s steps(1, end) 1; }
+  @keyframes mt-flicker { 0%, 18%, 30% { opacity: 1; } 10%, 24% { opacity: 0.35; } 100% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .mt-btn { transition: none; animation: none !important; } }
+</style>
+</head>
+<body>
+<button type="button" class="mt-btn" id="mtBtn"></button>
+<script>
+  const CONFIG = {
+    label: "开始探索",   // 按钮文字
+    flicker: true,       // 点亮时闪两下
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  const btn = document.getElementById('mtBtn'); btn.textContent = CONFIG.label; if (CONFIG.flicker) btn.classList.add('flicker');
+  let userTook = false; document.addEventListener('pointermove', () => (userTook = true), { once: true });
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时按钮自己进出悬停态
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) document.getElementById('mtBtn').classList.toggle('demo'); }, 1400);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

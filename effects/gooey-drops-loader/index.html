@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>粘液液滴</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #7c9cff;     /* 液滴颜色 */
+    --mt-size: 22px;         /* 液滴大小 */
+    --mt-travel: 56px;       /* 滑动距离 */
+    --mt-speed: 1.8s;        /* 一轮时长 */
+    --mt-goo: 7px;           /* 粘稠度（模糊半径） */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  /* 粘液滤镜：先高斯模糊再把 alpha 拉硬，两团靠近时模糊重叠处被阈值切成一体，就有了黏连 */
+  .mt-goo { filter: url(#mtGoo); width: calc(var(--mt-travel) * 2 + var(--mt-size) * 2); height: calc(var(--mt-size) * 2); position: relative; }
+  .mt-goo i { position: absolute; top: 50%; left: 50%; width: var(--mt-size); height: var(--mt-size); margin: calc(var(--mt-size) / -2); border-radius: 50%; background: var(--mt-color); animation: mt-slide var(--mt-speed) ease-in-out infinite; animation-delay: var(--d); }
+  @keyframes mt-slide { 0%, 100% { transform: translateX(calc(var(--mt-travel) * -1)) scale(0.9); } 50% { transform: translateX(var(--mt-travel)) scale(1.1); } }
+  @media (prefers-reduced-motion: reduce) { * { animation-play-state: paused !important; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="mtGoo"><feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b" id="mtBlur"/><feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter></defs></svg>
+<div class="mt-goo" role="status" aria-label="加载中"><i style="--d:0s"></i><i style="--d:-0.6s"></i><i style="--d:-1.2s"></i></div>
+<script>
+  const CONFIG = {
+    // 本效果全部参数由 CSS 变量控制，无需脚本配置
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  document.getElementById('mtBlur').setAttribute('stdDeviation', parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-goo')) || 7);
+</script>
+</body>
+</html>

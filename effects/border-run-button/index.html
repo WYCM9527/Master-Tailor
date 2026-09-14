@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>边框跑光按钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-glow: #a855f7;      /* 光带颜色 */
+    --mt-glow2: #22d3ee;     /* 光带第二色 */
+    --mt-btnBg: #0f0f16;     /* 按钮底色 */
+    --mt-color: #f2f3f8;     /* 文字颜色 */
+    --mt-border: 2px;        /* 边框宽度 */
+    --mt-speed: 3s;          /* 一圈时长 */
+    --mt-radius: 12px;       /* 圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  /* 用可动画的自定义属性驱动圆锥渐变的起始角：渐变绕中心转，露在边框缝里的那一段就是跑动的光带 */
+  @property --mt-a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+  .mt-btn {
+    position: relative; padding: 14px 36px; border: 0; border-radius: var(--mt-radius); cursor: pointer; background: var(--mt-btnBg); color: var(--mt-color);
+    font-family: var(--mt-font); font-size: 16px; font-weight: 700; letter-spacing: 0.04em; isolation: isolate;
+  }
+  .mt-btn::before {
+    content: ""; position: absolute; inset: calc(var(--mt-border) * -1); z-index: -1; border-radius: calc(var(--mt-radius) + var(--mt-border));
+    background: conic-gradient(from var(--mt-a), transparent 0 70%, var(--mt-glow2) 82%, var(--mt-glow) 92%, transparent 100%);
+    animation: mt-run var(--mt-speed) linear infinite;
+  }
+  /* 悬停：转得更快、光带更长（渐变的透明段更短） */
+  .mt-btn:hover::before, .mt-btn:focus-visible::before, .mt-btn.demo::before { animation-duration: calc(var(--mt-speed) / 2.5); background: conic-gradient(from var(--mt-a), transparent 0 40%, var(--mt-glow2) 62%, var(--mt-glow) 88%, transparent 100%); }
+  .mt-btn::after { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: var(--mt-radius); background: var(--mt-btnBg); }
+  @keyframes mt-run { to { --mt-a: 360deg; } }
+  .mt-btn:focus-visible { outline: none; }
+  @media (prefers-reduced-motion: reduce) { .mt-btn::before { animation: none; } }
+</style>
+</head>
+<body>
+<button type="button" class="mt-btn" id="mtBtn"></button>
+<script>
+  const CONFIG = {
+    label: "限时开放",   // 按钮文字
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  document.getElementById('mtBtn').textContent = CONFIG.label;
+  let userTook = false; document.addEventListener('pointermove', () => (userTook = true), { once: true });
+  /* @mt:thumb-start */
+  // 缩略图演示：没有鼠标时按钮自己进出悬停态
+  if (!reduceMotion) setInterval(() => { if (!userTook && !document.hidden) document.getElementById('mtBtn').classList.toggle('demo'); }, 1400);
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

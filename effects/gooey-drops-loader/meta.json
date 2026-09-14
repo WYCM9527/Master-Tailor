@@ -1,0 +1,103 @@
+{
+  "slug": "gooey-drops-loader",
+  "name": "粘液液滴",
+  "category": "loading",
+  "sub": "idle",
+  "tags": [
+    "加载",
+    "液滴",
+    "粘液",
+    "融合"
+  ],
+  "summary": "三颗小液滴在一条线上来回滑动、相遇时黏在一起再分开，像水银珠一样有粘稠感",
+  "params": [
+    {
+      "key": "color",
+      "label": "液滴颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "size",
+      "label": "液滴大小",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 40,
+      "step": 2,
+      "default": 22,
+      "unit": "px"
+    },
+    {
+      "key": "travel",
+      "label": "滑动距离",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 120,
+      "step": 4,
+      "default": 56,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.8,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.8,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "goo",
+      "label": "粘稠度",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 14,
+      "step": 1,
+      "default": 7,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "mercury",
+      "name": "水银",
+      "values": {
+        "color": "#d1d5db",
+        "goo": 10,
+        "size": 26
+      }
+    },
+    {
+      "id": "tiny",
+      "name": "细小快速",
+      "values": {
+        "size": 12,
+        "travel": 36,
+        "speed": 1,
+        "goo": 4,
+        "color": "#34d399"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的粘液液滴加载",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

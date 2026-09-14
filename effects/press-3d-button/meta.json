@@ -1,0 +1,114 @@
+{
+  "slug": "press-3d-button",
+  "name": "3D 按压按钮",
+  "category": "button",
+  "sub": "hover",
+  "tags": [
+    "按钮",
+    "3D",
+    "按压",
+    "点击"
+  ],
+  "summary": "一颗有厚度的实体按钮：底下一层深色「侧面」撑出立体感，悬停微微抬起，按下去时整颗压进底座、侧面消失，手感像机械键帽",
+  "params": [
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "按我一下",
+      "maxLength": 12
+    },
+    {
+      "key": "face",
+      "label": "键面颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "side",
+      "label": "侧面颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#3b4fb8"
+    },
+    {
+      "key": "color",
+      "label": "文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "depth",
+      "label": "厚度",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 14,
+      "step": 1,
+      "default": 6,
+      "unit": "px"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "蓝键帽",
+      "values": {}
+    },
+    {
+      "id": "thick",
+      "name": "厚底黄",
+      "values": {
+        "face": "#fbbf24",
+        "side": "#b45309",
+        "color": "#1a1200",
+        "depth": 12
+      }
+    },
+    {
+      "id": "flat",
+      "name": "薄白",
+      "values": {
+        "face": "#f2f3f8",
+        "side": "#9ca3af",
+        "color": "#111118",
+        "depth": 3,
+        "radius": 24
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的 3D 按压按钮",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

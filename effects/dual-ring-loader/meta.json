@@ -1,0 +1,98 @@
+{
+  "slug": "dual-ring-loader",
+  "name": "双环交错",
+  "category": "loading",
+  "sub": "idle",
+  "tags": [
+    "加载",
+    "圆环",
+    "旋转",
+    "纯 CSS"
+  ],
+  "summary": "两段圆弧套在一起朝相反方向旋转，一快一慢、一粗一细，交错处像齿轮咬合",
+  "params": [
+    {
+      "key": "colorA",
+      "label": "外环颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "colorB",
+      "label": "内环颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "size",
+      "label": "尺寸",
+      "type": "range",
+      "target": "css",
+      "min": 32,
+      "max": 140,
+      "step": 4,
+      "default": 64,
+      "unit": "px"
+    },
+    {
+      "key": "thickness",
+      "label": "线宽",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 4,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一转时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.2,
+      "unit": "s",
+      "displayUnit": " 秒"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "thick",
+      "name": "粗环",
+      "values": {
+        "thickness": 10,
+        "size": 90,
+        "colorB": "#f472b6"
+      }
+    },
+    {
+      "id": "mono",
+      "name": "单色细环",
+      "values": {
+        "colorA": "#22d3ee",
+        "colorB": "#22d3ee",
+        "thickness": 2,
+        "speed": 0.8
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的双环旋转加载",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

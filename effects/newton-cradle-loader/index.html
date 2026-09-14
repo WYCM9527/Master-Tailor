@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>牛顿摆</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 小球颜色 */
+    --mt-size: 72px;         /* 整体尺寸 */
+    --mt-angle: 60deg;       /* 摆动角度 */
+    --mt-speed: 1.4s;        /* 一轮时长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mt-cradle { display: flex; justify-content: center; align-items: flex-start; width: var(--mt-size); height: var(--mt-size); }
+  /* 每根「线」以顶部为轴：球在线的底端；左球前半周期甩出再回来，右球后半周期 */
+  .mt-cradle i { position: relative; display: block; width: 25%; height: 100%; transform-origin: 50% 0; }
+  .mt-cradle i::before { content: ""; position: absolute; left: 50%; top: 0; width: 1px; height: 78%; background: rgba(255, 255, 255, 0.25); transform: translateX(-50%); }
+  .mt-cradle i::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; aspect-ratio: 1; border-radius: 50%; background: var(--mt-color); }
+  .mt-cradle i:first-child { animation: mt-swingL var(--mt-speed) linear infinite; }
+  .mt-cradle i:last-child { animation: mt-swingR var(--mt-speed) linear infinite; }
+  @keyframes mt-swingL { 0% { transform: rotate(0); animation-timing-function: ease-out; } 25% { transform: rotate(var(--mt-angle)); animation-timing-function: ease-in; } 50%, 100% { transform: rotate(0); } }
+  @keyframes mt-swingR { 0%, 50% { transform: rotate(0); animation-timing-function: ease-out; } 75% { transform: rotate(calc(var(--mt-angle) * -1)); animation-timing-function: ease-in; } 100% { transform: rotate(0); } }
+  @media (prefers-reduced-motion: reduce) { * { animation-play-state: paused !important; } }
+</style>
+</head>
+<body>
+<div class="mt-cradle" role="status" aria-label="加载中"><i></i><i></i><i></i><i></i></div>
+<script>
+  const CONFIG = {
+    // 本效果全部参数由 CSS 变量控制，无需脚本配置
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+{
+  "slug": "bars-equalizer-loader",
+  "name": "条形均衡器",
+  "category": "loading",
+  "sub": "idle",
+  "tags": [
+    "加载",
+    "条形",
+    "均衡器",
+    "音乐"
+  ],
+  "summary": "五根竖条像音乐播放器的均衡器一样此起彼伏地伸缩，节奏错开，有声音在响的感觉",
+  "params": [
+    {
+      "key": "color",
+      "label": "条的颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#7c9cff"
+    },
+    {
+      "key": "bars",
+      "label": "条数",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 9,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "key": "width",
+      "label": "条宽",
+      "type": "range",
+      "target": "css",
+      "min": 3,
+      "max": 16,
+      "step": 1,
+      "default": 6,
+      "unit": "px"
+    },
+    {
+      "key": "gap",
+      "label": "条间距",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 14,
+      "step": 1,
+      "default": 5,
+      "unit": "px"
+    },
+    {
+      "key": "height",
+      "label": "最大高度",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 80,
+      "step": 2,
+      "default": 40,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.4,
+      "max": 2,
+      "step": 0.1,
+      "default": 1,
+      "unit": "s",
+      "displayUnit": " 秒"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "thin",
+      "name": "细密七条",
+      "values": {
+        "bars": 9,
+        "width": 3,
+        "gap": 3,
+        "color": "#22d3ee"
+      }
+    },
+    {
+      "id": "fat",
+      "name": "粗三条",
+      "values": {
+        "bars": 3,
+        "width": 14,
+        "gap": 10,
+        "height": 60,
+        "speed": 0.7
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的均衡器条加载",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

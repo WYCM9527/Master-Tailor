@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三点跳动</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #f2f3f8;     /* 圆点颜色 */
+    --mt-size: 12px;         /* 圆点大小 */
+    --mt-gap: 10px;          /* 圆点间距 */
+    --mt-height: 16px;       /* 弹起高度 */
+    --mt-speed: 0.9s;        /* 一轮时长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mt-dots { display: flex; gap: var(--mt-gap); align-items: flex-end; height: calc(var(--mt-size) + var(--mt-height)); }
+  /* 每颗点同一段关键帧、不同延迟：上抛用 ease-out，落下用 ease-in，落地时略压扁 */
+  .mt-dots i { display: block; width: var(--mt-size); height: var(--mt-size); border-radius: 50%; background: var(--mt-color); animation: mt-bounce var(--mt-speed) infinite; animation-delay: var(--d); }
+  @keyframes mt-bounce {
+    0%, 60%, 100% { transform: translateY(0) scale(1, 1); animation-timing-function: ease-out; }
+    30% { transform: translateY(calc(var(--mt-height) * -1)) scale(0.95, 1.05); animation-timing-function: ease-in; }
+    62% { transform: translateY(0) scale(1.1, 0.9); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation-play-state: paused !important; } }
+</style>
+</head>
+<body>
+<div class="mt-dots" role="status" aria-label="加载中"><i style="--d:0s"></i><i style="--d:0.12s"></i><i style="--d:0.24s"></i></div>
+<script>
+  const CONFIG = {
+    // 本效果全部参数由 CSS 变量控制，无需脚本配置
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+
+</script>
+</body>
+</html>

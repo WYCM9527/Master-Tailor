@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>条形均衡器</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-color: #7c9cff;     /* 条的颜色 */
+    --mt-width: 6px;         /* 条宽 */
+    --mt-gap: 5px;           /* 条间距 */
+    --mt-height: 40px;       /* 最大高度 */
+    --mt-speed: 1s;          /* 一轮时长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mt-eq { display: flex; align-items: center; gap: var(--mt-gap); height: var(--mt-height); }
+  /* 每根条在 30%–100% 高度之间伸缩，延迟按位置错开，两端矮中间高的感觉靠不同的峰值 */
+  .mt-eq i { display: block; width: var(--mt-width); height: 100%; border-radius: calc(var(--mt-width) / 2); background: var(--mt-color); transform-origin: 50% 50%; animation: mt-eq var(--mt-speed) ease-in-out infinite; animation-delay: var(--d); }
+  @keyframes mt-eq { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(var(--peak, 1)); } }
+  @media (prefers-reduced-motion: reduce) { * { animation-play-state: paused !important; } }
+</style>
+</head>
+<body>
+<div class="mt-eq" id="mtEq" role="status" aria-label="加载中"></div>
+<script>
+  const CONFIG = {
+    bars: 5,   // 条数
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  const eq = document.getElementById('mtEq');
+  for (let i = 0; i < CONFIG.bars; i++) { const b = document.createElement('i'); const mid = (CONFIG.bars - 1) / 2; b.style.setProperty('--d', (-Math.abs(i - mid) * 0.12 - i * 0.05) + 's'); b.style.setProperty('--peak', (0.7 + 0.3 * (1 - Math.abs(i - mid) / Math.max(1, mid))).toFixed(2)); eq.appendChild(b); }
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方块翻转</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-colorA: #7c9cff;    /* 颜色 A */
+    --mt-colorB: #f472b6;    /* 颜色 B */
+    --mt-size: 48px;         /* 尺寸 */
+    --mt-radius: 8px;        /* 圆角 */
+    --mt-speed: 2s;          /* 一轮时长 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .mt-stage { perspective: 240px; }
+  /* 一轮四步：绕 X 翻半圈 → 绕 Y 翻半圈 → 再各翻回来；每步 25%，翻到一半时背面换色 */
+  .mt-cube { width: var(--mt-size); height: var(--mt-size); border-radius: var(--mt-radius); background: var(--mt-colorA); animation: mt-flip var(--mt-speed) cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+  @keyframes mt-flip {
+    0%   { transform: perspective(240px) rotateX(0) rotateY(0); background: var(--mt-colorA); }
+    25%  { transform: perspective(240px) rotateX(-180deg) rotateY(0); background: var(--mt-colorB); }
+    50%  { transform: perspective(240px) rotateX(-180deg) rotateY(-180deg); background: var(--mt-colorA); }
+    75%  { transform: perspective(240px) rotateX(0) rotateY(-180deg); background: var(--mt-colorB); }
+    100% { transform: perspective(240px) rotateX(0) rotateY(0); background: var(--mt-colorA); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation-play-state: paused !important; } }
+</style>
+</head>
+<body>
+<div class="mt-stage" role="status" aria-label="加载中"><div class="mt-cube"></div></div>
+<script>
+  const CONFIG = {
+    // 本效果全部参数由 CSS 变量控制，无需脚本配置
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+
+</script>
+</body>
+</html>

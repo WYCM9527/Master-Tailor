@@ -1,0 +1,110 @@
+{
+  "slug": "neon-outline-button",
+  "name": "霓虹描边按钮",
+  "category": "button",
+  "sub": "hover",
+  "tags": [
+    "按钮",
+    "霓虹",
+    "发光",
+    "悬停"
+  ],
+  "summary": "一颗只有细描边的按钮，悬停时描边和文字像霓虹灯管一样亮起、向外晕开光雾，还会像老灯管那样闪两下",
+  "params": [
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "开始探索",
+      "maxLength": 12
+    },
+    {
+      "key": "neon",
+      "label": "霓虹颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#22d3ee"
+    },
+    {
+      "key": "color",
+      "label": "默认文字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "glow",
+      "label": "光雾范围",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 40,
+      "step": 2,
+      "default": 18,
+      "unit": "px"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "default": 8,
+      "unit": "px"
+    },
+    {
+      "key": "fontSize",
+      "label": "字号",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "key": "flicker",
+      "label": "点亮时闪两下",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "青色",
+      "values": {}
+    },
+    {
+      "id": "pink",
+      "name": "粉紫",
+      "values": {
+        "neon": "#f472b6",
+        "glow": 28,
+        "radius": 30
+      }
+    },
+    {
+      "id": "steady",
+      "name": "不闪",
+      "values": {
+        "flicker": false,
+        "neon": "#a3e635"
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "autoplay"
+  },
+  "source": {
+    "kind": "reference",
+    "name": "Uiverse 社区常见的霓虹描边按钮",
+    "url": "https://uiverse.io/",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}
