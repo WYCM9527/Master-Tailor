@@ -45,24 +45,33 @@
   const chance = (p) => Math.random() <= p;
 
   // =========================== 一、雨滴模拟（画到一张「水图」上） ===========================
-  // 水图每个像素：R/G = 该处水面的法线方向（决定折射偏移），B = 水的厚度，A = 有没有水
+  // 水图每个像素：G/R = 该处的折射方向（G 管横向、R 管纵向），B = 水的厚度，A = 有没有水
   const SIM_SCALE = 1;   // 模拟画布相对 CSS 像素的比例；1 已足够，重的是着色器
   let W = 0, H = 0;
   const water = document.createElement('canvas'), wctx = water.getContext('2d');
   const droplets = document.createElement('canvas'), dctx = droplets.getContext('2d');   // 静态小水珠层（会被大水珠滑过时擦掉）
   const SPRITE = 64, LEVELS = 48, sprites = [];
-  // 按厚度分级预生成雨滴精灵：法线球面 + 软边 alpha，B 通道写厚度
+  // 按厚度分级预生成雨滴精灵。关键不是「球面法线」而是「线性梯度」：
+  // 折射方向从左到右线性地由 +1 变到 -1、从上到下由 0 变到 -1——整颗水珠里的景是一张压缩、镜像、上下颠倒的
+  // 「小照片」，边缘清晰，这才是真实水珠透镜的观感；球面法线会让中心几乎不折射、边缘打旋，看起来像一滩油。
+  // 厚度 B 在一颗水珠内均匀，只随水珠大小分级；alpha 是高斯软团、顶部裁掉四分之一，配合纵向 1.5 倍拉伸成水滴形。
   (function buildSprites() {
+    const SIG = 0.148;   // 高斯半径（相对精灵边长）：alpha 在 0.25 处的半径 ≈ 精灵的四分之一，着色器阈值切出的可见水珠正好是绘制尺寸的一半
     for (let l = 0; l < LEVELS; l++) {
       const c = document.createElement('canvas'); c.width = c.height = SPRITE; const ctx = c.getContext('2d'); const img = ctx.createImageData(SPRITE, SPRITE); const d = img.data;
       for (let y = 0; y < SPRITE; y++) for (let x = 0; x < SPRITE; x++) {
-        const nx = (x + 0.5) / SPRITE * 2 - 1, ny = (y + 0.5) / SPRITE * 2 - 1, rr = nx * nx + ny * ny, i = (y * SPRITE + x) * 4;
-        if (rr > 1) { d[i + 3] = 0; continue; }
-        const z = Math.sqrt(1 - rr);                        // 球面高度
-        const bulge = Math.pow(1 - z, 0.65);                // 边缘折射强、中心弱
-        d[i] = Math.round((nx * bulge * 0.5 + 0.5) * 255); d[i + 1] = Math.round((ny * bulge * 0.5 + 0.5) * 255);
-        d[i + 2] = Math.round(l / (LEVELS - 1) * 255 * (0.35 + 0.65 * z));   // 厚度：越大的水珠越厚，中心比边缘厚
-        d[i + 3] = Math.round(255 * Math.min(1, (1 - rr) * 6));             // 软边
+        const u = (x + 0.5) / SPRITE, v = (y + 0.5) / SPRITE, i = (y * SPRITE + x) * 4;
+        // 纵向折射：上四分之一为 0，中上部微微向下凸一点，过中心后线性变到 -0.93（底部采样上方很远的景）
+        let ry = 0;
+        if (v < 0.5) { if (v > 0.25) ry = 0.22 * Math.sin(Math.PI * (v - 0.25) / 0.25); } else ry = -1.06 * (v - 0.5) * 2;
+        ry = Math.max(-0.93, ry);
+        d[0 + i] = Math.round((ry * 0.5 + 0.5) * 255);                 // R：纵向
+        d[1 + i] = Math.round((1 - u) * 255);                          // G：横向，左 +1 右 -1
+        d[2 + i] = Math.round(l / (LEVELS - 1) * 255);                 // B：厚度（整颗均匀）
+        const dx = u - 0.5, dy = v - 0.5;
+        let a = Math.exp(-(dx * dx + dy * dy) / (2 * SIG * SIG));      // 高斯软团
+        a *= Math.min(1, Math.max(0, (v - 0.22) / 0.08));              // 顶部裁掉四分之一（软切）
+        d[3 + i] = Math.round(255 * a);
       }
       ctx.putImageData(img, 0, 0); sprites.push(c);
     }
@@ -158,21 +167,23 @@
     void main() {
       vec2 px = 1.0 / uRes, uv = texCoord();
       vec4 w = texture2D(uWater, uv + uParallax * px * 20.0);
-      float thick = w.b, a = clamp(w.a * 20.0 - 5.0, 0.0, 1.0);      // 把软边切硬一点，水珠边缘才清楚
-      vec2 refr = (w.rg - 0.5) * 2.0;
+      float thick = w.b, a = clamp(w.a * 20.0 - 5.0, 0.0, 1.0);      // 高斯软团 ×20 −5：在 alpha 0.25 处切出硬边，水珠轮廓才清楚
+      vec2 refr = (vec2(w.g, w.r) - 0.5) * 2.0;                       // G 横向、R 纵向，各在 -1..1
       // 玻璃外：雾化的景 + 轻微视差
       vec3 bg = texture2D(uBlur, coverCoord(uv + uParallax * px * 5.0)).rgb;
-      // 水珠里：清晰的景按法线方向偏移采样（大水珠偏得多，成了一枚小凸透镜）
+      // 水珠里：清晰的景沿折射方向偏移 256–512 像素采样——方向在水珠内线性变化，出来的是一张镜像、颠倒、压缩的清晰小图
       vec2 rp = coverCoord(uv + px * refr * (256.0 + thick * 256.0) * uRefract + uParallax * px * -15.0);
       vec3 inside = texture2D(uSharp, rp).rgb * uBright;
-      // 高光：法线朝左上方的那一小片更亮
-      float spec = pow(max(0.0, dot(normalize(vec3(-refr, 0.6)), normalize(vec3(-0.45, -0.75, 0.5)))), 24.0) * thick;
-      inside += spec * 0.35;
-      // 水珠下缘一点阴影，显出厚度
-      float shadowA = clamp(texture2D(uWater, uv - vec2(0.0, thick * 6.0) * px).a * 20.0 - 5.5, 0.0, 1.0) * 0.2;
-      vec3 col = mix(bg, bg * (1.0 - shadowA), 1.0);
-      col = mix(col, inside, a);
-      gl_FragColor = vec4(col, 1.0);
+      // 玻璃质感：按折射方向铺一层「左亮右暗」的薄雾，再在右下偏中一点打一个小高光点
+      float k = (88.0 + 402.0 * thick) / 512.0;
+      vec2 sp = vec2(0.5) - refr * k;
+      float haze = smoothstep(0.5, 0.0, sp.x) * 0.18;
+      float dark = smoothstep(0.5, 1.0, sp.x) * 0.09;
+      float spot = smoothstep(0.11, 0.05, distance(sp, vec2(0.66, 0.78))) * 0.9;
+      inside = mix(inside, vec3(1.0), haze);
+      inside = mix(inside, vec3(0.0), dark);
+      inside = mix(inside, vec3(1.0), spot);
+      gl_FragColor = vec4(mix(bg, inside, a), 1.0);
     }
   `;
   const compile = (t, s) => { const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh); return sh; };
