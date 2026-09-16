@@ -9,61 +9,62 @@
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;        /* 页面底色 */
     --mt-glow: #22d3ee;      /* 灯光颜色 */
-    --mt-spread: 30rem;      /* 光锥展开宽度 */
-    --mt-height: 14rem;      /* 光锥高度 */
+    --mt-spread: 30rem;      /* 灯管长度（光锥随之展开） */
+    --mt-height: 14rem;      /* 光锥向下照亮的高度 */
     --mt-intensity: 1;       /* 光强 */
-    --mt-color: #f2f3f8;     /* 标题颜色 */
-    --mt-fontSize: 52px;     /* 标题字号 */
+    --mt-color: #e2e8f0;     /* 标题颜色（渐变的亮端） */
+    --mt-fontSize: 56px;     /* 标题字号 */
     --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
 
-  .mt-scene { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  /* 灯：一根很细、很亮的横线，是整个画面唯一的「硬光源」 */
-  .mt-lamp { position: relative; width: min(var(--mt-spread), 90vw); height: var(--mt-height); display: flex; align-items: flex-end; justify-content: center; }
+  /* 布局：灯管在画面偏上，光向下照，标题就坐在光里 */
+  .mt-scene { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 6vh; box-sizing: border-box; }
+  .mt-lamp { position: relative; width: min(var(--mt-spread), 90vw); height: var(--mt-height); }
+  /* 灯管：整个画面唯一的硬光源——细、亮、带两层光晕 */
   .mt-tube {
-    position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 100%; height: 2px; border-radius: 2px;
-    background: var(--mt-glow); box-shadow: 0 0 12px var(--mt-glow), 0 0 40px color-mix(in srgb, var(--mt-glow) 60%, transparent);
-    opacity: var(--mt-intensity);
-    animation: mt-turn-on 0.8s ease-out both;
+    position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 100%; height: 2px; border-radius: 2px;
+    background: color-mix(in srgb, var(--mt-glow) 85%, #fff); opacity: var(--mt-intensity);
+    box-shadow: 0 0 6px var(--mt-glow), 0 0 18px var(--mt-glow), 0 0 48px color-mix(in srgb, var(--mt-glow) 55%, transparent);
+    animation: mt-turn-on 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
-  /* 光锥：从灯管向上张开的三角形柔光，两侧对称；用 clip-path 裁三角、再整体模糊 */
-  /* 模糊放在外层、裁切放在内层：先裁成三角再整体模糊，边缘才是软的（反过来会把模糊结果又裁出硬边） */
-  .mt-cone { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 100%; height: 100%; filter: blur(14px); opacity: var(--mt-intensity); }
+  /* 向下的光锥：紧贴灯管处最亮、与灯管同宽，向下略张开并迅速变淡。
+     裁成倒梯形再整体大模糊，边缘是软的、又保留「一束光」的方向感 */
+  .mt-cone { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 100%; height: 100%; filter: blur(30px); opacity: var(--mt-intensity); transform-origin: 50% 0; animation: mt-open 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
   .mt-cone i {
     position: absolute; inset: 0; display: block;
-    /* 光从灯管处最强、越远越淡：径向渐变以灯管中心为圆心，再裁成三角 */
-    background: radial-gradient(ellipse 100% 130% at 50% 100%, color-mix(in srgb, var(--mt-glow) 42%, transparent), color-mix(in srgb, var(--mt-glow) 10%, transparent) 55%, transparent 80%);
-    clip-path: polygon(50% 100%, -8% 0, 108% 0);
-    animation: mt-open 0.8s ease-out both;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--mt-glow) 88%, #fff) 0%, color-mix(in srgb, var(--mt-glow) 55%, transparent) 18%, color-mix(in srgb, var(--mt-glow) 16%, transparent) 55%, transparent 100%);
+    clip-path: polygon(0 0, 100% 0, 114% 100%, -14% 100%);
   }
-  /* 灯下的一团晕光，把标题也照亮一点 */
-  .mt-halo {
-    position: absolute; left: 50%; bottom: -3rem; transform: translateX(-50%); width: 60%; height: 6rem; border-radius: 50%;
-    background: var(--mt-glow); filter: blur(60px); opacity: calc(var(--mt-intensity) * 0.35);
-  }
-  /* 开灯：光锥从收拢到张开，灯管由暗变亮 */
-  @keyframes mt-open { from { clip-path: polygon(50% 100%, 35% 0, 65% 0); opacity: 0.3; } to { clip-path: polygon(50% 100%, -8% 0, 108% 0); opacity: var(--mt-intensity); } }
-  @keyframes mt-turn-on { from { width: 40%; opacity: 0.2; } to { width: 100%; opacity: var(--mt-intensity); } }
+  /* 灯下一大团散射的环境光，把标题区域整体染上一点颜色；灯上方也漏一点极淡的光 */
+  .mt-halo { position: absolute; left: 50%; top: 10%; transform: translateX(-50%); width: 130%; height: 120%; border-radius: 50%; background: var(--mt-glow); filter: blur(90px); opacity: calc(var(--mt-intensity) * 0.28); animation: mt-fade 1s ease-out both; }
+  .mt-up { position: absolute; left: 50%; top: -3rem; transform: translateX(-50%); width: 70%; height: 3rem; background: var(--mt-glow); filter: blur(40px); opacity: calc(var(--mt-intensity) * 0.12); animation: mt-fade 1s ease-out both; }
+  /* 开灯：灯管从中间点亮拉长，光锥由窄张开，环境光淡入 */
+  @keyframes mt-turn-on { from { width: 35%; opacity: 0.15; } to { width: 100%; opacity: var(--mt-intensity); } }
+  @keyframes mt-open { from { transform: translateX(-50%) scaleX(0.35); opacity: 0.2; } to { transform: translateX(-50%) scaleX(1); opacity: var(--mt-intensity); } }
+  @keyframes mt-fade { from { opacity: 0; } }
 
+  /* 标题坐在光里：银灰渐变字（亮端为文字颜色，暗端向底色混），跟灯一起升起 */
   .mt-title {
-    position: relative; margin: 2.6rem 0 0; padding: 0 24px; text-align: center; text-wrap: balance;
-    font-size: var(--mt-fontSize); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--mt-color);
-    animation: mt-rise 0.8s ease-out both 0.2s;
+    position: relative; margin: calc(var(--mt-height) * -0.25) 0 0; padding: 0 24px; text-align: center; text-wrap: balance;
+    font-size: var(--mt-fontSize); font-weight: 600; letter-spacing: -0.03em; line-height: 1.12;
+    background: linear-gradient(to bottom, var(--mt-color) 20%, color-mix(in srgb, var(--mt-color) 55%, var(--mt-bg)) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: mt-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both 0.15s;
   }
-  .mt-sub { margin: 14px 0 0; color: var(--mt-color); opacity: 0.55; font-size: 16px; animation: mt-rise 0.8s ease-out both 0.35s; }
-  @keyframes mt-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+  .mt-sub { position: relative; margin: 16px 0 0; color: var(--mt-color); opacity: 0.5; font-size: 16px; animation: mt-rise 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both 0.3s; }
+  @keyframes mt-rise { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
 
   /* 用户开启「减少动态效果」时：不播开灯动画 */
   @media (prefers-reduced-motion: reduce) {
-    .mt-tube, .mt-cone i, .mt-title, .mt-sub { animation: none; }
+    .mt-tube, .mt-cone, .mt-halo, .mt-up, .mt-title, .mt-sub { animation: none; }
   }
 </style>
 </head>
 <body>
 <div class="mt-scene">
-  <div class="mt-lamp" aria-hidden="true"><div class="mt-cone"><i></i></div><div class="mt-tube"></div><div class="mt-halo"></div></div>
+  <div class="mt-lamp" aria-hidden="true"><div class="mt-halo"></div><div class="mt-up"></div><div class="mt-cone"><i></i></div><div class="mt-tube"></div></div>
   <h1 class="mt-title" id="mtTitle"></h1>
   <p class="mt-sub" id="mtSub"></p>
 </div>
