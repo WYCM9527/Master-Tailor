@@ -1,27 +1,185 @@
 {
   "slug": "tilted-image-wall",
   "name": "3D 图墙",
-  "category": "background",
-  "sub": "idle",
-  "tags": ["图墙", "3D", "跑马灯", "首屏"],
+  "category": "showcase",
+  "sub": "wall",
+  "tags": [
+    "图墙",
+    "3D",
+    "跑马灯",
+    "首屏"
+  ],
   "summary": "一面铺满屏幕的图片网格在 3D 空间里俯视、斜转 45°，各列交替上下缓缓流动，像俯瞰一条流动的作品长廊",
   "params": [
-    { "key": "slides", "label": "图片列表", "type": "images", "target": "config", "min": 4, "max": 8, "captions": false, "default": [{"src": "/samples/sample-1.webp", "caption": ""}, {"src": "/samples/sample-2.webp", "caption": ""}, {"src": "/samples/sample-3.webp", "caption": ""}, {"src": "/samples/sample-4.webp", "caption": ""}, {"src": "/samples/sample-5.webp", "caption": ""}, {"src": "/samples/sample-6.webp", "caption": ""}, {"src": "/samples/sample-7.webp", "caption": ""}, {"src": "/samples/sample-8.webp", "caption": ""}] },
-    { "key": "title", "label": "标题", "type": "text", "target": "config", "default": "作品墙", "maxLength": 20 },
-    { "key": "sub", "label": "副标题", "type": "text", "target": "config", "default": "一面斜着铺开、缓缓流动的图片墙", "maxLength": 40 },
-    { "key": "cols", "label": "列数", "type": "range", "target": "config", "min": 3, "max": 10, "step": 1, "default": 6 },
-    { "key": "tiltX", "label": "俯视倾角", "type": "range", "target": "css", "min": 20, "max": 75, "step": 5, "default": 55, "unit": "deg", "displayUnit": "°" },
-    { "key": "tiltZ", "label": "平面旋转", "type": "range", "target": "css", "min": -90, "max": 90, "step": 5, "default": -45, "unit": "deg", "displayUnit": "°" },
-    { "key": "speed", "label": "滚动一轮时长", "type": "range", "target": "css", "min": 8, "max": 60, "step": 2, "default": 24, "unit": "s", "displayUnit": " 秒" },
-    { "key": "gap", "label": "图片间距", "type": "range", "target": "css", "min": 4, "max": 40, "step": 2, "default": 14, "unit": "px" },
-    { "key": "dim", "label": "压暗程度", "type": "range", "target": "css", "min": 0, "max": 0.85, "step": 0.05, "default": 0.55 },
-    { "key": "color", "label": "标题颜色", "type": "color", "target": "css", "default": "#f2f3f8" }
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        {
+          "src": "/samples/sample-1.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-2.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-3.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-4.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-5.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-6.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-7.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-8.webp",
+          "caption": ""
+        }
+      ]
+    },
+    {
+      "key": "title",
+      "label": "标题",
+      "type": "text",
+      "target": "config",
+      "default": "作品墙",
+      "maxLength": 20
+    },
+    {
+      "key": "sub",
+      "label": "副标题",
+      "type": "text",
+      "target": "config",
+      "default": "一面斜着铺开、缓缓流动的图片墙",
+      "maxLength": 40
+    },
+    {
+      "key": "cols",
+      "label": "列数",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "default": 6
+    },
+    {
+      "key": "tiltX",
+      "label": "俯视倾角",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 75,
+      "step": 5,
+      "default": 55,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "tiltZ",
+      "label": "平面旋转",
+      "type": "range",
+      "target": "css",
+      "min": -90,
+      "max": 90,
+      "step": 5,
+      "default": -45,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "speed",
+      "label": "滚动一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 60,
+      "step": 2,
+      "default": 24,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "gap",
+      "label": "图片间距",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 40,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    },
+    {
+      "key": "dim",
+      "label": "压暗程度",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 0.85,
+      "step": 0.05,
+      "default": 0.55
+    },
+    {
+      "key": "color",
+      "label": "标题颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
-    { "id": "flat", "name": "平视轻斜", "values": { "tiltX": 30, "tiltZ": -20, "dim": 0.35, "cols": 5 } },
-    { "id": "gallery", "name": "无压暗画廊", "values": { "dim": 0, "title": "", "sub": "", "speed": 40, "gap": 24 } }
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "flat",
+      "name": "平视轻斜",
+      "values": {
+        "tiltX": 30,
+        "tiltZ": -20,
+        "dim": 0.35,
+        "cols": 5
+      }
+    },
+    {
+      "id": "gallery",
+      "name": "无压暗画廊",
+      "values": {
+        "dim": 0,
+        "title": "",
+        "sub": "",
+        "speed": 40,
+        "gap": 24
+      }
+    }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration", "name": "Aceternity UI 的 3D Marquee 一类图墙", "url": "https://ui.aceternity.com", "license": "未使用其代码" }
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Aceternity UI 的 3D Marquee 一类图墙",
+    "url": "https://ui.aceternity.com",
+    "license": "未使用其代码"
+  }
 }
