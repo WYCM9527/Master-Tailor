@@ -3,8 +3,13 @@
   "name": "球池背景",
   "category": "background",
   "sub": "hover",
-  "tags": ["球", "物理", "光泽", "鼠标交互"],
-  "summary": "一池带清漆高光的圆球缓缓漂浮互挤，鼠标是一盏跟着走的灯，也可以是一颗推开它们的球",
+  "tags": [
+    "球",
+    "物理",
+    "光泽",
+    "鼠标交互"
+  ],
+  "summary": "一池带清漆高光的圆球漂浮互挤、前后遮挡，鼠标是一盏跟着走的灯，也可以是一颗推开它们的球",
   "params": [
     {
       "key": "count",
@@ -23,7 +28,11 @@
       "target": "config",
       "min": 1,
       "max": 5,
-      "default": ["#ffffff", "#000000", "#27ff64"],
+      "default": [
+        "#ffffff",
+        "#000000",
+        "#27ff64"
+      ],
       "help": "按顺序在球群里做渐变分配"
     },
     {
@@ -89,10 +98,37 @@
     }
   ],
   "presets": [
-    { "id": "default", "name": "默认", "values": {} },
-    { "id": "sink", "name": "沉底堆积", "values": { "gravity": 0.5, "count": 200, "followCursor": true } },
-    { "id": "candy", "name": "糖果色", "values": { "colors": ["#5227ff", "#ff9ffc", "#b19eef"], "sizeMax": 1.4 } }
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "sink",
+      "name": "沉底堆积",
+      "values": {
+        "gravity": 0.5,
+        "count": 200,
+        "followCursor": true
+      }
+    },
+    {
+      "id": "candy",
+      "name": "糖果色",
+      "values": {
+        "colors": [
+          "#5227ff",
+          "#ff9ffc",
+          "#b19eef"
+        ],
+        "sizeMax": 1.4
+      }
+    }
   ],
-  "thumb": { "mode": "live" },
-  "source": { "kind": "visual-inspiration" }
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration"
+  }
 }
