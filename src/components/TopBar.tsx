@@ -171,7 +171,6 @@ export function TopBar() {
     <header className="g12 first hdr">
       <Link to="/" viewTransition className="cell span-2 hdr-brand">
         裁缝大师
-        <span className="mono">Master-Tailor</span>
       </Link>
       <form className="cell span-10 hdr-search" role="search" onSubmit={(e) => e.preventDefault()}>
         <IconSearch size={18} className="search-icon" />

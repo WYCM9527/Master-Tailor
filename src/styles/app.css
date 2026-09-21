@@ -172,14 +172,8 @@
   font-size: 17px;
   letter-spacing: 0.02em;
 }
-.hdr-brand .mono {
-  color: var(--fg-mute);
-}
 .hdr-brand:hover {
   background: var(--fg);
-  color: var(--bg);
-}
-.hdr-brand:hover .mono {
   color: var(--bg);
 }
 /* 通栏搜索格：底色比页面浅一档与其他板块区分，聚焦再亮一档；
