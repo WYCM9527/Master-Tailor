@@ -8,7 +8,7 @@
 
 ## 使用方式（给访客）
 
-1. **挑一个效果**：左侧两级侧边栏浏览——原有分类按触发方式细分，「多卡/图展示」按形态细分（轮播图 / 图片对比 / 滚动堆叠）；卡片全部是实时渲染的迷你预览
+1. **挑一个效果**：左侧两级侧边栏浏览——原有分类按触发方式细分，「多卡/图展示」按形态细分（轮播图 / 图片对比 / 滚动堆叠 / 图墙），「页面转场」按换场方式细分；卡片全部是实时渲染的迷你预览
 2. **调成你要的样子**：右侧面板改颜色、拖滑块，预览 / prompt / 代码三者实时同步
 3. **复制 prompt 粘给你的 AI**：Trae、Qoder、Cursor、Claude Code、扣子编程、CodeBuddy、豆包网页版……任何能写代码的 AI 都可以
 
@@ -24,6 +24,7 @@ pnpm install        # Node 22+ / pnpm 11+
 pnpm dev            # 开发服务器
 pnpm validate       # 校验所有效果是否符合作者契约
 pnpm test           # 引擎单元测试（vitest）
+pnpm lint           # eslint
 pnpm smoke          # 效果冒烟：无头 Chromium 逐个打开全部效果，查异常 / 外链 / 空白渲染（首次先 pnpm exec playwright install chromium）
 pnpm build          # validate + tsc + vite build + 生成 dist/prompts/*.md
 ```
@@ -53,7 +54,7 @@ effects/<slug>/
 ### meta.json
 
 - `category`：`background | button | nav | text | card | showcase | transition | loading | canvas`（侧边栏一级）
-- `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表——原有 6 类的子类是触发方式（`idle | hover | click | scroll`），「多卡/图展示」的子类是 `carousel | compare | stack-scroll`，「页面转场」的子类是 `shared | push | zoom | keynote | scroll`
+- `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表（`src/contract/categories.ts`）——按钮 / 导航 / 卡片 / 加载 / 鼠标交互的子类是触发方式（`idle | hover | click | scroll`），背景效果不收 `scroll`，文字效果多一个 `marquee`（跑马灯），「多卡/图展示」是 `carousel | compare | stack-scroll | wall`，「页面转场」是 `shared | push | zoom | keynote | scroll`。分类归属的既定决策见 `docs/sources.md`「分类决策记录」
 - `params[]`：9 种控件类型 `color | range | toggle | select | text | font | image | images | colors`（`colors` 为可增删的颜色列表，只允许 `config`，CONFIG 中写成单行数组 `colors: ["#…", …], // 注释`）
   - `target: "css"` → 值注入 `:root` 的 `--mt-<key>`，调参时**热更新**（动画不重置）
   - `target: "config"` → 值注入 JS 顶部 `const CONFIG` 块，调参时**防抖重建**预览
@@ -118,16 +119,21 @@ validate 会检查 index.html 含四个基线能力关键字：`aria-roledescrip
 
 ```text
 effects/           # 272 个效果（内容层，唯一需要日常维护的目录）
-src/contract/      # 类型、zod schema、字体表、分类与子类、示例图表、registry（import.meta.glob 收集）
-src/engine/        # bakeCode（参数烘焙）、renderPrompt（7 段）、urlState（参数 ↔ URL）、previewRuntime
-src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 效果 Cell / 怎么用区块……
+src/contract/      # 类型、zod schema、字体表、分类与子类、示例图表、base（部署路径）、registry（首包索引 + 效果包懒加载）
+src/engine/        # bakeCode（参数烘焙）、renderPrompt（7 段）、urlState（参数 ↔ URL）、search、previewRuntime
+src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 效果 Cell / 效果包加载 hook / 怎么用区块……
 src/app/           # HashRouter 页面：Home（海报首页 + 分类索引 + 怎么用）/ Gallery（/effects 效果页）/ EffectPage / NotFound
-src/styles/        # tokens（灰阶 / 间距 / 字号）、base（reset）、app（12 栏网格与全部组件样式）
-scripts/           # validate（契约校验）、smoke（效果冒烟测试）、build-prompts（静态 md 端点）、prepare-fonts、templates/（轮播核心模板）
+src/styles/        # tokens（灰阶 / 间距 / 字号）、base（reset）、app（12 栏网格与全部组件样式）、transitions（路由转场）
+scripts/           # validate（契约校验）、smoke（效果冒烟测试）、build-prompts（静态 md 端点）、prepare-fonts、templates/（轮播 / 转场核心模板）
 public/fonts/      # 自托管 OFL 字体（思源黑体 / 霞鹜文楷 / 得意黑 / JetBrains Mono）+ 许可文件
 public/samples/    # 8 张示例照片（免费可商用素材库，图片 / 图片列表参数默认值）
 tests/             # 引擎单测
+docs/              # architecture（站点怎么工作）、runbook（怎么跑 / CI / 部署 / 故障）、sources（来源与收录台账）
+.github/workflows/ # ci.yml：门禁 + 6 片冒烟 + GitHub Pages 部署
+AGENTS.md          # 给 AI 协作者的规则手册（红线、分类决策、踩坑、文档索引）
 ```
+
+深入阅读：站点内部机制看 [docs/architecture.md](docs/architecture.md)，运维与排障看 [docs/runbook.md](docs/runbook.md)，内容来源与不收录原因看 [docs/sources.md](docs/sources.md)。
 
 ## 许可与来源
 
