@@ -11,7 +11,8 @@
  *   pnpm smoke ball-pit rain-on-glass   只跑指定 slug
  *   pnpm smoke --shard=2/4         只跑第 2/4 片（按排序后的序号交错切分，CI 用多台 runner 并行）
  *   SMOKE_WORKERS=6 pnpm smoke     并发页数（默认 min(4, CPU 核数)；软件渲染下每页吃满一核，多开只会互相拖慢）
- *   SMOKE_SHOTS=1 pnpm smoke       失败效果的截图存到系统临时目录
+ *   SMOKE_SHOTS=1 pnpm smoke       失败效果的截图存到系统临时目录（SMOKE_SHOTS_DIR 可改目录）
+ *   SMOKE_VIEWPORT=960x540 pnpm smoke   视口（默认 1280x720）
  *   SMOKE_DEBUG=1 pnpm smoke       打印各阶段耗时与静止的 live 效果
  * 首次运行前需要安装浏览器：pnpm exec playwright install chromium
  */
@@ -33,15 +34,22 @@ const publicDir = path.join(root, 'public');
 
 /** 假域名：所有请求经 route 拦截，本站资源从 public/ 读，其余一律记为外链 */
 const ORIGIN = 'http://mt-smoke.local';
-const VIEWPORT = { width: 1280, height: 720 };
+/** 视口默认取卡片的 1280×720 设计视口；软件渲染的着色器效果耗时与像素数成正比，CI 用 SMOKE_VIEWPORT=960x540 减负 */
+const VIEWPORT = parseViewport(process.env.SMOKE_VIEWPORT) ?? { width: 1280, height: 720 };
 const WORKERS = Math.max(
   1,
   Number(process.env.SMOKE_WORKERS) || Math.min(4, os.availableParallelism()),
 );
 const SAVE_SHOTS = !!process.env.SMOKE_SHOTS;
+const SHOTS_DIR = process.env.SMOKE_SHOTS_DIR || path.join(os.tmpdir(), 'mt-smoke');
 const DEBUG = !!process.env.SMOKE_DEBUG;
 /** 单个效果的上限：本机重效果 10s 上下，2 核 CI runner 软件渲染慢 3–5 倍，留足余量；真正卡死的仍会被拦下 */
-const PER_EFFECT_TIMEOUT_MS = 60_000;
+const PER_EFFECT_TIMEOUT_MS = 90_000;
+
+function parseViewport(s: string | undefined): { width: number; height: number } | undefined {
+  const m = s && /^(\d+)x(\d+)$/.exec(s);
+  return m ? { width: Number(m[1]), height: Number(m[2]) } : undefined;
+}
 /** 非底色像素占比低于此值视为空白：0.02% ≈ 1280×720 里一块 14×14 的点；小型加载动画约 0.05%+ */
 const BLANK_THRESHOLD = 0.0002;
 /** 截图用 JPEG：比 PNG 快好几倍、体积小一个量级；统计时颜色量化到 8 级，压缩噪声不影响判定 */
@@ -184,6 +192,8 @@ async function runOne(context: BrowserContext, lab: Page, t: Target): Promise<Re
   const errors: string[] = [];
   const external: string[] = [];
   const page = await context.newPage();
+  // 单步动作（截图、鼠标）不单独设 30s 上限：重效果在软件渲染下一帧就要几百毫秒，统一交给整体超时兜底
+  page.setDefaultTimeout(PER_EFFECT_TIMEOUT_MS);
   page.on('pageerror', (e) => errors.push(`异常: ${e.message}`));
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(`console.error: ${m.text()}`);
@@ -245,8 +255,15 @@ async function runOne(context: BrowserContext, lab: Page, t: Target): Promise<Re
         lap('interact');
         shotA = await page.screenshot(SHOT);
         lap('shotA');
-        const a = await analyze(lab, shotA);
+        let a = await analyze(lab, shotA);
         lap('analyzeA');
+        if (a.nonBg < BLANK_THRESHOLD) {
+          // 逐字浮现、打字机这类循环效果有「全部隐去」的瞬间，隔一秒再采一帧，两帧都空才算空白
+          await page.waitForTimeout(1200);
+          shotA = await page.screenshot(SHOT);
+          a = await analyze(lab, shotA);
+          lap('blankRetry');
+        }
         nonBg = a.nonBg;
         blank = a.nonBg < BLANK_THRESHOLD;
         if (meta.thumb.mode === 'live') {
@@ -265,9 +282,8 @@ async function runOne(context: BrowserContext, lab: Page, t: Target): Promise<Re
   if (DEBUG) console.log(`  · ${meta.slug}: ${phases.join(' / ')}`);
 
   if (SAVE_SHOTS && shotA && (errors.length > 0 || external.length > 0 || blank)) {
-    const dir = path.join(os.tmpdir(), 'mt-smoke');
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(path.join(dir, `${meta.slug}.jpg`), shotA);
+    mkdirSync(SHOTS_DIR, { recursive: true });
+    writeFileSync(path.join(SHOTS_DIR, `${meta.slug}.jpg`), shotA);
   }
   await page.close().catch(() => {});
   return {
@@ -384,7 +400,7 @@ async function main() {
   if (failures.length > 0) {
     console.log('\n失败：');
     for (const r of failures) console.log(`  ${r.slug}（${r.name}）`);
-    if (SAVE_SHOTS) console.log(`截图见 ${path.join(os.tmpdir(), 'mt-smoke')}`);
+    if (SAVE_SHOTS) console.log(`截图见 ${SHOTS_DIR}`);
     process.exit(1);
   }
 }
