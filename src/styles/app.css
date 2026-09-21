@@ -881,6 +881,31 @@
   max-height: none;
   overflow: hidden;
 }
+/* 预览底部的渐隐遮罩：文字往下没入底色，遮罩底部居中放「查看全文」提示。
+   遮罩本身不接受点击（整个预览就是按钮），悬停时终点色跟随预览的悬停底色，避免底部露出一道色差。 */
+.blk-fade {
+  --fade-to: #000;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 14px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, var(--fade-to) 58.59%);
+  pointer-events: none;
+}
+.blk-preview:hover .blk-fade {
+  --fade-to: var(--k1);
+}
+.blk-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--fg);
+}
 .prompt-text,
 .code-text {
   margin: 0;

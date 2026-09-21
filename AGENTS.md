@@ -21,7 +21,7 @@
 - **效果 `index.html` 零依赖、零外链、单文件**：不引库、不写 `http(s)://`（连注释都不行，SVG 命名空间除外）。`document.hidden` 时暂停 rAF；尊重 `prefers-reduced-motion`；与父页面的通信只经 `previewRuntime` 注入的 `window.__MT_ENV` / `window.__mtOnPointer`。
 - **许可红线**：只读 MIT / BSD / CC0 源的代码作参考（`source.kind: reference`，写明 name + license）；Vue Bits / React Bits（Commons Clause）、Aceternity 等自有许可站点只看效果不读源码（`visual-inspiration`）；不搬源站资产（图、字库、权重）。详见 `docs/sources.md`「许可口径」。
 - **prompt 文案**：每个事实只出现一次——`## 效果描述` 只写体验、≤ 200 字、无数值 / 占位符 / 实现术语；数值在参数、技术路线在 `## 实现提示`。规则全文 `.cursor/rules/prompt-copy.mdc`，validate 强制。
-- **站点 chrome 视觉**：纯黑白灰、全直角、无阴影渐变、12 栏 1px 线网格、图标只用 IconPark（`.cursor/rules/icons.mdc`）。效果 `index.html` 内部样式不受此约束。
+- **站点 chrome 视觉**：纯黑白灰、全直角、无阴影渐变、12 栏 1px 线网格、图标只用 IconPark（`.cursor/rules/icons.mdc`）。唯一例外是 Prompt / 参考代码截断预览底部的渐隐遮罩（`.blk-fade`，透明 → 底色，用于把截断的文字没入底色并承载「查看全文」提示），不算装饰渐变。效果 `index.html` 内部样式不受此约束。
 - **首包纪律**：`registry.ts` 首包只带 `?light` 索引，效果源码与全量 meta 走 `loadEffectBundle` 懒加载；不要在首包静态引入 `effects/*` 的 html / prompt / 全量 meta，也不要把 zod / schema 静态引到非 DEV 路径。`vite build` 的 700 KB 告警就是这条被破坏的信号。
 - **子路径部署**：JS 里要发请求的站内根路径（`/samples/…`、`/fonts/…`）必须经 `withBase()`（`src/contract/base.ts`）或 `bakeCode({ baseUrl })`；契约、URL 状态、示例图表里继续写根路径不动。
 - **视图转场名唯一**：`stage` / `title` / `heading` / `nav-toggle` 只在参与转场的那个元素上挂载，重名会让整次转场被跳过。

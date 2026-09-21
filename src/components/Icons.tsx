@@ -10,6 +10,7 @@ import {
   Plus,
   Search,
   SettingConfig,
+  Up,
 } from '@icon-park/react';
 
 /**
@@ -68,3 +69,5 @@ export const IconMinus = wrap(Minus as IconParkComponent);
 export const IconClose = wrap(Close as IconParkComponent);
 /** 搜索：放大镜（search） */
 export const IconSearch = wrap(Search as IconParkComponent);
+/** 向上的折角（up）：截断预览底部「查看全文」的展开提示；线端汇聚成尖，同箭头用平头帽 */
+export const IconUp = wrap(Up as IconParkComponent, 'butt');

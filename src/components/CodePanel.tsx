@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { ThemeRegistrationRaw } from 'shiki/core';
 import { ContentModal } from './ContentModal';
 import { CopyButton } from './CopyButton';
-import { IconCode } from './Icons';
+import { IconCode, IconUp } from './Icons';
 
 interface Props {
   /** 导出版代码（当前参数已烘焙） */
@@ -80,7 +80,10 @@ function getHighlighter() {
   return highlighterPromise;
 }
 
-/** 左列下半的参考代码 Cell（占 4 栏）：头部（标题 + 复制）→ 截断预览 → 底栏（下载 + 查看全文）；全文在弹窗里高亮显示 */
+/**
+ * 左列下半的参考代码 Cell（占 4 栏）：头部（标题 + 下载 + 复制）→ 截断预览；全文在弹窗里高亮显示。
+ * 预览整块是一个按钮，底部叠渐隐遮罩与「查看全文」提示（提示只是视觉引导，点哪里都打开弹窗）。
+ */
 export function CodePanel({ code, slug }: Props) {
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState('');
@@ -116,12 +119,6 @@ export function CodePanel({ code, slug }: Props) {
       下载 HTML
     </button>
   );
-  const viewAll = (
-    <button type="button" className="btn" onClick={() => setOpen(true)}>
-      查看全文
-    </button>
-  );
-
   return (
     <section className="cell blk" aria-label="参考代码">
       <div className="blk-head">
@@ -132,7 +129,6 @@ export function CodePanel({ code, slug }: Props) {
         </span>
         <div className="blk-actions">
           {downloadBtn}
-          {viewAll}
           {copy}
         </div>
       </div>
@@ -143,6 +139,12 @@ export function CodePanel({ code, slug }: Props) {
         aria-label="查看参考代码全文"
       >
         <pre className="code-text">{preview}</pre>
+        <span className="blk-fade" aria-hidden="true">
+          <span className="blk-more">
+            查看全文
+            <IconUp size={14} />
+          </span>
+        </span>
       </button>
 
       <ContentModal

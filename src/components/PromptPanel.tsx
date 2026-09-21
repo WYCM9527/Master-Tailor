@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ContentModal } from './ContentModal';
 import { CopyButton } from './CopyButton';
-import { IconPrompt } from './Icons';
+import { IconPrompt, IconUp } from './Icons';
 
 interface PromptProps {
   promptText: string;
@@ -9,7 +9,10 @@ interface PromptProps {
   onIncludeCodeChange: (v: boolean) => void;
 }
 
-/** 左列下半的 Prompt Cell（占 4 栏）：头部（标题 + 复制）→ 截断预览 → 底栏（仅描述开关 + 查看全文）；全文在弹窗里 */
+/**
+ * 左列下半的 Prompt Cell（占 4 栏）：头部（标题 + 仅描述开关 + 复制）→ 截断预览；全文在弹窗里。
+ * 预览整块是一个按钮，底部叠渐隐遮罩与「查看全文」提示（提示只是视觉引导，点哪里都打开弹窗）。
+ */
 export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: PromptProps) {
   const [open, setOpen] = useState(false);
   const meta = `${promptText.length} 字`;
@@ -32,11 +35,6 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
   const copy = (
     <CopyButton getText={() => promptText} label="复制 Prompt" doneLabel="Prompt 已复制" />
   );
-  const viewAll = (
-    <button type="button" className="btn" onClick={() => setOpen(true)}>
-      查看全文
-    </button>
-  );
 
   return (
     <section className="cell blk" aria-label="Prompt">
@@ -48,7 +46,6 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
         </span>
         <div className="blk-actions">
           {toggle}
-          {viewAll}
           {copy}
         </div>
       </div>
@@ -59,6 +56,12 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
         aria-label="查看 Prompt 全文"
       >
         <pre className="prompt-text">{preview}</pre>
+        <span className="blk-fade" aria-hidden="true">
+          <span className="blk-more">
+            查看全文
+            <IconUp size={14} />
+          </span>
+        </span>
       </button>
 
       <ContentModal
