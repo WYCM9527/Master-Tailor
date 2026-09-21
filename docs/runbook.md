@@ -69,7 +69,7 @@ CI 参数是踩出来的：GitHub 2 核 runner 只有 SwiftShader 软件渲染�
 - Settings → Pages → Source 选 **GitHub Actions**（已设置；私有仓库需付费套餐，2026-09-21 仓库已转公开）。
 - 项目站地址形如 `https://<owner>.github.io/<repo>/`，`build` job 用 `BASE_PATH=/<repo>/` 构建。绑定自定义域名后在仓库 Settings → Variables 里设 `SITE_BASE_PATH=/`。
 - 其他静态托管：`BASE_PATH=/子路径/ pnpm build`（根路径部署不用设），把 `dist/` 整个上传即可；hash 路由无需 SPA fallback。也可用仓库 `Dockerfile`（nginx）。
-- 静态 prompt 端点随站点一起发布：`/prompts/<slug>.md`。
+- 给 AI 抓取的静态端点随站点一起发布：`/prompts/<slug>.md`、`/code/<slug>.html`、`/meta/<slug>.json`、`/prompts/index.json`、`/llms.txt`；构建时需设 `SITE_URL`（完整站点地址，末尾带斜杠），否则端点地址为相对路径。
 
 ## 常见故障
 

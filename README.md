@@ -15,7 +15,12 @@
 其他出口：
 
 - **复制代码 / 下载 HTML**：拿到参数已写死的单文件，双击就能在浏览器打开
-- **静态 prompt 端点**：`/prompts/<slug>.md`（默认参数版），可被 curl / agent 直接拉取，如 `curl https://wycm9527.github.io/Master-Tailor/prompts/ball-pit.md`
+- **给 AI / agent 抓取的静态端点**（默认参数版，构建时由 `scripts/build-prompts.ts` 生成；下面以 GitHub Pages 地址为例）：
+  - `/code/<slug>.html`：可直接运行的单文件参考实现 —— `curl -o ball-pit.html https://wycm9527.github.io/Master-Tailor/code/ball-pit.html`
+  - `/meta/<slug>.json`：参数表（键名、类型、范围、默认值、说明）与各端点地址
+  - `/prompts/<slug>.md`：完整 prompt（附参考代码）—— `curl https://wycm9527.github.io/Master-Tailor/prompts/ball-pit.md`
+  - `/prompts/index.json`、`/llms.txt`：全站目录（机器可读 / llmstxt 惯例）
+- **prompt 里的还原度设计**：【参数】每行带参考实现里的落点（`--mt-<key>` / `CONFIG.<key>`）；不附代码时【参考实现】给出上面 code / meta 端点的地址，能联网的 AI 先取回再按参数改值，取不到再按【实现提示】实现；末尾的在线预览链接是给人核对的（hash 路由，AI 抓不到内容）
 
 ## 本地开发
 
@@ -26,7 +31,7 @@ pnpm validate       # 校验所有效果是否符合作者契约
 pnpm test           # 引擎单元测试（vitest）
 pnpm lint           # eslint
 pnpm smoke          # 效果冒烟：无头 Chromium 逐个打开全部效果，查异常 / 外链 / 空白渲染（首次先 pnpm exec playwright install chromium）
-pnpm build          # validate + tsc + vite build + 生成 dist/prompts/*.md
+pnpm build          # validate + tsc + vite build + 生成 dist/prompts/*.md、code/*.html、meta/*.json、prompts/index.json、llms.txt（地址前缀取 SITE_URL）
 ```
 
 `pnpm smoke` 可只跑指定效果（`pnpm smoke ball-pit rain-on-glass`），`SMOKE_SHOTS=1` 把失败效果的截图存到系统临时目录；CI 里每次推送都会全量跑一遍。
@@ -124,7 +129,7 @@ src/engine/        # bakeCode（参数烘焙）、renderPrompt（7 段）、urlS
 src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 效果 Cell / 效果包加载 hook / 怎么用区块……
 src/app/           # HashRouter 页面：Home（海报首页 + 分类索引 + 怎么用）/ Gallery（/effects 效果页）/ EffectPage / NotFound
 src/styles/        # tokens（灰阶 / 间距 / 字号）、base（reset）、app（12 栏网格与全部组件样式）、transitions（路由转场）
-scripts/           # validate（契约校验）、smoke（效果冒烟测试）、build-prompts（静态 md 端点）、prepare-fonts、templates/（轮播 / 转场核心模板）
+scripts/           # validate（契约校验）、smoke（效果冒烟测试）、build-prompts（给 AI 抓取的静态端点：prompts/*.md、code/*.html、meta/*.json、index.json、llms.txt）、prepare-fonts、templates/（轮播 / 转场核心模板）
 public/fonts/      # 自托管 OFL 字体（思源黑体 / 霞鹜文楷 / 得意黑 / JetBrains Mono）+ 许可文件
 public/samples/    # 8 张示例照片（免费可商用素材库，图片 / 图片列表参数默认值）
 tests/             # 引擎单测

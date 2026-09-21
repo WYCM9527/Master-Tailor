@@ -210,17 +210,20 @@ function EffectBody({ bundle, head }: { bundle: EffectBundle; head: ReactNode })
     [meta, bundle.html, state.values, bg],
   );
 
-  const promptText = useMemo(
-    () =>
-      renderPrompt({
-        meta,
-        promptMd: bundle.promptMd,
-        values: state.values,
-        includeCode: state.includeCode,
-        exportedCode: state.includeCode ? exportCode : undefined,
-      }),
-    [meta, bundle.promptMd, state.values, state.includeCode, exportCode],
-  );
+  // 站点地址（含子路径）：prompt 里参考实现 / 参数表的抓取地址前缀；预览地址带当前参数，供人核对
+  const siteUrl = `${window.location.origin}${BASE_URL}`;
+  const promptText = useMemo(() => {
+    const query = encodeState(meta, state).toString();
+    return renderPrompt({
+      meta,
+      promptMd: bundle.promptMd,
+      values: state.values,
+      includeCode: state.includeCode,
+      exportedCode: state.includeCode ? exportCode : undefined,
+      siteUrl,
+      previewUrl: `${siteUrl}#/e/${meta.slug}${query ? `?${query}` : ''}`,
+    });
+  }, [meta, bundle.promptMd, state, exportCode, siteUrl]);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const enterFullscreen = () => void stageRef.current?.requestFullscreen?.();

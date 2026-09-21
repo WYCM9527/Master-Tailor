@@ -13,6 +13,8 @@ jobs:
     env:
       # 项目站部署在 https://<owner>.github.io/<repo>/；绑定自定义域名后在仓库 Variables 里把 SITE_BASE_PATH 设为 /
       BASE_PATH: ${{ vars.SITE_BASE_PATH || format('/{0}/', github.event.repository.name) }}
+      # 站点完整地址（末尾带斜杠）：写进 prompt 与 llms.txt 里参考实现 / 参数表的抓取地址；换域名时在 Variables 里设 SITE_URL
+      SITE_URL: ${{ vars.SITE_URL || 'https://wycm9527.github.io/Master-Tailor/' }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4 # 版本读 package.json 的 packageManager

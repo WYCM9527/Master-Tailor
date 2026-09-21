@@ -23,7 +23,7 @@ src/engine/bakeCode.ts ── 参数值写进 :root 的 --mt-* 与 const CONFIG 
         │
         ├─► <iframe srcdoc>（EffectCard 缩略图 / PreviewFrame 详情舞台）
         ├─► CodePanel（复制 / 下载 HTML）
-        └─► renderPrompt.ts（7 段中文 prompt，附参考实现）与 scripts/build-prompts.ts（dist/prompts/<slug>.md）
+        └─► renderPrompt.ts（7 段中文 prompt，附参考实现或其抓取地址）与 scripts/build-prompts.ts（dist/prompts/<slug>.md、code/<slug>.html、meta/<slug>.json、prompts/index.json、llms.txt）
 ```
 
 ## 契约层 `src/contract/`
@@ -59,7 +59,7 @@ src/engine/bakeCode.ts ── 参数值写进 :root 的 --mt-* 与 const CONFIG 
 - **advancedChunks 分组**：`effects/<slug>/meta.json`、`index.html?raw`、`prompt.md?raw` 合成一个 chunk `assets/effects/<slug>-[hash].js`（平均约 8 KB）。
 - **首包构成**（2026-09-21）：620 KB / 182 KB gzip ≈ React + Router 270 KB + 272 条索引与加载表 240 KB + 站点代码。`chunkSizeWarningLimit: 700` 是哨兵——效果源码或全量 meta 若再被内联进首包，构建会重新告警。
 - **base 路径**：`base: process.env.BASE_PATH || '/'`。子路径部署时 Vite 处理 `index.html` / CSS 里的绝对引用；JS 与 `srcdoc` 里的 `/samples/…`、`/fonts/fonts.css` 由 `withBase()` 与 `bakeCode({ baseUrl })` 改写（`srcdoc` 文档里的绝对路径按父页面 origin 解析，不会自动带子路径）。导出代码与 prompt 只写占位路径，与 base 无关。
-- **`pnpm build`** = `validate`（prebuild）→ `tsc -b` → `vite build` → `scripts/build-prompts.ts` 输出 `dist/prompts/<slug>.md`（默认参数、深色底、附参考代码）。
+- **`pnpm build`** = `validate`（prebuild）→ `tsc -b` → `vite build` → `scripts/build-prompts.ts` 输出给 AI 抓取的静态端点（默认参数、深色底）：`dist/prompts/<slug>.md`（附参考代码）、`dist/code/<slug>.html`（单文件参考实现）、`dist/meta/<slug>.json`（参数表 + 端点）、`dist/prompts/index.json` 与 `dist/llms.txt`（目录）；地址前缀取环境变量 `SITE_URL`（CI 与服务器 deploy.conf 各设自己的站点地址）。
 
 ## 样式
 

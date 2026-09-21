@@ -22,9 +22,10 @@ describe('renderPrompt', () => {
       includeCode: true,
       exportedCode: '<!doctype html><html></html>',
     });
+    // 段落标题独占一行；正文里也会提到「【参数】」这类段名（如取舍顺序、检查项），所以按行首定位
     let last = -1;
     for (const s of SECTIONS) {
-      const idx = text.indexOf(s);
+      const idx = text.search(new RegExp(`(^|\\n)${s}\\n`));
       expect(idx, `缺少 ${s}`).toBeGreaterThan(last);
       last = idx;
     }
@@ -66,15 +67,70 @@ describe('renderPrompt', () => {
     expect(withCode).not.toContain('【实现提示】');
   });
 
-  it('【参数】每行带 help 说明数字含义', () => {
+  it('【参数】每行带参考实现里的落点（--mt-* / CONFIG.*）与 help', () => {
     const text = renderPrompt({
       meta: fixtureMeta,
       promptMd: fixturePromptMd,
       values: defaultValues(fixtureMeta),
       includeCode: false,
     });
-    expect(text).toContain('- 速度：1×（1× 是常速）');
-    expect(text).toContain('- 主色：#f9cf00\n'); // 无 help 不加括号
+    expect(text).toContain('- 速度 · --mt-speed：1×（1× 是常速）');
+    expect(text).toContain('- 主色 · --mt-color：#f9cf00\n'); // 无 help 不加括号
+    expect(text).toContain('- 数量 · CONFIG.count：3');
+    // 引擎追加的参数核对项接在效果自带的检查项之后
+    expect(text).toContain('- 自定义检查二\n- 逐项核对【参数】的值已写入对应的 --mt-* / CONFIG.*');
+  });
+
+  it('给了站点地址：不附代码时【参考实现】输出可抓取的 code / meta 地址并保留【实现提示】；附代码时补来源行', () => {
+    const site = 'https://example.com/master-tailor/';
+    const noCode = renderPrompt({
+      meta: fixtureMeta,
+      promptMd: fixturePromptMd,
+      values: defaultValues(fixtureMeta),
+      includeCode: false,
+      siteUrl: site,
+      previewUrl: `${site}#/e/demo-effect?speed=2`,
+    });
+    expect(noCode).toContain('以【参考实现】为准，【参数】用于改值');
+    expect(noCode).toContain('【实现提示】');
+    expect(noCode).toContain(
+      '【参考实现】\n- 默认参数版的完整实现（单文件，可直接运行）：https://example.com/master-tailor/code/demo-effect.html',
+    );
+    expect(noCode).toContain(
+      '参数表（键名、类型、范围、默认值、说明）：https://example.com/master-tailor/meta/demo-effect.json',
+    );
+    expect(
+      noCode
+        .trimEnd()
+        .endsWith(
+          '在线预览（供人核对，AI 无需访问）：https://example.com/master-tailor/#/e/demo-effect?speed=2',
+        ),
+    ).toBe(true);
+
+    const withCode = renderPrompt({
+      meta: fixtureMeta,
+      promptMd: fixturePromptMd,
+      values: defaultValues(fixtureMeta),
+      includeCode: true,
+      exportedCode: '<html></html>',
+      siteUrl: site,
+    });
+    expect(withCode).toContain(
+      '```html\n<html></html>\n```\n\n同一份默认参数版也可从 https://example.com/master-tailor/code/demo-effect.html 获取',
+    );
+    expect(withCode).not.toContain('【实现提示】');
+    expect(withCode).not.toContain('在线预览');
+  });
+
+  it('没有站点地址也不附代码：不输出取舍顺序与【参考实现】', () => {
+    const text = renderPrompt({
+      meta: fixtureMeta,
+      promptMd: fixturePromptMd,
+      values: defaultValues(fixtureMeta),
+      includeCode: false,
+    });
+    expect(text).not.toContain('以【参考实现】为准');
+    expect(text).not.toContain('【参考实现】');
   });
 
   it('images 占位符列出每张图与标题；【技术要求补充】并入技术要求段', () => {
