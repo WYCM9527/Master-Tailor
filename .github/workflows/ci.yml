@@ -32,14 +32,14 @@ jobs:
           path: dist
 
   # 效果冒烟：无头 Chromium 逐个打开 272 个效果，查异常 / 外链 / 空白渲染（scripts/smoke.ts）。
-  # runner 只有软件渲染，重效果一个要十几秒，切 4 片并行、每片按核数开并发
+  # runner 只有 2 核软件渲染：两页并发时重着色器会把另一页的截图一起拖到超时，所以每片只开 1 路、切 6 片并行
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -51,8 +51,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm smoke --shard=${{ matrix.shard }}/4
+      - run: pnpm smoke --shard=${{ matrix.shard }}/6
         env:
+          SMOKE_WORKERS: 1
           # 2 核软件渲染：视口缩到 960×540 省一半像素；失败效果的截图上传为 artifact 便于排查
           SMOKE_VIEWPORT: 960x540
           SMOKE_SHOTS: 1
