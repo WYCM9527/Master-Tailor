@@ -1,4 +1,4 @@
-import type { EffectMeta } from '../contract/types';
+import type { EffectIndex } from '../contract/types';
 import { categoryName, subDef } from '../contract/categories';
 
 /**
@@ -36,7 +36,7 @@ export function isEmptyQuery(parsed: ParsedQuery): boolean {
 }
 
 /** 效果的可检索文本（小写）：名称 + 摘要 + slug + 标签 + 分类名 + 子类名 */
-function haystack(meta: EffectMeta): string {
+function haystack(meta: EffectIndex): string {
   return [
     meta.name,
     meta.summary,
@@ -50,7 +50,7 @@ function haystack(meta: EffectMeta): string {
 }
 
 /** 是否命中：tags 全部精确命中效果标签，words 全部是可检索文本的子串 */
-export function matchEffect(meta: EffectMeta, parsed: ParsedQuery): boolean {
+export function matchEffect(meta: EffectIndex, parsed: ParsedQuery): boolean {
   if (isEmptyQuery(parsed)) return true;
   if (parsed.tags.length > 0) {
     const own = new Set(meta.tags.map((t) => t.toLowerCase()));
@@ -72,7 +72,7 @@ export interface TagSuggestion {
  * 标签补全：统计集合内标签出现次数，
  * 排序为 前缀命中 → 包含命中 → 次数降序（同次数按名称稳定）。
  */
-export function suggestTags(prefix: string, metas: EffectMeta[], limit = 8): TagSuggestion[] {
+export function suggestTags(prefix: string, metas: EffectIndex[], limit = 8): TagSuggestion[] {
   const p = prefix.trim().toLowerCase();
   const counts = new Map<string, number>();
   for (const m of metas) {

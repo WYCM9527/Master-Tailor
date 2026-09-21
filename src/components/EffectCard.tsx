@@ -6,6 +6,7 @@ import { FONTS_CSS_HREF } from '../contract/fonts';
 import { bakeCode } from '../engine/bakeCode';
 import { defaultValues } from '../engine/urlState';
 import { IconArrowRight } from './Icons';
+import { useEffectBundle } from './useEffectBundle';
 
 /** 卡片预览的设计视口：效果按这个尺寸渲染（与详情页舞台比例一致），再整体等比缩进卡片 */
 const DESIGN_W = 1280;
@@ -18,7 +19,8 @@ const FAR_MARGIN = '150% 0px';
 
 /**
  * 效果页的效果 Cell（效果区内部 3 列之一）：
- * - 预览铺满 Cell（16:9，与详情页舞台同比例），IntersectionObserver 接近视口才挂载 iframe
+ * - 预览铺满 Cell（16:9，与详情页舞台同比例），IntersectionObserver 接近视口才拉取效果源码并挂载 iframe
+ *   （源码按 slug 独立 chunk 懒加载，首包不内联几百份 html；加载过的进详情页零等待）
  * - iframe 固定按 1280×720 设计视口渲染，再 transform: scale 等比缩小到卡片宽度——
  *   避免整屏效果在小视口下文字换行 / 溢出错乱（如 Hero 图文轮播）
  * - 性能：几百张卡不能同时活着。滚出「近区」就给 iframe 发 mt:visible=false，runtime 把它
@@ -87,18 +89,20 @@ export function EffectCard({ effect }: { effect: Effect }) {
     return () => ro.disconnect();
   }, []);
 
+  // 滚近视口才拉效果包（完整 meta + 源码）；远离卸载后再滚回来命中缓存，无需重新请求
+  const bundle = useEffectBundle(mounted ? meta.slug : undefined);
   const srcdoc = useMemo(() => {
-    if (!mounted) return '';
+    if (!bundle) return '';
     return bakeCode({
-      meta,
-      html: effect.html,
-      values: defaultValues(meta),
+      meta: bundle.meta,
+      html: bundle.html,
+      values: defaultValues(bundle.meta),
       bg: BG_DARK,
       mode: 'preview',
       thumb: true,
       fontsCssHref: FONTS_CSS_HREF,
     });
-  }, [mounted, effect, meta]);
+  }, [bundle]);
 
   const forwardPointer = (e: React.MouseEvent) => {
     const iframe = iframeRef.current;
@@ -125,7 +129,7 @@ export function EffectCard({ effect }: { effect: Effect }) {
         className="card-preview"
         style={{ viewTransitionName: transitioning ? 'stage' : undefined }}
       >
-        {mounted && scale > 0 ? (
+        {mounted && srcdoc && scale > 0 ? (
           <iframe
             ref={iframeRef}
             srcDoc={srcdoc}

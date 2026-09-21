@@ -186,7 +186,22 @@ export interface EffectMeta {
   promptEn?: string;
 }
 
+/**
+ * 首包携带的效果索引：meta.json 去掉 params / presets（两者占 meta 体积八成以上）。
+ * 目录、搜索、计数、卡片标题只需要这些字段；参数表随效果包懒加载。
+ */
+export type EffectIndex = Omit<EffectMeta, 'params' | 'presets'>;
+
+/** 注册表条目 */
 export interface Effect {
+  meta: EffectIndex;
+}
+
+/**
+ * 效果包：完整 meta + index.html + prompt.md 原文。
+ * 按 slug 拆成独立 chunk 懒加载（卡片滚近视口 / 进入详情页时），见 registry 的 loadEffectBundle。
+ */
+export interface EffectBundle {
   meta: EffectMeta;
   html: string;
   promptMd: string;
