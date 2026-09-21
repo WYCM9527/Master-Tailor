@@ -1389,6 +1389,10 @@ input[type='color']::-webkit-color-swatch {
     grid-column: span 12;
     grid-template-rows: auto;
   }
+  /* 左列展开到 12 栏后，舞台的 span-9 只剩 3/4 宽、右侧露出网格底色；跟页头一样通宽 */
+  .d-stage {
+    grid-column: 1 / -1;
+  }
   .blk-preview {
     flex: 0 0 260px;
   }
