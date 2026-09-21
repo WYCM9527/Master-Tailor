@@ -36,6 +36,8 @@ function lightMetaPlugin(): Plugin {
 export default defineConfig({
   plugins: [lightMetaPlugin(), react()],
   base: process.env.BASE_PATH || '/',
+  // 构建日期（UTC，YYYY-MM-DD）：首页「Edition · 持续更新」旁的构建戳；类型声明见 src/globals.d.ts
+  define: { __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)) },
   build: {
     target: 'es2022',
     assetsInlineLimit: 0,

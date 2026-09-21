@@ -32,8 +32,10 @@ const FAR_MARGIN = '150% 0px';
  *   Cell 把真实鼠标坐标（换算回设计坐标）postMessage 给 iframe，thumb 演示块可跟随真实指针
  * - 转场承接：仅当本卡参与转场时给预览挂 stage、标题挂 title，
  *   与详情页的舞台 / h1 形成共享元素形变（文档内名字唯一）
+ * - compact（首页布样卡）：不渲染说明条，预览按 cover 方式等比放大并居中裁切填满格子（格子比例由布局决定，
+ *   不再锁 16:9）；可访问名称改由 aria-label / title 提供
  */
-export function EffectCard({ effect }: { effect: Effect }) {
+export function EffectCard({ effect, compact = false }: { effect: Effect; compact?: boolean }) {
   const { meta } = effect;
   const rootRef = useRef<HTMLAnchorElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -81,14 +83,18 @@ export function EffectCard({ effect }: { effect: Effect }) {
     postVisible(visible);
   }, [visible]);
 
-  // 卡片宽度 → 缩放比（随窗口尺寸变化持续更新）
+  // 卡片尺寸 → 缩放比（随窗口尺寸变化持续更新）：常态按宽度贴合（格子本身 16:9），
+  // compact 取宽高两向的较大者（cover），多出的部分被格子裁掉
   useEffect(() => {
     const el = previewRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setScale(el.clientWidth / DESIGN_W));
+    const ro = new ResizeObserver(() => {
+      const byW = el.clientWidth / DESIGN_W;
+      setScale(compact ? Math.max(byW, el.clientHeight / DESIGN_H) : byW);
+    });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [compact]);
 
   // 滚近视口才拉效果包（完整 meta + 源码）；远离卸载后再滚回来命中缓存，无需重新请求
   const bundle = useEffectBundle(mounted ? meta.slug : undefined);
@@ -122,13 +128,15 @@ export function EffectCard({ effect }: { effect: Effect }) {
       to={to}
       viewTransition
       state={{ fromSearch: search }}
-      className="cell card"
+      className={compact ? 'cell card card-compact' : 'cell card'}
       ref={rootRef}
       onMouseMove={forwardPointer}
+      aria-label={compact ? meta.name : undefined}
+      title={compact ? meta.name : undefined}
     >
       <div
         ref={previewRef}
-        className="card-preview"
+        className={compact ? 'card-preview cover' : 'card-preview'}
         style={{ viewTransitionName: transitioning ? 'stage' : undefined }}
       >
         {mounted && srcdoc && scale > 0 ? (
@@ -148,18 +156,20 @@ export function EffectCard({ effect }: { effect: Effect }) {
           <div className="card-skeleton" />
         )}
       </div>
-      <div className="card-caption">
-        <span>
-          <span
-            className="name"
-            style={{ viewTransitionName: transitioning ? 'title' : undefined }}
-          >
-            {meta.name}
+      {!compact && (
+        <div className="card-caption">
+          <span>
+            <span
+              className="name"
+              style={{ viewTransitionName: transitioning ? 'title' : undefined }}
+            >
+              {meta.name}
+            </span>
+            <span className="summary">{meta.summary}</span>
           </span>
-          <span className="summary">{meta.summary}</span>
-        </span>
-        <IconArrowRight className="arrow card-arrow" />
-      </div>
+          <IconArrowRight className="arrow card-arrow" />
+        </div>
+      )}
     </Link>
   );
 }

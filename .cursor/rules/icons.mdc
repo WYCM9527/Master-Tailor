@@ -38,3 +38,6 @@ alwaysApply: false
 | IconPlus / Minus | plus / minus | 折叠、添加 |
 | IconClose | close | 关闭、删除 |
 | IconUp | up | Prompt / 参考代码截断预览底部的「查看全文」提示 |
+| IconPin | pin | 首页 kicker 小字前的珠针 |
+| IconScissors | scissors | 首页布样卡标题 |
+| IconTape | tape-measure | 首页软尺通栏的端头 |

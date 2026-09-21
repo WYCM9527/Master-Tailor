@@ -7,9 +7,12 @@ import {
   FileText,
   HamburgerButton,
   Minus,
+  Pin,
   Plus,
+  Scissors,
   Search,
   SettingConfig,
+  TapeMeasure,
   Up,
 } from '@icon-park/react';
 
@@ -71,3 +74,9 @@ export const IconClose = wrap(Close as IconParkComponent);
 export const IconSearch = wrap(Search as IconParkComponent);
 /** 向上的折角（up）：截断预览底部「查看全文」的展开提示；线端汇聚成尖，同箭头用平头帽 */
 export const IconUp = wrap(Up as IconParkComponent, 'butt');
+/** 珠针（pin）：首页 kicker 小字前，像钉在布上的纸标签 */
+export const IconPin = wrap(Pin as IconParkComponent);
+/** 剪刀（scissors）：首页布样卡的标题——小样是从整匹布上裁下来的 */
+export const IconScissors = wrap(Scissors as IconParkComponent);
+/** 软尺（tape-measure）：首页软尺通栏左端的端头 */
+export const IconTape = wrap(TapeMeasure as IconParkComponent);
