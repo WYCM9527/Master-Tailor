@@ -18,6 +18,7 @@ import { BG_DARK, BG_LIGHT, bgColor } from '../contract/types';
 import { FONTS } from '../contract/fonts';
 import { IconClose, IconParams, IconPlus } from './Icons';
 import { SAMPLE_IMAGES } from '../contract/samples';
+import { withBase } from '../contract/base';
 import { applyPreset, defaultValues } from '../engine/urlState';
 
 interface PanelProps {
@@ -447,7 +448,7 @@ function ImagesControl({
                 title="更换这张图"
                 onClick={() => setExpanded(expanded === i ? null : i)}
               >
-                <img src={slide.src} alt={`第 ${i + 1} 张`} />
+                <img src={withBase(slide.src)} alt={`第 ${i + 1} 张`} />
               </button>
               {param.captions ? (
                 <input
@@ -484,7 +485,7 @@ function ImagesControl({
                     }}
                     title={`示例图 ${si + 1}`}
                   >
-                    <img src={src} alt={`示例图 ${si + 1}`} />
+                    <img src={withBase(src)} alt={`示例图 ${si + 1}`} />
                   </button>
                 ))}
                 <label
@@ -553,7 +554,7 @@ function ImageControl({
             onClick={() => onChange(src)}
             title={`示例图 ${i + 1}`}
           >
-            <img src={src} alt={`示例图 ${i + 1}`} />
+            <img src={withBase(src)} alt={`示例图 ${i + 1}`} />
           </button>
         ))}
         <label className="image-upload" htmlFor={inputId} title="上传自己的图片（仅本地预览）">

@@ -18,6 +18,18 @@ export interface BakeOptions {
   thumb?: boolean;
   /** 仅 preview：字体样式表地址（如 /fonts/fonts.css） */
   fontsCssHref?: string;
+  /**
+   * 仅 preview：站点部署的 base 路径（以 / 结尾，默认 '/'）。
+   * 子路径部署（如 GitHub Pages 项目站 /Master-Tailor/）时，示例图 /samples/… 与字体样式表这些
+   * 站内根路径要改写到 base 下——srcdoc iframe 里的绝对路径按父页面 origin 解析，不会自动带上子路径
+   */
+  baseUrl?: string;
+}
+
+/** 站内根路径 → 部署路径（base 为 '/' 时原样返回） */
+function prefixBase(p: string, baseUrl: string | undefined): string {
+  if (!baseUrl || baseUrl === '/' || !p.startsWith('/')) return p;
+  return baseUrl.replace(/\/$/, '') + p;
 }
 
 /** 替换 :root 中 --mt-<key> 声明的值（保留行内注释） */
@@ -107,9 +119,13 @@ export function bakeCode(o: BakeOptions): string {
   // 3. 预览注入：runtime + 字体样式表（在 </head> 前，效果脚本执行前 __MT_ENV 已就绪）
   const inject: string[] = [buildRuntimeScript(o.thumb ?? false)];
   if (o.fontsCssHref) {
-    inject.push(`<link rel="stylesheet" href="${o.fontsCssHref}">`);
+    inject.push(`<link rel="stylesheet" href="${prefixBase(o.fontsCssHref, o.baseUrl)}">`);
   }
   html = html.replace('</head>', `${inject.join('\n')}\n</head>`);
+  // 4. 子路径部署：示例图的站内根路径改写到 base 下（/samples/ 只会出现在示例图引用里）
+  if (o.baseUrl && o.baseUrl !== '/') {
+    html = html.replaceAll('/samples/', prefixBase('/samples/', o.baseUrl));
+  }
   return html;
 }
 

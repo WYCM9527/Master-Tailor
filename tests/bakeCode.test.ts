@@ -101,6 +101,37 @@ describe('bakeCode', () => {
     expect(out).toContain('photo: "blob:http-local-preview"');
   });
 
+  it('子路径部署：预览把示例图与字体样式表改写到 base 下，导出不受影响', () => {
+    const base = {
+      meta: fixtureMeta,
+      html: fixtureHtml,
+      values: defaultValues(fixtureMeta),
+      bg: '#0a0a0f',
+    };
+    const preview = bakeCode({
+      ...base,
+      mode: 'preview',
+      fontsCssHref: '/fonts/fonts.css',
+      baseUrl: '/Master-Tailor/',
+    });
+    expect(preview).toContain('<link rel="stylesheet" href="/Master-Tailor/fonts/fonts.css">');
+    expect(preview).toContain('"/Master-Tailor/samples/sample-1.webp"');
+    expect(preview).not.toContain('"/samples/');
+    // 根路径部署原样
+    const rootPreview = bakeCode({
+      ...base,
+      mode: 'preview',
+      fontsCssHref: '/fonts/fonts.css',
+      baseUrl: '/',
+    });
+    expect(rootPreview).toContain('href="/fonts/fonts.css"');
+    expect(rootPreview).toContain('"/samples/sample-1.webp"');
+    // 导出只写占位路径，与 base 无关
+    const exported = bakeCode({ ...base, mode: 'export', baseUrl: '/Master-Tailor/' });
+    expect(exported).not.toContain('/Master-Tailor/');
+    expect(exported).toContain('./your-image.jpg');
+  });
+
   it('font 参数注入 font-family 栈；toggle 注入 1/0', () => {
     const values = { ...defaultValues(fixtureMeta), font: 'jetbrains-mono', glow: false };
     const out = bakeCode({

@@ -5,6 +5,7 @@ import type { EffectBundle, EffectIndex, EffectState } from '../../contract/type
 import { bgColor } from '../../contract/types';
 import { categoryName, subDef } from '../../contract/categories';
 import { FONTS_CSS_HREF } from '../../contract/fonts';
+import { BASE_URL } from '../../contract/base';
 import { EFFECT_BY_SLUG } from '../../contract/registry';
 import { bakeCode, collectCssVars, configSignature } from '../../engine/bakeCode';
 import { renderPrompt } from '../../engine/renderPrompt';
@@ -178,6 +179,7 @@ function EffectBody({ bundle, head }: { bundle: EffectBundle; head: ReactNode })
       bg,
       mode: 'preview',
       fontsCssHref: FONTS_CSS_HREF,
+      baseUrl: BASE_URL,
     }),
   );
   const isFirstBake = useRef(true);
@@ -195,6 +197,7 @@ function EffectBody({ bundle, head }: { bundle: EffectBundle; head: ReactNode })
           bg: bgColor(state.bg),
           mode: 'preview',
           fontsCssHref: FONTS_CSS_HREF,
+          baseUrl: BASE_URL,
         }),
       );
     }, 300);

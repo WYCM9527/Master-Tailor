@@ -22,10 +22,18 @@ pnpm install        # Node 22+ / pnpm 11+
 pnpm dev            # 开发服务器
 pnpm validate       # 校验所有效果是否符合作者契约
 pnpm test           # 引擎单元测试（vitest）
+pnpm smoke          # 效果冒烟：无头 Chromium 逐个打开全部效果，查异常 / 外链 / 空白渲染（首次先 pnpm exec playwright install chromium）
 pnpm build          # validate + tsc + vite build + 生成 dist/prompts/*.md
 ```
 
+`pnpm smoke` 可只跑指定效果（`pnpm smoke ball-pit rain-on-glass`），`SMOKE_SHOTS=1` 把失败效果的截图存到系统临时目录；CI 里每次推送都会全量跑一遍。
+
 部署：`dist/` 是纯静态产物，任何静态服务器可托管（hash 路由，无需 SPA fallback）。也可用仓库里的 `Dockerfile`（nginx）。
+
+- **GitHub Pages**：`.github/workflows/ci.yml` 在 `main` 推送且门禁全绿后自动部署（仓库需已启用 Pages，Settings → Pages → Source 选 GitHub Actions；私有仓库启用 Pages 需要付费套餐，未启用时部署步骤跳过）。项目站默认部署在 `https://<owner>.github.io/<repo>/`，构建时通过 `BASE_PATH` 适配子路径；绑定自定义域名后把仓库 Variables 里的 `SITE_BASE_PATH` 设为 `/`
+- 自行部署到子路径时同样设 `BASE_PATH=/子路径/ pnpm build`；站内的示例图、字体等根路径引用会经 `src/contract/base.ts` 与 `bakeCode` 的 `baseUrl` 改写，导出代码与 prompt 不受影响
+
+首包只带 272 条效果索引（约 180 KB gzip）；每个效果的完整参数表与源码是独立 chunk（`assets/effects/<slug>-*.js`），卡片滚近视口或进入详情页时才加载。
 
 字体升级：`pnpm tsx scripts/prepare-fonts.ts`（从 npm 包与 GitHub release 重新生成 `public/fonts/`，产物已提交进仓库）。
 
@@ -107,13 +115,13 @@ validate 会检查 index.html 含四个基线能力关键字：`aria-roledescrip
 ## 目录结构
 
 ```text
-effects/           # 52 个效果（内容层，唯一需要日常维护的目录）
+effects/           # 272 个效果（内容层，唯一需要日常维护的目录）
 src/contract/      # 类型、zod schema、字体表、分类与子类、示例图表、registry（import.meta.glob 收集）
 src/engine/        # bakeCode（参数烘焙）、renderPrompt（7 段）、urlState（参数 ↔ URL）、previewRuntime
 src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 效果 Cell / 怎么用区块……
 src/app/           # HashRouter 页面：Home（海报首页 + 分类索引 + 怎么用）/ Gallery（/effects 效果页）/ EffectPage / NotFound
 src/styles/        # tokens（灰阶 / 间距 / 字号）、base（reset）、app（12 栏网格与全部组件样式）
-scripts/           # validate（契约校验）、build-prompts（静态 md 端点）、prepare-fonts、templates/（轮播核心模板）
+scripts/           # validate（契约校验）、smoke（效果冒烟测试）、build-prompts（静态 md 端点）、prepare-fonts、templates/（轮播核心模板）
 public/fonts/      # 自托管 OFL 字体（思源黑体 / 霞鹜文楷 / 得意黑 / JetBrains Mono）+ 许可文件
 public/samples/    # 8 张示例照片（免费可商用素材库，图片 / 图片列表参数默认值）
 tests/             # 引擎单测

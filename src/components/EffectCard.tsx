@@ -3,6 +3,7 @@ import { Link, useLocation, useViewTransitionState } from 'react-router-dom';
 import type { Effect } from '../contract/types';
 import { BG_DARK } from '../contract/types';
 import { FONTS_CSS_HREF } from '../contract/fonts';
+import { BASE_URL } from '../contract/base';
 import { bakeCode } from '../engine/bakeCode';
 import { defaultValues } from '../engine/urlState';
 import { IconArrowRight } from './Icons';
@@ -101,6 +102,7 @@ export function EffectCard({ effect }: { effect: Effect }) {
       mode: 'preview',
       thumb: true,
       fontsCssHref: FONTS_CSS_HREF,
+      baseUrl: BASE_URL,
     });
   }, [bundle]);
 

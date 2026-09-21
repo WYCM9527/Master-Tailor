@@ -30,10 +30,12 @@ function lightMetaPlugin(): Plugin {
   };
 }
 
-// 纯静态 SPA：hash 路由，部署在根路径，任何静态服务器零配置可托管
+// 纯静态 SPA：hash 路由，任何静态服务器零配置可托管。
+// 默认部署在根路径；GitHub Pages 项目站这类子路径部署由构建时的 BASE_PATH 指定（如 /Master-Tailor/），
+// 站内代码经 src/contract/base.ts 的 withBase / bakeCode 的 baseUrl 适配，见 .github/workflows/ci.yml
 export default defineConfig({
   plugins: [lightMetaPlugin(), react()],
-  base: '/',
+  base: process.env.BASE_PATH || '/',
   build: {
     target: 'es2022',
     assetsInlineLimit: 0,
