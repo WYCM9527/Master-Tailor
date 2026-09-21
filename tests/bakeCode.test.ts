@@ -81,6 +81,23 @@ describe('bakeCode', () => {
     expect(out).not.toContain('__MT_ENV');
   });
 
+  it('导出模式：参数之外写死的示例图（<img src> 初始值）也换成占位路径，预览不受影响', () => {
+    // 模拟 tilt-card / glass-card 一类效果：img 标签先写示例图，脚本运行后再用 CONFIG.photo 覆盖
+    const html = fixtureHtml.replace(
+      '<body>',
+      '<body>\n<img id="mtPhoto" src="/samples/sample-6.webp" alt="卡片图片">',
+    );
+    const base = { meta: fixtureMeta, html, values: defaultValues(fixtureMeta), bg: '#0a0a0f' };
+
+    const exported = bakeCode({ ...base, mode: 'export' });
+    expect(exported).toContain('<img id="mtPhoto" src="./your-image.jpg" alt="卡片图片">');
+    expect(exported).not.toContain('/samples/');
+    expect(exported).toContain('图片使用了占位路径 ./your-image.jpg');
+
+    const preview = bakeCode({ ...base, mode: 'preview', baseUrl: '/Master-Tailor/' });
+    expect(preview).toContain('src="/Master-Tailor/samples/sample-6.webp"');
+  });
+
   it('预览模式：注入 runtime 与字体样式表、保留 thumb 块、图片用真实地址', () => {
     const values = { ...defaultValues(fixtureMeta), photo: 'blob:http-local-preview' };
     const out = bakeCode({

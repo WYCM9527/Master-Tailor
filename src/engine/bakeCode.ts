@@ -1,4 +1,5 @@
 import type { EffectMeta, Values } from '../contract/types';
+import { IMAGE_PLACEHOLDER } from '../contract/types';
 import { toCssValue, toConfigValue } from './cssValue';
 import { buildRuntimeScript } from './previewRuntime';
 
@@ -58,14 +59,13 @@ function stripThumbBlocks(html: string): string {
   return html.replace(/[ \t]*\/\* @mt:thumb-start \*\/[\s\S]*?\/\* @mt:thumb-end \*\/\n?/g, '');
 }
 
-function exportHeader(meta: EffectMeta, values: Values): string {
+function exportHeader(meta: EffectMeta, values: Values, hasPlaceholderImage: boolean): string {
   const lines = [
     `「${meta.name}」 · 由裁缝大师 Master-Tailor 生成`,
     `参数已按你调好的值写入代码，双击本文件即可在浏览器中预览。`,
   ];
-  const imageParams = meta.params.filter((p) => p.type === 'image');
-  if (imageParams.length > 0) {
-    lines.push(`图片使用了占位路径 ./your-image.jpg，请替换为你自己的图片路径。`);
+  if (hasPlaceholderImage) {
+    lines.push(`图片使用了占位路径 ${IMAGE_PLACEHOLDER}，请替换为你自己的图片路径。`);
   }
   if (meta.params.some((p) => p.type === 'images')) {
     lines.push(
@@ -108,10 +108,15 @@ export function bakeCode(o: BakeOptions): string {
 
   if (exportMode) {
     html = stripThumbBlocks(html);
+    // 参数之外写死的示例图（如 <img src="/samples/…"> 的初始值，脚本运行后才被 CONFIG 覆盖）
+    // 也换成占位路径：导出的代码不该依赖站内资源，否则在用户项目里会先 404 一次
+    const hasHardcodedSample = /\/samples\//.test(html);
+    html = html.replace(/\/samples\/[\w.-]+/g, IMAGE_PLACEHOLDER);
+    const hasPlaceholderImage = hasHardcodedSample || o.meta.params.some((p) => p.type === 'image');
     // 文件头注释放在 doctype 之后，避免触发浏览器怪异模式
     html = html.replace(
       /<!doctype html>\s*/i,
-      (m) => m.trimEnd() + '\n' + exportHeader(o.meta, o.values),
+      (m) => m.trimEnd() + '\n' + exportHeader(o.meta, o.values, hasPlaceholderImage),
     );
     return html;
   }
