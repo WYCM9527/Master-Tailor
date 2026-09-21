@@ -4,6 +4,8 @@
 
 面向中文 vibe coding 用户的前端效果图鉴：挑一个效果 → 拖滑块调成你要的样子 → 复制中文 prompt 粘给任何 AI 编程工具。每个效果都有实时预览、可调参数、结构化 prompt 和一份可直接运行的原生 HTML 参考代码。
 
+在线地址：**<https://wycm9527.github.io/Master-Tailor/>**（`main` 每次推送、门禁全绿后自动部署）
+
 ## 使用方式（给访客）
 
 1. **挑一个效果**：左侧两级侧边栏浏览——原有分类按触发方式细分，「多卡/图展示」按形态细分（轮播图 / 图片对比 / 滚动堆叠）；卡片全部是实时渲染的迷你预览
@@ -13,7 +15,7 @@
 其他出口：
 
 - **复制代码 / 下载 HTML**：拿到参数已写死的单文件，双击就能在浏览器打开
-- **静态 prompt 端点**：`/prompts/<slug>.md`（默认参数版），可被 curl / agent 直接拉取
+- **静态 prompt 端点**：`/prompts/<slug>.md`（默认参数版），可被 curl / agent 直接拉取，如 `curl https://wycm9527.github.io/Master-Tailor/prompts/ball-pit.md`
 
 ## 本地开发
 
