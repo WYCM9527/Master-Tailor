@@ -9,7 +9,8 @@
  * 用法：
  *   pnpm smoke                    全部效果
  *   pnpm smoke ball-pit rain-on-glass   只跑指定 slug
- *   SMOKE_WORKERS=6 pnpm smoke     并发页数（默认 4）
+ *   pnpm smoke --shard=2/4         只跑第 2/4 片（按排序后的序号交错切分，CI 用多台 runner 并行）
+ *   SMOKE_WORKERS=6 pnpm smoke     并发页数（默认 min(4, CPU 核数)；软件渲染下每页吃满一核，多开只会互相拖慢）
  *   SMOKE_SHOTS=1 pnpm smoke       失败效果的截图存到系统临时目录
  *   SMOKE_DEBUG=1 pnpm smoke       打印各阶段耗时与静止的 live 效果
  * 首次运行前需要安装浏览器：pnpm exec playwright install chromium
@@ -33,10 +34,14 @@ const publicDir = path.join(root, 'public');
 /** 假域名：所有请求经 route 拦截，本站资源从 public/ 读，其余一律记为外链 */
 const ORIGIN = 'http://mt-smoke.local';
 const VIEWPORT = { width: 1280, height: 720 };
-const WORKERS = Math.max(1, Number(process.env.SMOKE_WORKERS) || 4);
+const WORKERS = Math.max(
+  1,
+  Number(process.env.SMOKE_WORKERS) || Math.min(4, os.availableParallelism()),
+);
 const SAVE_SHOTS = !!process.env.SMOKE_SHOTS;
 const DEBUG = !!process.env.SMOKE_DEBUG;
-const PER_EFFECT_TIMEOUT_MS = 25_000;
+/** 单个效果的上限：本机重效果 10s 上下，2 核 CI runner 软件渲染慢 3–5 倍，留足余量；真正卡死的仍会被拦下 */
+const PER_EFFECT_TIMEOUT_MS = 60_000;
 /** 非底色像素占比低于此值视为空白：0.02% ≈ 1280×720 里一块 14×14 的点；小型加载动画约 0.05%+ */
 const BLANK_THRESHOLD = 0.0002;
 /** 截图用 JPEG：比 PNG 快好几倍、体积小一个量级；统计时颜色量化到 8 级，压缩噪声不影响判定 */
@@ -71,12 +76,28 @@ interface Result {
   ms: number;
 }
 
-function loadTargets(only: string[]): Target[] {
+/** 解析 --shard=i/n（i 从 1 起）；未指定则跑全部 */
+function parseShard(argv: string[]): { index: number; total: number } | undefined {
+  const arg = argv.find((a) => a.startsWith('--shard='));
+  if (!arg) return undefined;
+  const m = /^--shard=(\d+)\/(\d+)$/.exec(arg);
+  const index = m ? Number(m[1]) : 0;
+  const total = m ? Number(m[2]) : 0;
+  if (!m || index < 1 || total < 1 || index > total) {
+    console.error(`--shard 格式应为 i/n（1 ≤ i ≤ n），收到：${arg}`);
+    process.exit(1);
+  }
+  return { index, total };
+}
+
+function loadTargets(only: string[], shard?: { index: number; total: number }): Target[] {
   const dirs = readdirSync(effectsDir, { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => d.name)
     .filter((slug) => only.length === 0 || only.includes(slug))
-    .sort();
+    .sort()
+    // 交错切片：相邻的重效果（同一批 GLSL 往往 slug 相近）分散到不同片
+    .filter((_, i) => !shard || i % shard.total === shard.index - 1);
   return dirs.map((slug) => {
     const meta = effectMetaSchema.parse(
       JSON.parse(readFileSync(path.join(effectsDir, slug, 'meta.json'), 'utf8')),
@@ -263,7 +284,8 @@ async function runOne(context: BrowserContext, lab: Page, t: Target): Promise<Re
 
 async function main() {
   const only = process.argv.slice(2).filter((a) => !a.startsWith('-'));
-  const targets = loadTargets(only);
+  const shard = parseShard(process.argv.slice(2));
+  const targets = loadTargets(only, shard);
   if (targets.length === 0) {
     console.error('没有匹配的效果');
     process.exit(1);
@@ -317,7 +339,9 @@ async function main() {
   });
   const lab = await context.newPage();
 
-  console.log(`冒烟测试 ${targets.length} 个效果，${WORKERS} 路并发……`);
+  console.log(
+    `冒烟测试 ${targets.length} 个效果${shard ? `（第 ${shard.index}/${shard.total} 片）` : ''}，${WORKERS} 路并发（${os.availableParallelism()} 核）……`,
+  );
   const queue = [...targets];
   const results: Result[] = [];
   const t0 = Date.now();

@@ -31,10 +31,15 @@ jobs:
         with:
           path: dist
 
-  # 效果冒烟：无头 Chromium 逐个打开 272 个效果，查异常 / 外链 / 空白渲染（scripts/smoke.ts）
+  # 效果冒烟：无头 Chromium 逐个打开 272 个效果，查异常 / 外链 / 空白渲染（scripts/smoke.ts）。
+  # runner 只有软件渲染，重效果一个要十几秒，切 4 片并行、每片按核数开并发
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -46,9 +51,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm smoke
-        env:
-          SMOKE_WORKERS: 4
+      - run: pnpm smoke --shard=${{ matrix.shard }}/4
 
   # 部署到 GitHub Pages：只在 main 推送、且仓库已启用 Pages（Settings → Pages → Source: GitHub Actions）时执行。
   # 私有仓库启用 Pages 需要付费套餐，未启用时这一步跳过、不算失败。
