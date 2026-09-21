@@ -881,12 +881,16 @@
   max-height: none;
   overflow: hidden;
 }
-/* 预览底部的渐隐遮罩：文字往下没入底色，遮罩底部居中放「查看全文」提示。
-   遮罩本身不接受点击（整个预览就是按钮），悬停时终点色跟随预览的悬停底色，避免底部露出一道色差。 */
+/* 预览底部的渐隐遮罩：贴底一条，高度只够托住「查看全文」提示（约 4 行文字：下 1.5 行没入底色、上 2.5 行渐隐），
+   提示居中放在实底那一段上。遮罩本身不接受点击（整个预览就是按钮），
+   悬停时终点色跟随预览的悬停底色，避免底部露出一道色差。 */
 .blk-fade {
   --fade-to: #000;
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 80px;
   display: flex;
   align-items: flex-end;
   justify-content: center;

@@ -10,7 +10,8 @@ interface PromptProps {
 }
 
 /**
- * 左列下半的 Prompt Cell（占 4 栏）：头部（标题 + 仅描述开关 + 复制）→ 截断预览；全文在弹窗里。
+ * 左列下半的 Prompt Cell（占 4 栏）：头部（标题 + 「附加代码」开关 + 复制）→ 截断预览；全文在弹窗里。
+ * 开关默认开（includeCode: true）：prompt 末尾附带参考代码；关掉后改为输出【实现提示】，状态经 URL 持久化。
  * 预览整块是一个按钮，底部叠渐隐遮罩与「查看全文」提示（提示只是视觉引导，点哪里都打开弹窗）。
  */
 export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: PromptProps) {
@@ -20,16 +21,19 @@ export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: Pro
   const preview = promptText.split('\n').slice(0, 40).join('\n');
 
   const toggle = (
-    <label className="switch-row" title="只复制效果描述，不附参考代码">
+    <label
+      className="switch-row"
+      title="开：prompt 末尾附带按当前参数烘焙的参考代码；关：只有效果描述与实现提示"
+    >
       <button
         type="button"
         role="switch"
-        aria-checked={!includeCode}
-        aria-label="仅复制效果描述，不附参考代码"
-        className={`toggle${!includeCode ? ' on' : ''}`}
+        aria-checked={includeCode}
+        aria-label="复制 Prompt 时附带参考代码"
+        className={`toggle${includeCode ? ' on' : ''}`}
         onClick={() => onIncludeCodeChange(!includeCode)}
       />
-      仅描述
+      附加代码
     </label>
   );
   const copy = (
