@@ -11,3 +11,6 @@ dist/
 
 # 测试
 coverage/
+
+# pnpm 本地 store（不应入库）
+.pnpm-store/
