@@ -44,7 +44,7 @@ const SAVE_SHOTS = !!process.env.SMOKE_SHOTS;
 const SHOTS_DIR = process.env.SMOKE_SHOTS_DIR || path.join(os.tmpdir(), 'mt-smoke');
 const DEBUG = !!process.env.SMOKE_DEBUG;
 /** 单个效果的上限：本机重效果 10s 上下，2 核 CI runner 软件渲染下重着色器一帧要几秒，留足余量；真正卡死的仍会被拦下 */
-const PER_EFFECT_TIMEOUT_MS = 120_000;
+const PER_EFFECT_TIMEOUT_MS = 180_000;
 
 function parseViewport(s: string | undefined): { width: number; height: number } | undefined {
   const m = s && /^(\d+)x(\d+)$/.exec(s);
