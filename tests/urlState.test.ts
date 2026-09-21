@@ -13,12 +13,23 @@ describe('urlState', () => {
     state.values.color = '#112233';
     state.values.photo = 'blob:local-only';
     state.bg = { mode: 'light' };
-    state.includeCode = false;
+    state.includeCode = true;
     const sp = encodeState(fixtureMeta, state);
     expect(sp.get('color')).toBe('#112233');
     expect(sp.get('photo')).toBeNull();
     expect(sp.get('bg')).toBe('light');
-    expect(sp.get('nc')).toBe('1');
+    expect(sp.get('code')).toBe('1');
+  });
+
+  it('附加代码开关：默认关且不进 URL，开着写 code=1；旧链接的 nc=1 仍解码为关', () => {
+    expect(defaultState(fixtureMeta).includeCode).toBe(false);
+    expect(decodeState(fixtureMeta, new URLSearchParams('code=1')).includeCode).toBe(true);
+    expect(decodeState(fixtureMeta, new URLSearchParams('nc=1')).includeCode).toBe(false);
+    expect(decodeState(fixtureMeta, new URLSearchParams('')).includeCode).toBe(false);
+    // 开着的状态往返编解码保持为开
+    const state = defaultState(fixtureMeta);
+    state.includeCode = true;
+    expect(decodeState(fixtureMeta, encodeState(fixtureMeta, state)).includeCode).toBe(true);
   });
 
   it('roundtrip：编码再解码得到等价状态', () => {

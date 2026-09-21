@@ -14,6 +14,9 @@ import { sampleByIndex, sampleIndex } from '../contract/samples';
  */
 
 const BG_KEY = 'bg';
+/** 「附加代码」开关：默认关，开着时写 code=1 */
+const CODE_KEY = 'code';
+/** 旧链接兼容：曾经默认附加代码，关掉时写 nc=1；继续识别，含义仍是「不附加」 */
 const NO_CODE_KEY = 'nc';
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
@@ -30,7 +33,8 @@ export function defaultValues(meta: EffectMeta): Values {
 }
 
 export function defaultState(meta: EffectMeta): EffectState {
-  return { values: defaultValues(meta), bg: { mode: 'dark' }, includeCode: true };
+  // 默认不附加参考代码：prompt 只有描述 + 参数 + 实现提示，用户按需打开开关再附代码
+  return { values: defaultValues(meta), bg: { mode: 'dark' }, includeCode: false };
 }
 
 /** 应用预设：默认值 + 预设覆盖 */
@@ -118,7 +122,7 @@ export function encodeState(meta: EffectMeta, state: EffectState): URLSearchPara
   }
   if (state.bg.mode === 'light') sp.set(BG_KEY, 'light');
   if (state.bg.mode === 'custom') sp.set(BG_KEY, state.bg.color);
-  if (!state.includeCode) sp.set(NO_CODE_KEY, '1');
+  if (state.includeCode) sp.set(CODE_KEY, '1');
   return sp;
 }
 
@@ -158,8 +162,13 @@ export function decodeState(meta: EffectMeta, sp: URLSearchParams): EffectState 
       else if (HEX_RE.test(raw)) state.bg = { mode: 'custom', color: raw };
       continue;
     }
+    if (key === CODE_KEY) {
+      state.includeCode = raw === '1';
+      continue;
+    }
     if (key === NO_CODE_KEY) {
-      state.includeCode = raw !== '1';
+      // 旧链接：nc=1 表示不附加（与现在的默认一致）；不带 nc 的旧链接按新默认处理，不再自动附代码
+      if (raw === '1') state.includeCode = false;
       continue;
     }
     const decoded = decodeValue(meta, key, raw);

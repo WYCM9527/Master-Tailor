@@ -11,7 +11,7 @@ interface PromptProps {
 
 /**
  * 左列下半的 Prompt Cell（占 4 栏）：头部（标题 + 「附加代码」开关 + 复制）→ 截断预览；全文在弹窗里。
- * 开关默认开（includeCode: true）：prompt 末尾附带参考代码；关掉后改为输出【实现提示】，状态经 URL 持久化。
+ * 开关默认关（includeCode: false）：prompt 输出【实现提示】；打开后末尾附带参考代码，状态经 URL（code=1）持久化。
  * 预览整块是一个按钮，底部叠渐隐遮罩与「查看全文」提示（提示只是视觉引导，点哪里都打开弹窗）。
  */
 export function PromptCell({ promptText, includeCode, onIncludeCodeChange }: PromptProps) {
