@@ -4,7 +4,7 @@
  *   1. 没有未捕获异常 / console.error / 加载失败的资源
  *   2. 没有向站外发请求（契约：零依赖、零外链；字体与示例图来自本站 public/）
  *   3. 画面不是一片空白（渲染出来的像素里至少有一小部分不是底色）
- * 另外对 thumb.mode = live（自身一直在动）的效果做一次前后帧对比，静止不动的只在 SMOKE_DEBUG 下列出、不算失败。
+ * SMOKE_DEBUG 下另对 thumb.mode = live（自身一直在动）的效果做一次前后帧对比，静止不动的列出来供人工复核、不算失败。
  *
  * 用法：
  *   pnpm smoke                    全部效果
@@ -34,7 +34,7 @@ const publicDir = path.join(root, 'public');
 
 /** 假域名：所有请求经 route 拦截，本站资源从 public/ 读，其余一律记为外链 */
 const ORIGIN = 'http://mt-smoke.local';
-/** 视口默认取卡片的 1280×720 设计视口；软件渲染的着色器效果耗时与像素数成正比，CI 用 SMOKE_VIEWPORT=960x540 减负 */
+/** 视口默认取卡片的 1280×720 设计视口；软件渲染的着色器效果耗时与像素数成正比，CI 用 SMOKE_VIEWPORT=800x450 减负 */
 const VIEWPORT = parseViewport(process.env.SMOKE_VIEWPORT) ?? { width: 1280, height: 720 };
 const WORKERS = Math.max(
   1,
@@ -43,8 +43,8 @@ const WORKERS = Math.max(
 const SAVE_SHOTS = !!process.env.SMOKE_SHOTS;
 const SHOTS_DIR = process.env.SMOKE_SHOTS_DIR || path.join(os.tmpdir(), 'mt-smoke');
 const DEBUG = !!process.env.SMOKE_DEBUG;
-/** 单个效果的上限：本机重效果 10s 上下，2 核 CI runner 软件渲染慢 3–5 倍，留足余量；真正卡死的仍会被拦下 */
-const PER_EFFECT_TIMEOUT_MS = 90_000;
+/** 单个效果的上限：本机重效果 10s 上下，2 核 CI runner 软件渲染下重着色器一帧要几秒，留足余量；真正卡死的仍会被拦下 */
+const PER_EFFECT_TIMEOUT_MS = 120_000;
 
 function parseViewport(s: string | undefined): { width: number; height: number } | undefined {
   const m = s && /^(\d+)x(\d+)$/.exec(s);
@@ -236,13 +236,13 @@ async function runOne(context: BrowserContext, lab: Page, t: Target): Promise<Re
         await page.goto(`${ORIGIN}/e/${meta.slug}.html`, { waitUntil: 'load' });
         lap('load');
         await page.waitForTimeout(400);
-        // 一轮基本交互：鼠标划过画面中部（悬停类），点击类点一下，滚动类滚两屏
+        // 一轮基本交互：鼠标划过画面中部（悬停类），点击类点一下，滚动类滚两屏。
+        // 每个输入事件都要等页面跑完一帧才算送达，重着色器在软件渲染下一帧要好几秒，事件数从简：
+        // 进入画面 + 移动一次足以触发 mouseenter / mousemove 类逻辑
         const cx = VIEWPORT.width / 2;
         const cy = VIEWPORT.height / 2;
-        // 每个 step 都要等页面处理完输入事件，重渲染的效果下很慢，步数从简
-        await page.mouse.move(cx - 200, cy - 100);
-        await page.mouse.move(cx, cy, { steps: 2 });
-        await page.mouse.move(cx + 200, cy + 80, { steps: 2 });
+        await page.mouse.move(cx, cy);
+        await page.mouse.move(cx + 160, cy + 60);
         if (meta.sub === 'click') {
           await page.mouse.click(cx, cy);
         }
@@ -266,7 +266,8 @@ async function runOne(context: BrowserContext, lab: Page, t: Target): Promise<Re
         }
         nonBg = a.nonBg;
         blank = a.nonBg < BLANK_THRESHOLD;
-        if (meta.thumb.mode === 'live') {
+        // 前后帧对比只作参考、不判失败，且多花一帧；只在调试时做
+        if (DEBUG && meta.thumb.mode === 'live') {
           await page.waitForTimeout(300);
           const shotB = await page.screenshot(SHOT);
           const b = await analyze(lab, shotB, shotA);
