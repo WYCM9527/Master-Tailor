@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-一个 300vh 的滚动轨道，里面 `position: sticky; top: 0; height: 100vh` 的舞台设 `perspective: 1000px`。优先用 CSS 滚动驱动动画：`@supports (animation-timeline: scroll())` 内给卡片组 `animation: 关键帧 linear both; animation-timeline: scroll(nearest)`——关键帧 from `rotateX(初始角) rotateZ(初始角) translateY(−45vh)` 且 opacity 0.25，33% 处角度归零、opacity 1，to `translateY(5vh)`；每行另一段关键帧 `translateX(−滑动距离/2 → +滑动距离/2)`，奇数行反向。不支持的浏览器降级：JS 监听滚动算进度 k 写入同样的 transform（前三分之一插角度与透明度，纵向位移 ease-in-out，横向线性）。每行 5 张卡，从图片列表错位取图避免相邻行同图对齐。
+一个 300vh 的滚动轨道，里面 `position: sticky; top: 0; height: 100vh` 的舞台设 `perspective: 1000px`，舞台裁切用 `overflow: clip`（不要用 hidden：hidden 会让舞台变成滚动容器，滚动驱动动画会错绑到它上面而一动不动）。优先用 CSS 滚动驱动动画：给滚动容器 `scroll-timeline: --mt-page block` 命名时间线，`@supports (animation-timeline: scroll())` 内给卡片组 `animation: 关键帧 linear both; animation-timeline: --mt-page`（显式绑到滚动容器，别用 `scroll(nearest)`）——关键帧 from `rotateX(初始角) rotateZ(初始角) translateY(−45vh)` 且 opacity 0.25，33% 处角度归零、opacity 1，to `translateY(5vh)`；每行另一段关键帧 `translateX(−滑动距离/2 → +滑动距离/2)`，奇数行反向。不支持的浏览器降级：JS 监听滚动算进度 k 写入同样的 transform（前三分之一插角度与透明度，纵向位移 ease-in-out，横向线性）。每行 5 张卡，从图片列表错位取图避免相邻行同图对齐。
 
 ## 完成后请检查
 

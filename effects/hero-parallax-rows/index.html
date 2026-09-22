@@ -15,11 +15,13 @@
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); color: var(--mt-color); }
-  .mt-page { height: 100vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  /* 滚动容器同时是命名滚动时间线的来源：下面的滚动驱动动画显式绑到它上面 */
+  .mt-page { height: 100vh; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; scroll-timeline: --mt-page block; }
   .mt-page::-webkit-scrollbar { display: none; }
   .mt-track { height: 300vh; }
-  /* 定住的舞台：三行卡片在 3D 里从「翘起、倾斜、淡」滚到「放平、对正、实」，同时各行横向反向滑动 */
-  .mt-stage { position: sticky; top: 0; height: 100vh; overflow: hidden; perspective: 1000px; display: flex; flex-direction: column; justify-content: center; }
+  /* 定住的舞台：三行卡片在 3D 里从「翘起、倾斜、淡」滚到「放平、对正、实」，同时各行横向反向滑动。
+     裁切用 overflow: clip 而不是 hidden——hidden 会让舞台成为一个「滚动容器」，scroll(nearest) 会错绑到它（滚动范围为 0，动画永远不动） */
+  .mt-stage { position: sticky; top: 0; height: 100vh; overflow: clip; perspective: 1000px; display: flex; flex-direction: column; justify-content: center; }
   .mt-head { position: absolute; top: 10vh; left: 0; right: 0; text-align: center; padding: 0 24px; z-index: 2; pointer-events: none; }
   .mt-head h1 { margin: 0 0 8px; font-size: clamp(28px, 4.6vw, 54px); letter-spacing: -0.03em; }
   .mt-head p { margin: 0; opacity: 0.6; font-size: 16px; }
@@ -30,8 +32,8 @@
   /* ===== 滚动驱动层：支持 animation-timeline 的浏览器直接把滚动进度绑到关键帧上，不经过 JS =====
      渐进增强：不支持的浏览器（含 Firefox 稳定版）走下面 JS 的 scroll 监听做同样的事，画面一致。 */
   @supports (animation-timeline: scroll()) {
-    .mt-rows { animation: mt-flat linear both; animation-timeline: scroll(nearest); }
-    .mt-row { animation: mt-slide ease-in-out both; animation-timeline: scroll(nearest); }
+    .mt-rows { animation: mt-flat linear both; animation-timeline: --mt-page; }
+    .mt-row { animation: mt-slide ease-in-out both; animation-timeline: --mt-page; }
     .mt-row.rev { animation-name: mt-slide-rev; }
     @keyframes mt-flat {
       from { transform: rotateX(var(--tiltX)) rotateZ(var(--tiltZ)) translateY(-45vh); opacity: 0.25; }
