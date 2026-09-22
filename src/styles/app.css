@@ -290,7 +290,9 @@
    每格只有活体预览（EffectCard compact：无说明条，cover 等比放大居中裁切），格与格之间 1px 线 */
 .swatches-wrap {
   flex: 1 1 0;
-  min-height: 0;
+  /* 不能写 min-height: 0——视口矮时外层会缩成零高，里面 180px 的格子就压到巨字上；
+     按内容撑住，宁可让页面略超一屏 */
+  min-height: min-content;
   display: flex;
   flex-direction: column;
   gap: 10px;
