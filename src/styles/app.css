@@ -1042,11 +1042,11 @@
   max-height: none;
   overflow: hidden;
 }
-/* 预览底部的渐隐遮罩：贴底一条，高度只够托住「查看全文」提示（约 4 行文字：下 1.5 行没入底色、上 2.5 行渐隐），
-   提示居中放在实底那一段上。遮罩本身不接受点击（整个预览就是按钮），
-   悬停时终点色跟随预览的悬停底色，避免底部露出一道色差。 */
+/* 预览底部的渐隐遮罩：贴底一条，高度只够托住「查看全文」提示（约 4 行文字：下 1.5 行没入实底、上 2.5 行渐隐），
+   提示居中放在实底那一段上。遮罩本身不接受点击（整个预览就是按钮）。
+   实底用深灰 k2 而不是页面的纯黑，让「查看全文」这一条与底色区分开；悬停时预览底色变 k1，实底再抬半级保持这层区分。 */
 .blk-fade {
-  --fade-to: #000;
+  --fade-to: var(--k2);
   position: absolute;
   left: 0;
   right: 0;
@@ -1056,11 +1056,11 @@
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 14px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, var(--fade-to) 58.59%);
+  background: linear-gradient(180deg, transparent 0%, var(--fade-to) 58.59%);
   pointer-events: none;
 }
 .blk-preview:hover .blk-fade {
-  --fade-to: var(--k1);
+  --fade-to: #262626;
 }
 .blk-more {
   display: inline-flex;
