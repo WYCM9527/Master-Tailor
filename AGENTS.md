@@ -1,6 +1,6 @@
 # AGENTS.md · 裁缝大师 Master-Tailor
 
-面向中文 vibe coding 用户的前端效果图鉴：272 个效果，每个是 `effects/<slug>/` 下的三件套（`meta.json` / `index.html` / `prompt.md`），站点把它们烘焙成实时预览、可调参数、中文 prompt 与可下载的单文件。纯静态 SPA，无后端。在线：<https://wycm9527.github.io/Master-Tailor/>。用中文沟通与写注释、提交信息。
+面向中文 vibe coding 用户的前端效果图鉴：近三百个效果（以 `effects/` 目录数为准），每个是 `effects/<slug>/` 下的三件套（`meta.json` / `index.html` / `prompt.md`），站点把它们烘焙成实时预览、可调参数、中文 prompt 与可下载的单文件。纯静态 SPA，无后端。在线：<https://wycm9527.github.io/Master-Tailor/>。用中文沟通与写注释、提交信息。
 
 ## 命令
 

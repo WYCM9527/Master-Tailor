@@ -41,7 +41,7 @@ pnpm build          # validate + tsc + vite build + 生成 dist/prompts/*.md、c
 - **GitHub Pages**：`.github/workflows/ci.yml` 在 `main` 推送且门禁全绿后自动部署（仓库需已启用 Pages，Settings → Pages → Source 选 GitHub Actions；私有仓库启用 Pages 需要付费套餐，未启用时部署步骤跳过）。项目站默认部署在 `https://<owner>.github.io/<repo>/`，构建时通过 `BASE_PATH` 适配子路径；绑定自定义域名后把仓库 Variables 里的 `SITE_BASE_PATH` 设为 `/`
 - 自行部署到子路径时同样设 `BASE_PATH=/子路径/ pnpm build`；站内的示例图、字体等根路径引用会经 `src/contract/base.ts` 与 `bakeCode` 的 `baseUrl` 改写，导出代码与 prompt 不受影响
 
-首包只带 268 条效果索引（约 180 KB gzip）；每个效果的完整参数表与源码是独立 chunk（`assets/effects/<slug>-*.js`），卡片滚近视口或进入详情页时才加载。
+首包只带 284 条效果索引（约 180 KB gzip）；每个效果的完整参数表与源码是独立 chunk（`assets/effects/<slug>-*.js`），卡片滚近视口或进入详情页时才加载。
 
 字体升级：`pnpm tsx scripts/prepare-fonts.ts`（从 npm 包与 GitHub release 重新生成 `public/fonts/`，产物已提交进仓库）。
 
@@ -102,7 +102,7 @@ validate 会检查 index.html 含四个基线能力关键字：`aria-roledescrip
 
 ### 转场基线（`category: "transition"` 的效果强制）
 
-非 `scroll` 子类以 View Transitions API 为主引擎，validate 检查三个关键字：`startViewTransition`（同文档视图过渡）、`prefers-reduced-motion`（瞬间切换降级）、`@mt:fallback`（无 API 时的 CSS 类回退路径标记）。`scroll` 子类是滚动驱动动画，检查 `animation-timeline`、`@supports`（渐进增强，终态必须写成默认样式）与 `prefers-reduced-motion`。除此之外的约定基线：返回严格反向播放、共享元素名只在参与转场时挂载（重名会导致转场被跳过）、转场期间聚焦新页标题。新写转场请从 `scripts/templates/transition-core.html` 起步——它带迷你站双页骨架、方向化 `go()`（`<html data-vt>`）、无 API 回退、键盘/焦点管理与 thumb 自动往返演示，多数形态只需改「过渡层」CSS。
+以 View Transitions API 为主引擎，validate 检查三个关键字：`startViewTransition`（同文档视图过渡）、`prefers-reduced-motion`（瞬间切换降级）、`@mt:fallback`（无 API 时的 CSS 类回退路径标记）。转场类不收滚动驱动的形态（随滚动推进的分节 / 视差 / 堆叠归 `showcase/stack-scroll`，用 `scroll-timeline` 命名时间线显式绑定滚动容器，别用 `scroll(nearest)`）。除此之外的约定基线：返回严格反向播放、共享元素名只在参与转场时挂载（重名会导致转场被跳过）、转场期间聚焦新页标题。新写转场请从 `scripts/templates/transition-core.html` 起步——它带迷你站双页骨架、方向化 `go()`（`<html data-vt>`）、无 API 回退、键盘/焦点管理与 thumb 自动往返演示，多数形态只需改「过渡层」CSS。
 
 最终 prompt 由引擎拼装为 7 段：任务 → 效果描述 → 参数（值 + help）→ 技术要求 →〔实现提示，仅不附代码时〕→ 完成后请检查 → 如果遇到问题 → 参考实现（「附加代码」开关，默认关）。
 
@@ -123,7 +123,7 @@ validate 会检查 index.html 含四个基线能力关键字：`aria-roledescrip
 ## 目录结构
 
 ```text
-effects/           # 268 个效果（内容层，唯一需要日常维护的目录）
+effects/           # 284 个效果（内容层，唯一需要日常维护的目录）
 src/contract/      # 类型、zod schema、字体表、分类与子类、示例图表、base（部署路径）、registry（首包索引 + 效果包懒加载）
 src/engine/        # bakeCode（参数烘焙）、renderPrompt（7 段）、urlState（参数 ↔ URL）、search、previewRuntime
 src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 效果 Cell / 效果包加载 hook / 怎么用区块……

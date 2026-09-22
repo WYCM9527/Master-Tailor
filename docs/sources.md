@@ -1,6 +1,6 @@
 # 内容来源与收录台账
 
-> 更新：2026-09-22 · 站内 268 个效果（本日删去「玻璃图标」glass-icons、「缩放淡入转场」zoom-fade、「滚动接力长页」scroll-handoff、「滚动换底长页」scroll-page-fade）。回答两件事：**已经从哪些源收了什么、为什么不收其余的**，以及**下一批还能去哪找**。加新效果或评估新来源前先读这里，避免重复评估同一批组件。
+> 更新：2026-09-22 · 站内 284 个效果（本日删去「玻璃图标」glass-icons、「缩放淡入转场」zoom-fade、「滚动接力长页」scroll-handoff、「滚动换底长页」scroll-page-fade；新收 animos 批十九 16 个自动播放图片陈列）。回答两件事：**已经从哪些源收了什么、为什么不收其余的**，以及**下一批还能去哪找**。加新效果或评估新来源前先读这里，避免重复评估同一批组件。
 
 ## 许可口径（红线）
 
@@ -24,6 +24,7 @@
 | Vue Bits               | MIT + Commons Clause → visual-inspiration |      109 | 批一～批十（含批六/七重做、批八/九新收、批十补齐） |
 | 原创                   | —                                         |       35 | 转场、轮播、表单控件等                             |
 | Aceternity UI          | 自有许可 → visual-inspiration             |       27 | 批十二                                             |
+| animos                 | 闭源 SaaS → visual-inspiration            |       16 | 批十九（2026-09-22，自动播放图片陈列）             |
 | Codrops                | MIT → reference                           |       26 | 批十五、十五·附、十六、备选                        |
 | 其他通用技法 / 产品    | 见下                                      |       21 | 零散                                               |
 | Magic UI               | MIT → reference                           |       19 | 批十一                                             |
@@ -73,6 +74,33 @@
 
 不收：重依赖 7（BalloonButton / WebGLBlobs / Interactive3DMallMap / LiquidDistortion / TextDistortionEffects / Animocons / MusicalInteractions）；jQuery 时代插件与整页模板（PageTransitions、SidebarTransitions、BookBlock、Slicebox、Baraja 等）；GSAP Flip 驱动的整页布局切换（ScrollBasedLayoutAnimations、GridToSlider、MenuToGrid 等，复现价值低于成本）；约 27 个站内已有等价（MagneticButtons、TiltHoverEffects、ImageTrailEffects、CircularTextEffect、MarqueeMenu、GooeyCursor、ClickEffects、TypeShuffleAnimation、StickySections、3DCarousel 等）。
 
+### animos（16）
+
+animos.app 是闭源商业 SaaS（设计作品展示的视频动效模板编辑器，beta，付费解锁全部模板与商用），64 个模板、9 组，全部是 5–30 秒自动循环的时间线动效、无交互。自有条款 → **只看效果不读其代码、不搬示例图与文案**，全部 `visual-inspiration`（`source.name` 写「animos 的 XX 模板一类效果」）。2026-09-22 逐个截图核对，收 16 个站内没有的形态，全部归 `showcase/wall`（「图墙」描述随之放宽，见分类决策表）。
+
+| 源站模板                                                                     | 站内                              | 备注                                                                                       |
+| ---------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------ |
+| Showcase Stream                                                              | `band-ring-showcase` 带状环陈列   | 倾斜连续环带自转，背面镜像压暗                                                             |
+| Sphere Wall + Sphere Cascade                                                 | `curved-wall-rows` 弧面图墙       | 合为一个，`mode` 切交错流动 / 级联步进                                                     |
+| Card Tunnel                                                                  | `card-tunnel` 卡片隧道            | 四壁贴卡向前飞                                                                             |
+| Spiral Stream                                                                | `spiral-card-stream` 螺旋卡片流   | 螺旋自转的理发店招牌式「上升」错觉                                                         |
+| Depth Stack Scroll                                                           | `depth-fly-through` 纵深飞入      | 源站按时间线推进，这里改为自动循环                                                         |
+| Card Globe + Orbit Globe                                                     | `card-globe` 卡片球               | `mode` 切密铺 / 稀疏；Σ卡片 ≤ 96 的性能门槛                                                |
+| Vortex Spin                                                                  | `vortex-rings` 涡旋双环           | 内外环反向                                                                                 |
+| Wheel Spin + Wheel Spin Bottom                                               | `card-wheel-spin` 卡片轮盘        | `position` 切居中 / 底部半轮                                                               |
+| Iso Cascade + Iso Focus + Iso Orbit                                          | `iso-card-stack` 等轴测叠卡       | `mode` 切三种运镜                                                                          |
+| Orbit Showcase + Orbit Bloom + Photo Orbit（+ Orbit Carousel / Focus Orbit） | `orbit-cluster` 轨道群卡          | 与站内 `orbit-images`（2D 路径绕文字）不同，是 3D 倾斜轨道绕主卡；`mode` 切环绕 / 花瓣绽放 |
+| Parallax Totem                                                               | `parallax-drift-cards` 视差漂移卡 | 自动漂移，区别于鼠标驱动的 `mouse-parallax-layers`                                         |
+| Diagonal Carousel                                                            | `diagonal-card-flow` 斜向叠卡流   |                                                                                            |
+| Mosaic Marquee                                                               | `mosaic-marquee` 图片马赛克跑马灯 | 异形拼贴，区别于等格的文字 / Logo 跑马灯                                                   |
+| Flip Grid                                                                    | `flip-swap-grid` 网格翻面换图     |                                                                                            |
+| Position Dance                                                               | `position-dance-cards` 换位卡组   |                                                                                            |
+| Card Totem                                                                   | `card-totem-stream` 竖向卡片流    | 连续流 + 中央放大，区别于离散切换的 `vertical-carousel`                                    |
+
+不收 · 与站内重合（约 20）：Cover Ring / Cover Ring Vertical（`ring-carousel`）、Cover Flow / Cover Flow Vertical（`coverflow-carousel`）、Carousel Flow / Focus Slider（`peek-carousel` / `multi-slide-carousel`）、Film Strip / Hero Reel（`slide-carousel` / `hero-text-carousel`）、Image Trail（`image-trail`）、Card Toss / Cascade Drop / Cascade Deck / Stack Slide / Deck Peel（`stack-cards-carousel` / `shuffle-stack-carousel` / `card-swap`）、Ticker Loop / Ticker Tilt / Column Drift / Totem Wall（`tilted-image-wall` / `grid-motion`）、Grid Reveal / Pop Grid（`masonry-grid`）、Center Stage / Focus Shift / Spotlight Zoom / Zoom Parallax（`kenburns-carousel` / `zoom-fade-carousel`）、Diagonal Wipe / Stripe Reveal / Split Reveal / Mosaic Wipe（`slice-carousel` / `clip-shape-carousel` / 发布会转场）。
+
+不收 · 不是网页组件形态（约 12）：Multiscene 8 个（Triple Scene、Collage Reel、Fan Shuffle、Sweep Ring、Scatter Dial、Grid Zoom Strip、Spread Rows、Spread Columns）是多场景蒙太奇剪辑，参数模型装不下多段时间线；Feed Scroll 是手机信息流机壳；Poster Burst 以大字排版为主，不算图片陈列。
+
 ### 原创（35）与其他（21）
 
 - 原创：表单控件 5（日夜切换开关、液态开关、勾选动画、单选胶囊组、浮动标签输入框）、多数页面转场、多数轮播形态、以及站内自设的效果。
@@ -87,14 +115,15 @@
 
 ## 分类决策记录
 
-| 决策                                     | 内容                                                                                                                       |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| 背景不收滚动触发                         | 背景效果的子类只有自动 / 鼠标交互 / 点击；滚动驱动的背景归「多卡/图展示·滚动交互」或不收                                  |
-| 转场不收滚动接力                         | 「页面转场」只收页面间换场（共享元素 / 推屏 / 缩放淡入 / 发布会），随滚动推进的分节、视差、堆叠一律归「多卡/图展示·滚动交互」 |
-| 表单控件归「按钮与交互」                 | 单个控件（开关 / 复选框 / 输入框）不单设分类；累计已到 5 个的阈值，**再加一个就该新增「表单控件」分类并把现有 5 个迁过去** |
-| 「鼠标交互」分类（`canvas`）只放光标本体 | 果冻光标、十字瞄准线等 7 个纯光标效果；全屏氛围类（融球、粒子星空等）归背景效果                                            |
-| 多图 / 卡片墙归 `showcase/wall`          | 3D 图墙、斜向图墙、鼠标视差层从背景移入「多卡/图展示·图墙」                                                                |
-| 薄库合成合集                             | Hover.css、链接下划线、图说悬停、线条菜单等单个太薄的形态用一个 `select` 参数切多种                                        |
+| 决策                                       | 内容                                                                                                                          |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| 背景不收滚动触发                           | 背景效果的子类只有自动 / 鼠标交互 / 点击；滚动驱动的背景归「多卡/图展示·滚动交互」或不收                                      |
+| 转场不收滚动接力                           | 「页面转场」只收页面间换场（共享元素 / 推屏 / 缩放淡入 / 发布会），随滚动推进的分节、视差、堆叠一律归「多卡/图展示·滚动交互」 |
+| 表单控件归「按钮与交互」                   | 单个控件（开关 / 复选框 / 输入框）不单设分类；累计已到 5 个的阈值，**再加一个就该新增「表单控件」分类并把现有 5 个迁过去**    |
+| 「鼠标交互」分类（`canvas`）只放光标本体   | 果冻光标、十字瞄准线等 7 个纯光标效果；全屏氛围类（融球、粒子星空等）归背景效果                                               |
+| 多图 / 卡片墙归 `showcase/wall`            | 3D 图墙、斜向图墙、鼠标视差层从背景移入「多卡/图展示·图墙」                                                                   |
+| 自动播放的 3D 图片陈列也归 `showcase/wall` | 环带、弧面墙、隧道、螺旋、卡片球、轮盘这类无交互的自动陈列不另设子类，「图墙」描述已放宽为「墙、环、球、隧道等陈列」          |
+| 薄库合成合集                               | Hover.css、链接下划线、图说悬停、线条菜单等单个太薄的形态用一个 `select` 参数切多种                                           |
 
 ## 候选池（未启动）
 
