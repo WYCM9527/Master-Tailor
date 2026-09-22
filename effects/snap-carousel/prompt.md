@@ -3,6 +3,10 @@
 
 ## 实现提示
 主体是纯 CSS（overflow-x + scroll-snap + scroll-behavior: smooth）；只需十几行 JS——圆点点击用滚动容器自身的 scrollTo({ left: 卡片.offsetLeft − (容器宽 − 卡片宽)/2, behavior: 'smooth' })，不要用锚点或 scrollIntoView（两者都会连带滚动整个页面），滚动位置同步圆点用 IntersectionObserver。聚焦滚动容器后按 keydown 方向键滚动、pointerdown 拖动，都是浏览器原生行为，无需自己写。
+- 外框宽 `min(720px, 92vw)`；滚动容器 `display: flex; gap: {{gap}}; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px`，隐藏滚动条（`scrollbar-width: none` + `::-webkit-scrollbar { display: none }`）。
+- 卡片 `flex: none; width: {{cardW}}`（占容器宽的百分比，小于 100% 露出邻卡），`aspect-ratio: 16 / 10`，圆角 {{rounded}}，`overflow: hidden`；`scroll-snap-align: center` 吸附居中，`scroll-snap-stop: always` 一次最多翻一张。
+- 标题条贴底 `padding: 36px 16px 12px`，白字 16px / 600，底 `linear-gradient(transparent, rgba(0,0,0,0.62))`。
+- 圆点行距容器 12px 居中，间距 7px，8px `rgba(255,255,255,0.35)`，当前项 {{accent}} 并 `scale(1.25)`；IntersectionObserver 以滚动容器为 root、`threshold: 0.6`，露出超过六成即置为当前。
 
 ## 技术要求补充
 - 主体必须用纯 CSS scroll-snap 实现，不要用 JS 计算位移；JS 只做圆点同步与跳转

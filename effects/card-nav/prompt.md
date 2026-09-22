@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-- 导航条 `overflow: hidden; height: 60px`，展开时把 height 改成「60 + 卡片高度 + 内边距」的像素值，`transition: height 0.4s cubic-bezier(0.22, 1, 0.36, 1)`（power3.out 感）——高度用 JS 读卡片 `scrollHeight` 算出具体数值，不要用 `height: auto`（无法过渡）。
+- 导航条 `overflow: hidden; height: 60px`，展开时把 height 改成「60 + 卡片高度 + 内边距」的像素值，`transition: height {{duration}} cubic-bezier(0.22, 1, 0.36, 1)`（power3.out 感）——高度用 JS 读卡片 `scrollHeight` 算出具体数值，不要用 `height: auto`（无法过渡）。
 - 顶栏三栏 `grid-template-columns: 1fr auto 1fr`；汉堡两条线 30×2px，开时分别 `translateY(±4px) rotate(±45deg)`，0.3s linear。
 - 卡片区绝对定位在顶栏下方，flex 并排、间距 12px；每张卡默认 `translateY(50px); opacity: 0`，展开时回到 0 / 1，第 i 张 `transition-delay = i × 0.08s`，与高度过渡几乎同时开始（源站是高度动画开始后 0.1s 内叠加）。
 - 卡片内容：标题 22px 常规字重，链接列表贴底、每条前带 ↗，悬停透明度 0.75。

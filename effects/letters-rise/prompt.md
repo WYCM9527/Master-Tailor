@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-文案按字（`Array.from`）或按词（按空白切分并保留空格）拆成 inline-block span 放在一个 overflow: hidden 的行容器里（裁掉起跳前露出的部分）；每个 span 初始 opacity 0 + translateY(起跳距离，默认 0.7em) + rotate(12deg × 开关，默认关)，用同一条 keyframes 到 0，时长默认 1.2s，timing-function 默认 `cubic-bezier(0.22, 1, 0.36, 1)`（干脆落定），可切到带过冲的 `cubic-bezier(0.34, 1.56, 0.64, 1)`；animation-delay = 序号 × 相邻错开。循环用定时器重新渲染。
+文案按字（`Array.from`）或按词（按空白切分并保留空格；当前 {{splitBy}}）拆成 inline-block span 放在一个 overflow: hidden 的行容器里（裁掉起跳前露出的部分）；每个 span 初始 opacity 0 + translateY(起跳距离 {{distance}}) + rotate(12deg × 旋转开关，当前 {{rotate}})，用同一条 keyframes 到 0，时长 {{duration}}，timing-function 取弹跳手感 {{ease}}（源效果为干脆落定的 `cubic-bezier(0.22, 1, 0.36, 1)`，也可切到带过冲的 `cubic-bezier(0.34, 1.56, 0.64, 1)`）；animation-delay = 序号 × 相邻错开 {{stagger}}。循环用定时器重新渲染。
 
 ## 完成后请检查
 

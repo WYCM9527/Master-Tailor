@@ -6,6 +6,14 @@
 
 按数量生成列容器，每列两个绝对定位的圆点。关键帧 `translateY(−幅度) scale(0.55) opacity 0.45 → translateY(+幅度) scale(1.15) opacity 1 → 回`，`ease-in-out` 无限循环；第 i 列 `animation-delay = −0.12i s`，同一列的第二颗点再额外减去半个周期让它反相。列间距约 0.9 倍点径。
 
+补充常量与细节（点径 {{size}}、幅度 {{amplitude}}、周期 {{speed}}、每链 {{count}} 颗都取参数）：
+
+- 外层容器 `display: flex; align-items: center`，`gap = 点径 × 0.9`，高度 = `幅度 × 2 + 点径 × 2`（给最高、最低位置各留一颗点的余量），整体在页面里 grid 居中。
+- 每列 `position: relative; width: 点径; height: 100%`；两颗点都是 `position: absolute; left: 0; top: 50%; margin-top: −点径/2`、`border-radius: 50%`，静止基准在列的垂直中点，全靠 transform 上下位移。
+- 链 A 的点填 {{colorA}}，链 B 填 {{colorB}}；两颗点共用同一段关键帧（0% 与 100% 在上方：小而暗；50% 在下方：大而亮），B 只是延迟再减 `周期 / 2`。
+- 第 i 列的延迟 `−0.12 × i` 秒是固定秒数、不随周期缩放：周期越长相邻列相位差越小、螺旋越舒展；负延迟让页面一打开各列就处于各自的相位，不会出现「全体从同一位置起跳」的开场。
+- 页面切后台时把动画 `animation-play-state` 置为 paused、回前台恢复；减少动态时全部动画暂停。容器 `role="status"`、`aria-label="加载中"`。
+
 ## 完成后请检查
 
 - 两排点反相起伏、相邻列依次错开形成螺旋

@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-在 SVG 里定义一个滤镜：`feTurbulence`（type=turbulence，baseFrequency=0.02，numOctaves=2）生成噪声，再 `feDisplacementMap` 用噪声的 R/G 通道把原图像素位移 `scale=幅度` 像素；滤镜区域向外扩 10% 防止位移后被裁。文字元素 `filter: url(#滤镜)`。动画用 requestAnimationFrame：平滑模式下让 baseFrequency 的 x、y 分量分别按不同频率的正弦在 ±35% 范围内缓慢变化、幅度也在 80%–100% 间起伏，波纹就像在流动；逐帧模式下每 `1/速度` 秒随机换一次 `seed`。
+在 SVG 里定义一个滤镜：`feTurbulence`（type=turbulence，baseFrequency={{frequency}}，numOctaves=2）生成噪声，再 `feDisplacementMap` 用噪声的 R/G 通道把原图像素位移 `scale={{amplitude}}`；滤镜区域向外扩 10% 防止位移后被裁。文字元素 `filter: url(#滤镜)`。动画用 requestAnimationFrame：平滑模式下让 baseFrequency 的 x、y 分量分别按不同频率的正弦在 ±35% 范围内缓慢变化、幅度也在 80%–100% 间起伏，波纹就像在流动；逐帧模式下每 `1/{{speed}}` 秒随机换一次 `seed`。
 
 ## 完成后请检查
 

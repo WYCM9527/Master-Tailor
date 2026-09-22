@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-一张全屏 SVG。按数量生成三次贝塞尔路径：起点在左上一带均匀排开、终点在右下方，两个控制点带一点随 i 变化的偏移，让曲线平行又各自微弯。每条路径画两遍：底线 `stroke-opacity 0.12`，亮线用 `linearGradient`（`gradientUnits="userSpaceOnUse"`，四个 stop：透明 → 起始色 → 中段色 → 末端色透明）描边。每帧用 requestAnimationFrame 推进每束光的进度 k，`getPointAtLength(总长 × k)` 取光头位置、`getPointAtLength(总长 × (k − 0.22))` 取光尾位置，把渐变的 (x1, y1) / (x2, y2) 钉在这两点上——渐变随之沿曲线移动。进度超过 1.2 后设一个随机负值当休息时间。
+一张全屏 SVG。按数量生成三次贝塞尔路径：起点在左上一带均匀排开、终点在右下方，两个控制点带一点随 i 变化的偏移，让曲线平行又各自微弯。每条路径画两遍：底线用起始色描边、`stroke-opacity` 取底线不透明度（{{lineOpacity}}）、`stroke-width` 取线宽（{{lineWidth}}），亮线的 `stroke-width` 是线宽的 1.6 倍，用 `linearGradient`（`gradientUnits="userSpaceOnUse"`，四个 stop：透明 → 起始色 → 中段色 → 末端色透明）描边。每帧用 requestAnimationFrame 推进每束光的进度 k，`getPointAtLength(总长 × k)` 取光头位置、`getPointAtLength(总长 × (k − 0.22))` 取光尾位置，把渐变的 (x1, y1) / (x2, y2) 钉在这两点上——渐变随之沿曲线移动。进度超过 1.2 后设一个随机负值当休息时间。
 
 ## 完成后请检查
 

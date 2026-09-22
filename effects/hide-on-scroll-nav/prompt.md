@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-导航 `position: fixed; top: 20px; left: 50%; transform: translate(-50%, 0)`，`backdrop-filter: blur(12px)`，加 `transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s`；隐藏态类把 transform 改成 `translate(-50%, -140%)` 并 `opacity: 0`。滚动监听（passive）：记录上一次的 scrollTop，本次差值 dy 的绝对值小于阈值直接忽略；否则 dy > 0（向下）加隐藏类、dy < 0 去掉；若开启「顶部附近始终显示」且 scrollTop < 40 则强制显示。每次有效判定后更新上一次位置。
+导航 `position: fixed; top: 20px; left: 50%; transform: translate(-50%, 0)`，`backdrop-filter: blur(12px)`，加 `transition: transform 隐现时长 cubic-bezier(0.2, 0.8, 0.2, 1), opacity 隐现时长`，隐现时长取 {{duration}}；隐藏态类把 transform 改成 `translate(-50%, -140%)` 并 `opacity: 0`。滚动监听（passive）：记录上一次的 scrollTop，本次差值 dy 的绝对值小于阈值直接忽略；否则 dy > 0（向下）加隐藏类、dy < 0 去掉；若开启「顶部附近始终显示」且 scrollTop < 40 则强制显示。每次有效判定后更新上一次位置。
 
 ## 完成后请检查
 

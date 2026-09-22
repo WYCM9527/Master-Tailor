@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-正文页与幕布层都是 `position: fixed; inset: 0`，幕布 z-index 更高、`pointer-events: none`。对开样式：两块 `height: 50%` 的 div 分别贴顶贴底，揭幕时分别 `translateY(−101%)` / `translateY(101%)`，过渡 `cubic-bezier(0.45, 0, 0.55, 1)`。竖条样式：按视口宽 / 条宽算条数（至少 3），每条 `left = i × 宽 / n`、宽度略大 1px 防缝，揭幕时 `translateY(101%)`，`transition-delay = |i − 中间索引| × 延迟`。进度用 requestAnimationFrame 按 ease-out 从 0 走到 100%，到 100 给 body 加 `revealed` 类触发所有过渡；正文标题 `translateY(20px) + opacity 0 → 0 + 1`，延迟 0.3s。
+正文页与幕布层都是 `position: fixed; inset: 0`，幕布 z-index 更高、`pointer-events: none`。对开样式：两块 `height: 50%` 的 div 分别贴顶贴底，揭幕时分别 `translateY(−101%)` / `translateY(101%)`，过渡 `cubic-bezier(0.45, 0, 0.55, 1)`。竖条样式：按视口宽 / {{tileWidth}} 算条数（至少 3），每条 `left = i × 宽 / n`、宽度略大 1px 防缝，揭幕时 `translateY(101%)`，`transition-delay = |i − 中间索引| × {{stagger}}`。进度用 requestAnimationFrame 按 ease-out 从 0 走到 100%，到 100 给 body 加 `revealed` 类触发所有过渡；正文标题 `translateY(20px) + opacity 0 → 0 + 1`，延迟 0.3s。
 
 ## 完成后请检查
 

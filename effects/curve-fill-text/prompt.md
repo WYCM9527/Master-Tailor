@@ -4,7 +4,11 @@
 
 ## 实现提示
 
-canvas 2D，尺寸按文字测量结果决定。每帧：先在整块画布上画 N 条横贯的正弦曲线（每条有自己的垂直位置、相位、频率、幅度，`y = y0 + sin(x·f + φ + t) × A + 小幅二次谐波`），颜色循环取自颜色列表；然后把 `globalCompositeOperation` 设为 `destination-in`，用 `fillText` 在画布中央写一遍文字——合成规则只保留「已有内容 ∩ 新画内容」，曲线就被裁进了字形。最后切回 `source-over`，`strokeText` 描一圈 25% 白的细边。按 devicePixelRatio 放大画布保持锐利。
+- canvas 2D，尺寸按文字测量结果决定：字体 `900 字重、{{fontSize}}、系统无衬线（-apple-system / PingFang SC / Microsoft YaHei）`，画布宽 = `ceil(measureText 宽度 + 字号 × 0.3)`、高 = `ceil(字号 × 1.3)`；按 devicePixelRatio（上限 2）放大画布保持锐利，CSS 上再限 `max-width: 96vw`。
+- 初始化 {{lines}} 条线，第 i 条：基线 `y0 = (i + 0.5) / 条数 × 画布高`（均匀铺满整高）、相位 φ 随机 0–2π、频率 f 随机 0.008–0.018（弧度 / 像素）、幅度 `A = {{amplitude}} × 随机 0.5–1.5`、漂移系数 d 随机 0.6–1.4、颜色循环取自颜色列表（第 i 条取第 i % 颜色数 个）。
+- 每帧：先在整块画布上画 N 条横贯的正弦曲线，`y = y0 + sin(x·f + φ + t × 2d) × A + sin(x·f × 2.3 − t × 1.3) × A × 0.3`（后一项是小幅二次谐波，反向流动），x 从 −10 到画布宽 + 10、步长 6px 连成折线，`lineWidth = {{thickness}}`、`lineCap: round`；时间 `t += dt × {{speed}}`（dt 上限 0.05s）。然后把 `globalCompositeOperation` 设为 `destination-in`，用 `fillText` 在画布中央（textAlign center、textBaseline middle）写一遍文字——合成规则只保留「已有内容 ∩ 新画内容」，曲线就被裁进了字形。
+- 最后若开启字形描边（当前 {{outline}}），切回 `source-over`，`strokeText` 描一圈 1px、25% 白的细边。
+- 系统开启「减少动态效果」时 t 固定（取 5）不再推进，曲线静止但仍完整渲染。
 
 ## 完成后请检查
 

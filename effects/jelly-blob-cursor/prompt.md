@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-球层套一个 SVG 滤镜实现黏合：feGaussianBlur（stdDeviation 即黏合强度）→ feColorMatrix 把 alpha 做高对比（如 0 0 0 24 -12）→ feComposite atop 回填原色，模糊后相邻球的边缘就融为一体。每个球是绝对定位的圆形 div：`opacity: 0.6`（叠在一起时颜色更浓）、`box-shadow: 10px 10px 5px rgba(0,0,0,0.75)` 投影、`::after` 画一个直径约 1/3 的 `rgba(255,255,255,0.8)` 高光点；三颗球直径按 60 / 125 / 75 三档。用 requestAnimationFrame 做链式跟随：第一个球按迟滞系数追鼠标，后面的球追前一个球，序号越大迟滞略大、缩放略小。cursor: none 隐藏系统光标（可选）。
+球层套一个 SVG 滤镜实现黏合：feGaussianBlur（stdDeviation 即黏合强度 {{goo}}）→ feColorMatrix 把 alpha 做高对比（如 0 0 0 24 -12）→ feComposite atop 回填原色，模糊后相邻球的边缘就融为一体。每个球是绝对定位的圆形 div（填充色 {{color}}）：`opacity: 0.6`（叠在一起时颜色更浓）、`box-shadow: 10px 10px 5px rgba(0,0,0,0.75)` 投影、`::after` 画一个直径约 1/3 的 `rgba(255,255,255,0.8)` 高光点；球的宽高都取最大球直径 {{size}}，第 i 颗再按 `[0.48, 1, 0.6][i % 3]` 缩放（小 / 大 / 中三档循环），每满 3 颗整体再缩 20%，共 {{count}} 颗。用 requestAnimationFrame 做链式跟随：第一个球按迟滞系数 {{lag}} 追鼠标，后面的球追前一个球，序号越大系数略大（`{{lag}} × (1 + 0.3i)`）。cursor: none 隐藏系统光标（当前 {{hideCursor}}）。
 
 ## 完成后请检查
 

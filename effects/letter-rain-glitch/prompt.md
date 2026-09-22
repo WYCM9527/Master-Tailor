@@ -4,7 +4,11 @@
 
 ## 实现提示
 
-全屏 canvas，按字格大小划成网格，每格记录当前字符、起始色、目标色与渐变进度。每帧随机挑「换字频率 %」比例的格子换字符与目标色（平滑模式把进度归零，硬切模式直接到位），然后遍历所有格子：进度 < 1 的按 0.08 递增并在起止色间线性插值，fillText 在格中心绘制。四周压暗用一层 radial-gradient 罩。等宽字体、textAlign center。
+- 全屏 canvas（devicePixelRatio 上限 2，`setTransform` 缩放），按字格大小 {{cell}} 划成网格：列数 = ceil(视口宽 / 字格)、行数 = ceil(视口高 / 字格)，每格记录当前字符、起始色、目标色与渐变进度；初始每格随机取一个字符和颜色池（{{colors}}）里的一色，进度置 1。窗口尺寸变化时重建全部格子。
+- 字符集按参数选（当前 {{glyphs}}）：latin 为 A–Z 加 0–9，binary 为 0 和 1，kana 为「アイウエオカキクケコサシスセソタチツテトナニヌネノ<>/=+*」。
+- 每帧随机挑「换字频率 {{rate}} %」比例的格子（数量 = floor(格数 × 频率 / 100)，随机抽取、可能重复抽到同一格）换字符与目标色：平滑模式把起始色定为当前正在显示的插值色、目标色从颜色池随机取、进度归零；硬切模式不做插值，进度置 1 直接显示新目标色。然后整张清空、遍历所有格子：进度 < 1 的按每帧 0.08 递增（约 12 帧走完），在起止色间按整数线性插值出 rgb，fillText 在格中心绘制。
+- 字体为 `0.8 × 字格` px 的等宽字体（ui-monospace / SFMono-Regular / Consolas），textAlign center、textBaseline middle；页面底色 #0a0a0f。
+- 四周压暗用一层 `position: fixed; inset: 0` 的 radial-gradient 罩：`radial-gradient(ellipse at center, transparent 40%, 页面底色 100%)`，不透明度 1 / 0 对应开关（当前 {{vignette}}），`pointer-events: none`。开启「减少动态效果」时不再换字换色、画布不透明度降到 0.85。
 
 ## 完成后请检查
 

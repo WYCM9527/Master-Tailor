@@ -7,7 +7,7 @@
 - 卡片绝对定位在一个居中的舞台里，每张卡的姿态写成 `transform: rotate(角度) translate(横向偏移)`：第 i 张（共 n 张，中位 mid = (n−1)/2）偏移 `(i − mid) × 间距`，倾角按 `−(i − mid)/mid × 最大倾角` 从正到负（最后一张稍微回正一点更像扑克）。
 - 进场：`scale(0) → scale(1)` 的关键帧，缓动用 CSS `linear()` 采样 elastic.out(1, 0.8) 曲线（`2^(−10t) · sin((t − 0.2)·2π/0.8) + 1`，采 40 个点），不支持 `linear()` 时退化为 `cubic-bezier(0.34, 1.56, 0.64, 1)`；每张延迟 `0.5s + i × 错开`。
 - 悬停让位：悬停卡 `rotate(0)` 保留位移；其余卡在其基础姿态上把偏移加减「让位距离」（左边的向左、右边的向右），`transition-delay = |i − hover| × 0.05s`；离开全部回基础姿态。过渡 `0.4s cubic-bezier(0.34, 1.56, 0.64, 1)`（back.out 感）。
-- 卡片 `border: 8px solid #fff; border-radius: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.2)`，图片 `object-fit: cover`。
+- 卡片 `border: {{borderWidth}} solid {{borderColor}}; border-radius: {{radius}}; box-shadow: 0 4px 10px rgba(0,0,0,0.2)`，图片 `object-fit: cover`。
 
 ## 技术要求补充
 

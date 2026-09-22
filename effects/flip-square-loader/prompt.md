@@ -6,6 +6,12 @@
 
 一个方块 div，关键帧四段（各 25%）：`rotateX(0→−180°)`、再 `rotateY(0→−180°)`、再 X 回 0、再 Y 回 0，每一帧都带 `perspective(240px)` 前缀让翻转有透视；同时在关键帧里交替设置 `background` 为颜色 A / B（颜色会随翻转过程渐变，正好模拟两面不同色）。缓动 `cubic-bezier(0.45, 0, 0.55, 1)`。
 
+- 只有一个 div，没有真正的六个面：边长 {{size}}、圆角 {{radius}}、静止底色 {{colorA}}，无边框无投影；外层舞台也设 `perspective: 240px`（与 transform 内同值），翻到 90° 时压成带梯形透视的细线。
+- 关键帧（顺序不能乱，翻回时另一轴保持 −180°）：0% `rotateX(0) rotateY(0)` + A；25% `rotateX(-180deg) rotateY(0)` + B；50% `rotateX(-180deg) rotateY(-180deg)` + A；75% `rotateX(0) rotateY(-180deg)` + B；100% 同 0%。角度都是负值，照抄符号。
+- 动画一轮 {{speed}}、infinite 循环，缓动按 CSS 默认作用在每两个关键帧之间，每翻半圈一次加速—减速、在面上短暂停顿，不是匀速连转。
+- 背景色在两帧间线性插值，90° 最薄时正好是 A、B 中间色，像换到了背面；{{colorA}} 与 {{colorB}} 对比越大换面感越强。
+- 「减少动态效果」时 `animation-play-state: paused` 定格起始姿态；切后台同样暂停。
+
 ## 完成后请检查
 
 - 交替绕两个轴翻转、每次换色；侧面时压成细线

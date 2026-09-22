@@ -5,8 +5,8 @@
 ## 实现提示
 
 - 每张卡 `position: relative; overflow: hidden`，里面铺一层绝对定位、`pointer-events: none` 的光层：`background: radial-gradient(circle at var(--x) var(--y), 光色, transparent 80%)`，默认 `opacity: 0`，`transition: opacity 0.5s ease-in-out`。
-- pointermove 时把「鼠标相对卡片的坐标」写进 `--x/--y`；pointerenter 把光层 opacity 设为亮起程度（默认 0.6），pointerleave 设回 0；focus/blur 同样处理。
-- 光色用带透明度的 rgba（默认白 25%），叠在深底上才柔；渐变到 80% 处完全透明，光斑边缘不能有硬边。
+- pointermove 时把「鼠标相对卡片的坐标」写进 `--x/--y`；pointerenter 把光层 opacity 设为亮起程度 {{intensity}}，pointerleave 设回 0；focus/blur 同样处理。
+- 光色用带透明度的 rgba：{{spotColor}} 以聚光浓度 {{spotAlpha}} 作 alpha，叠在深底上才柔；渐变到 80% 处完全透明，光斑边缘不能有硬边。
 - 标题、描述放在光层之上（`position: relative`），光斑只是氛围不遮内容。
 
 ## 技术要求补充

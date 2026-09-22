@@ -4,6 +4,13 @@
 ## 实现提示
 容器设 perspective；旧图 rotateY(0→±180deg)、新图 rotateY(∓180deg→0) 同时过渡，两面都设 backface-visibility: hidden，交接点自然落在 90°。
 
+- 居中容器宽 `min(720px, 92vw)`、宽高比 {{ratio}}、圆角 {{rounded}}、底色 #14151f；视口 `perspective: 1100px`，幻灯片绝对定位叠满，图片 object-fit: cover。
+- 三态类：默认 `rotateY(180deg)`（背面被隐藏），`.is-active` 为 `transform: none; z-index: 1`，`.is-prev` 为 `rotateY(-180deg)`。切换时新卡先关过渡、瞬移到进入侧（下一张 +180°、上一张 −180°）并强制 reflow，再同时让旧卡转向离开侧（−180° / +180°）、新卡加 active 转回 0。transform 过渡时长 {{duration}}，缓动 `cubic-bezier(0.45, 0, 0.25, 1)`。
+- 字幕贴底：内边距 `42px 20px 14px`，白字 18px / 600 / 字距 0.02em，透明→`rgba(0,0,0,0.62)` 竖向渐变。
+- 箭头：40px 圆按钮，底 `rgba(10,10,15,0.55)`，白色 18px ‹ ›，距左右 12px 垂直居中；悬停底色换 {{accent}}、字 #111。
+- 分页器：圆点底 10px、间距 7px、8px 圆点 40% 白，当前点强调色 + scale(1.25)；数字为右下角胶囊（各 12px，`3px 10px` 内边距，同箭头底色，12.5px 等宽「N / M」）；进度条贴底 3px，轨道 18% 白、填充强调色，宽 = (序号 + 1) / 总数。
+- 自动播放间隔 {{interval}}，间隔为 0、单张或减少动态时不启动。
+
 ## 技术要求补充
 - 支持鼠标拖拽和触摸滑动切换（用 Pointer Events 统一处理，滑动超过约 50px 判定翻页）
 - 支持键盘操作：容器可聚焦，← / → 切换；聚焦或悬停时暂停自动播放

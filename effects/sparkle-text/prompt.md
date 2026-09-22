@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-标题放在 `position: relative` 的容器里，星星是绝对定位的内联 SVG（21×21 的四角星路径），`left / top` 用随机百分比落在容器范围内。关键帧 0.8s 无限循环：`0% { opacity 0; scale(0) rotate(75deg) } 50% { opacity 1; scale(随机 0.3–1.3) rotate(120deg) } 100% { opacity 0; scale(0) rotate(150deg) }`，每颗星给随机 0–2s 的 animation-delay 错开节奏。生成时给每颗星一个 5–15 秒的定时器，到期重新随机位置、大小、颜色。星星层级在文字下方或旁边即可，不需要遮挡文字。
+标题放在 `position: relative` 的容器里，星星是绝对定位的内联 SVG（viewBox 固定 21×21 的四角星路径，渲染尺寸 `width / height` 都取 {{star}}），`left / top` 用随机百分比落在容器范围内。关键帧 0.8s 无限循环：`0% { opacity 0; scale(0) rotate(75deg) } 50% { opacity 1; scale(随机 0.3–1.3) rotate(120deg) } 100% { opacity 0; scale(0) rotate(150deg) }`，每颗星给随机 0–2s 的 animation-delay 错开节奏。生成时给每颗星一个 5–15 秒的定时器，到期重新随机位置、大小、颜色。星星层级在文字下方或旁边即可，不需要遮挡文字。
 
 ## 完成后请检查
 

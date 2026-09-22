@@ -5,7 +5,7 @@
 ## 实现提示
 
 - 滑轨 transform：`scaleX(1 + overflow/轨宽) scaleY(1 − 0.2 × overflow/最大拉伸)`，`transform-origin` 在往右拽时为 left、往左拽时为 right（从远端为轴拉长）；悬停变粗叠乘在 scaleY 上。
-- overflow 由「指针超出轨道的像素距离」经 sigmoid 软限得到：`decay(x, max) = (2 × (1/(1 + e^(−x/max)) − 0.5)) × max`，最大拉伸默认 50px。
+- overflow 由「指针超出轨道的像素距离」经 sigmoid 软限得到：`decay(x, max) = (2 × (1/(1 + e^(−x/max)) − 0.5)) × max`，其中 max 就是最大拉伸 {{stretch}}。
 - 端点图标 `translateX(±overflow) scale(pulse)`，0.2s ease-out 过渡；指针区域从「轨内」变为「左外 / 右外」的瞬间，把该侧 pulse 设为 1.4、125ms 后回 1。
 - 松手：不用 CSS transition，而是用欠阻尼弹簧解析式把 overflow 从当前值振荡到 0——刚度 170、阻尼 `26 × (1 − 0.4)`、质量 1：`ζ = c/(2√(mk))`，`ω0 = √(k/m)`，`ωd = ω0√(1 − ζ²)`，位移 `e^(−ζω0 t)(cos ωd t + (ζω0/ωd) sin ωd t)`，每帧写回变形量，约 1 秒收敛。
 - 用 setPointerCapture 处理指针离开元素；拖动中直接赋值不做过渡保证跟手。

@@ -1,6 +1,14 @@
 ## 效果描述
 一张图铺满容器，有标题的图片底部压一条从透明到深色的渐变标题条。切换时新图从一侧水平滑入、旧图向另一侧滑出，先快后慢，首尾相接无缝循环，不会出现「倒带回滚」。按自动播放间隔自动切换，鼠标悬停时暂停、移开后恢复；底部有分页器，可选的左右箭头是半透明圆钮，悬停时变为强调色。
 
+## 实现提示
+不用长轨道，用「三态类切换」：幻灯片都绝对定位铺满容器，默认态在右侧待命 `translateX(100%)`，`is-active` 态 `transform: none; z-index: 1`，`is-prev` 态在左侧 `translateX(-100%)`；每次只动相邻两张，循环天然无缝。
+- 容器宽 `min(720px, 92vw)`，`aspect-ratio` 取 {{ratio}}，圆角 {{rounded}}，`overflow: hidden`，底 #14151f。幻灯片 `transition: transform {{duration}} cubic-bezier(0.33, 1, 0.68, 1)`。
+- 切换：目标张先无过渡放到进入侧（往前翻加 `is-prev` 放左边，否则留右侧默认态），读 `offsetWidth` 强制 reflow 后恢复过渡；再把当前张退到出口侧（往后翻加 `is-prev`，否则去掉 `is-active` 回右侧）、目标张加 `is-active`。
+- 标题条贴底 `padding: 42px 20px 14px`，白字 18px / 600、`letter-spacing: 0.02em`，底 `linear-gradient(transparent, rgba(0,0,0,0.62))`。
+- 箭头（「显示左右箭头」= {{arrows}} 时生成）：40px 圆钮，底 `rgba(10,10,15,0.55)`，白色 ‹ › 18px，垂直居中、距边 12px，悬停底色换 {{accent}}、字色 #111，`transition 0.15s`。
+- 分页器（样式 {{pager}}）：圆点居中距底 10px、间距 7px，8px `rgba(255,255,255,0.4)`，当前项 {{accent}} 并 `scale(1.25)`；数字为右下角距边 12px 的胶囊，`padding: 3px 10px`，底同箭头，白色 12.5px 等宽字「当前 / 总数」；进度条贴底 3px，轨道 `rgba(255,255,255,0.18)`，填充 {{accent}}，宽 = 序号 ÷ 总数。「减少动态效果」时 `transition: none`。
+
 ## 技术要求补充
 - 支持鼠标拖拽和触摸滑动切换（用 Pointer Events 统一处理，横向滑动超过约 50px 判定翻页）
 - 支持键盘操作：容器可聚焦，按 ← / → 切换上一张 / 下一张；聚焦或悬停时暂停自动播放

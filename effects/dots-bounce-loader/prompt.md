@@ -4,7 +4,15 @@
 
 ## 实现提示
 
-三个 `inline-block` 圆形元素 flex 排列、底对齐。共用一段关键帧：0% 与 60% 在原位，30% 处 `translateY(−高度) scale(0.95, 1.05)`，62% 处 `scale(1.1, 0.9)` 落地压扁，之后停到 100%；上升段用 `ease-out`、下落段用 `ease-in`（在关键帧里分段写 `animation-timing-function`）。三颗点的 `animation-delay` 分别为 0 / 0.12s / 0.24s。加 `role="status"` 与 aria-label。
+三个 `inline-block` 圆形元素 flex 排列、底对齐。共用一段关键帧：0% 与 60% 在原位，30% 处 `translateY(−高度) scale(0.95, 1.05)`，62% 处 `scale(1.1, 0.9)` 落地压扁，之后到 100% 慢慢回到原形（不再位移）；上升段用 `ease-out`、下落段用 `ease-in`（在关键帧里分段写 `animation-timing-function`）。三颗点的 `animation-delay` 分别为 0 / 0.12s / 0.24s。加 `role="status"` 与 aria-label。
+
+补充常量与细节（点径 {{size}}、间距 {{gap}}、弹起高度 {{height}}、一轮 {{speed}}、颜色 {{color}} 均取参数）：
+
+- 容器 `display: flex; align-items: flex-end; gap: 间距`，高度固定为 `点径 + 弹起高度`（预留最高点的空间，弹跳时容器不变高），整体在页面里 grid 居中。
+- 每颗点 `width = height = 点径`、`border-radius: 50%`、填圆点颜色，`animation: 一轮时长 infinite`，不设方向反转，上抛-下落-压扁-复原全由一段关键帧完成。
+- 时序细节：0%、60%、100% 三帧都是 `translateY(0) scale(1, 1)` 且带 `animation-timing-function: ease-out`；30% 帧带 `ease-in`；62% 帧不写缓动（用默认 `ease`）。于是 0→30% 上抛减速、30→60% 下落加速、60→62% 在 2% 的时间里迅速压成 `scale(1.1, 0.9)`、62→100% 再用近四成周期慢慢复原——落地「啪」一下再缓缓回弹的橡皮感来自这里。
+- 延迟 0 / 0.12s / 0.24s 是固定秒数、不随一轮时长缩放：周期越短相邻点相位差越大；延迟为正，刷新后前 0.24s 内后两颗点静止等待。
+- 页面切后台时把动画 `animation-play-state` 置为 paused、回前台恢复；减少动态时动画暂停。容器 `role="status"`、`aria-label="加载中"`。
 
 ## 完成后请检查
 

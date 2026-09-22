@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-关键词包在一个 `position: relative` 的 span 里，把文字同时写进 `data-text` 属性。用 `::after` 伪元素 `content: attr(data-text)` 复制一份文字，绝对定位向右下偏移 0.04em、z-index 放到本体之下。伪元素的背景用 `linear-gradient(45deg, transparent 45%, 投影色 45%, 投影色 55%, transparent 0)` 平铺、`background-size: 0.06em 0.06em`，再 `background-clip: text; color: transparent` 把纹理裁进字形。流动用关键帧 `background-position: 0 0 → 100% -100%`，15s 线性无限循环。
+关键词包在一个 `position: relative` 的 span 里，把文字同时写进 `data-text` 属性。用 `::after` 伪元素 `content: attr(data-text)` 复制一份文字，绝对定位向右下偏移 {{offset}}（`top` 与 `left` 同值）、z-index 放到本体之下。伪元素的背景用 `linear-gradient(45deg, transparent 45%, 投影色 45%, 投影色 55%, transparent 0)` 平铺、`background-size` 取 {{hatch}}（宽高同值），再 `background-clip: text; color: transparent` 把纹理裁进字形。流动用关键帧 `background-position: 0 0 → 100% -100%`，一轮时长取 {{speed}}，线性无限循环。
 
 ## 完成后请检查
 

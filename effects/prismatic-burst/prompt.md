@@ -4,12 +4,12 @@
 
 ## 实现提示
 
-- 全屏 WebGL2 片元着色器做 44 步光线步进：视线 `normalize((2·像素 − 分辩率, 高))`；每步的采样点 `P = marchT × dir`，`P.z −= 2`，投到半径 10 的球面 `Pl = P × 10/|P|`，再按运动方式旋转——平面：`Pl.xz` 乘 `cos(0.2t + (0, 33, 11, 0))` 组成的 2×2 矩阵；三维：`rotZ(0.17t)·rotY(0.21t)·rotX(0.31t)`；鼠标：`rotY(0.6·mx)·rotX(0.6·my)`。
-- 步长 `min(|P| − 0.3, 噪声 × 抖动) + 0.1`。
-- 光线图案 `ray = smoothstep(0.5, 0.7, sin(x + cos(y)cos(z)) × sin(z + sin(y)cos(x + t)))`；光束分组 N > 0 时再乘 `smoothstep(0.15, 0.95, (0.5 + 0.5·cos(N × atan(y, x)))³)`。
-- 扭曲：随 marchT 增长（`smoothstep(0.35, 3, marchT)`）的两次弯折，角度由三轴正弦和 `bendAngle` 给出，分别旋转 `xz` 与 `xy`。
+- 全屏 WebGL2 片元着色器做 44 步光线步进，下文的 t = 运行秒数 × 速度（速度取 {{speed}}）：视线 `normalize((2·像素 − 分辨率, 高))`；每步的采样点 `P = marchT × dir`，`P.z −= 2`，投到半径 10 的球面 `Pl = P × 10/|P|`，再按运动方式旋转——平面：`Pl.xz` 乘 `cos(0.2t + (0, 33, 11, 0))` 组成的 2×2 矩阵；三维：`rotZ(0.17t)·rotY(0.21t)·rotX(0.31t)`；鼠标：`rotY(0.6·mx)·rotX(0.6·my)`。
+- 步长 `min(|P| − 0.3, 噪声 × 抖动) + 0.1`（抖动量固定为 0，所以 |P| ≥ 0.3 时步长恒为 0.1）。
+- 光线图案 `ray = smoothstep(0.5, 0.7, sin(x + cos(y)cos(z)) × sin(z + sin(y)cos(x + t)))`；光束分组 N（{{rayCount}}）> 0 时再乘 `smoothstep(0.15, 0.95, (0.5 + 0.5·cos(N × atan(y, x)))³)`。
+- 扭曲：随 marchT 增长（`smoothstep(0.35, 3, marchT)`）的两次弯折，幅度 = 扭曲（{{distort}}）× 0.15、第二次减半，角度由三轴正弦和 `bendAngle` 给出，分别旋转 `xz` 与 `xy`。
 - 颜色：默认光谱 `1 + cos(3·marchT + (0, 1, 2))`；自定义色表按 `smoothstep(fract(0.25·marchT))` 取色 × 2。每步贡献 `0.05/(0.4 + 步长) × smoothstep(5, 0, |P|) × 颜色 × ray`。
-- 最后乘边缘渐暗（到中心归一化距离过五次平滑、开 1.5 次幂，加微量噪声）与亮度。鼠标以时间常数 `0.02 + 阻尼 × 0.5` 秒平滑。
+- 最后乘边缘渐暗（到中心归一化距离过五次平滑、开 1.5 次幂，加微量噪声）与亮度（{{intensity}}）。鼠标以时间常数 `0.02 + 阻尼 × 0.5` 秒平滑（阻尼取 {{hoverDampness}}）。
 
 ## 技术要求补充
 

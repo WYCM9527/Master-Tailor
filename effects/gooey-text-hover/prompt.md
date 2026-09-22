@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-每个菜单项是一张 SVG，里面两个 `<text>` 叠在同一位置：A 词（默认色）和 B 词（强调色、opacity 0），两者包在一个 `<g>` 上套滤镜。滤镜三步：`feGaussianBlur`（stdDeviation 由 JS 控制）→ `feColorMatrix` 把 alpha 乘 20 减 8（阈值，把模糊边缘切回实边）→ `feComposite operator="atop"` 用原图给结果着色。悬停时用 requestAnimationFrame 推进进度 s 从 0 到 1：`stdDeviation = 峰值 × sin(πs)`（中途最糊、两端为 0），A 的 opacity = cos(πs/2)^1.2、B = sin(πs/2)^1.2（余弦交叉，中途两词都还较实，叠加处才能过阈值融成一团）；离开时从当前进度反向推进。滤镜只在融化过程中挂到 `<g>` 上、结束即摘掉——常开时阈值会把文字的抗锯齿边缘切成锯齿。
+每个菜单项是一张 SVG，里面两个 `<text>` 叠在同一位置：A 词（默认色）和 B 词（强调色、opacity 0），两者包在一个 `<g>` 上套滤镜。滤镜三步：`feGaussianBlur`（stdDeviation 由 JS 控制）→ `feColorMatrix` 把 alpha 乘 20 减 8（阈值，把模糊边缘切回实边）→ `feComposite operator="atop"` 用原图给结果着色。悬停时用 requestAnimationFrame 推进进度 s 从 0 到 1（走完全程耗时 = 融化时长 {{duration}} × |目标 − 当前进度|）：`stdDeviation = 峰值 × sin(πs)`（中途最糊、两端为 0），A 的 opacity = cos(πs/2)^1.2、B = sin(πs/2)^1.2（余弦交叉，中途两词都还较实，叠加处才能过阈值融成一团）；离开时从当前进度反向推进。滤镜只在融化过程中挂到 `<g>` 上、结束即摘掉——常开时阈值会把文字的抗锯齿边缘切成锯齿。
 
 ## 完成后请检查
 

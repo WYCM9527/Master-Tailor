@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-一行 flex 布局的 `<img>`，每张 `margin-left: −重叠量`（首张用容器 padding 抵消），`border: 6px solid #fff; border-radius: 18px; object-fit: cover`，各自的倾角写进 CSS 变量 `--angle`（取一组正负交错的预设值再按最大倾角缩放）。初始态 `transform: rotate(var(--angle)) scale(0.2); opacity: 0`，进场态 `scale(1); opacity: 1`，过渡 `transform 0.3s cubic-bezier(0.34, 1.3, 0.64, 1)`（过冲），第 i 张 `transition-delay = i × 间隔`。悬停 `rotate(0) scale(1.06); z-index: 10` 且延迟归零。重放：移除进场类、等两帧再加回。
+一行 flex 布局的 `<img>`，每张 `margin-left: −重叠量`（首张用容器 padding 抵消），`border: {{frameWidth}} solid {{frame}}; border-radius: 18px; object-fit: cover`，各自的倾角写进 CSS 变量 `--angle`（取一组正负交错的预设值 8、−15、−5、10、−5、12、−9、6 度，按张数循环，再除以 15 乘最大倾角 {{tilt}}）。初始态 `transform: rotate(var(--angle)) scale(0.2); opacity: 0`，进场态 `scale(1); opacity: 1`，过渡 `transform 0.3s cubic-bezier(0.34, 1.3, 0.64, 1)`（过冲），第 i 张 `transition-delay = i × 间隔`。悬停 `rotate(0) scale(1.06); z-index: 10` 且延迟归零。重放：移除进场类、等两帧再加回。
 
 ## 完成后请检查
 

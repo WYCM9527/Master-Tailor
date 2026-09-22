@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-舞台 `position: fixed; inset: 0; perspective: 1000px`，底层铺一张 `background-size: cover` 的背景图。每块碎片是一个铺满舞台的容器（`transform-style: preserve-3d`），内含同一张背景图的全尺寸副本，用 `clip-path: polygon(左 上, 右 上, 右 下, 左 下)` 只留自己的矩形——因为尺寸与定位和底图完全相同，纹理天然对齐；再放一个与矩形同位同尺寸的阴影元素（`box-shadow: 0 30px 60px rgba(0,0,0,浓度)`、`translateZ(-1px)` 垫在图后面），默认 opacity 0。悬停给舞台加类：碎片 `transform: translate3d(视差x, 视差y, 浮起高度)`，高度按序递增随机（`0.15–1 × 最大浮起` 排序），`transition-delay` 反序错开；阴影 opacity → 1。视差每帧用 0.08 插值追鼠标，偏移 = 归一化鼠标位置 × 幅度 × 该片深度（0.3–1，由浮起高度换算）。
+舞台 `position: fixed; inset: 0; perspective: 1000px`，底层铺一张 `background-size: cover` 的背景图。每块碎片是一个铺满舞台的容器（`transform-style: preserve-3d`），内含同一张背景图的全尺寸副本，用 `clip-path: polygon(左 上, 右 上, 右 下, 左 下)` 只留自己的矩形——因为尺寸与定位和底图完全相同，纹理天然对齐；再放一个与矩形同位同尺寸的阴影元素（`box-shadow: 0 30px 60px rgba(0,0,0,{{shadow}})`、`translateZ(-1px)` 垫在图后面），默认 opacity 0。悬停给舞台加类：碎片 `transform: translate3d(视差x, 视差y, 浮起高度)`，过渡 `transform {{duration}} cubic-bezier(0.2, 0.8, 0.2, 1)`，高度按序递增随机（`0.15–1 × {{lift}}` 排序），`transition-delay = (片数 − 1 − 序号) × {{stagger}}` 反序错开（浮得最高的片最先起）；阴影 opacity → 1。视差每帧用 0.08 插值追鼠标，偏移 = 归一化鼠标位置（−1…1）× {{parallax}} × 该片深度（0.3–1，由浮起高度换算）。
 
 ## 完成后请检查
 

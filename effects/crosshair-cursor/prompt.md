@@ -6,7 +6,7 @@
 
 指到目标那一瞬间四条线要「被电一下」：两个 SVG 滤镜（feTurbulence fractalNoise 一层 + feDisplacementMap scale 40），横线用 X 滤镜、竖线用 Y 滤镜；进入目标时挂上滤镜并在 0.5s 内把 baseFrequency 从 1 缓出到 0（power1），结束后移除滤镜——线条会先剧烈扭曲再迅速平直。
 
-四条绝对定位的 1px div 组成十字：水平两段从屏幕左右边缘延伸到交叉点 ± 留空，竖直两段同理，每帧按 lag 系数做插值跟随（x += (目标x − x) × 迟滞），留空半径也用插值在普通值与目标值之间过渡。pointermove 里用 e.target.closest 判断是否指在目标元素上。body 设 cursor: none 隐藏系统光标；坐标读数用等宽字放在交叉点右下。
+四条绝对定位的 1px div 组成十字：水平两段从屏幕左右边缘延伸到交叉点 ± 留空，竖直两段同理，每帧按 lag 系数做插值跟随（x += (目标x − x) × {{lag}}），留空半径也以每帧 20% 的插值在 {{gap}} 与 {{hoverGap}} 之间过渡。pointermove 里用 e.target.closest 判断是否指在目标元素上。body 设 cursor: none 隐藏系统光标；坐标读数用等宽字放在交叉点右下。
 
 ## 完成后请检查
 

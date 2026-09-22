@@ -6,6 +6,12 @@
 
 三个圆形 div 绝对定位在同一中心，关键帧 `translateX(−距离) scale(0.9) → translateX(+距离) scale(1.1) → 回`，`ease-in-out` 无限，三颗的 `animation-delay` 为 0 / −1/3 / −2/3 周期。黏连靠 SVG 滤镜套在容器上：`feGaussianBlur stdDeviation = 粘稠度` 再 `feColorMatrix` 把 alpha 乘 20 减 9——模糊后两团重叠区域的半透明被阈值切成实体，形成细颈与融合。容器要比运动范围大一圈，别让滤镜裁切。
 
+- 容器：`position: relative`，宽 `2 × {{travel}} + 2 × {{size}}`、高 `2 × {{size}}`，整体挂 `filter: url(#goo)`；页面 grid 居中，容器带 `role="status" aria-label="加载中"`；滤镜定义放在 `width="0" height="0"` 的隐藏 SVG 里。
+- 液滴：三个 `<i>`，`top: 50%; left: 50%`，宽高 {{size}}，`margin: −{{size}} / 2` 把圆心对到容器中心，`border-radius: 50%`，纯色 {{color}}，不加边框和投影——实边全靠阈值切出来。
+- 动画：时长取一轮时长 {{speed}}，0%/100% `translateX(−{{travel}}) scale(0.9)`、50% `translateX({{travel}}) scale(1.1)`；三颗延迟 `0`、`−1/3`、`−2/3` 个一轮时长写进内联 CSS 变量，负延迟让三颗一开始就错开相位。
+- 滤镜链：`feGaussianBlur in="SourceGraphic"`，`stdDeviation` 取粘稠度 {{goo}} 的数值（该属性不吃 CSS 变量，用 JS 读后写入）→ `feColorMatrix type="matrix"`，前三行单位阵、第四行 `0 0 0 20 −9`：alpha ≤ 0.45 全透、≥ 0.5 全实，阈值够硬才没有灰边。
+- 「减少动态效果」时 `animation-play-state: paused`；切后台同样暂停。
+
 ## 完成后请检查
 
 - 液滴相遇时有细颈黏连、融合、再拉断的过程，不是硬重叠

@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-每种颜色一个绝对定位的 div，`border-radius: 30%`、`filter: blur(64px)`、`mix-blend-mode: screen`（深底上叠色变亮），`opacity 0.55`。位置：围着屏幕中心均匀摆一圈（第 i 团角度 `i/n × 2π − π/2`，半径 ≈ 28% × 散开范围）。一段 `ease-in-out infinite alternate` 的关键帧同时改 `scale`（1 → 1.2 → 0.85 → 1.1）和小幅 `translate`（±8%），每团给不同的负 `animation-delay` 让相位错开。所有几何用 `translate(-50%, -50%)` 居中后再叠加动画位移。页面在后台时暂停动画。
+每种颜色一个绝对定位的 div，`border-radius: 30%`、`filter: blur({{blur}})`、`mix-blend-mode: screen`（深底上叠色变亮），`opacity {{opacity}}`。位置：围着屏幕中心均匀摆一圈（第 i 团角度 `i/n × 2π − π/2`，半径 ≈ 28% × 散开范围）。一段 `ease-in-out infinite alternate` 的关键帧同时改 `scale`（1 → 1.2 → 0.85 → 1.1）和小幅 `translate`（±8%），每团给不同的负 `animation-delay` 让相位错开。所有几何用 `translate(-50%, -50%)` 居中后再叠加动画位移。页面在后台时暂停动画。
 
 ## 完成后请检查
 

@@ -4,7 +4,13 @@
 
 ## 实现提示
 
-把文案拆成逐字或逐词的 inline-block span，每个 span 用同一条 keyframes（filter: blur 从起始模糊到 0、opacity 0→1、translateY 从方向 × 0.6em 到 0，中途在 50% 过一个半清晰略过头的点），animation-delay = 序号 × 相邻错开；方向用 CSS 变量 ±1 乘进位移。循环用 setInterval 重新渲染一遍 span。
+把文案拆成逐字或逐词的 inline-block span，每个 span 用同一条 keyframes（filter: blur 从起始模糊到 0、opacity 0→1、translateY 从方向 × −0.6em 到 0，中途在 50% 过一个半清晰略过头的点），animation-delay = 序号 × 相邻错开；方向用 CSS 变量 ±1 乘进位移。循环用 setInterval 重新渲染一遍 span。
+
+- 容器是居中的 `<p>`：`max-width: 86vw; text-align: center; font-weight: 600; line-height: 1.5`，字号 `{{fontSize}}`、颜色 `{{color}}`、字体 {{font}}；整句写进容器 `aria-label`，span 一律 `aria-hidden`。
+- 拆分：逐字 `Array.from(text)`（空格也算一个单位）；逐词 `text.split(/(\s+)/)` 滤掉空串，空白段也是独立 span。span `display: inline-block; white-space: pre`，空格才不被折叠。
+- 方向系数 `--dir` 取自浮现方向（「从上方落下」为 -1、「从下方升起」为 1，当前 {{direction}}）。span 初始态 `filter: blur({{blurAmount}}); opacity: 0; transform: translateY(calc(var(--dir) × -0.6em))`。
+- 关键帧 50%：`blur(calc({{blurAmount}} × 0.35))`、`opacity 0.6`、`translateY(calc(var(--dir) × 0.12em))`（反向略过头）；100%：`blur(0); opacity: 1; transform: none`。缓动 `cubic-bezier(0.2, 0.7, 0.2, 1)`、`forwards`，时长 `{{duration}}`，`animation-delay` 走每个 span 的内联变量 `--d = 序号 × {{stagger}}`。
+- 循环：一轮 = 单位数 × {{stagger}} + {{duration}} + 1.8s 停留，到点清空容器重新生成全部 span（重建即重播），`document.hidden` 时跳过这一轮；`prefers-reduced-motion` 下不起定时器，CSS 直接 `animation: none; filter: none; opacity: 1; transform: none`。
 
 ## 完成后请检查
 

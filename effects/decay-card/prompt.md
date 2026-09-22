@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-- 图片放在 SVG 里的 `<image>` 上，套一个滤镜：`feTurbulence`（type turbulence，baseFrequency ≈ 0.015，numOctaves 5，stitchTiles）→ `feDisplacementMap`（in=SourceGraphic，in2=湍流，xChannelSelector R、yChannelSelector B），滤镜和图像的 x/y/width/height 都设 0%–100%。SVG 的 viewBox 四周留出余量（如 `-60 -75 720 900` 放 600×750 的图），扭曲时边缘不会被裁。
+- 图片放在 SVG 里的 `<image>` 上，套一个滤镜：`feTurbulence`（type turbulence，baseFrequency {{baseFrequency}}，numOctaves {{numOctaves}}，stitchTiles）→ `feDisplacementMap`（in=SourceGraphic，in2=湍流，xChannelSelector R、yChannelSelector B），滤镜和图像的 x/y/width/height 都设 0%–100%。SVG 的 viewBox 四周留出余量（如 `-60 -75 720 900` 放 600×750 的图），扭曲时边缘不会被裁。
 - 每帧：鼠标屏幕位置映射到 ±120px 位移、±10° 旋转，以 10% 阻尼趋近；位移超过「漂移范围」的部分只保留 20%（软边界）；结果写到卡片的 `transform`。
 - 溶解量：这一帧鼠标走过的像素距离（0–200）线性映射到 0–最大扭曲，以 6% 阻尼趋近后写进 `feDisplacementMap` 的 `scale`——所以快动就散、停下就凝，这是效果的灵魂。
 - 文字用 `text-shadow` 提一点可读性，首行更大加粗。

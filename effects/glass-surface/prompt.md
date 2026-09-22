@@ -6,7 +6,7 @@
 
 - 核心是 `backdrop-filter: url(#滤镜)`——把一个 SVG 滤镜作用在面板背后的内容上（Chrome / Edge 支持；不支持的浏览器检测 `el.style.backdropFilter = 'url(#x)'` 是否被接受，不行就回退到 `blur(12px) saturate(1.8) brightness(1.2)` 的普通毛玻璃）。
 - 位移图用 JS 拼一个 data-URI SVG：黑底；一层从右到左由透明到纯红的渐变矩形（红通道 = x 位移）；一层从上到下由透明到纯蓝的渐变矩形，`mix-blend-mode: difference`（蓝通道 = y 位移）；最后在中央盖一块向内缩「短边 × 边宽比例 × 0.5」的灰色矩形（`hsl(0 0% 亮度% / 0.93)`，`filter: blur(柔化px)`）——灰色把中央位移压成 0，于是只有边缘折射，且过渡柔和。矩形都用同一个 rx 圆角。
-- 滤镜链：`feImage` 载入位移图 → 三个 `feDisplacementMap`（in=SourceGraphic，xChannelSelector R，yChannelSelector G，scale 分别为「强度」「强度 + 10 × 色散」「强度 + 20 × 色散」，强度默认 −180）→ 各接一个 `feColorMatrix` 只留红 / 绿 / 蓝一个通道 → 两次 `feBlend mode=screen` 合并 → `feGaussianBlur stdDeviation=0.7`。三通道位移量不同就是色散。
+- 滤镜链：`feImage` 载入位移图 → 三个 `feDisplacementMap`（in=SourceGraphic，xChannelSelector R，yChannelSelector G，scale 分别为「强度」「强度 + 10 × 色散」「强度 + 20 × 色散」，强度即 {{distortionScale}}、色散即 {{chromatic}}）→ 各接一个 `feColorMatrix` 只留红 / 绿 / 蓝一个通道 → 两次 `feBlend mode=screen` 合并 → `feGaussianBlur stdDeviation=0.7`。三通道位移量不同就是色散。
 - 面板叠多层 `box-shadow`：两层 inset 白色细光边（`0 0 2px 1px` 65% 透明、`0 0 10px 4px` 85% 透明）加内外各三层极淡的深色柔影，模拟厚度。
 - 拖动：pointerdown 记录偏移，pointermove 改 left/top，`setPointerCapture` 防止拖出面板丢事件。
 

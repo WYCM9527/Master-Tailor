@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-节点是普通的 flex 布局圆形 div；连线画在一张铺满容器、垫在节点之下的 SVG 里。用 `getBoundingClientRect()` 取每对节点的中心，生成二次贝塞尔 `M x1,y1 Q (x1+x2)/2,(y1 − 弯曲) x2,y2`，每条线画两遍：底线 `stroke-opacity 0.2`，亮线 `stroke: url(#渐变)`。渐变用 `gradientUnits="userSpaceOnUse"`，四个 stop：起始色透明 → 起始色 → 32.5% 结束色 → 结束色透明；每帧用 requestAnimationFrame 更新它的 x1/x2：x2 从 0 走到容器宽度、x1 领先 10% 宽度，进度用 expo-out 缓动（`1 − 2^(−10t)`），反向的线把坐标镜像。窗口尺寸变化时重新取节点位置重画。
+节点是普通的 flex 布局圆形 div；连线画在一张铺满容器、垫在节点之下的 SVG 里。用 `getBoundingClientRect()` 取每对节点的中心，生成二次贝塞尔 `M x1,y1 Q (x1+x2)/2,(y1 − 弯曲) x2,y2`，每条线画两遍：底线 `stroke-opacity {{lineOpacity}}`，亮线 `stroke: url(#渐变)`。渐变用 `gradientUnits="userSpaceOnUse"`，四个 stop：起始色透明 → 起始色 → 32.5% 结束色 → 结束色透明；每帧用 requestAnimationFrame 更新它的 x1/x2：x2 从 0 走到容器宽度、x1 领先 10% 宽度，进度用 expo-out 缓动（`1 − 2^(−10t)`），反向的线把坐标镜像。窗口尺寸变化时重新取节点位置重画。
 
 ## 完成后请检查
 

@@ -3,6 +3,10 @@
 
 ## 实现提示
 上层图用 clip-path: inset(0 X% 0 0) 裁切，拖动时同步分割线 left 与裁切比例；用 Pointer Events 统一处理鼠标与触摸，按下即跳到指针位置。
+- 容器 `width: min(680px, 92vw); aspect-ratio: 16 / 10; border-radius: {{rounded}}; overflow: hidden; cursor: ew-resize; touch-action: pan-y`，底色 #14151f 兜住图片未加载的空白；两张占位图 `<img>` 绝对铺满、`object-fit: cover`、禁选中与拖拽。
+- 位置只存一个 CSS 变量 `--pos`（初始 `{{startPos}}`）：上层图 `clip-path: inset(0 calc(100% − var(--pos)) 0 0)`；竖线 `left: var(--pos); width: {{lineWidth}}; translateX(-50%)` 贯穿上下，背景 `{{accent}}`。
+- 手柄居中压在竖线上：40px 圆、背景 `{{accent}}`、#111111 的「‹›」（15px、700 字重），`box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45)`。角标 `top: 12px`，「前」贴右、「后」贴左各 12px，`padding: 3px 12px; border-radius: 999px`，底 `rgba(10, 10, 15, 0.6)`、白字 12.5px、`letter-spacing: 0.08em`。竖线、手柄、角标都 `z-index: 2; pointer-events: none`。
+- `pointerdown` 时 `setPointerCapture` 并立刻 `pos = clamp((clientX − rect.left) / rect.width × 100, 0, 100)`，`pointermove` 持续更新；键盘步进时给容器加 `smooth` 类（`clip-path` 与 `left` 各 `transition 0.2s ease`），按下即移除。
 
 ## 技术要求补充
 - 拖拽用 Pointer Events 且必须实时跟手（拖动中不能有过渡动画）；在容器任意位置按下都有效，不必精确点中手柄

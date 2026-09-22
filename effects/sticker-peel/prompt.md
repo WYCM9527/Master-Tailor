@@ -4,11 +4,11 @@
 
 ## 实现提示
 
-- 结构三层，全部是同一张图：①正面 `img`，`clip-path: polygon` 把上方 `peel%` 裁掉（多边形四角向外留 12px 余量，避免投影被切）；②背面翻片：正面的副本 `transform: scaleY(-1)`，`top: calc(−100% + 2 × peel − 1px)`，`clip-path` 只露出 0–peel% 那一条——上下翻转后正好像沿折线翻下来贴在正面上；背面图套一个 `feColorMatrix` 压成半透明白灰模拟背胶；③翻片的影子：再一份翻片 `filter: brightness(0) blur(8px)`、`opacity 0.4`、偏移 (8px, 16px)。
-- `peel` 是 CSS 变量：默认 0，悬停 30%、按住 40%，`clip-path` 与 `top` 用 0.6s ease-out 过渡。
-- 翻折方向：外层容器 `rotate(方向角)`，内层贴纸 `rotate(歪斜 − 方向角)` 抵消，这样折线永远在「上方」的逻辑不变、只是整体转了方向。
-- 高光：SVG 滤镜 `feGaussianBlur(SourceAlpha) → feSpecularLighting(specularExponent 100, specularConstant = 高光强度, fePointLight z=300) → feComposite 叠回原图并按 alpha 裁`；pointermove 把光源 x/y 设为鼠标相对贴纸的坐标，翻片那一份的 y 取 `高度 − y`（因为它被上下翻转了）。
-- 投影用 `feDropShadow(dx 2, dy 4, stdDeviation 3 × 浓度, 透明度 = 浓度)`。拖拽用 pointer 事件改外层 translate。
+- 结构三层，全部是同一张图（贴纸容器宽 {{size}}，图 `width: 100%; height: auto`，圆角 {{rounded}}）：①正面 `img`，`clip-path: polygon` 把上方 `peel%` 裁掉（多边形四角向外留 12px 余量，避免投影被切）；②背面翻片：正面的副本 `transform: scaleY(-1)`，`top: calc(−100% + 2 × peel − 1px)`，`clip-path` 只露出 0–peel% 那一条——上下翻转后正好像沿折线翻下来贴在正面上；背面图套一个 `feColorMatrix` 压成半透明白灰模拟背胶；③翻片的影子：再一份翻片 `filter: brightness(0) blur(8px)`、`opacity 0.4`、偏移 (8px, 16px)。
+- `peel` 是 CSS 变量：初始 0，悬停 {{peelHover}}、按住 {{peelActive}}，`clip-path` 与 `top` 用 0.6s ease-out 过渡。
+- 翻折方向：外层容器 `rotate(方向角)`（从上 / 下 / 右 / 左翻分别取 0° / 180° / 90° / 270°），内层贴纸 `rotate({{rotate}} − 方向角)` 抵消，这样折线永远在「上方」的逻辑不变、只是整体转了方向。
+- 高光：SVG 滤镜 `feGaussianBlur(SourceAlpha) → feSpecularLighting(specularExponent 100, specularConstant = {{lighting}}, fePointLight z=300) → feComposite 叠回原图并按 alpha 裁`；pointermove 把光源 x/y 设为鼠标相对贴纸的坐标，翻片那一份的 y 取 `高度 − y`（因为它被上下翻转了）。
+- 投影用 `feDropShadow(dx 2, dy 4, stdDeviation 3 × {{shadow}}, flood-opacity = {{shadow}})`。拖拽用 pointer 事件改外层 translate。
 
 ## 完成后请检查
 

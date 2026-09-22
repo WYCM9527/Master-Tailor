@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-每张卡是 `figure`（`position: relative; overflow: hidden`，背景为衬色），内含 `img` 和绝对定位铺满的 `figcaption`；线框、光带、渐变都用 `figcaption::before / ::after` 做。悬停给 figure 加类：斜光扫过是 `::before` 铺满、白色 50% 透明，`transform: scale(1.9, 1.4) rotate(45deg) translateY(−100% → 100%)`，图片 `scale(1.05 → 1)`、opacity 0.95 → 0.6；内框用两个伪元素 `inset: 30px`，一个只有上下边框 `scale(0, 1) → 1`，一个只有左右边框 `scale(1, 0) → 1`；渐变浮起是 `translateY(50% → 0)` + opacity，标题 `translateY(−50%) → translateY(−50%) translateY(−40px)`；缩回内框是图 `scale(1.12 → 1)`、框 `scale(1.1 → 1)`、说明 `scale(1.5 → 1)`；光环用 `border` + `box-shadow: 0 0 0 30px rgba(255,255,255,.2)`，`scale(1.4 → 1)`；图片右移把 img 宽设 `calc(100% + 50px)`、`translateX(−40px → 0)`。过渡统一 0.35s。
+每张卡是 `figure`（`position: relative; overflow: hidden`，背景为衬色），内含 `img` 和绝对定位铺满的 `figcaption`；线框、光带、渐变都用 `figcaption::before / ::after` 做。悬停给 figure 加类：斜光扫过是 `::before` 铺满、白色 50% 透明，`transform: scale(1.9, 1.4) rotate(45deg) translateY(−100% → 100%)`，图片 `scale(1.05 → 1)`、opacity 0.95 → 0.6；内框用两个伪元素 `inset: 30px`，一个只有上下边框 `scale(0, 1) → 1`，一个只有左右边框 `scale(1, 0) → 1`；渐变浮起是 `translateY(50% → 0)` + opacity，标题 `translateY(−50%) → translateY(−50%) translateY(−40px)`；缩回内框是图 `scale(1.12 → 1)`、框 `scale(1.1 → 1)`、说明 `scale(1.5 → 1)`；光环用 `border` + `box-shadow: 0 0 0 30px rgba(255,255,255,.2)`，`scale(1.4 → 1)`；图片右移把 img 宽设 `calc(100% + 50px)`、`translateX(−40px → 0)`。过渡统一 {{duration}}，只有斜光带的位移用 1.7 倍时长。
 
 ## 完成后请检查
 

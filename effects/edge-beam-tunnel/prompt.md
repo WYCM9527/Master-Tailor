@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-一个全屏容器设 `perspective` 与 `transform-style: preserve-3d`，四面墙是四个绝对定位的 div：顶墙宽 = 视口宽、左右墙宽 = 视口高，四面墙的高（隧道深度）都取视口长边。顶墙 `transform-origin: 50% 0; rotateX(-90deg)`，底墙放在 `top: 100%` 用同样的旋转，左墙 `origin 0 0; rotate(90deg) rotateX(-90deg)`，右墙 `origin 100% 0; rotate(-90deg) rotateX(-90deg)`。墙面网格用两组 linear-gradient 平铺，格子大小 = 光束宽度（百分比）。光束是 `width: 格子宽; aspect-ratio: 1 / 随机 1–10` 的竖条，背景 `linear-gradient(hsl(随机色相 80% 60%), transparent)`，用一段线性无限关键帧从 `translateY(隧道深度)` 飞到 `translateY(-100%)`，各自随机延迟；监听 animationiteration 在每趟结束时换色相和长度。容器加 `clip-path: inset(0)` 裁掉伸出屏幕的墙。
+一个全屏容器设 `perspective`（取 {{perspective}}，越小隧道越深）与 `transform-style: preserve-3d`，四面墙是四个绝对定位的 div：顶墙宽 = 视口宽、左右墙宽 = 视口高，四面墙的高（隧道深度）都取视口长边。顶墙 `transform-origin: 50% 0; rotateX(-90deg)`，底墙放在 `top: 100%` 用同样的旋转，左墙 `origin 0 0; rotate(90deg) rotateX(-90deg)`，右墙 `origin 100% 0; rotate(-90deg) rotateX(-90deg)`。墙面网格用两组 linear-gradient 平铺，格子大小 = 光束宽度（百分比）。光束是 `width: 格子宽; aspect-ratio: 1 / 随机 1–10` 的竖条，背景 `linear-gradient(hsl(随机色相 80% 60%), transparent)`，用一段线性无限关键帧从 `translateY(隧道深度)` 飞到 `translateY(-100%)`，各自随机延迟；监听 animationiteration 在每趟结束时换色相和长度。容器加 `clip-path: inset(0)` 裁掉伸出屏幕的墙。
 
 ## 完成后请检查
 

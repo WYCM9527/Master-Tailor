@@ -4,8 +4,8 @@
 
 ## 实现提示
 
-- 每项一个 `--effect`（0–1）变量，所有视觉都由它驱动：文字 `translateX(effect × 滑出距离)`、颜色 `color-mix(强调色 effect×100%, 文字色)`；主刻度线 `scaleX(0.7 + effect × 0.5)`、颜色同样 color-mix；项间小刻度（`::after`，半长、opacity 0.5）`scaleX(0.7 + effect × 0.6)`。
-- pointermove 时对每项算「鼠标 y 到项中心的距离」，目标值 `smoothstep(max(0, 1 − 距离/感应半径))`；点击过的项目标值至少为 1；离开列表全部归 0。
+- 每项一个 `--effect`（0–1）变量，所有视觉都由它驱动：文字 `translateX(effect × 滑出距离)`（滑出距离 {{maxShift}}）、颜色 `color-mix(强调色 effect×100%, 文字色)`；主刻度线 `scaleX(0.7 + effect × 0.5)`、颜色同样 color-mix；项间小刻度（`::after`，半长、opacity 0.5）`scaleX(0.7 + effect × 0.6)`。
+- pointermove 时对每项算「鼠标 y 到项中心的距离」，目标值 `smoothstep(max(0, 1 − 距离/感应半径))`（感应半径 {{proximityRadius}}）；点击过的项目标值至少为 1；离开列表全部归 0。
 - 每帧把当前值以时间常数 100ms 指数趋近目标（`k = 1 − e^(−dt/0.1)`），再写回 `--effect`，手感柔和不跳。
 - 用 `::before` 把每项的命中区向四周扩 6px / 左右 48px，鼠标在项之间也有反应。
 

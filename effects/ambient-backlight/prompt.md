@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-同一张图叠两层：上层是原图；下层同尺寸、`position: absolute; inset: 0`，整层套一个 SVG 滤镜：`feGaussianBlur stdDeviation=20` 再 `feColorMatrix type="saturate" values="4"`。关键是把 `<filter>` 的区域放大——`x="-50%" y="-50%" width="200%" height="200%"`，否则模糊会被裁在图片边界内、溢不出来形成光晕。呼吸用关键帧在 75%–100% 不透明度之间往复 4s；悬停时下层 `transform: scale(1.06)`，0.6s 过渡。文字层 z-index 高于光晕。
+同一张图叠两层：上层是原图；下层同尺寸、`position: absolute; inset: 0`，整层套一个 SVG 滤镜：`feGaussianBlur stdDeviation={{blur}}` 再 `feColorMatrix type="saturate" values="{{saturate}}"`。关键是把 `<filter>` 的区域放大——`x="-50%" y="-50%" width="200%" height="200%"`，否则模糊会被裁在图片边界内、溢不出来形成光晕。呼吸用关键帧在 75%–100% 不透明度之间往复 4s；悬停时下层 `transform: scale(1.06)`，0.6s 过渡。文字层 z-index 高于光晕。
 
 ## 完成后请检查
 

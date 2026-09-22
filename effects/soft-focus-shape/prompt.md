@@ -5,8 +5,8 @@
 ## 实现提示
 
 - 全屏 WebGL2 片元着色器（需要 `dFdx/dFdy`）。坐标归一化到「以画面中心为原点、短边为 1」的正方形系并翻转 x，再 +0.5 到 0–1。
-- 用有符号距离场描述形状：圆角矩形 `sdRoundRect(p, 大小, 圆角)`（`|p − 0.5| × 4.2 − b + r`），圆 `2|p − c|`，正多边形 `cos(round(a/r)·r − a) × 2|p| − w`。
-- 关键点：描边 / 填充函数的「边缘半宽」不是常数，而是 `soft = 1 − smoothstep(范围 − 过渡, 范围 + 过渡, 2|p − 鼠标|)`——一个以鼠标为中心、近处 1 远处 0 的软圆。半宽越大边越糊，所以鼠标附近化开、远处锐利。方框模式 `strokeAA(sdf, 0, 线宽, soft) × 4`，实心圆 `fill(sdf, 0.6, soft) × 1.2`，圆环 `strokeAA(sdf, 0.58, 0.02, soft) × 4`，三角 `fill(sdf, 0.05, soft) × 1.4`。`strokeAA` 在半宽上再加 `|∇sdf| × 0.707` 做抗锯齿。
+- 用有符号距离场描述形状：圆角矩形 `sdRoundRect(p, b = {{shapeSize}}, r = {{roundness}})`（`|p − 0.5| × 4.2 − b + r`），圆 `2|p − c|`，正多边形 `cos(round(a/r)·r − a) × 2|p| − w`。
+- 关键点：描边 / 填充函数的「边缘半宽」不是常数，而是 `soft = 1 − smoothstep(范围 − 过渡, 范围 + 过渡, 2|p − 鼠标|)`（范围 = {{circleSize}}，过渡 = {{circleEdge}}）——一个以鼠标为中心、近处 1 远处 0 的软圆。半宽越大边越糊，所以鼠标附近化开、远处锐利。方框模式 `strokeAA(sdf, 0, w = {{borderSize}}, soft) × 4`，实心圆 `fill(sdf, 0.6, soft) × 1.2`，圆环 `strokeAA(sdf, 0.58, 0.02, soft) × 4`，三角 `fill(sdf, 0.05, soft) × 1.4`。`strokeAA` 在半宽上再加 `|∇sdf| × 0.707` 做抗锯齿。
 - 输出 `(颜色, sdf)`，透明部分透出页面底色。鼠标以 `1 − e^(−8·dt)` 阻尼跟随。
 
 ## 技术要求补充

@@ -4,7 +4,15 @@
 
 ## 实现提示
 
-光斑用大尺寸圆形元素 + filter: blur（光斑柔和度）实现，各自一组 keyframes 做平移与缩放、相位错开；数量与颜色按参数循环分配；流动速度换算为 animation-duration。
+光斑用大尺寸圆形元素 + filter: blur（光斑柔和度）实现，共用一组 keyframes，靠起始位置和 animation-delay 错开相位；流动速度换算为 animation-duration。
+
+- 结构：`position: fixed; inset: 0; overflow: hidden` 容器垫底，生成 {{blobs}} 个 `div`。
+- 单个光斑：`position: absolute`，宽高 `58vmax`，`border-radius: 50%`，`filter: blur({{blur}})`，`opacity: 0.55`，`mix-blend-mode: screen`（交叠处透出叠色亮光的关键）。
+- 颜色：第 i 个取颜色列表第 `i % 颜色数` 个，背景 `radial-gradient(circle at 50% 50%, 该色, transparent 70%)`（70% 处已透明，叠 blur 后无硬边）。
+- 位置：`left = ((i × 37) % 70 − 12)%`，`top = ((i × 53) % 55 − 15)%`。
+- 动画：`animation: mt-drift 时长 ease-in-out infinite alternate`，时长 = 26s ÷ 流动速度倍率（{{speed}}），第 i 个 `animation-delay = −7s × i ÷ 倍率`；alternate 往返不跳变。
+- 关键帧：0% `translate(-8%, -6%) scale(1) rotate(0)`；50% `translate(10%, 8%) scale(1.18) rotate(12deg)`；100% `translate(-4%, 12%) scale(0.92) rotate(-10deg)`。
+- 「减少动态效果」时 `animation: none`，保留静态配色。
 
 ## 完成后请检查
 

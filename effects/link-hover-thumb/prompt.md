@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-每个链接 `position: relative`，里面放一个绝对定位的浮图容器（`overflow: hidden`），容器内再套一层 `inner`（也 `overflow: hidden`）和一个背景图层 `img`。默认态两层朝相反方向位移：`inner: translateX(-100%)`、`img: translateX(100%)`——两层同时移到 0 时，可见区域正好是两层重叠处，产生「从中间揭开」的观感；对角变体用 `translate(±100%, ±100%)`，缩放变体 `inner scale(0.5) / img scale(2)`，翻入变体 `inner rotateY(-90deg)`（origin 左侧）。悬停时两层都过渡到 `none`，`cubic-bezier(0.2, 1, 0.3, 1)`。跟随：pointermove 时把光标相对链接的 x（加 30px、限制范围）写进 `--x` 作为浮图的 left。
+每个链接 `position: relative`，里面放一个绝对定位的浮图容器（`overflow: hidden`），容器内再套一层 `inner`（也 `overflow: hidden`）和一个背景图层 `img`。默认态两层朝相反方向位移：`inner: translateX(-100%)`、`img: translateX(100%)`——两层同时移到 0 时，可见区域正好是两层重叠处，产生「从中间揭开」的观感；对角变体用 `translate(±100%, ±100%)`，缩放变体 `inner scale(0.5) / img scale(2)`，翻入变体 `inner rotateY(-90deg)`（origin 左侧）。悬停时两层都过渡到 `none`，时长 {{duration}}、缓动 `cubic-bezier(0.2, 1, 0.3, 1)`。跟随：pointermove 时把光标相对链接的 x（加 30px、限制范围）写进 `--x` 作为浮图的 left。链接本身字号 {{fontSize}}、`font-weight: 700`，悬停 0.3s 过渡到 {{accent}}；浮图宽 {{width}}、比例 4:3、圆角 8px。
 
 ## 完成后请检查
 

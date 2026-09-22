@@ -6,6 +6,14 @@
 
 托盘 flex、align-items: flex-end，图标 width/height 绑一个 CSS 变量。每帧读鼠标横坐标，对每个图标算中心横向距离 d：k = d < 影响范围 ? 0.5 + 0.5·cos(d/范围·π) : 0，目标尺寸 = 基础 × (1 + (放大倍数 − 1) × k)，再按回弹迟滞插值后写入变量；鼠标离开把横坐标置为极远即可全部回弹。名称气泡是绝对定位在图标上方的小标签，:hover 时淡入上浮。
 
+补充常量与细节：
+
+- 托盘底部居中、距底 28px；`gap: 10px; padding: 10px 14px`，边框 `1px solid rgba(255,255,255,0.14)`，底色 `rgba(255,255,255,0.06)` 加 `backdrop-filter: blur(12px)`，圆角 = 图标圆角 {{rounded}} 再加 10px。
+- 图标是 `<button>`，文字取每项名称的首字：`font-weight: 700`，字号 = 当前边长 × 0.42（随放大一起长），文字色 {{accent}}，底色 `color-mix(in srgb, {{accent}} 14%, transparent)`、悬停 28%（`transition: background 0.15s ease`）；加 `will-change: width, height`。
+- 尺寸每帧 `当前 += (目标 − 当前) × {{lag}}` 指数逼近，放大与回弹同一公式；pointermove 挂在托盘上，横坐标初始与离开时都置 −9999；图标中心每帧用 getBoundingClientRect 读（邻居变宽会挤动它，不能用固定坐标）。
+- 名称气泡在图标上方 12px（`bottom: calc(100% + 12px)`）水平居中：`padding: 4px 10px`、圆角 6px、白底 `rgba(255,255,255,0.92)`、字色 `#0a0a0f`、12px / 600 字重、`white-space: nowrap`、`pointer-events: none`；默认透明并下沉 4px，悬停 0.15s ease 淡入上浮。关闭「悬停显示名称」时 `display: none`。
+- 减少动态时不启动逐帧循环，图标保持基础大小 {{base}}，气泡仍靠 :hover 显示；页面切后台时跳过更新。
+
 ## 完成后请检查
 
 - 放大以鼠标为中心平滑衰减，只有范围内的图标变化；图标底边始终对齐

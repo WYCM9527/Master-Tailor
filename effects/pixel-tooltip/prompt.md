@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-提示框 `position: fixed`，内部用 `grid-template-areas` 让「碎块网格」和「内容层」叠在同一格；碎块是 `rows × cols` 个 `<i>`（`background` 与 `outline: 1px` 同色，避免格间缝），默认 `opacity: 0`。开合都用 `element.animate()`：每个碎块按变体算一个「档位」——依次 = 行主序号（关闭时倒序）、中心 = 到中心的归一化距离、随机 = 建格时存下的随机数、中心出现边缘消失 = 打开用距离、关闭用 1 − 距离；`delay = 档位 × 错开`，关键帧按变体为 opacity / scale / scaleX(0.8) 之一，`fill: forwards`，关闭时关键帧反向。内容层在所有碎块出现后 200ms 淡入，关闭时立即淡出并在全部动画结束后隐藏提示框。粘液变体给碎块网格套 SVG 滤镜（`feGaussianBlur 8` + alpha 矩阵 `20 −7`），碎块 `scale(0.3 → 1)`、时长拉到 500ms。定位：光标坐标加 16px，并夹在视口内。
+提示框 `position: fixed`，内部用 `grid-template-areas` 让「碎块网格」和「内容层」叠在同一格；碎块是 {{rows}} 行 × {{cols}} 列个 `<i>`（`background` 与 `outline: 1px` 同色，避免格间缝），默认 `opacity: 0`。开合都用 `element.animate()`：每个碎块按变体算一个「档位」（n 为碎块总数）——依次 = 行主序号（关闭时倒序）、中心 = 到中心的归一化距离 × 0.6n、随机 = 建格时存下的随机数 × n、中心出现边缘消失 = 打开用距离、关闭用 1 − 距离（同样 × 0.6n）；`delay = 档位 × 错开`（错开取 {{speed}}），每块时长 120ms、缓动 `cubic-bezier(0.16, 1, 0.3, 1)`，关键帧按变体为 opacity / scale / scaleX(0.8) 之一，`fill: forwards`，关闭时关键帧反向。内容层打开时延迟 `n × 错开 × 0.6` 毫秒后用 200ms 淡入，关闭时立即淡出并在全部动画结束后隐藏提示框。粘液变体给碎块网格套 SVG 滤镜（`feGaussianBlur 8` + alpha 矩阵 `20 −7`），碎块 `scale(0.3 → 1)`、时长拉到 500ms。定位：光标坐标加 16px，并夹在视口内。
 
 ## 完成后请检查
 
