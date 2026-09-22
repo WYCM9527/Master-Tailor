@@ -4,7 +4,7 @@
 
 ## 实现提示
 
-按钮 `position: relative; overflow: hidden`。液体是一个绝对定位、宽 150%、高 200% 的色块，默认 `top: 100%` 藏在按钮下方；悬停时过渡到 `top: -60%`（`cubic-bezier(0.2, 0.8, 0.2, 1)`）。波浪用液体的 `::before / ::after`：两个正方形、`border-radius` 分别 44% 与 40%（近圆非圆），中心钉在液体顶边中点、填底色（第二个填底色与液体色的混合色），各自以不同周期 `rotate(360deg)` 线性无限——不规则圆角转动时边缘上下起伏，就是波浪。文字 z-index 高于液体并在悬停时换色。
+按钮 `position: relative; overflow: hidden`。液体是一个绝对定位、宽 150%、高 200%、自身也 `overflow: hidden` 的色块，默认 `top: 100%` 藏在按钮下方；悬停时以 {{fill}} 过渡到 `top: -20%`（`cubic-bezier(0.2, 0.8, 0.2, 1)`）。波浪用液体的 `::before / ::after`：两个正方形，高取液体高度的 400%（`aspect-ratio: 1`），`left: 50%; top: 12%; transform: translate(-50%, -100%)`——几乎整个悬在液面之上，只有底边一小段弧压进液体；`border-radius` 分别 45% 与 42%（近圆非圆），填底色（第二个填 `color-mix(in srgb, 底色 60%, 液体色)`），周期分别为 {{waveSpeed}} 与其 1.6 倍，`rotate(360deg)` 线性无限——不规则圆角转到角上时底边多压进一点，就是左右荡的波。液体的 `overflow: hidden` 不能省：两个方块很大，不裁掉会把整颗按钮盖住。文字 z-index 高于液体并在悬停时换色。
 
 ## 完成后请检查
 

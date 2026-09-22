@@ -20,12 +20,16 @@
   body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
   .mt-btn { position: relative; overflow: hidden; padding: 14px 36px; border: 2px solid var(--mt-liquid); border-radius: var(--mt-radius); background: transparent; cursor: pointer; color: var(--mt-color); font-family: var(--mt-font); font-size: 16px; font-weight: 700; letter-spacing: 0.04em; transition: color 0.3s; }
   .mt-btn span { position: relative; z-index: 1; }
-  /* 液体：一块比按钮高两倍的色块，顶部叠两个转动的大圆角椭圆形成波浪；悬停时整块上移到盖住按钮 */
-  .mt-btn .liquid { position: absolute; left: -25%; top: 100%; width: 150%; height: 200%; background: var(--mt-liquid); transition: top var(--mt-fill) cubic-bezier(0.2, 0.8, 0.2, 1); }
-  .mt-btn .liquid::before, .mt-btn .liquid::after { content: ""; position: absolute; left: 50%; top: 0; width: 100%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 44%; background: var(--mt-bg); animation: mt-wave var(--mt-waveSpeed) linear infinite; }
-  .mt-btn .liquid::after { border-radius: 40%; background: color-mix(in srgb, var(--mt-bg) 60%, var(--mt-liquid)); animation-duration: calc(var(--mt-waveSpeed) * 1.6); }
-  @keyframes mt-wave { to { transform: translate(-50%, -50%) rotate(360deg); } }
-  .mt-btn:hover .liquid, .mt-btn:focus-visible .liquid, .mt-btn.demo .liquid { top: -60%; }
+  /* 液体：一块比按钮高两倍的色块，顶部叠两个转动的大圆角方块把液面「削」出波浪；悬停时整块上移到盖住按钮。
+     overflow: hidden 让两个方块只在液体内部起作用——否则它们会把整颗按钮盖住，静止态和悬停态都只剩一片暗色 */
+  .mt-btn .liquid { position: absolute; left: -25%; top: 100%; width: 150%; height: 200%; overflow: hidden; background: var(--mt-liquid); transition: top var(--mt-fill) cubic-bezier(0.2, 0.8, 0.2, 1); }
+  /* 方块按液体高度定尺寸（8 倍按钮高），几乎整个悬在液面之上，只有底边一小段弧压进液体：底边中点在液体顶边下 0.24 倍按钮高，
+     转到角上时再多压进约 9px / 14px，就是左右荡的波；::after 圆角更小、转得更慢，形成第二层半透明的浪 */
+  .mt-btn .liquid::before, .mt-btn .liquid::after { content: ""; position: absolute; left: 50%; top: 12%; height: 400%; aspect-ratio: 1; transform: translate(-50%, -100%); border-radius: 45%; background: var(--mt-bg); animation: mt-wave var(--mt-waveSpeed) linear infinite; }
+  .mt-btn .liquid::after { border-radius: 42%; background: color-mix(in srgb, var(--mt-bg) 60%, var(--mt-liquid)); animation-duration: calc(var(--mt-waveSpeed) * 1.6); }
+  @keyframes mt-wave { to { transform: translate(-50%, -100%) rotate(360deg); } }
+  /* 灌满态：液体顶边升到按钮上方 0.2 倍高，液面（含浪）落在按钮顶部一小条里，其余全是液体 */
+  .mt-btn:hover .liquid, .mt-btn:focus-visible .liquid, .mt-btn.demo .liquid { top: -20%; }
   .mt-btn:hover, .mt-btn:focus-visible, .mt-btn.demo { color: var(--mt-onLiquid); outline: none; }
   @media (prefers-reduced-motion: reduce) { .mt-btn .liquid { transition: none; } .mt-btn .liquid::before, .mt-btn .liquid::after { animation: none; } }
 </style>
