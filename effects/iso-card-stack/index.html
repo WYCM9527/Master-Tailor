@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>等轴测叠卡</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-tiltX: 56deg;         /* 俯视角 */
+    --mt-tiltZ: -34deg;        /* 平面旋转 */
+    --mt-layerGap: 90px;       /* 层间距 */
+    --mt-cardWidth: 280px;     /* 卡片宽度 */
+    --mt-speed: 14s;           /* 一轮时长 */
+    --mt-shadow: 1;            /* 投影：1 开 / 0 关 */
+    --mt-radius: 16px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 舞台：等轴测视角 = 先俯视再在平面内转；叠放方向就是这块平面的法线（translateZ） */
+  .mt-stage { position: fixed; inset: 0; perspective: 1400px; overflow: hidden; }
+  .mt-iso { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(var(--s, 1)) rotateX(var(--mt-tiltX)) rotateZ(var(--mt-tiltZ)); transform-style: preserve-3d; }
+  .mt-orbit { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
+  .mode-orbit .mt-orbit { animation: mt-orbit var(--mt-speed) linear infinite; will-change: transform; }
+  @keyframes mt-orbit { from { transform: rotateZ(0deg); } to { transform: rotateZ(360deg); } }
+  /* 层：第 i 张沿法线抬高 (i − (N−1)/2) 个层间距 */
+  .mt-layer { position: absolute; left: 0; top: 0; width: var(--mt-cardWidth); aspect-ratio: 4 / 3; margin: calc(var(--mt-cardWidth) * -0.375) calc(var(--mt-cardWidth) * -0.5); --z: calc((var(--i) - (var(--n) - 1) / 2) * var(--mt-layerGap)); transform: translateZ(var(--z)); transform-style: preserve-3d; will-change: transform; }
+  .mt-card { width: 100%; height: 100%; border-radius: var(--mt-radius); overflow: hidden; background: #16161d; box-shadow: 0 30px 60px rgba(0, 0, 0, calc(0.45 * var(--mt-shadow))); }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+  /* 级联穿过：每张从最底沿法线一路升到最顶，首尾淡入淡出；相位按序号错开，任一时刻恰好等距 */
+  .mode-cascade .mt-layer { --range: calc(var(--n) / 2 * var(--mt-layerGap)); animation: mt-climb var(--mt-speed) linear infinite; animation-delay: calc(-1 * var(--i) * var(--mt-speed) / var(--n)); }
+  @keyframes mt-climb {
+    0%   { transform: translateZ(calc(-1 * var(--range))); opacity: 0; }
+    12%  { opacity: 1; }
+    88%  { opacity: 1; }
+    100% { transform: translateZ(var(--range)); opacity: 0; }
+  }
+  /* 轮流聚焦：被点名的那张抬起 140px，并反向抵消两个视角旋转，正对观者 */
+  .mode-focus .mt-layer { transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mode-focus .mt-layer.focus { transform: translateZ(calc(var(--z) + 140px)) rotateZ(calc(-1 * var(--mt-tiltZ))) rotateX(calc(-1 * var(--mt-tiltX))); }
+
+  /* 用户开启「减少动态效果」时：叠卡静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-layer, .mt-orbit { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage" aria-hidden="true"><div class="mt-iso" id="mtIso"><div class="mt-orbit" id="mtOrbit"></div></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""}], // 图片列表
+    mode: "cascade",    // 运镜方式：cascade 级联穿过 / focus 轮流聚焦 / orbit 整叠环绕
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stage = document.getElementById('mtStage'), iso = document.getElementById('mtIso'), orbit = document.getElementById('mtOrbit');
+  stage.className = 'mt-stage mode-' + CONFIG.mode;
+  const N = Math.min(8, CONFIG.slides.length); // 每张图一层，最多 8 层
+  iso.style.setProperty('--n', N);
+  const layers = [];
+  for (let i = 0; i < N; i++) {
+    const layer = document.createElement('div'); layer.className = 'mt-layer'; layer.style.setProperty('--i', i);
+    const card = document.createElement('div'); card.className = 'mt-card';
+    const img = document.createElement('img'); img.src = CONFIG.slides[i].src; img.alt = ''; img.loading = 'lazy';
+    card.appendChild(img); layer.appendChild(card); orbit.appendChild(layer); layers.push(layer);
+  }
+  // 适配：卡片对角线加整叠的高度占画面短边的 86%（小屏缩小，大屏最多放大 1.2 倍）
+  function fit() {
+    const cs = getComputedStyle(document.documentElement);
+    const w = parseFloat(cs.getPropertyValue('--mt-cardWidth')) || 280, gap = parseFloat(cs.getPropertyValue('--mt-layerGap')) || 90;
+    const size = Math.hypot(w, w * 0.75) + N * gap * 0.6;
+    iso.style.setProperty('--s', Math.min(1.2, Math.min(innerWidth, innerHeight) * 0.86 / size).toFixed(3));
+  }
+  fit(); addEventListener('resize', fit);
+  // 轮流聚焦：每 speed / N 秒点名下一张
+  if (CONFIG.mode === 'focus' && !reduceMotion) {
+    let k = 0;
+    const secs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-speed')) || 14;
+    layers[0].classList.add('focus');
+    setInterval(() => { if (document.hidden) return; layers[k].classList.remove('focus'); k = (k + 1) % N; layers[k].classList.add('focus'); }, Math.max(900, secs * 1000 / N));
+  }
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('.mt-layer, .mt-orbit').forEach(el => (el.style.animationPlayState = document.hidden ? 'paused' : 'running')));
+</script>
+</body>
+</html>

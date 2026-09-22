@@ -1,0 +1,134 @@
+{
+  "slug": "orbit-cluster",
+  "name": "轨道群卡",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["3D", "轨道", "环绕", "自动播放"],
+  "summary": "一群小卡片沿两条倾斜的轨道围着中央主卡公转、始终正对观者，也可像花瓣一样朝外斜张着开合",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "mode",
+      "label": "运动方式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "orbit", "label": "群卡环绕" },
+        { "value": "bloom", "label": "花瓣绽放" }
+      ],
+      "default": "orbit",
+      "help": "环绕：小卡正对观者绕主卡公转；绽放：小卡像花瓣朝外斜张，一边转一边开合"
+    },
+    {
+      "key": "radiusA",
+      "label": "外轨半径",
+      "type": "range",
+      "target": "css",
+      "min": 160,
+      "max": 400,
+      "step": 10,
+      "default": 260,
+      "unit": "px"
+    },
+    {
+      "key": "radiusB",
+      "label": "内轨半径",
+      "type": "range",
+      "target": "css",
+      "min": 80,
+      "max": 260,
+      "step": 10,
+      "default": 150,
+      "unit": "px"
+    },
+    {
+      "key": "incline",
+      "label": "轨道倾角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 80,
+      "step": 1,
+      "default": 58,
+      "unit": "deg",
+      "displayUnit": "°",
+      "help": "轨道面向后倒多少，0 为正圆面对观者"
+    },
+    {
+      "key": "cardWidth",
+      "label": "小卡宽度",
+      "type": "range",
+      "target": "css",
+      "min": 80,
+      "max": 200,
+      "step": 5,
+      "default": 130,
+      "unit": "px"
+    },
+    {
+      "key": "focusWidth",
+      "label": "主卡宽度",
+      "type": "range",
+      "target": "css",
+      "min": 140,
+      "max": 360,
+      "step": 10,
+      "default": 220,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 60,
+      "step": 1,
+      "default": 24,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "外轨公转一圈的时长，内轨反向且稍快"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "bloom", "name": "花瓣绽放", "values": { "mode": "bloom", "incline": 70 } },
+    { "id": "flat", "name": "平面卫星", "values": { "incline": 10, "radiusA": 320 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Orbit Showcase / Orbit Bloom / Photo Orbit 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

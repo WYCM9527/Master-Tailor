@@ -1,0 +1,142 @@
+{
+  "slug": "vortex-rings",
+  "name": "涡旋双环",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["环形", "3D", "涡旋", "自动播放"],
+  "summary": "内外两圈卡片平躺在略微后倾的面上，外环顺时针、内环逆时针缓缓转动，像一只涡旋",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "outerCount",
+      "label": "外环卡片数",
+      "type": "range",
+      "target": "config",
+      "min": 8,
+      "max": 18,
+      "step": 1,
+      "default": 12
+    },
+    {
+      "key": "innerCount",
+      "label": "内环卡片数",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 12,
+      "step": 1,
+      "default": 7
+    },
+    {
+      "key": "outerR",
+      "label": "外环半径",
+      "type": "range",
+      "target": "css",
+      "min": 200,
+      "max": 420,
+      "step": 10,
+      "default": 300,
+      "unit": "px"
+    },
+    {
+      "key": "innerR",
+      "label": "内环半径",
+      "type": "range",
+      "target": "css",
+      "min": 90,
+      "max": 260,
+      "step": 10,
+      "default": 160,
+      "unit": "px"
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "css",
+      "min": 70,
+      "max": 180,
+      "step": 5,
+      "default": 110,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 80,
+      "step": 2,
+      "default": 32,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "外环转一圈的时长，内环反向且更快一些"
+    },
+    {
+      "key": "tilt",
+      "label": "后倾角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 70,
+      "step": 1,
+      "default": 38,
+      "unit": "deg",
+      "displayUnit": "°",
+      "help": "整个环面向后倒多少，0 为正对观者"
+    },
+    {
+      "key": "orient",
+      "label": "卡片朝向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "tangent", "label": "顺着圆周" },
+        { "value": "upright", "label": "始终直立" }
+      ],
+      "default": "tangent"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "default": 10,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "flat", "name": "平视直立", "values": { "tilt": 0, "orient": "upright" } },
+    { "id": "dense", "name": "密环快旋", "values": { "outerCount": 18, "innerCount": 12, "speed": 16 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Vortex Spin 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

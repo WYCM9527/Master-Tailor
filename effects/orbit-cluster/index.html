@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轨道群卡</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-radiusA: 260px;       /* 外轨半径 */
+    --mt-radiusB: 150px;       /* 内轨半径 */
+    --mt-incline: 58deg;       /* 轨道面倾角 */
+    --mt-cardWidth: 130px;     /* 小卡宽度 */
+    --mt-focusWidth: 220px;    /* 中央主卡宽度 */
+    --mt-speed: 24s;           /* 外轨公转一圈的时长 */
+    --mt-radius: 12px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 舞台：中央主卡 + 两条倾斜轨道。链路上每一层都 preserve-3d，深度排序才正确 */
+  .mt-stage { position: fixed; inset: 0; perspective: 1400px; overflow: hidden; }
+  .mt-center { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(var(--s, 1)); transform-style: preserve-3d; }
+  .mt-card { position: absolute; left: 0; top: 0; width: var(--w); aspect-ratio: 4 / 3; margin: calc(var(--w) * -0.375) calc(var(--w) * -0.5); border-radius: var(--mt-radius); overflow: hidden; background: #16161d; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5); }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+  .mt-focus { --w: var(--mt-focusWidth); }
+  /* 轨道：先倒下 incline → 公转（spin）→ 臂转到方位角并推到半径 → 反向公转（unspin）→ 反向倒回（untilt）→ 卡片。
+     四次旋转两两相消，卡片只剩一个纯平移：永远正对观者，却沿倾斜的椭圆轨道走 */
+  .mt-orbit { position: absolute; left: 0; top: 0; transform: rotateX(var(--mt-incline)); transform-style: preserve-3d; }
+  .mt-orbit.a { --r: var(--mt-radiusA); --dur: var(--mt-speed); --dir: normal; --cdir: reverse; }
+  .mt-orbit.b { --r: var(--mt-radiusB); --dur: calc(var(--mt-speed) * 0.75); --dir: reverse; --cdir: normal; }
+  .mt-spin { position: absolute; left: 0; top: 0; transform-style: preserve-3d; animation: mt-spin var(--dur) linear infinite; animation-direction: var(--dir); will-change: transform; }
+  @keyframes mt-spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+  .mt-arm { position: absolute; left: 0; top: 0; transform: rotateY(var(--a)) translateZ(var(--r)); transform-style: preserve-3d; }
+  .mt-unspin { position: absolute; left: 0; top: 0; transform-style: preserve-3d; animation: mt-spin var(--dur) linear infinite; animation-direction: var(--cdir); }
+  .mt-untilt { position: absolute; left: 0; top: 0; transform: rotateY(calc(-1 * var(--a))) rotateX(calc(-1 * var(--mt-incline))); transform-style: preserve-3d; }
+  .mt-orbit .mt-card { --w: var(--mt-cardWidth); }
+  /* 花瓣绽放：不再抵消旋转，小卡朝外斜张 35°，臂的半径在 0.6～1 倍之间呼吸 */
+  .mode-bloom .mt-unspin, .mode-bloom .mt-untilt { animation: none; transform: none; }
+  .mode-bloom .mt-arm { animation: mt-bloom 6s ease-in-out infinite alternate; }
+  @keyframes mt-bloom {
+    from { transform: rotateY(var(--a)) translateZ(calc(var(--r) * 0.6)) rotateX(-35deg); }
+    to   { transform: rotateY(var(--a)) translateZ(var(--r)) rotateX(-35deg); }
+  }
+
+  /* 用户开启「减少动态效果」时：全部静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-spin, .mt-unspin, .mt-arm { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage" aria-hidden="true"><div class="mt-center" id="mtCenter"></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表（第 1 张作主卡）
+    mode: "orbit",      // 运动方式：orbit 群卡环绕 / bloom 花瓣绽放
+  };
+  const stage = document.getElementById('mtStage'), center = document.getElementById('mtCenter');
+  stage.className = 'mt-stage mode-' + CONFIG.mode;
+  const srcs = CONFIG.slides.map(s => s.src);
+  const makeCard = (src, cls) => { const c = document.createElement('div'); c.className = 'mt-card ' + cls; const img = document.createElement('img'); img.src = src; img.alt = ''; img.loading = 'lazy'; c.appendChild(img); return c; };
+  center.appendChild(makeCard(srcs[0], 'mt-focus'));
+  // 其余图片交替分到外轨 a 与内轨 b（最多 7 张小卡 + 1 张主卡）
+  const rest = srcs.slice(1, 8);
+  const tracks = { a: rest.filter((_, i) => i % 2 === 0), b: rest.filter((_, i) => i % 2 === 1) };
+  for (const key of ['a', 'b']) {
+    const list = tracks[key]; if (!list.length) continue;
+    const orbit = document.createElement('div'); orbit.className = 'mt-orbit ' + key;
+    const spin = document.createElement('div'); spin.className = 'mt-spin';
+    list.forEach((src, i) => {
+      const arm = document.createElement('div'); arm.className = 'mt-arm'; arm.style.setProperty('--a', (i * 360 / list.length) + 'deg');
+      const unspin = document.createElement('div'); unspin.className = 'mt-unspin';
+      const untilt = document.createElement('div'); untilt.className = 'mt-untilt';
+      untilt.appendChild(makeCard(src, '')); unspin.appendChild(untilt); arm.appendChild(unspin); spin.appendChild(arm);
+    });
+    orbit.appendChild(spin); center.appendChild(orbit);
+  }
+  // 适配：外轨直径 + 一张小卡的宽度占画面短边的 90%
+  function fit() {
+    const cs = getComputedStyle(document.documentElement);
+    const size = 2 * parseFloat(cs.getPropertyValue('--mt-radiusA')) + parseFloat(cs.getPropertyValue('--mt-cardWidth'));
+    center.style.setProperty('--s', Math.min(1, Math.min(innerWidth, innerHeight) * 0.9 / size).toFixed(3));
+  }
+  fit(); addEventListener('resize', fit);
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('.mt-spin, .mt-unspin, .mt-arm').forEach(el => (el.style.animationPlayState = document.hidden ? 'paused' : 'running')));
+</script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+{
+  "slug": "card-wheel-spin",
+  "name": "卡片轮盘",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["轮盘", "扇形", "旋转", "自动播放"],
+  "summary": "竖版卡片像风扇叶片一样从圆心向外辐射、略微交叠，整只轮盘缓缓转动，也可只露出底部的半轮",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "count",
+      "label": "叶片数",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 16,
+      "step": 1,
+      "default": 9,
+      "help": "轮盘上的卡片数，图片不够时循环取用"
+    },
+    {
+      "key": "hub",
+      "label": "轴心留空",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 200,
+      "step": 10,
+      "default": 60,
+      "unit": "px",
+      "help": "卡片底边到圆心的距离"
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "css",
+      "min": 90,
+      "max": 220,
+      "step": 10,
+      "default": 150,
+      "unit": "px"
+    },
+    {
+      "key": "ratio",
+      "label": "卡片比例",
+      "type": "select",
+      "target": "css",
+      "options": [
+        { "value": "3 / 4", "label": "竖版" },
+        { "value": "1", "label": "正方" },
+        { "value": "4 / 3", "label": "横版" }
+      ],
+      "default": "3 / 4"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 60,
+      "step": 1,
+      "default": 20,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "position",
+      "label": "轮盘位置",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "center", "label": "居中整轮" },
+        { "value": "bottom", "label": "底部半轮" }
+      ],
+      "default": "center"
+    },
+    {
+      "key": "wobble",
+      "label": "轻微摆动",
+      "type": "toggle",
+      "target": "config",
+      "default": false,
+      "help": "整只轮盘像被吹动一样缓缓前后摆"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "bottom", "name": "底部半轮", "values": { "position": "bottom", "count": 12, "hub": 120 } },
+    { "id": "fan", "name": "密叶扇", "values": { "count": 16, "cardWidth": 120, "hub": 30, "wobble": true } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Wheel Spin / Wheel Spin Bottom 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

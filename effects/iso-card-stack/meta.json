@@ -1,0 +1,129 @@
+{
+  "slug": "iso-card-stack",
+  "name": "等轴测叠卡",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["等轴测", "3D", "叠卡", "自动播放"],
+  "summary": "几张卡片以等轴测视角一层层悬浮叠开，或逐层穿过、或轮流抬起转正、或整叠缓缓环绕",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "mode",
+      "label": "运镜方式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "cascade", "label": "级联穿过" },
+        { "value": "focus", "label": "轮流聚焦" },
+        { "value": "orbit", "label": "整叠环绕" }
+      ],
+      "default": "cascade",
+      "help": "级联：卡片沿叠放方向源源不断穿过；聚焦：轮到的那张抬起转正停一会儿；环绕：整叠绕竖轴慢转"
+    },
+    {
+      "key": "tiltX",
+      "label": "俯视角",
+      "type": "range",
+      "target": "css",
+      "min": 30,
+      "max": 75,
+      "step": 1,
+      "default": 56,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "tiltZ",
+      "label": "平面旋转",
+      "type": "range",
+      "target": "css",
+      "min": -60,
+      "max": 60,
+      "step": 1,
+      "default": -34,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "layerGap",
+      "label": "层间距",
+      "type": "range",
+      "target": "css",
+      "min": 40,
+      "max": 160,
+      "step": 5,
+      "default": 90,
+      "unit": "px"
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "css",
+      "min": 160,
+      "max": 420,
+      "step": 10,
+      "default": 280,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 40,
+      "step": 1,
+      "default": 14,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "级联穿过一整轮 / 聚焦轮完所有卡 / 环绕转一圈的时长"
+    },
+    {
+      "key": "shadow",
+      "label": "投影",
+      "type": "toggle",
+      "target": "css",
+      "default": true
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 28,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "focus", "name": "轮流聚焦", "values": { "mode": "focus" } },
+    { "id": "orbit", "name": "整叠环绕", "values": { "mode": "orbit", "tiltX": 62, "speed": 24 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Iso Cascade / Iso Focus / Iso Orbit 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

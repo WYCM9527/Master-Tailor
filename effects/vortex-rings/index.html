@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>涡旋双环</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-outerR: 300px;        /* 外环半径 */
+    --mt-innerR: 160px;        /* 内环半径 */
+    --mt-cardWidth: 110px;     /* 卡片宽度（内环取 0.8 倍） */
+    --mt-speed: 32s;           /* 外环转一圈的时长 */
+    --mt-tilt: 38deg;          /* 环面后倾角 */
+    --mt-radius: 10px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 舞台：一块向后倒的平面，上面两只 2D 的环各自转动；卡片本身只做 2D 变换，很省 */
+  .mt-stage { position: fixed; inset: 0; perspective: 1200px; overflow: hidden; }
+  .mt-plane { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(var(--s, 1)) rotateX(var(--mt-tilt)); transform-style: preserve-3d; }
+  .mt-ring { position: absolute; left: 0; top: 0; animation: mt-spin var(--dur) linear infinite; animation-direction: var(--dir); will-change: transform; }
+  .mt-ring.outer { --dur: var(--mt-speed); --dir: normal; --cdir: reverse; --r: var(--mt-outerR); --w: var(--mt-cardWidth); }
+  .mt-ring.inner { --dur: calc(var(--mt-speed) * 0.7); --dir: reverse; --cdir: normal; --r: var(--mt-innerR); --w: calc(var(--mt-cardWidth) * 0.8); }
+  @keyframes mt-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  /* 臂：转到方位角再沿半径推出去，卡片的长边自然顺着圆周 */
+  .mt-arm { position: absolute; left: 0; top: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--r))); }
+  .mt-card { position: absolute; left: 0; top: 0; width: var(--w); aspect-ratio: 4 / 3; margin: calc(var(--w) * -0.375) calc(var(--w) * -0.5); border-radius: var(--mt-radius); overflow: hidden; background: #16161d; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+  /* 始终直立：先抵消方位角，再用一段反向同速的动画抵消环的转动 */
+  .orient-upright .mt-unrot { position: absolute; left: 0; top: 0; transform: rotate(calc(-1 * var(--a))); }
+  .orient-upright .mt-card { animation: mt-spin var(--dur) linear infinite; animation-direction: var(--cdir); }
+
+  /* 用户开启「减少动态效果」时：双环静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-ring, .mt-card { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" aria-hidden="true"><div class="mt-plane" id="mtPlane"></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    outerCount: 12,     // 外环卡片数
+    innerCount: 7,      // 内环卡片数
+    orient: "tangent",  // 卡片朝向：tangent 顺着圆周 / upright 始终直立
+  };
+  const plane = document.getElementById('mtPlane');
+  plane.className = 'mt-plane orient-' + CONFIG.orient;
+  const srcs = CONFIG.slides.map(s => s.src);
+  // 两环合计不超过 30 张卡
+  const outerN = Math.min(18, CONFIG.outerCount), innerN = Math.min(12, CONFIG.innerCount);
+  function buildRing(cls, n, offset) {
+    const ring = document.createElement('div'); ring.className = 'mt-ring ' + cls;
+    for (let i = 0; i < n; i++) {
+      const arm = document.createElement('div'); arm.className = 'mt-arm'; arm.style.setProperty('--a', (i * 360 / n) + 'deg');
+      const unrot = document.createElement('div'); unrot.className = 'mt-unrot';
+      const card = document.createElement('div'); card.className = 'mt-card';
+      const img = document.createElement('img'); img.src = srcs[(i + offset) % srcs.length]; img.alt = ''; img.loading = 'lazy';
+      card.appendChild(img); unrot.appendChild(card); arm.appendChild(unrot); ring.appendChild(arm);
+    }
+    plane.appendChild(ring);
+  }
+  buildRing('outer', outerN, 0);
+  buildRing('inner', innerN, 3); // 内环错 3 张取图，避免内外同图对齐
+  // 适配：外环直径加一张卡的宽度占画面短边的 86%
+  function fit() {
+    const cs = getComputedStyle(document.documentElement);
+    const size = 2 * parseFloat(cs.getPropertyValue('--mt-outerR')) + parseFloat(cs.getPropertyValue('--mt-cardWidth'));
+    plane.style.setProperty('--s', Math.min(1, Math.min(innerWidth, innerHeight) * 0.86 / size).toFixed(3));
+  }
+  fit(); addEventListener('resize', fit);
+  document.addEventListener('visibilitychange', () => plane.querySelectorAll('.mt-ring, .mt-card').forEach(el => (el.style.animationPlayState = document.hidden ? 'paused' : 'running')));
+</script>
+</body>
+</html>

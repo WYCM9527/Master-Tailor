@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡片轮盘</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-hub: 60px;            /* 卡片底边到圆心的距离 */
+    --mt-cardWidth: 150px;     /* 卡片宽度 */
+    --mt-ratio: 3 / 4;         /* 卡片宽高比 */
+    --mt-speed: 20s;           /* 转一圈的时长 */
+    --mt-radius: 14px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 舞台：轮盘锚点在画面中心（整轮）或底边中点（半轮）；可选一层 3D 轻摆 */
+  .mt-stage { position: fixed; inset: 0; perspective: 1200px; overflow: hidden; }
+  .mt-anchor { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(var(--s, 1)); transform-style: preserve-3d; }
+  .pos-bottom .mt-anchor { top: 100%; }
+  .mt-tiltwrap { position: absolute; left: 0; top: 0; transform-style: preserve-3d; }
+  .wobble .mt-tiltwrap { animation: mt-wobble 6s ease-in-out infinite alternate; }
+  @keyframes mt-wobble { from { transform: rotateX(-6deg) rotateY(3deg); } to { transform: rotateX(6deg) rotateY(-3deg); } }
+  .mt-wheel { position: absolute; left: 0; top: 0; animation: mt-spin var(--mt-speed) linear infinite; will-change: transform; }
+  @keyframes mt-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  /* 叶片：底边中点对到圆心，以底边中点为轴转到方位角，再沿自己的方向推出轴心留空的距离 */
+  .mt-card { position: absolute; left: 0; bottom: 0; width: var(--mt-cardWidth); aspect-ratio: var(--mt-ratio); margin-left: calc(var(--mt-cardWidth) / -2); transform-origin: 50% 100%; transform: rotate(var(--a)) translateY(calc(-1 * var(--mt-hub))); border-radius: var(--mt-radius); overflow: hidden; background: #16161d; box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5); }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+
+  /* 用户开启「减少动态效果」时：轮盘静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-wheel, .mt-tiltwrap { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage" aria-hidden="true"><div class="mt-anchor" id="mtAnchor"><div class="mt-tiltwrap"><div class="mt-wheel" id="mtWheel"></div></div></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    count: 9,            // 叶片数（图片不够循环取用）
+    position: "center",  // 轮盘位置：center 居中整轮 / bottom 底部半轮
+    wobble: false,       // 轻微摆动
+  };
+  const stage = document.getElementById('mtStage'), anchor = document.getElementById('mtAnchor'), wheel = document.getElementById('mtWheel');
+  stage.className = 'mt-stage pos-' + CONFIG.position + (CONFIG.wobble ? ' wobble' : '');
+  const srcs = CONFIG.slides.map(s => s.src);
+  const N = Math.min(16, CONFIG.count); // 上限 16 张
+  for (let i = 0; i < N; i++) {
+    const card = document.createElement('div'); card.className = 'mt-card'; card.style.setProperty('--a', (i * 360 / N) + 'deg');
+    const img = document.createElement('img'); img.src = srcs[i % srcs.length]; img.alt = ''; img.loading = 'lazy';
+    card.appendChild(img); wheel.appendChild(card);
+  }
+  // 适配：轮盘外径 = 轴心留空 + 卡片高度；整轮占画面短边的 88%，半轮则占高度的 92%
+  function fit() {
+    const cs = getComputedStyle(document.documentElement);
+    const hub = parseFloat(cs.getPropertyValue('--mt-hub')) || 0;
+    const outer = hub + (wheel.firstElementChild ? wheel.firstElementChild.offsetHeight : 0);
+    const room = CONFIG.position === 'bottom' ? innerHeight * 0.92 : Math.min(innerWidth, innerHeight) * 0.46;
+    anchor.style.setProperty('--s', Math.min(1.3, room / outer).toFixed(3)); // 小屏缩、大屏最多放大 1.3 倍
+  }
+  fit(); addEventListener('resize', fit);
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('.mt-wheel, .mt-tiltwrap').forEach(el => (el.style.animationPlayState = document.hidden ? 'paused' : 'running')));
+</script>
+</body>
+</html>
