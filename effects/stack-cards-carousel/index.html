@@ -129,11 +129,16 @@
     fraction.setAttribute('aria-hidden', 'true');
     root.appendChild(fraction);
 
+    // 正在飞出的卡：layout 跳过它们，等过渡走完再瞬时落到队尾隐藏位
+    const flying = new Set();
+    const durationMs = () => (parseFloat(getComputedStyle(root).getPropertyValue('--mt-duration')) || 0.5) * 1000;
+
     // 布局：off=0 是顶卡；1..VISIBLE 依次缩小下移露出「一沓」；再往后藏在最底
     function layout() {
       for (let i = 0; i < total; i++) {
         const off = (i - index + total) % total;
         const el = cards[i];
+        if (flying.has(el)) continue;
         if (off === 0) {
           el.style.transform = '';
           el.style.opacity = '1';
@@ -156,19 +161,35 @@
       fraction.textContent = ((index % total) + 1) + ' / ' + total;
     }
 
-    // 下一张：顶卡向左上飞出淡出，落到队尾；其余整体上浮一层
+    // 下一张：顶卡压在整沓上面向左上飞出淡出；其余即刻上浮一层；飞完再落到队尾
     function nextSlide() {
       const top = cards[index];
+      flying.add(top);
+      top.style.zIndex = String(total + 1);
       top.style.transform = 'translate(-55%, -6%) rotate(-10deg)';
       top.style.opacity = '0';
       index = (index + 1) % total;
-      // 其余卡片即刻按新次序排布；飞出的卡过渡结束后已是队尾的隐藏位
-      requestAnimationFrame(() => requestAnimationFrame(layout));
+      layout();
+      const settle = (e) => {
+        if (e && e.target !== top) return; // 忽略子元素冒泡
+        clearTimeout(top._settleTimer);
+        top.removeEventListener('transitionend', settle);
+        if (!flying.delete(top)) return; // 已被「上一张」接管
+        top.style.transition = 'none'; // 已透明，归位到队尾隐藏位不走过渡
+        layout();
+        void top.offsetWidth;
+        top.style.transition = '';
+      };
+      top.addEventListener('transitionend', settle);
+      top._settleTimer = setTimeout(settle, durationMs() + 80); // 兜底：reduced-motion 无过渡时也要归位
     }
     // 上一张：队尾的卡从左上飞回顶层
     function prevSlide() {
       index = (index - 1 + total) % total;
       const top = cards[index];
+      // 若这张正在飞出（连点后退），接管它：直接从当前飞出姿态飞回
+      clearTimeout(top._settleTimer);
+      flying.delete(top);
       top.style.transition = 'none';
       top.style.transform = 'translate(-55%, -6%) rotate(-10deg)';
       top.style.opacity = '0';

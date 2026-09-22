@@ -4,7 +4,7 @@
 ## 实现提示
 - 纯 DOM + CSS transition。容器 `position: relative; width: min(420px, 82vw); aspect-ratio: 4 / 5; cursor: grab`。所有卡 `position: absolute; inset: 0` 叠在同一位置：圆角 {{rounded}}、`overflow: hidden`、投影 `0 18px 44px rgba(0, 0, 0, 0.45)`、图片加载前底色 `linear-gradient(135deg, #1a1c2c, #2a2f4a)`，图片 `object-fit: cover`（占位图）。卡的过渡：`transform {{duration}} cubic-bezier(0.33, 1, 0.68, 1)`、`opacity {{duration}} ease`（层叠位移与飞出共用）。
 - 按层号 `off = (i − index + total) % total` 布局：off = 0 顶卡，transform 置空、opacity 1、z-index 最高；off = 1–3 露出的那沓：`translateY(off × 16px × {{stackDepth}}) scale(1 − off × 0.05 × {{stackDepth}})`，z-index 逐层递减，第 3 层 opacity 0.55、其余 1；off > 3 藏在最底：与第 3 层同 transform、opacity 0、z-index 0。
-- 下一张：顶卡写入 `translate(-55%, -6%) rotate(-10deg)` + `opacity: 0`，index 前进一位，两帧 rAF 后 layout() 让其余卡上浮一层，飞出的卡随之落到队尾隐藏位（过渡从飞行途中重定向，被新顶卡盖住后淡出）。上一张：index 退一位，新顶卡关过渡、瞬移到同一飞出姿态并置顶，强制 reflow 恢复过渡后 layout()，从左上方飞回。
+- 下一张：顶卡标记为「飞行中」并置顶（z-index 总数 + 1），写入 `translate(-55%, -6%) rotate(-10deg)` + `opacity: 0`，index 前进一位后立刻 layout() 让其余卡上浮一层（layout 跳过飞行中的卡，别把它重定向）；等 `transitionend`（再用 {{duration}} + 80ms 的定时器兜底，reduced-motion 下没有过渡事件）后取消标记、关过渡、layout() 让它瞬时落到队尾隐藏位，再恢复过渡。上一张：index 退一位，新顶卡若正在飞出就先取消其标记与兜底定时器，然后关过渡、瞬移到同一飞出姿态并置顶，强制 reflow 恢复过渡后 layout()，从左上方飞回。
 - 角标 `top: -34px; right: 0; padding: 3px 12px`、圆角 999px、底 `rgba(10, 10, 15, 0.6)`、{{accent}} 12.5px 等宽字，内容「N / M」；标题条 `padding: 42px 18px 14px`、白字 17px / 600、背景 `linear-gradient(transparent, rgba(0, 0, 0, 0.62))`。
 - 自动播放每 {{interval}} 切下一张；拖拽中卡片不跟手，松手后才判定。
 

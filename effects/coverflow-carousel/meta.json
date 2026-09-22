@@ -80,7 +80,8 @@
       "max": 55,
       "step": 1,
       "default": 34,
-      "displayUnit": "%"
+      "displayUnit": "%",
+      "help": "相邻封面的水平间距，按封面自身宽度的百分比计"
     },
     { "key": "accent", "label": "强调色", "type": "color", "target": "css", "default": "#ffffff" },
     {

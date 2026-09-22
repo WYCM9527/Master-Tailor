@@ -11,7 +11,7 @@
 - 高光层：`radial-gradient(260px at var(--gx, 50%) var(--gy, 50%), rgba(255,255,255, {{gloss}} × 0.55), transparent 60%)`，`mix-blend-mode: soft-light`。
 - 标题条 {{title}}：贴底，`padding: 40px 18px 16px`，白字 13px、字重 700、`letter-spacing: 0.12em`，背景 `linear-gradient(transparent, rgba(0,0,0,0.55))`。
 - 交互：`pointermove` 取卡内归一化目标 `tx = (clientX − left) / width − 0.5`（ty 同理），`pointerleave` 归 0 回正；每帧 `x += (tx − x) × {{lag}}`（y 同），写入 `--ry = x × {{tilt}} × 2`、`--rx = −y × {{tilt}} × 2`（deg），高光中心 `--gx/--gy = (x/y + 0.5) × 100%`，全息位置反向 `--px/--py = (0.5 − x/y) × 100%`；`document.hidden` 时跳过。
-- 「减少动态效果」：卡片 `transform: none !important` 不再倾斜，JS 里插值系数取 1。
+- 「减少动态效果」：卡片 `transform: none !important` 不再倾斜；JS 不再从 pointermove 采样目标位置（目标保持 0,0），全息与高光留在中心，插值系数取 1。
 
 ## 完成后请检查
 

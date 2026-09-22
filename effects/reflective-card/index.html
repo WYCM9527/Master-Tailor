@@ -90,6 +90,7 @@
   let tx = 0, ty = 0, x = 0, y = 0, auto = true;
   card.addEventListener('pointermove', e => {
     auto = false;
+    if (reduceMotion) return; // 减少动态效果：不采样指针，全息与高光留在中心
     const r = card.getBoundingClientRect();
     tx = (e.clientX - r.left) / r.width - 0.5; ty = (e.clientY - r.top) / r.height - 0.5;
   });

@@ -15,9 +15,15 @@
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; }
 
-  .mt-gradient {
+  /* 两层都是纯背景：垫到最底且不拦截鼠标，页面内容和交互不受影响 */
+  .mt-gradient,
+  .mt-grain {
     position: fixed;
     inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .mt-gradient {
     /* 渐变的颜色段由 JS 按「渐变颜色」列表拼成 linear-gradient 写入，角度仍引用变量 */
     background: #1b1035;
   }
@@ -30,8 +36,6 @@
   }
 
   .mt-grain {
-    position: fixed;
-    inset: 0;
     opacity: var(--mt-grain);
     /* 内联 SVG feTurbulence 生成胶片噪点，无任何外部请求 */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");

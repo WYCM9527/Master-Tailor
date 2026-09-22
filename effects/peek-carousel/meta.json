@@ -109,7 +109,7 @@
       "step": 2,
       "default": 56,
       "displayUnit": "%",
-      "help": "占容器宽度的百分比"
+      "help": "相邻卡片的水平间距，按卡片自身宽度的百分比计"
     },
     {
       "key": "accent",

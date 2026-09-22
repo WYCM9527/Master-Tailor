@@ -169,20 +169,24 @@
     });
     root.appendChild(viewport);
 
-    // ---- 切换（三态类切换：无缝循环的关键） ----
+    // ---- 切换：圆形揭示与方向无关——新图永远从圆点撑开，旧图满圆垫底 ----
+    // （dir 只供调用方语义一致，这里不影响动画；前进后退都是「新图晕开」）
     function goTo(next, dir) {
+      void dir;
       next = (next + total) % total;
       if (next === index || total < 2) return;
       const current = slideEls[index];
       const target = slideEls[next];
-      // 把新卡瞬时放到「进入侧」（next 从右进，prev 从左进），再触发过渡
-      target.style.transition = 'none';
-      target.classList.toggle('is-prev', dir < 0);
-      void target.offsetWidth; // 强制 reflow，让上面的瞬时定位生效
-      target.style.transition = '';
+      // 除当前图外全部瞬时归位到起点小圆：新图从 0% 起撑，上一轮留下的满圆旧图也不会在底层露出来
+      slideEls.forEach((el) => {
+        if (el === current) return;
+        el.style.transition = 'none';
+        el.classList.remove('is-prev', 'is-active');
+      });
+      void target.offsetWidth; // 强制 reflow，让瞬时归位生效
+      slideEls.forEach((el) => { el.style.transition = ''; });
       current.classList.remove('is-active');
-      current.classList.toggle('is-prev', dir > 0);
-      target.classList.remove('is-prev');
+      current.classList.add('is-prev');
       target.classList.add('is-active');
       index = next;
       updatePager();

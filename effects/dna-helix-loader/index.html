@@ -37,7 +37,7 @@
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
   const dna = document.getElementById('mtDna');
-  for (let i = 0; i < CONFIG.count; i++) { const c = document.createElement('div'); c.className = 'mt-col'; c.style.setProperty('--d', (-i * 0.12) + 's'); c.innerHTML = '<i class="a"></i><i class="b"></i>'; dna.appendChild(c); }
+  for (let i = 0; i < CONFIG.count; i++) { const c = document.createElement('div'); c.className = 'mt-col'; c.style.setProperty('--d', 'calc(var(--mt-speed) * ' + (-i * 0.075) + ')'); /* 相邻列相差 7.5% 周期，改速度不改螺距 */ c.innerHTML = '<i class="a"></i><i class="b"></i>'; dna.appendChild(c); }
 </script>
 </body>
 </html>

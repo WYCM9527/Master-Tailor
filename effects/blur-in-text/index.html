@@ -39,7 +39,8 @@
     white-space: pre;
     filter: blur(var(--mt-blurAmount));
     opacity: 0;
-    transform: translateY(calc(var(--mt-direction) * -0.6em));
+    /* -1 从上落下：起点在上方（负 Y）；1 从下升起：起点在下方 */
+    transform: translateY(calc(var(--mt-direction) * 0.6em));
     animation: mt-focus var(--mt-duration) cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
     animation-delay: var(--d, 0s);
   }

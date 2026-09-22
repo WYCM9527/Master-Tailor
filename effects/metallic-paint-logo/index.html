@@ -99,7 +99,8 @@
       vec2 iC = fA();
       vec4 tex = texture(uTex, iC);
       float dp = tex.r, shapeMask = tex.a;
-      vec3 hi = uLight * uBright, lo = uDark * (2.0 - uBright);
+      // 亮部随 BRIGHTNESS 提亮；暗部直接取「暗部颜色」（源实现按 2 − 亮度 缩放，亮度定为 2 时会把暗部归零，参数失效）
+      vec3 hi = uLight * uBright, lo = uDark;
       lo.b += smoothstep(0.6, 1.4, sc.x + sc.y) * 0.08;
       // 一个偏心的「曲率」场，模拟漆面整体的受光
       vec2 fC = sc - 0.5;

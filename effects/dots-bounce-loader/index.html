@@ -28,7 +28,8 @@
 </style>
 </head>
 <body>
-<div class="mt-dots" role="status" aria-label="加载中"><i style="--d:0s"></i><i style="--d:0.12s"></i><i style="--d:0.24s"></i></div>
+<!-- 相邻点相差 2/15 周期（默认 0.9s 时即 0.12s），按周期比例算，改速度不改波形 -->
+<div class="mt-dots" role="status" aria-label="加载中"><i style="--d:0s"></i><i style="--d:calc(var(--mt-speed) * 2 / 15)"></i><i style="--d:calc(var(--mt-speed) * 4 / 15)"></i></div>
 <script>
   const CONFIG = {
     // 本效果全部参数由 CSS 变量控制，无需脚本配置
