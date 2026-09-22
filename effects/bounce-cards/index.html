@@ -9,8 +9,8 @@
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
     --mt-bg: #0a0a0f;            /* 页面底色 */
     --mt-borderColor: #ffffff;   /* 卡边颜色 */
-    --mt-borderWidth: 8px;       /* 卡边粗细 */
-    --mt-radius: 30px;           /* 圆角 */
+    --mt-borderWidth: 0px;       /* 卡边粗细 */
+    --mt-radius: 12px;           /* 圆角 */
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); display: grid; place-items: center; overflow: hidden; }
@@ -43,11 +43,11 @@
 <script>
   const CONFIG = {
     slides: [{ src: '/samples/sample-1.webp', caption: '' }], // 卡片图片
-    cardSize: 200,       // 卡片边长（px）
-    spread: 85,          // 扇形间距（px）
+    cardSize: 140,       // 卡片边长（px）
+    spread: 70,          // 扇形间距（px）
     maxRotate: 10,       // 最大倾角（度）
-    pushDistance: 160,   // 让开距离（px）
-    stagger: 0.06,       // 进场错开（s）
+    pushDistance: 80,    // 让开距离（px）
+    stagger: 0.1,        // 进场错开（s）
     enableHover: true,   // 悬停让位
   };
 
