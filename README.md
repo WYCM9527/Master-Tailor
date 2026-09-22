@@ -8,7 +8,7 @@
 
 ## 使用方式（给访客）
 
-1. **挑一个效果**：左侧两级侧边栏浏览——原有分类按触发方式细分，「多卡/图展示」按形态细分（轮播图 / 图片对比 / 滚动堆叠 / 图墙），「页面转场」按换场方式细分；卡片全部是实时渲染的迷你预览
+1. **挑一个效果**：左侧两级侧边栏浏览——原有分类按触发方式细分，「多卡/图展示」按形态细分（轮播图 / 图片对比 / 滚动交互 / 图墙），「页面转场」按换场方式细分；卡片全部是实时渲染的迷你预览
 2. **调成你要的样子**：右侧面板改颜色、拖滑块，预览 / prompt / 代码三者实时同步
 3. **复制 prompt 粘给你的 AI**：Trae、Qoder、Cursor、Claude Code、扣子编程、CodeBuddy、豆包网页版……任何能写代码的 AI 都可以
 
@@ -59,7 +59,7 @@ effects/<slug>/
 ### meta.json
 
 - `category`：`background | button | nav | text | card | showcase | transition | loading | canvas`（侧边栏一级）
-- `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表（`src/contract/categories.ts`）——按钮 / 导航 / 卡片 / 加载 / 鼠标交互的子类是触发方式（`idle | hover | click | scroll`），背景效果不收 `scroll`，文字效果多一个 `marquee`（跑马灯），「多卡/图展示」是 `carousel | compare | stack-scroll | wall`，「页面转场」是 `shared | push | zoom | keynote | scroll`。分类归属的既定决策见 `docs/sources.md`「分类决策记录」
+- `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表（`src/contract/categories.ts`）——按钮 / 导航 / 卡片 / 加载 / 鼠标交互的子类是触发方式（`idle | hover | click | scroll`），背景效果不收 `scroll`，文字效果多一个 `marquee`（跑马灯），「多卡/图展示」是 `carousel | compare | stack-scroll | wall`，「页面转场」是 `shared | push | zoom | keynote`。分类归属的既定决策见 `docs/sources.md`「分类决策记录」
 - `params[]`：9 种控件类型 `color | range | toggle | select | text | font | image | images | colors`（`colors` 为可增删的颜色列表，只允许 `config`，CONFIG 中写成单行数组 `colors: ["#…", …], // 注释`）
   - `target: "css"` → 值注入 `:root` 的 `--mt-<key>`，调参时**热更新**（动画不重置）
   - `target: "config"` → 值注入 JS 顶部 `const CONFIG` 块，调参时**防抖重建**预览

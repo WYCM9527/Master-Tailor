@@ -1,8 +1,8 @@
 {
   "slug": "hero-parallax-rows",
   "name": "滚动视差行",
-  "category": "transition",
-  "sub": "scroll",
+  "category": "showcase",
+  "sub": "stack-scroll",
   "tags": ["滚动", "视差", "3D", "作品墙"],
   "summary": "三行作品卡片起初翘起、倾斜、半透明地悬在上方，往下滚动时逐行反向滑动、整体放平对正落到画面中央",
   "params": [

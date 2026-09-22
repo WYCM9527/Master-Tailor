@@ -21,7 +21,7 @@ const TEXT_SUBS: SubDef[] = [
 const SHOWCASE_SUBS: SubDef[] = [
   { id: 'carousel', name: '轮播图', desc: '多张图片或卡片按节奏轮流展示' },
   { id: 'compare', name: '图片对比', desc: '拖动分割线对比两张图片' },
-  { id: 'stack-scroll', name: '滚动堆叠', desc: '页面滚动时卡片依次叠上' },
+  { id: 'stack-scroll', name: '滚动交互', desc: '随页面滚动推进的卡片堆叠、视差与网格变化' },
   { id: 'wall', name: '图墙', desc: '多张图片铺成一面墙或叠成几层，整体缓动或随鼠标视差' },
 ];
 
@@ -31,7 +31,6 @@ const TRANSITION_SUBS: SubDef[] = [
   { id: 'push', name: '推屏导航', desc: '新页从一侧推入、旧页让位，返回时严格反向' },
   { id: 'zoom', name: '缩放淡入', desc: '新页整体缩放淡入登场，旧页轻轻退后' },
   { id: 'keynote', name: '发布会转场', desc: '擦除、揭示、翻转、溶解等舞台式换场' },
-  { id: 'scroll', name: '滚动接力', desc: '随页面滚动推进的换场与分节接力' },
 ];
 
 /** 一级分类（subs 即该分类下的二级分类表，侧边栏只显示有效果的子项） */

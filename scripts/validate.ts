@@ -139,21 +139,11 @@ for (const slug of dirs) {
     }
   }
 
-  // ---- 转场基线（category 为 transition 的效果强制）----
+  // ---- 转场基线（category 为 transition 的效果强制）：View Transitions 为主引擎，必须带 CSS 回退路径与降级 ----
   if (meta.category === 'transition') {
-    if (meta.sub === 'scroll') {
-      // 滚动接力：滚动驱动动画必须 @supports 渐进增强，终态写成默认样式
-      for (const keyword of ['animation-timeline', '@supports', 'prefers-reduced-motion']) {
-        if (!html.includes(keyword)) {
-          fail(slug, `滚动接力转场缺少基线能力关键字「${keyword}」（滚动驱动 / 渐进增强 / 降级）`);
-        }
-      }
-    } else {
-      // 页面间转场：View Transitions 为主引擎，必须带 CSS 回退路径与降级
-      for (const keyword of ['startViewTransition', 'prefers-reduced-motion', '@mt:fallback']) {
-        if (!html.includes(keyword)) {
-          fail(slug, `转场效果缺少基线能力关键字「${keyword}」（视图过渡 / 降级 / 无 API 回退）`);
-        }
+    for (const keyword of ['startViewTransition', 'prefers-reduced-motion', '@mt:fallback']) {
+      if (!html.includes(keyword)) {
+        fail(slug, `转场效果缺少基线能力关键字「${keyword}」（视图过渡 / 降级 / 无 API 回退）`);
       }
     }
   }
