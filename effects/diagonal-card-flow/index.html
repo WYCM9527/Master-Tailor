@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>斜向叠卡流</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-cardWidth: 230px;     /* 卡片宽度 */
+    --mt-speed: 18s;           /* 一张卡从起点走到终点的时长 */
+    --mt-scaleEnd: 1.2;        /* 走到终点时的放大倍数 */
+    --mt-radius: 14px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 舞台保留 3D：每张卡的深度从 −600px 单调升到 200px，越靠终点越近于观者，层叠顺序自然正确，不用管 z-index */
+  .mt-stage { position: fixed; inset: 0; perspective: 1200px; transform-style: preserve-3d; }
+  .mt-card { position: absolute; left: 50%; top: 50%; width: var(--mt-cardWidth); aspect-ratio: 4 / 3; margin: calc(var(--mt-cardWidth) * -0.375) calc(var(--mt-cardWidth) * -0.5); border-radius: var(--mt-radius); overflow: hidden; background: #16161d; box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5); will-change: transform, opacity; animation: mt-flow var(--mt-speed) linear infinite; }
+  .reverse .mt-card { animation-direction: reverse; }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+  /* 起点在左上（−dx, −dy）、终点在右下（+dx, +dy），首尾各留一段淡入淡出，回绕时不闪 */
+  @keyframes mt-flow {
+    0%   { transform: translate3d(calc(-1 * var(--dx)), calc(-1 * var(--dy)), -600px) scale(1); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translate3d(var(--dx), var(--dy), 200px) scale(var(--mt-scaleEnd)); opacity: 0; }
+  }
+
+  /* 用户开启「减少动态效果」时：卡片停在沿斜线排开的静态阶梯（用动画延迟定住各自相位） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-card { animation-play-state: paused; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    count: 7,           // 同时可见的卡片数（图片不够循环取用）
+    angle: 36,          // 斜线相对水平的角度（度）
+    spacing: 120,       // 相邻卡片沿斜线的距离（px）
+    reverse: false,     // 反向：从右下往左上
+  };
+  const stage = document.getElementById('mtStage');
+  stage.className = 'mt-stage' + (CONFIG.reverse ? ' reverse' : '');
+  const srcs = CONFIG.slides.map(s => s.src);
+  const N = Math.min(10, CONFIG.count); // 上限 10 张
+  // 路径总长 = N × 间距，以画面中心为中点；分解到横纵两个方向
+  const half = N * CONFIG.spacing / 2, rad = CONFIG.angle * Math.PI / 180;
+  stage.style.setProperty('--dx', (half * Math.cos(rad)).toFixed(1) + 'px');
+  stage.style.setProperty('--dy', (half * Math.sin(rad)).toFixed(1) + 'px');
+  for (let i = 0; i < N; i++) {
+    const card = document.createElement('div'); card.className = 'mt-card';
+    // 相位均匀错开：第 i 张提前 i/N 个周期出发，任一时刻沿斜线恰好等距排开
+    card.style.animationDelay = 'calc(' + (-i / N).toFixed(4) + ' * var(--mt-speed))';
+    const img = document.createElement('img'); img.src = srcs[i % srcs.length]; img.alt = ''; img.loading = 'lazy';
+    card.appendChild(img); stage.appendChild(card);
+  }
+  // 后台暂停；减少动态效果时本来就靠 paused 定住相位，不能被这里的 running 覆盖
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('visibilitychange', () => { if (reduceMotion) return; stage.querySelectorAll('.mt-card').forEach(el => (el.style.animationPlayState = document.hidden ? 'paused' : 'running')); });
+</script>
+</body>
+</html>

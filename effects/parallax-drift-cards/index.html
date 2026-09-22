@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视差漂移卡</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-speed: 22s;           /* 最近一层漂完一轮的时长 */
+    --mt-scaleFar: 0.45;       /* 最远一层的相对大小 */
+    --mt-dimFar: 0.45;         /* 最远一层的压暗程度 */
+    --mt-cardWidth: 280px;     /* 最近一层的卡片宽度 */
+    --mt-direction: normal;    /* 漂移方向：normal 向左 / reverse 向右 */
+    --mt-radius: 14px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 每层一条横向轨道，放两份同样的卡序列，平移半个轨道即无缝；层越远时长越长、卡越小越暗 */
+  .mt-stage { position: fixed; inset: 0; overflow: hidden; }
+  .mt-layer { position: absolute; inset: 0; --t: calc(var(--l) / max(1, var(--layers) - 1)); }
+  .mt-track { position: absolute; left: 0; top: 0; display: flex; gap: 48px; width: max-content; animation: mt-drift calc(var(--mt-speed) * (1 + 0.6 * var(--l))) linear infinite; animation-direction: var(--mt-direction); will-change: transform; }
+  @keyframes mt-drift { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 24px)); } }
+  /* 卡片：按层缩放（缩放写在卡上而不是层上，轨道宽度才不会跟着缩、露出空当）；纵向位置逐张错落 */
+  .mt-card { position: relative; flex: none; width: var(--mt-cardWidth); aspect-ratio: 4 / 3; border-radius: var(--mt-radius); overflow: hidden; background: #16161d; transform: translateY(var(--ty)) scale(calc(1 - var(--t) * (1 - var(--mt-scaleFar)))); transform-origin: 50% 0; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45); }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+  .mt-card::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, calc(var(--t) * var(--mt-dimFar))); pointer-events: none; }
+  /* 上下轻浮：给图片一段小幅往返，别与卡片自身的位移变换打架 */
+  .bob .mt-card img { animation: mt-bob 5s ease-in-out infinite alternate; animation-delay: var(--bd); }
+  @keyframes mt-bob { from { transform: translateY(-6px); } to { transform: translateY(6px); } }
+
+  /* 用户开启「减少动态效果」时：全部静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-track, .mt-card img { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    layers: 3,          // 层数
+    bob: true,          // 上下轻浮
+  };
+  const stage = document.getElementById('mtStage');
+  stage.className = 'mt-stage' + (CONFIG.bob ? ' bob' : '');
+  const L = Math.min(4, Math.max(2, CONFIG.layers));
+  stage.style.setProperty('--layers', L);
+  const srcs = CONFIG.slides.map(s => s.src);
+  const PER = 8;                                   // 每层一份序列 8 张，两份 16 张；4 层最多 64 张
+  const TY = ['8vh', '48vh', '28vh', '66vh', '16vh', '58vh', '36vh', '4vh']; // 纵向错落（相对画面高度），上下都铺到
+  // 层号 0 最近、L−1 最远；近层在上面，所以倒序插入 DOM（后插的在上）
+  for (let l = L - 1; l >= 0; l--) {
+    const layer = document.createElement('div'); layer.className = 'mt-layer'; layer.style.setProperty('--l', l);
+    const track = document.createElement('div'); track.className = 'mt-track';
+    track.style.animationDelay = (-l * 7.3) + 's'; // 各层起点错开
+    const seq = Array.from({ length: PER }, (_, i) => srcs[(i + l * 3) % srcs.length]); // 每层错 3 张取图
+    [...seq, ...seq].forEach((src, i) => {
+      const card = document.createElement('div'); card.className = 'mt-card';
+      card.style.setProperty('--ty', TY[(i + l * 2) % TY.length]);
+      const img = document.createElement('img'); img.src = src; img.alt = ''; img.loading = 'lazy'; img.style.setProperty('--bd', (-(i * 0.7 + l * 1.1)) + 's');
+      card.appendChild(img); track.appendChild(card);
+    });
+    layer.appendChild(track); stage.appendChild(layer);
+  }
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('.mt-track, .mt-card img').forEach(el => (el.style.animationPlayState = document.hidden ? 'paused' : 'running')));
+</script>
+</body>
+</html>

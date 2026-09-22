@@ -1,0 +1,126 @@
+{
+  "slug": "mosaic-marquee",
+  "name": "图片马赛克跑马灯",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["跑马灯", "拼贴", "图墙", "自动播放"],
+  "summary": "大小不一的图片格子拼成一条报纸版面般的横带，匀速向一侧流过，两端隐入底色",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "rows",
+      "label": "行数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 3,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "key": "tileHeight",
+      "label": "基准格子",
+      "type": "range",
+      "target": "css",
+      "min": 80,
+      "max": 240,
+      "step": 10,
+      "default": 150,
+      "unit": "px",
+      "help": "最小的一格的边长，大格是它的两倍"
+    },
+    {
+      "key": "gap",
+      "label": "格子间距",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 90,
+      "step": 2,
+      "default": 36,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "pattern",
+      "label": "排版",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "mixed", "label": "大小混排" },
+        { "value": "uniform", "label": "等格" }
+      ],
+      "default": "mixed"
+    },
+    {
+      "key": "direction",
+      "label": "滚动方向",
+      "type": "select",
+      "target": "css",
+      "options": [
+        { "value": "normal", "label": "向左" },
+        { "value": "reverse", "label": "向右" }
+      ],
+      "default": "normal"
+    },
+    {
+      "key": "fade",
+      "label": "两端渐隐",
+      "type": "toggle",
+      "target": "css",
+      "default": true
+    },
+    {
+      "key": "radius",
+      "label": "格子圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "three", "name": "三行密铺", "values": { "rows": 3, "tileHeight": 110, "gap": 8 } },
+    { "id": "uniform", "name": "等格慢滚", "values": { "pattern": "uniform", "speed": 60, "fade": false } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Mosaic Marquee 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

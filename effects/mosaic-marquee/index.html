@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图片马赛克跑马灯</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-tileHeight: 150px;    /* 基准格子边长 */
+    --mt-gap: 14px;            /* 格子间距 */
+    --mt-speed: 36s;           /* 滚过一份序列的时长 */
+    --mt-direction: normal;    /* 滚动方向：normal 向左 / reverse 向右 */
+    --mt-fade: 1;              /* 两端渐隐：1 开 / 0 关 */
+    --mt-radius: 12px;         /* 格子圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 横带垂直居中；两端用 mask 渐隐，--mt-fade 为 0 时两端颜色不透明、等于没有渐隐 */
+  .mt-stage { position: fixed; inset: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, calc(1 - var(--mt-fade))), #000 12%, #000 88%, rgba(0, 0, 0, calc(1 - var(--mt-fade)))); mask-image: linear-gradient(90deg, rgba(0, 0, 0, calc(1 - var(--mt-fade))), #000 12%, #000 88%, rgba(0, 0, 0, calc(1 - var(--mt-fade)))); }
+  .mt-band { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
+  /* 轨道是一张显式网格：两份同样的版面并排，平移半个轨道（加半个间距）正好一份，首尾无缝 */
+  .mt-track { display: grid; grid-template-rows: repeat(var(--rows), var(--mt-tileHeight)); grid-template-columns: repeat(var(--cols), var(--mt-tileHeight)); gap: var(--mt-gap); width: max-content; animation: mt-marquee var(--mt-speed) linear infinite; animation-direction: var(--mt-direction); will-change: transform; }
+  @keyframes mt-marquee { from { transform: translateX(0); } to { transform: translateX(calc(-50% - var(--mt-gap) / 2)); } }
+  .mt-tile { border-radius: var(--mt-radius); overflow: hidden; background: #16161d; }
+  .mt-tile img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+
+  /* 用户开启「减少动态效果」时：横带静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-track { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" aria-hidden="true"><div class="mt-band"><div class="mt-track" id="mtTrack"></div></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    rows: 2,            // 行数
+    pattern: "mixed",   // 排版：mixed 大小混排 / uniform 等格
+  };
+  const track = document.getElementById('mtTrack');
+  const srcs = CONFIG.slides.map(s => s.src);
+  const R = CONFIG.rows === 3 ? 3 : 2;
+  // 一个「版面周期」内每格的显式位置（列、行、跨列、跨行），周期正好填满 6 列没有空洞——两份序列才能严丝合缝
+  const PERIODS = {
+    mixed2: { cols: 6, tiles: [[1, 1, 2, 2], [3, 1, 1, 2], [4, 1], [4, 2], [5, 1, 2, 1], [5, 2], [6, 2]] },
+    mixed3: { cols: 6, tiles: [[1, 1, 2, 2], [1, 3, 2, 1], [3, 1, 1, 3], [4, 1], [4, 2], [4, 3], [5, 1, 2, 1], [5, 2], [6, 2], [5, 3, 2, 1]] },
+  };
+  let period;
+  if (CONFIG.pattern === 'uniform') { const t = []; for (let c = 1; c <= 4; c++) for (let r = 1; r <= R; r++) t.push([c, r]); period = { cols: 4, tiles: t }; }
+  else period = R === 3 ? PERIODS.mixed3 : PERIODS.mixed2;
+  // 每份序列含几个周期：一份的宽度必须盖过整个画面，回绕时右侧才不会露出空当；至少 2 个，最多 5 个
+  const cs0 = getComputedStyle(document.documentElement);
+  const cell = (parseFloat(cs0.getPropertyValue('--mt-tileHeight')) || 150) + (parseFloat(cs0.getPropertyValue('--mt-gap')) || 14);
+  const PER_COPY = Math.min(5, Math.max(2, Math.ceil(innerWidth / (period.cols * cell))));
+  const copyCols = period.cols * PER_COPY;
+  track.style.setProperty('--rows', R); track.style.setProperty('--cols', copyCols * 2);
+  // 两份同样的版面并排；图片按格子序号循环取用，两份取图一致
+  let k = 0;
+  for (let copy = 0; copy < 2; copy++) {
+    let idx = 0;
+    for (let p = 0; p < PER_COPY; p++) {
+      for (const [c, r, cs = 1, rs = 1] of period.tiles) {
+        const tile = document.createElement('div'); tile.className = 'mt-tile';
+        tile.style.gridColumn = (copy * copyCols + p * period.cols + c) + ' / span ' + cs;
+        tile.style.gridRow = r + ' / span ' + rs;
+        const img = document.createElement('img'); img.src = srcs[idx % srcs.length]; img.alt = ''; img.loading = 'lazy';
+        tile.appendChild(img); track.appendChild(tile); idx++; k++;
+      }
+    }
+  }
+  // 元素总数：2 份 × 最多 5 周期 × 每周期 7～12 格 ≤ 120 个纯 2D 格子（常见屏宽下 2～3 周期，30～72 个）
+  document.addEventListener('visibilitychange', () => (track.style.animationPlayState = document.hidden ? 'paused' : 'running'));
+</script>
+</body>
+</html>

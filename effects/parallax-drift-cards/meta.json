@@ -1,0 +1,126 @@
+{
+  "slug": "parallax-drift-cards",
+  "name": "视差漂移卡",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["视差", "漂移", "多层", "自动播放"],
+  "summary": "大小不一的卡片分成几层横向漂过：近的大而快、远的小而暗，像透过车窗看几排远近不同的招牌掠过",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "layers",
+      "label": "层数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 60,
+      "step": 2,
+      "default": 22,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "最近一层漂完一轮的时长，越远的层越慢"
+    },
+    {
+      "key": "scaleFar",
+      "label": "最远层大小",
+      "type": "range",
+      "target": "css",
+      "min": 0.3,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.45,
+      "help": "最远一层卡片相对最近一层的比例"
+    },
+    {
+      "key": "dimFar",
+      "label": "最远层压暗",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.45
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "css",
+      "min": 160,
+      "max": 420,
+      "step": 10,
+      "default": 280,
+      "unit": "px",
+      "help": "最近一层的卡片宽度"
+    },
+    {
+      "key": "direction",
+      "label": "漂移方向",
+      "type": "select",
+      "target": "css",
+      "options": [
+        { "value": "normal", "label": "向左" },
+        { "value": "reverse", "label": "向右" }
+      ],
+      "default": "normal"
+    },
+    {
+      "key": "bob",
+      "label": "上下轻浮",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "deep", "name": "四层纵深", "values": { "layers": 4, "scaleFar": 0.3, "dimFar": 0.6 } },
+    { "id": "calm", "name": "两层慢漂", "values": { "layers": 2, "speed": 40, "bob": false } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Parallax Totem 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

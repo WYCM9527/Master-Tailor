@@ -1,0 +1,125 @@
+{
+  "slug": "card-totem-stream",
+  "name": "竖向卡片流",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["竖向", "卡片流", "图腾", "自动播放"],
+  "summary": "一列卡片不停向上流过画面中央，走到中间的那张最大最亮，两头的越远越小越暗，像一根缓缓上升的图腾柱",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": true,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "作品一" },
+        { "src": "/samples/sample-2.webp", "caption": "作品二" },
+        { "src": "/samples/sample-3.webp", "caption": "作品三" },
+        { "src": "/samples/sample-4.webp", "caption": "作品四" },
+        { "src": "/samples/sample-5.webp", "caption": "作品五" },
+        { "src": "/samples/sample-6.webp", "caption": "作品六" }
+      ]
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "css",
+      "min": 160,
+      "max": 420,
+      "step": 10,
+      "default": 260,
+      "unit": "px"
+    },
+    {
+      "key": "gap",
+      "label": "卡片间距",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 60,
+      "step": 2,
+      "default": 24,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 40,
+      "step": 1,
+      "default": 16,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "整列图片流过一轮的时间"
+    },
+    {
+      "key": "peakScale",
+      "label": "中央放大",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 1.5,
+      "step": 0.02,
+      "default": 1.18,
+      "help": "走到画面正中的那张放大到多少倍"
+    },
+    {
+      "key": "dim",
+      "label": "两头压暗",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.9,
+      "step": 0.05,
+      "default": 0.55,
+      "help": "离中央越远越暗，这是最暗处的程度"
+    },
+    {
+      "key": "direction",
+      "label": "流动方向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "up", "label": "向上" },
+        { "value": "down", "label": "向下" }
+      ],
+      "default": "up"
+    },
+    {
+      "key": "caption",
+      "label": "显示标题",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "tall", "name": "大卡慢流", "values": { "cardWidth": 360, "gap": 40, "speed": 28, "peakScale": 1.1 } },
+    { "id": "plain", "name": "无标题向下", "values": { "caption": false, "direction": "down", "dim": 0.75 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Card Totem 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

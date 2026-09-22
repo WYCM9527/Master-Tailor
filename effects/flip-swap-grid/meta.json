@@ -1,0 +1,131 @@
+{
+  "slug": "flip-swap-grid",
+  "name": "网格翻面换图",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["网格", "翻面", "换图", "自动播放"],
+  "summary": "整齐的卡片网格里每隔一会儿有一张绕中轴翻个面换成新图，逐个、波次或随机地把整面墙悄悄换过一遍",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "cols",
+      "label": "列数",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 4,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "key": "rows",
+      "label": "行数",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 2
+    },
+    {
+      "key": "interval",
+      "label": "翻面间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0.6,
+      "max": 4,
+      "step": 0.2,
+      "default": 1.4,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "相邻两次翻面之间的间隔"
+    },
+    {
+      "key": "flipDuration",
+      "label": "翻面时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.4,
+      "max": 1.6,
+      "step": 0.1,
+      "default": 0.8,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "order",
+      "label": "翻面顺序",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "sequential", "label": "逐个" },
+        { "value": "wave", "label": "对角波次" },
+        { "value": "random", "label": "随机" }
+      ],
+      "default": "sequential"
+    },
+    {
+      "key": "axis",
+      "label": "翻转方向",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "y", "label": "左右翻" },
+        { "value": "x", "label": "上下翻" }
+      ],
+      "default": "y"
+    },
+    {
+      "key": "gap",
+      "label": "卡片间距",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "wave", "name": "三行波次", "values": { "cols": 4, "rows": 3, "order": "wave", "interval": 1 } },
+    { "id": "random", "name": "随机竖翻", "values": { "cols": 3, "rows": 2, "order": "random", "axis": "x", "flipDuration": 1.1 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Flip Grid 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

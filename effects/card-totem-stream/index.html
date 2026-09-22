@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>竖向卡片流</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-cardWidth: 260px;     /* 卡片宽度 */
+    --mt-gap: 24px;            /* 卡片间距 */
+    --mt-radius: 14px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 一列卡片都钉在画面中心，位置、缩放、明暗每帧由 JS 按「离中心多远」写进 transform / opacity */
+  .mt-stage { position: fixed; inset: 0; overflow: hidden; }
+  .mt-card { position: absolute; left: 50%; top: 50%; width: var(--mt-cardWidth); aspect-ratio: 4 / 3; margin: calc(var(--mt-cardWidth) * -0.375) calc(var(--mt-cardWidth) * -0.5); border-radius: var(--mt-radius); overflow: hidden; background: #16161d; box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5); will-change: transform, opacity; }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+  .mt-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 14px 12px; color: #f2f3f8; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; background: linear-gradient(transparent, rgba(0, 0, 0, 0.65)); }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":"作品一"},{"src":"/samples/sample-2.webp","caption":"作品二"},{"src":"/samples/sample-3.webp","caption":"作品三"},{"src":"/samples/sample-4.webp","caption":"作品四"},{"src":"/samples/sample-5.webp","caption":"作品五"},{"src":"/samples/sample-6.webp","caption":"作品六"}], // 图片列表
+    speed: 16,          // 整列流过一轮的时长（s）
+    peakScale: 1.18,    // 中央那张的放大倍数
+    dim: 0.55,          // 两头最暗处的压暗程度
+    direction: "up",    // 流动方向：up 向上 / down 向下
+    caption: true,      // 显示标题条
+  };
+  // prefers-reduced-motion：不起动画循环，只摆一次静态的一列
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stage = document.getElementById('mtStage');
+  const N = CONFIG.slides.length;
+  // 列表不够长时整组重复，保证整列比画面高一屏还多；最多 3 组、24 张
+  let reps = 1, cards = [];
+  function build() {
+    stage.textContent = ''; cards = [];
+    const cs = getComputedStyle(document.documentElement);
+    const w = parseFloat(cs.getPropertyValue('--mt-cardWidth')) || 260, gap = parseFloat(cs.getPropertyValue('--mt-gap')) || 24;
+    const h = w * 0.75, pitch = h + gap;
+    reps = Math.min(3, Math.max(1, Math.ceil((innerHeight + 2 * h) / (N * pitch))));
+    for (let i = 0; i < reps * N; i++) {
+      const s = CONFIG.slides[i % N];
+      const card = document.createElement('div'); card.className = 'mt-card';
+      const img = document.createElement('img'); img.src = s.src; img.alt = ''; img.loading = 'lazy'; card.appendChild(img);
+      if (CONFIG.caption && s.caption) { const cap = document.createElement('div'); cap.className = 'mt-cap'; cap.textContent = s.caption; card.appendChild(cap); }
+      stage.appendChild(card); cards.push(card);
+    }
+    return { pitch, h };
+  }
+  let geo = build();
+  // 每帧：按时间差推进偏移量（后台不推进），第 i 张的中心 y 归一到 [−L/2, L/2)，再按离中心的距离算缩放与明暗
+  let off = 0, last = performance.now();
+  function layout() {
+    const L = cards.length * geo.pitch, half = innerHeight / 2;
+    for (let i = 0; i < cards.length; i++) {
+      let y = ((i * geo.pitch - off) % L + L * 1.5) % L - L / 2;
+      const d = Math.min(1, Math.abs(y) / half);
+      const s = 1 + (CONFIG.peakScale - 1) * (1 - d);
+      cards[i].style.transform = 'translate3d(0, ' + y.toFixed(1) + 'px, 0) scale(' + s.toFixed(3) + ')';
+      cards[i].style.opacity = (1 - CONFIG.dim * d).toFixed(3);
+      cards[i].style.zIndex = String(100 - Math.round(d * 99)); // 越靠中央越在上面
+    }
+  }
+  function loop(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (!document.hidden) { off += (CONFIG.direction === 'down' ? -1 : 1) * dt * cards.length * geo.pitch / CONFIG.speed; layout(); }
+    requestAnimationFrame(loop);
+  }
+  layout();
+  if (!reduceMotion) requestAnimationFrame(loop);
+  addEventListener('resize', () => { geo = build(); layout(); });
+</script>
+</body>
+</html>

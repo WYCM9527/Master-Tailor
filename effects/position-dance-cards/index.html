@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>换位卡组</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;                                   /* 页面底色 */
+    --mt-duration: 0.9s;                                /* 换位时长 */
+    --mt-easing: cubic-bezier(0.34, 1.56, 0.64, 1);     /* 运动曲线（带过冲即弹性） */
+    --mt-spread: 88;                                    /* 整版占画面的比例（%） */
+    --mt-radius: 16px;                                  /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 版面与画面同大、绕中心按整版占比缩放；卡片只靠 transform 摆位，不改宽高，换位全程在合成层 */
+  .mt-board { position: fixed; inset: 0; transform: scale(calc(var(--mt-spread) / 100)); transform-origin: 50% 50%; }
+  .mt-card { position: absolute; left: 0; top: 0; width: var(--base); aspect-ratio: 4 / 3; transform-origin: 0 0; transform: translate(var(--x), var(--y)) scale(var(--k)); transition: transform var(--mt-duration) var(--mt-easing); border-radius: var(--mt-radius); overflow: hidden; background: #16161d; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); will-change: transform; }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+
+  /* 用户开启「减少动态效果」时：不换位（JS 不起定时器），卡片停在初始版面 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-card { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-board" id="mtBoard" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""}], // 图片列表
+    interval: 2.8,      // 换位间隔（s）
+    mode: "rotate",     // 换位规则：rotate 依次轮转 / shuffle 随机互换
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const board = document.getElementById('mtBoard');
+  // 槽位表：x、y 是中心点占画面宽高的百分比，w 是卡宽占画面宽的百分比；按张数选一张手排好的版面（最多 6 张）
+  const LAYOUTS = {
+    4: [[28, 30, 34], [74, 26, 24], [26, 74, 24], [70, 70, 34]],
+    5: [[20, 26, 24], [54, 40, 32], [84, 26, 20], [30, 76, 28], [74, 74, 24]],
+    6: [[18, 24, 22], [50, 40, 30], [82, 22, 18], [24, 72, 26], [60, 78, 20], [84, 62, 24]],
+  };
+  const K = Math.min(6, Math.max(4, CONFIG.slides.length));
+  const slots = LAYOUTS[K];
+  const maxW = Math.max(...slots.map(s => s[2]));
+  const cards = CONFIG.slides.slice(0, K).map(s => {
+    const card = document.createElement('div'); card.className = 'mt-card';
+    const img = document.createElement('img'); img.src = s.src; img.alt = ''; img.loading = 'lazy';
+    card.appendChild(img); board.appendChild(card); return card;
+  });
+  let assign = cards.map((_, i) => i); // 第 i 张卡当前占的槽位
+  // 摆位：卡片基准宽 = 最大槽宽；到别的槽位就按比例缩放，中心对准槽位中心
+  function place() {
+    const W = innerWidth, H = innerHeight, base = W * maxW / 100;
+    board.style.setProperty('--base', base + 'px');
+    cards.forEach((card, i) => {
+      const [x, y, w] = slots[assign[i]], k = w / maxW;
+      card.style.setProperty('--k', k.toFixed(4));
+      card.style.setProperty('--x', (x / 100 * W - base * k / 2).toFixed(1) + 'px');
+      card.style.setProperty('--y', (y / 100 * H - base * 0.75 * k / 2).toFixed(1) + 'px');
+    });
+  }
+  place(); addEventListener('resize', place);
+  // 换位：轮转 = 每张挪到下一个槽；随机 = 生成一个没有人留在原位的乱序（错排）
+  function dance() {
+    if (document.hidden) return;
+    if (CONFIG.mode === 'shuffle') {
+      let next;
+      do { next = assign.slice(); for (let i = next.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [next[i], next[j]] = [next[j], next[i]]; } } while (next.some((v, i) => v === assign[i]));
+      assign = next;
+    } else {
+      assign = assign.map(v => (v + 1) % K);
+    }
+    place();
+  }
+  if (!reduceMotion) setInterval(dance, Math.max(800, CONFIG.interval * 1000));
+</script>
+</body>
+</html>

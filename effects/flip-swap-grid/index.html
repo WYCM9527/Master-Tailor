@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网格翻面换图</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-flipDuration: 0.8s;   /* 翻面时长 */
+    --mt-gap: 14px;            /* 卡片间距 */
+    --mt-radius: 14px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 网格宽高都不超过画面短边的 86%（格子 4:3，总高 = 0.75 × 行数 × 格宽）；每格是一个带透视的小舞台，里面的卡片双面 */
+  .mt-grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: var(--mt-gap); width: min(86vmin * var(--cols) / max(var(--cols), var(--rows) * 0.75), 94vw); }
+  .mt-tile { perspective: 900px; aspect-ratio: 4 / 3; }
+  .mt-card { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateY(var(--turn, 0deg)); transition: transform var(--mt-flipDuration) cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; }
+  .axis-x .mt-card { transform: rotateX(var(--turn, 0deg)); }
+  .mt-face { position: absolute; inset: 0; border-radius: var(--mt-radius); overflow: hidden; background: #16161d; backface-visibility: hidden; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4); }
+  .mt-face.back { transform: rotateY(180deg); }
+  .axis-x .mt-face.back { transform: rotateX(180deg); }
+  .mt-face img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+
+  /* 用户开启「减少动态效果」时：不再翻面（JS 不起定时器），网格静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-card { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-grid" id="mtGrid" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    cols: 2,               // 列数
+    rows: 2,               // 行数
+    interval: 1.4,         // 相邻两次翻面的间隔（s）
+    order: "sequential",   // 翻面顺序：sequential 逐个 / wave 对角波次 / random 随机
+    axis: "y",             // 翻转方向：y 左右翻 / x 上下翻
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const grid = document.getElementById('mtGrid');
+  grid.className = 'mt-grid axis-' + CONFIG.axis;
+  const C = Math.min(4, CONFIG.cols), R = Math.min(3, CONFIG.rows); // 最多 4 × 3 = 12 格
+  grid.style.setProperty('--cols', C); grid.style.setProperty('--rows', R);
+  const srcs = CONFIG.slides.map(s => s.src);
+  let cursor = 0;                                    // 全局取图游标：下一张要露出的图
+  const next = () => srcs[cursor++ % srcs.length];
+  const tiles = [];
+  for (let i = 0; i < C * R; i++) {
+    const tile = document.createElement('div'); tile.className = 'mt-tile';
+    const card = document.createElement('div'); card.className = 'mt-card';
+    const faces = ['front', 'back'].map(side => { const f = document.createElement('div'); f.className = 'mt-face ' + side; const img = document.createElement('img'); img.alt = ''; img.loading = 'lazy'; f.appendChild(img); card.appendChild(f); return img; });
+    faces[0].src = next(); faces[1].src = srcs[(cursor + 3) % srcs.length]; // 背面先随便放一张，翻面前会换成真正的下一张
+    tile.appendChild(card); grid.appendChild(tile);
+    tiles.push({ card, faces, turn: 0, c: i % C, r: Math.floor(i / C) });
+  }
+  // 翻一格：把即将朝上的那面换成下一张图，再把角度累加 180°（只增不回绕，过渡永远只转半圈）
+  function flip(t) {
+    const hidden = t.turn % 2 === 0 ? t.faces[1] : t.faces[0];
+    hidden.src = next();
+    t.turn++;
+    t.card.style.setProperty('--turn', (t.turn * 180) + 'deg');
+  }
+  // 三种顺序：逐个（行优先循环）、对角波次（同一条对角线一起翻）、随机（每轮一个不重复的乱序）
+  let step = 0, bag = [];
+  function tick() {
+    if (document.hidden) return;
+    if (CONFIG.order === 'wave') {
+      const d = step % (C + R - 1);
+      tiles.filter(t => t.c + t.r === d).forEach(flip);
+    } else if (CONFIG.order === 'random') {
+      if (!bag.length) { bag = tiles.slice(); for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; } }
+      flip(bag.pop());
+    } else {
+      flip(tiles[step % tiles.length]);
+    }
+    step++;
+  }
+  if (!reduceMotion) setInterval(tick, Math.max(300, CONFIG.interval * 1000));
+</script>
+</body>
+</html>

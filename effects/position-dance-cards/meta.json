@@ -1,0 +1,109 @@
+{
+  "slug": "position-dance-cards",
+  "name": "换位卡组",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["换位", "弹性", "卡组", "自动播放"],
+  "summary": "几张大小不一的卡片散布在画面里，每隔一会儿一起滑到别人的位置并换成对应的大小，带着弹性停住",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 6,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "interval",
+      "label": "换位间隔",
+      "type": "range",
+      "target": "config",
+      "min": 1.5,
+      "max": 6,
+      "step": 0.5,
+      "default": 2.8,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "duration",
+      "label": "换位时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.4,
+      "max": 1.6,
+      "step": 0.1,
+      "default": 0.9,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "easing",
+      "label": "运动手感",
+      "type": "select",
+      "target": "css",
+      "options": [
+        { "value": "cubic-bezier(0.34, 1.56, 0.64, 1)", "label": "弹性过冲" },
+        { "value": "cubic-bezier(0.22, 1, 0.36, 1)", "label": "平滑减速" }
+      ],
+      "default": "cubic-bezier(0.34, 1.56, 0.64, 1)"
+    },
+    {
+      "key": "mode",
+      "label": "换位规则",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "rotate", "label": "依次轮转" },
+        { "value": "shuffle", "label": "随机互换" }
+      ],
+      "default": "rotate",
+      "help": "轮转：每张都挪到下一个位置；随机：每次生成一个没人留在原位的乱序"
+    },
+    {
+      "key": "spread",
+      "label": "整版占比",
+      "type": "range",
+      "target": "css",
+      "min": 60,
+      "max": 100,
+      "step": 5,
+      "default": 88,
+      "displayUnit": "%",
+      "help": "整组卡片占画面的比例"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 28,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "shuffle", "name": "随机快换", "values": { "mode": "shuffle", "interval": 1.5, "duration": 0.6 } },
+    { "id": "smooth", "name": "平滑慢舞", "values": { "easing": "cubic-bezier(0.22, 1, 0.36, 1)", "interval": 4, "duration": 1.4 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Position Dance 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}
