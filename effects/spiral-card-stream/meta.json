@@ -1,0 +1,199 @@
+{
+  "slug": "spiral-card-stream",
+  "name": "螺旋卡片流",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": [
+    "螺旋",
+    "3D",
+    "卡片流",
+    "陈列",
+    "循环"
+  ],
+  "summary": "竖版卡片沿竖直螺旋线盘旋排开，整条螺旋绕竖轴匀速转动，像卡片在不停向上流动，后方透出压暗的背面",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        {
+          "src": "/samples/sample-1.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-2.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-3.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-4.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-5.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-6.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-7.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-8.webp",
+          "caption": ""
+        }
+      ]
+    },
+    {
+      "key": "count",
+      "label": "卡片总数",
+      "type": "range",
+      "target": "config",
+      "min": 8,
+      "max": 30,
+      "step": 1,
+      "default": 18,
+      "help": "螺旋上的卡片总数，图片不够时循环取图"
+    },
+    {
+      "key": "angleStep",
+      "label": "相邻角度差",
+      "type": "range",
+      "target": "config",
+      "min": 12,
+      "max": 60,
+      "step": 2,
+      "default": 30,
+      "displayUnit": "°",
+      "help": "相邻卡片绕竖轴的角度差，越小螺旋越密"
+    },
+    {
+      "key": "pitch",
+      "label": "相邻高度差",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 90,
+      "step": 2,
+      "default": 44,
+      "unit": "px",
+      "help": "相邻卡片的高度差，决定螺旋有多陡"
+    },
+    {
+      "key": "ring",
+      "label": "螺旋半径",
+      "type": "range",
+      "target": "css",
+      "min": 120,
+      "max": 360,
+      "step": 10,
+      "default": 230,
+      "unit": "px",
+      "help": "卡片到竖轴的距离"
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "css",
+      "min": 80,
+      "max": 220,
+      "step": 10,
+      "default": 130,
+      "unit": "px"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 60,
+      "step": 1,
+      "default": 22,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "tilt",
+      "label": "俯仰角",
+      "type": "range",
+      "target": "css",
+      "min": -40,
+      "max": 40,
+      "step": 1,
+      "default": -10,
+      "unit": "deg",
+      "displayUnit": "°",
+      "help": "整条螺旋的前后倾斜，负值俯视"
+    },
+    {
+      "key": "backDim",
+      "label": "背面压暗",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 0.9,
+      "step": 0.05,
+      "default": 0.6,
+      "help": "转到后方的卡片压暗程度，0 不压暗"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "dense",
+      "name": "密螺旋",
+      "values": {
+        "count": 28,
+        "angleStep": 20,
+        "pitch": 30
+      }
+    },
+    {
+      "id": "loose",
+      "name": "大卡疏旋",
+      "values": {
+        "count": 10,
+        "angleStep": 45,
+        "pitch": 70,
+        "cardWidth": 190
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Spiral Stream 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

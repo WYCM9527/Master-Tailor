@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>螺旋卡片流</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-pitch: 44px;        /* 相邻卡片的高度差（螺距） */
+    --mt-ring: 230px;        /* 螺旋半径：卡片到竖轴的距离 */
+    --mt-cardWidth: 130px;   /* 卡片宽度（竖版 3:4） */
+    --mt-speed: 22s;         /* 整条螺旋转一圈的时长 */
+    --mt-tilt: -10deg;       /* 整体俯仰角，负值俯视 */
+    --mt-backDim: 0.6;       /* 转到后方的卡片压暗程度（0 不压暗） */
+    --mt-radius: 12px;       /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 舞台：全屏透视容器，螺旋的纵深感来自这里 */
+  .mt-stage { position: fixed; inset: 0; perspective: 1400px; overflow: hidden; }
+  /* 锚点：零尺寸、钉在画面正中央；先整体俯仰，里面的螺旋再绕竖轴自转 */
+  .mt-tilt { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(var(--s, 1)) rotateX(var(--mt-tilt)); transform-style: preserve-3d; }
+  .mt-helix { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; animation: mt-spin var(--mt-speed) linear infinite; }
+  /* 整条螺旋是刚体：转满一圈即回到原样，线性缓动首尾速度一致，所以循环无缝 */
+  @keyframes mt-spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+
+  /* 卡片：位置与朝向由 JS 写在 transform 里；不写 overflow: hidden（会把子元素拍平，背面压暗层就失效），圆角直接给图片与压暗层 */
+  .mt-card { position: absolute; left: 0; top: 0; width: var(--mt-cardWidth); aspect-ratio: 3 / 4; transform-style: preserve-3d; will-change: transform; }
+  .mt-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--mt-radius); background: #16161d; -webkit-user-drag: none; user-select: none; }
+  /* 背面压暗层：翻转半圈并往背面推一点。卡片正对观者时它背对观者而被隐藏；卡片转到后方时它正好盖在镜像图片之上 */
+  .mt-card::after { content: ''; position: absolute; inset: 0; border-radius: var(--mt-radius); background: rgba(0, 0, 0, var(--mt-backDim)); transform: rotateY(180deg) translateZ(1px); backface-visibility: hidden; }
+
+  /* 用户开启「减少动态效果」时：螺旋静止，停在初始排布 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-helix { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" aria-hidden="true"><div class="mt-tilt"><div class="mt-helix" id="mtHelix"></div></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    count: 18,     // 卡片总数（图片不够时循环取图）
+    angleStep: 30, // 相邻卡片绕竖轴的角度差（度）
+  };
+
+  (function () {
+    const helix = document.getElementById('mtHelix');
+    const srcs = CONFIG.slides.map(s => s.src);
+    // 元素上限：CI 冒烟机是 2 核软件渲染，同时存在的 3D 卡片不超过 30 张
+    const MAX_CARDS = 30;
+    const n = Math.max(1, Math.min(Math.round(CONFIG.count), MAX_CARDS));
+    const mid = (n - 1) / 2; // 让整条螺旋在竖直方向以画面中心为中心
+
+    for (let i = 0; i < n; i++) {
+      const card = document.createElement('div');
+      card.className = 'mt-card';
+      // 先绕竖轴转到自己的角度，再推到螺旋半径处，最后沿竖直方向逐张抬高 → 落在螺旋线上、正面朝外
+      // 半径与螺距引用 CSS 变量，面板调参时不用重建就能热更新
+      card.style.transform = 'translate(-50%, -50%) rotateY(' + (i * CONFIG.angleStep) + 'deg) translateZ(var(--mt-ring)) translateY(calc(' + (i - mid) + ' * var(--mt-pitch)))';
+      const img = document.createElement('img');
+      // 循环取图；每循环完一轮整体错开一张，避免上下相邻圈同图对齐
+      img.src = srcs[(i + Math.floor(i / srcs.length)) % srcs.length];
+      img.alt = '';
+      img.loading = 'lazy';
+      card.appendChild(img);
+      helix.appendChild(card);
+    }
+
+    // 适配：整条螺旋的高度（(n − 1) × 螺距 + 一张卡的高度）占画面高度的 92%，超出时整体缩放
+    const tilt = helix.parentElement;
+    function fit() {
+      const cs = getComputedStyle(document.documentElement);
+      const pitch = parseFloat(cs.getPropertyValue('--mt-pitch')) || 44, w = parseFloat(cs.getPropertyValue('--mt-cardWidth')) || 130;
+      tilt.style.setProperty('--s', Math.min(1, innerHeight * 0.92 / ((n - 1) * pitch + w * 4 / 3)).toFixed(3));
+    }
+    fit(); addEventListener('resize', fit);
+
+    // 页面切到后台时暂停 CSS 动画，回到前台再继续
+    document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  })();
+</script>
+</body>
+</html>

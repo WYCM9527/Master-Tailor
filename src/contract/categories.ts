@@ -22,7 +22,7 @@ const SHOWCASE_SUBS: SubDef[] = [
   { id: 'carousel', name: '轮播图', desc: '多张图片或卡片按节奏轮流展示' },
   { id: 'compare', name: '图片对比', desc: '拖动分割线对比两张图片' },
   { id: 'stack-scroll', name: '滚动交互', desc: '随页面滚动推进的卡片堆叠、视差与网格变化' },
-  { id: 'wall', name: '图墙', desc: '多张图片铺成一面墙或叠成几层，整体缓动或随鼠标视差' },
+  { id: 'wall', name: '图墙', desc: '多张图片铺成墙、环、球、隧道等陈列，自动缓动或随鼠标视差' },
 ];
 
 /** 「页面转场」的二级分类：按过渡形态（苹果式页面间过渡） */

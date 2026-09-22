@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弧面图墙</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-gap: 16px;            /* 卡片间距（行内与行间共用） */
+    --mt-speed: 40s;           /* 一行转一圈的时长 */
+    --mt-tilt: 6deg;           /* 俯仰角 */
+    --mt-radius: 10px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 舞台：观者在圆柱外侧看它鼓出来的一面；圆柱略向观者推近，让最前排撑满画面宽度、两侧被画框裁掉，才像一面墙而不是一个物件 */
+  .mt-stage { position: fixed; inset: 0; perspective: 1100px; overflow: hidden; }
+  .mt-cyl { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(var(--s, 1)) translateZ(calc(var(--r) * 0.1)) rotateX(var(--mt-tilt)); transform-style: preserve-3d; }
+  /* 每行：先摆到自己的高度，再由内层的 .mt-spin 绕竖轴转 */
+  .mt-row { position: absolute; left: 0; top: 0; transform: translateY(calc((var(--i) - (var(--rows) - 1) / 2) * (var(--h) + var(--mt-gap)))); transform-style: preserve-3d; }
+  .mt-spin { position: absolute; left: 0; top: 0; transform-style: preserve-3d; will-change: transform; }
+  .mode-flow .mt-spin { animation: mt-turn var(--mt-speed) linear infinite; }
+  .mode-flow .mt-row:nth-child(even) .mt-spin { animation-direction: reverse; }
+  @keyframes mt-turn { from { transform: rotateY(0deg); } to { transform: rotateY(-360deg); } }
+  /* 级联步进：JS 每步把 --turn 减一格，各行按序号错开一点起步，用过渡走出「一步一停」 */
+  .mode-cascade .mt-spin { transform: rotateY(var(--turn, 0deg)); transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); transition-delay: calc(var(--i) * 0.12s); }
+  /* 卡片：绕到自己的方位角再推到半径处；背面隐藏，转到圆柱后面就看不见 */
+  .mt-card { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); margin: calc(var(--h) / -2) calc(var(--w) / -2); border-radius: var(--mt-radius); overflow: hidden; background: #16161d; transform: rotateY(var(--a)) translateZ(var(--r)); backface-visibility: hidden; }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+
+  /* 用户开启「减少动态效果」时：墙静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-spin { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" aria-hidden="true"><div class="mt-cyl" id="mtCyl"></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    rows: 5,            // 行数
+    perRow: 16,         // 每行绕成一圈的卡片数
+    cardWidth: 150,     // 卡片宽度（px）
+    mode: "flow",       // 滚动方式：flow 交错流动 / cascade 级联步进
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cyl = document.getElementById('mtCyl');
+  const ROWS = CONFIG.rows;
+  const P = Math.min(CONFIG.perRow, Math.floor(96 / ROWS)); // 3D 卡片总数上限 96
+  const W = CONFIG.cardWidth, H = W * 0.75;
+  const srcs = CONFIG.slides.map(s => s.src);
+  cyl.className = 'mt-cyl mode-' + CONFIG.mode;
+  cyl.style.setProperty('--rows', ROWS); cyl.style.setProperty('--w', W + 'px'); cyl.style.setProperty('--h', H + 'px');
+  // 半径让 P 张卡正好首尾相接围成一圈；间距是 CSS 变量，写成 calc 让调间距时弧面跟着变
+  cyl.style.setProperty('--r', `calc((${W}px + var(--mt-gap)) / ${(2 * Math.tan(Math.PI / P)).toFixed(5)})`);
+  for (let r = 0; r < ROWS; r++) {
+    const row = document.createElement('div'); row.className = 'mt-row'; row.style.setProperty('--i', r);
+    const spin = document.createElement('div'); spin.className = 'mt-spin';
+    spin.style.animationDelay = (-r * 5.3) + 's'; // 各行起始相位错开，别一齐对齐
+    for (let i = 0; i < P; i++) {
+      const card = document.createElement('div'); card.className = 'mt-card'; card.style.setProperty('--a', (i * 360 / P) + 'deg');
+      const img = document.createElement('img'); img.src = srcs[(i + r * 3) % srcs.length]; img.alt = ''; img.loading = 'lazy'; // 每行错 3 张取图，避免同图上下并排
+      card.appendChild(img); spin.appendChild(card);
+    }
+    row.appendChild(spin); cyl.appendChild(row);
+  }
+  // 纵向适配：所有行占画面高度的 92%（前排因透视还会再放大一点，两侧被画框裁掉是有意的）
+  function fit() {
+    const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-gap')) || 0;
+    cyl.style.setProperty('--s', Math.min(1.2, innerHeight * 0.92 / (ROWS * (H + gap))).toFixed(3));
+  }
+  fit(); addEventListener('resize', fit);
+  // 级联步进：每步转一格（360/P 度），角度只增不回绕，过渡自然平滑
+  if (CONFIG.mode === 'cascade' && !reduceMotion) {
+    let turn = 0;
+    const step = () => { if (document.hidden) return; turn -= 360 / P; cyl.querySelectorAll('.mt-spin').forEach(s => s.style.setProperty('--turn', turn + 'deg')); };
+    const secs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mt-speed')) || 40;
+    setInterval(step, Math.max(1200, secs * 1000 / P));
+  }
+  document.addEventListener('visibilitychange', () => cyl.querySelectorAll('.mt-spin').forEach(s => (s.style.animationPlayState = document.hidden ? 'paused' : 'running')));
+</script>
+</body>
+</html>

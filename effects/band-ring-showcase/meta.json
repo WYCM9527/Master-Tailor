@@ -1,0 +1,121 @@
+{
+  "slug": "band-ring-showcase",
+  "name": "带状环陈列",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["3D", "环带", "作品展示", "自动播放"],
+  "summary": "卡片首尾相接围成一条倾斜的 3D 环带缓缓自转，前排正面滑过、后排透出压暗的背影",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 6,
+      "max": 12,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "count",
+      "label": "环上卡片数",
+      "type": "range",
+      "target": "config",
+      "min": 8,
+      "max": 20,
+      "step": 1,
+      "default": 12,
+      "help": "图片不够时循环取用"
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "config",
+      "min": 120,
+      "max": 320,
+      "step": 10,
+      "default": 200,
+      "unit": "px"
+    },
+    {
+      "key": "tilt",
+      "label": "俯仰角",
+      "type": "range",
+      "target": "css",
+      "min": -45,
+      "max": 45,
+      "step": 1,
+      "default": -18,
+      "unit": "deg",
+      "displayUnit": "°",
+      "help": "负值从上方俯视环带，正值从下方仰视"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 8,
+      "max": 60,
+      "step": 1,
+      "default": 26,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "backDim",
+      "label": "背面压暗",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 0.9,
+      "step": 0.05,
+      "default": 0.55,
+      "help": "转到后排的卡片透出的背影压暗多少，0 为不压暗"
+    },
+    {
+      "key": "direction",
+      "label": "转向",
+      "type": "select",
+      "target": "css",
+      "options": [
+        { "value": "normal", "label": "顺时针" },
+        { "value": "reverse", "label": "逆时针" }
+      ],
+      "default": "normal"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "default": 14,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "wide", "name": "宽环俯视", "values": { "cardWidth": 260, "tilt": -32, "count": 14 } },
+    { "id": "narrow", "name": "窄带快转", "values": { "cardWidth": 150, "count": 16, "speed": 14, "backDim": 0.75 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Showcase Stream 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

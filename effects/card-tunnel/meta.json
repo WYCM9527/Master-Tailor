@@ -1,0 +1,119 @@
+{
+  "slug": "card-tunnel",
+  "name": "卡片隧道",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["3D", "隧道", "穿越", "自动播放"],
+  "summary": "四面墙贴满卡片的方形隧道，观者匀速向前飞，卡片从远处长大掠过身边，尽头没入黑暗",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "size",
+      "label": "隧道口径",
+      "type": "range",
+      "target": "css",
+      "min": 40,
+      "max": 95,
+      "step": 5,
+      "default": 72,
+      "unit": "vmin",
+      "displayUnit": "%",
+      "help": "隧道宽度占画面短边的比例"
+    },
+    {
+      "key": "depth",
+      "label": "卡片间隔",
+      "type": "range",
+      "target": "css",
+      "min": 120,
+      "max": 400,
+      "step": 20,
+      "default": 240,
+      "unit": "px",
+      "help": "沿隧道方向相邻两张卡片的距离"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 40,
+      "step": 1,
+      "default": 16,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "飞过一整组图片所用的时间"
+    },
+    {
+      "key": "columns",
+      "label": "每面墙列数",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "1", "label": "一列大卡" },
+        { "value": "2", "label": "两列小卡" }
+      ],
+      "default": "1"
+    },
+    {
+      "key": "fog",
+      "label": "尽头压暗",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.85,
+      "help": "隧道深处被黑暗吞没的程度"
+    },
+    {
+      "key": "sway",
+      "label": "镜头轻摆",
+      "type": "toggle",
+      "target": "css",
+      "default": true
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 10,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "wide", "name": "宽阔隧道", "values": { "size": 90, "depth": 300, "fog": 0.7 } },
+    { "id": "rush", "name": "高速穿越", "values": { "speed": 7, "columns": "2", "depth": 180 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Card Tunnel 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

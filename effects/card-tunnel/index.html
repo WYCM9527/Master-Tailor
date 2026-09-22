@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡片隧道</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-size: 72vmin;         /* 隧道口径（占画面短边） */
+    --mt-depth: 240px;         /* 沿隧道方向相邻卡片的间隔 */
+    --mt-speed: 16s;           /* 飞过一整组图片的时长 */
+    --mt-fog: 0.85;            /* 尽头压暗程度 */
+    --mt-sway: 1;              /* 镜头轻摆：1 开 / 0 关 */
+    --mt-radius: 10px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 舞台：透视 900px，镜头在原点；隧道整体向 +z 平移一组图片的长度后回绕，三份序列保证前后都接得上 */
+  .mt-stage { position: fixed; inset: 0; perspective: 900px; overflow: hidden; }
+  .mt-cam { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; animation: mt-sway 9s ease-in-out infinite alternate; }
+  @keyframes mt-sway {
+    from { transform: rotateY(calc(var(--mt-sway) * -2deg)) rotateX(calc(var(--mt-sway) * 1deg)); }
+    to   { transform: rotateY(calc(var(--mt-sway) * 2deg)) rotateX(calc(var(--mt-sway) * -1deg)); }
+  }
+  .mt-tunnel { position: absolute; left: 0; top: 0; transform-style: preserve-3d; animation: mt-fly var(--mt-speed) linear infinite; will-change: transform; }
+  @keyframes mt-fly { from { transform: translateZ(0); } to { transform: translateZ(calc(var(--k) * var(--mt-depth))); } }
+  /* 卡片：先平移到所在墙面与深度，再转 90° 贴到墙上（法线朝隧道内侧）；沿隧道方向的边长 = 间隔 − 12px 缝 */
+  .mt-tile { position: absolute; left: 0; top: 0; border-radius: var(--mt-radius); overflow: hidden; background: #16161d; backface-visibility: hidden; --z: calc(500px - var(--j) * var(--mt-depth)); --c: calc(var(--mt-size) * var(--cf)); }
+  .mt-tile img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+  .mt-tile.l, .mt-tile.r { width: var(--along); height: var(--cross); margin: calc(var(--cross) / -2) calc(var(--along) / -2); }
+  .mt-tile.t, .mt-tile.b { width: var(--cross); height: var(--along); margin: calc(var(--along) / -2) calc(var(--cross) / -2); }
+  .mt-tile.l { transform: translate3d(calc(var(--mt-size) / -2), var(--c), var(--z)) rotateY(90deg); }
+  .mt-tile.r { transform: translate3d(calc(var(--mt-size) / 2), var(--c), var(--z)) rotateY(-90deg); }
+  .mt-tile.t { transform: translate3d(var(--c), calc(var(--mt-size) / -2), var(--z)) rotateX(-90deg) rotate(180deg); } /* 顶面再转半圈，图片上沿朝隧道深处，抬头看才是正的 */
+  .mt-tile.b { transform: translate3d(var(--c), calc(var(--mt-size) / 2), var(--z)) rotateX(90deg); }
+  /* 雾：屏幕中心就是消失点，越靠中心越黑，远处的卡片没入其中，回绕时补进来的远端卡片也就看不见 */
+  .mt-fog { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, var(--mt-fog)) 0%, rgba(0, 0, 0, calc(var(--mt-fog) * 0.75)) 16%, rgba(0, 0, 0, 0) 52%); }
+
+  /* 用户开启「减少动态效果」时：隧道静止、镜头不摆 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-tunnel, .mt-cam { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" aria-hidden="true"><div class="mt-cam"><div class="mt-tunnel" id="mtTunnel"></div></div></div>
+<div class="mt-fog" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    columns: "1",       // 每面墙的列数：1 一列大卡 / 2 两列小卡
+  };
+  const tunnel = document.getElementById('mtTunnel');
+  const cols = CONFIG.columns === '2' ? 2 : 1;
+  const srcs = CONFIG.slides.map(s => s.src);
+  // 一组序列 K 张，沿深度铺三份；4 面墙 × 列数 × 3K ≤ 96 张 3D 卡片
+  const K = Math.min(srcs.length, Math.floor(96 / (12 * cols)));
+  const GAP = 12;
+  tunnel.style.setProperty('--k', K);
+  tunnel.style.setProperty('--along', `calc(var(--mt-depth) - ${GAP}px)`);
+  tunnel.style.setProperty('--cross', `calc((var(--mt-size) - ${GAP * (cols + 1)}px) / ${cols})`);
+  const walls = ['l', 'r', 't', 'b'];
+  for (let j = 0; j < 3 * K; j++) {
+    walls.forEach((w, wi) => {
+      for (let c = 0; c < cols; c++) {
+        const tile = document.createElement('div'); tile.className = 'mt-tile ' + w;
+        tile.style.setProperty('--j', j);
+        tile.style.setProperty('--cf', cols === 1 ? 0 : (c === 0 ? -0.25 : 0.25)); // 两列时各占半边
+        const img = document.createElement('img'); img.src = srcs[(j + wi * 2 + c * 3) % K % srcs.length]; img.alt = ''; img.loading = 'lazy'; // 四面墙错开取图
+        tile.appendChild(img); tunnel.appendChild(tile);
+      }
+    });
+  }
+  document.addEventListener('visibilitychange', () => document.querySelectorAll('.mt-tunnel, .mt-cam').forEach(el => (el.style.animationPlayState = document.hidden ? 'paused' : 'running')));
+</script>
+</body>
+</html>

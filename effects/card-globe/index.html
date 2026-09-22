@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡片球</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-sphere: 250px;      /* 球半径，卡片尺寸随之等比缩放 */
+    --mt-speed: 36s;         /* 自转一圈的时长 */
+    --mt-tilt: 22deg;        /* 转轴的前后倾斜角 */
+    --mt-backDim: 0.6;       /* 稀疏模式下透出的背面卡片压暗程度（0 不压暗） */
+    --mt-radius: 8px;        /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 舞台：全屏透视容器 */
+  .mt-stage { position: fixed; inset: 0; perspective: 1500px; overflow: hidden; }
+  /* 转轴：零尺寸锚点钉在画面中央；先前后倾斜，再在画面内侧倾一点，像地球仪的斜轴 */
+  .mt-axis { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: rotateX(var(--mt-tilt)) rotateZ(8deg); transform-style: preserve-3d; }
+  .mt-globe { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; animation: mt-spin var(--mt-speed) linear infinite; }
+  /* 球是刚体：转满一圈即回到原样，线性缓动首尾速度一致，所以循环无缝 */
+  @keyframes mt-spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+
+  /* 卡片尺寸 = 球半径 × 系数（系数由 JS 按赤道卡片数、纬度算一次写成变量），改球半径时整体等比缩放 */
+  .mt-card { position: absolute; left: 0; top: 0; width: calc(var(--mt-sphere) * var(--wk)); height: calc(var(--mt-sphere) * var(--hk)); transform-style: preserve-3d; will-change: transform; }
+  .mt-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--mt-radius); background: #16161d; -webkit-user-drag: none; user-select: none; }
+  /* 稀疏模式的背面压暗层：翻转半圈推到背面；卡片正对观者时它背对观者被隐藏，转到球背面时正好盖在镜像图片上 */
+  .mt-card::after { content: ''; position: absolute; inset: 0; border-radius: var(--mt-radius); background: rgba(0, 0, 0, var(--mt-backDim)); transform: rotateY(180deg) translateZ(1px); backface-visibility: hidden; }
+  /* 密铺模式：观者在球外、缝隙极小，背面直接裁掉更省，卡片拍平成单层、不需要压暗层 */
+  .mt-globe.dense .mt-card { transform-style: flat; overflow: hidden; border-radius: var(--mt-radius); backface-visibility: hidden; }
+  .mt-globe.dense .mt-card::after { display: none; }
+
+  /* 用户开启「减少动态效果」时：球静止 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-globe { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" aria-hidden="true"><div class="mt-axis"><div class="mt-globe" id="mtGlobe"></div></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    mode: "dense",  // 排布模式：dense 密铺 / sparse 稀疏
+    bands: 5,       // 纬度带数（奇数时赤道正好一圈）
+    perEquator: 14, // 赤道一圈的卡片数，其他纬带按 cos(纬度) 比例减少
+  };
+
+  (function () {
+    const globe = document.getElementById('mtGlobe');
+    const srcs = CONFIG.slides.map(s => s.src);
+    const sparse = CONFIG.mode === 'sparse';
+    globe.classList.add(sparse ? 'sparse' : 'dense');
+    const RAD = Math.PI / 180;
+    const sum = (arr) => arr.reduce((a, b) => a + b, 0);
+
+    // 纬度带：从 -70° 到 +70° 均匀分布，两极留空（极点处卡片会挤成一团）
+    const bands = Math.max(1, Math.round(CONFIG.bands));
+    const lats = Array.from({ length: bands }, (_, k) => bands === 1 ? 0 : -70 + k * 140 / (bands - 1));
+    // 带内卡数按纬圈周长比例减少，最少 4 张
+    const countFor = (p) => lats.map(lat => Math.max(4, Math.round(p * Math.cos(lat * RAD))));
+
+    const perEquator = Math.max(4, Math.round(CONFIG.perEquator));
+    // 稀疏模式：赤道卡数减半，卡片少而大、彼此留空
+    let per = sparse ? Math.max(4, Math.round(perEquator / 2)) : perEquator;
+    // 元素上限：CI 冒烟机是 2 核软件渲染，球面卡片总数 ≤ 96。
+    // 超出时按 96/Σ 的比例缩小赤道卡数再重算（如 7 带 × 20 张 = 98 → 缩到 19 张 = 91），仍超就逐张减
+    const MAX_CARDS = 96;
+    let counts = countFor(per);
+    if (sum(counts) > MAX_CARDS) { per = Math.max(4, Math.floor(per * MAX_CARDS / sum(counts))); counts = countFor(per); }
+    while (sum(counts) > MAX_CARDS && per > 4) { per -= 1; counts = countFor(per); }
+
+    // 卡宽系数（相对球半径）：赤道弦长 × 0.96 留缝；稀疏模式在密铺宽度上放大 1.6 倍（按未减半的赤道数算）
+    const denseW = 2 * Math.sin(Math.PI / perEquator) * 0.96;
+    const baseW = sparse ? denseW * 1.6 : denseW;
+    // 卡高系数：不超过相邻纬带的弧长 × 0.94（避免上下带穿插），也不高于 1.4 倍卡宽
+    const bandArc = bands > 1 ? (140 / (bands - 1)) * RAD : Math.PI / 2;
+    const baseH = Math.min(baseW * 1.4, bandArc * 0.94);
+
+    let c = 0; // 全局取图游标
+    lats.forEach((lat, k) => {
+      const n = counts[k];
+      const cosLat = Math.cos(lat * RAD);
+      // 本带宽度再用本纬圈弦长兜底，越靠两极卡片越窄，避免极区互相穿插；高度也随纬度收一点
+      const wk = Math.min(baseW, 2 * cosLat * Math.sin(Math.PI / n) * 0.96);
+      const hk = baseH * (0.55 + 0.45 * cosLat);
+      for (let j = 0; j < n; j++) {
+        const card = document.createElement('div');
+        card.className = 'mt-card';
+        card.style.setProperty('--wk', wk.toFixed(4));
+        card.style.setProperty('--hk', hk.toFixed(4));
+        // 每带比上一带错开半格，像砌砖一样避免竖直缝对齐
+        const lon = j * 360 / n + k * (360 / n) / 2;
+        // 先转到经度，再抬到纬度，最后推到球面上 → 卡片正面朝外、贴着球面；半径引用 CSS 变量可热更新
+        card.style.transform = 'translate(-50%, -50%) rotateY(' + lon.toFixed(3) + 'deg) rotateX(' + (-lat).toFixed(3) + 'deg) translateZ(var(--mt-sphere))';
+        const img = document.createElement('img');
+        // 循环取图；每循环完一轮整体错开一张，避免相邻卡片同图
+        img.src = srcs[(c + Math.floor(c / srcs.length)) % srcs.length];
+        c++;
+        img.alt = '';
+        img.loading = 'lazy';
+        card.appendChild(img);
+        globe.appendChild(card);
+      }
+    });
+
+    // 页面切到后台时暂停 CSS 动画，回到前台再继续
+    document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  })();
+</script>
+</body>
+</html>

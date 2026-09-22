@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>纵深飞入</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;        /* 页面底色 */
+    --mt-speed: 14s;         /* 一张卡从最深处飞到眼前的时长 */
+    --mt-depth: 2400px;      /* 纵深距离：卡片起飞的最深处离眼前多远 */
+    --mt-spread: 40;         /* 散开范围：卡片在上下左右散开的幅度，占画面宽高的百分比 */
+    --mt-cardWidth: 180px;   /* 卡片宽度（横版 4:3） */
+    --mt-radius: 12px;       /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; font-family: var(--mt-font); }
+
+  /* 舞台：全屏透视 + preserve-3d，近处的卡自动盖住远处的。
+     这里不能写 overflow: hidden（会强制拍平、丢掉深度排序），裁切交给 body */
+  .mt-stage { position: fixed; inset: 0; perspective: 800px; transform-style: preserve-3d; }
+
+  .mt-card {
+    position: absolute; left: 50%; top: 50%;
+    width: var(--mt-cardWidth); aspect-ratio: 4 / 3;
+    border-radius: var(--mt-radius); overflow: hidden; background: #16161d;
+    will-change: transform, opacity;
+    /* 横竖偏移 = 伪随机系数 × 散开范围；用 vw / vh 让它跟着画面尺寸走 */
+    --x: calc(var(--rx) * var(--mt-spread) * 1vw);
+    --y: calc(var(--ry) * var(--mt-spread) * 1vh);
+    /* 静态排布（动画关闭时可见）：第 i 张放在从最深处到眼前的第 p 段，得到一片由远及近散开的静止卡片 */
+    transform: translate(-50%, -50%) translate3d(var(--x), var(--y), calc(var(--p) * (var(--mt-depth) + 260px) - var(--mt-depth))) rotate(var(--rz));
+    animation: mt-fly var(--mt-speed) linear infinite;
+  }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; user-select: none; }
+
+  /* 深度从最深处线性推进到越过眼前：透视让卡片先慢慢长大、再加速掠过。
+     首尾各留一段透明，重置回最深处时不会闪跳；两端关键帧的变换函数顺序一致才能平滑插值 */
+  @keyframes mt-fly {
+    0%   { transform: translate(-50%, -50%) translate3d(var(--x), var(--y), calc(-1 * var(--mt-depth))) rotate(var(--rz)); opacity: 0; }
+    12%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate3d(var(--x), var(--y), 260px) rotate(var(--rz)); opacity: 0; }
+  }
+
+  /* 用户开启「减少动态效果」时：不飞行，停在由远及近散开的静态排布 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-card { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" id="mtStage" aria-hidden="true"></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    count: 16,  // 同时在空中飞行的卡片数（图片不够时循环取图）
+    tilt: true, // 每张卡带一点随机倾斜
+  };
+
+  (function () {
+    const stage = document.getElementById('mtStage');
+    const srcs = CONFIG.slides.map(s => s.src);
+    // 元素上限：CI 冒烟机是 2 核软件渲染，同时存在的 3D 卡片不超过 24 张
+    const MAX_CARDS = 24;
+    const n = Math.max(1, Math.min(Math.round(CONFIG.count), MAX_CARDS));
+
+    // 固定种子的线性同余伪随机：同一份参数每次重建，布局完全一样。
+    // 横、竖、倾斜各用一条独立序列（不同种子）——同一条序列的相邻两个值有相关性，会让卡片排成一条斜线
+    const lcg = (seed) => () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+    const randX = lcg(42), randY = lcg(1337), randZ = lcg(7);
+    // 散开系数取 ±(0.2 ~ 1)：避开画面正中央，卡片不会正撞镜头把整屏盖住
+    const scatter = (rand) => (rand() < 0.5 ? -1 : 1) * (0.2 + 0.8 * rand());
+
+    for (let i = 0; i < n; i++) {
+      const card = document.createElement('div');
+      card.className = 'mt-card';
+      card.style.setProperty('--rx', scatter(randX).toFixed(3));
+      card.style.setProperty('--ry', scatter(randY).toFixed(3));
+      // 倾斜从独立序列取，开关倾斜不会改变其他卡的位置
+      const rz = (randZ() * 2 - 1) * 8;
+      card.style.setProperty('--rz', (CONFIG.tilt ? rz.toFixed(2) : 0) + 'deg');
+      card.style.setProperty('--p', (i / n).toFixed(4)); // 静态排布用的深度比例
+      // 相位均匀错开：第 i 张提前 i/N 个周期起飞，任何时刻深度方向都排满、首尾无缝
+      card.style.animationDelay = 'calc(' + (-i / n).toFixed(4) + ' * var(--mt-speed))';
+      const img = document.createElement('img');
+      img.src = srcs[i % srcs.length]; // 相邻起飞的两张卡不同图
+      img.alt = '';
+      img.loading = 'lazy';
+      card.appendChild(img);
+      stage.appendChild(card);
+    }
+
+    // 页面切到后台时暂停 CSS 动画，回到前台再继续
+    document.addEventListener('visibilitychange', () => document.querySelectorAll('*').forEach(el => { if (getComputedStyle(el).animationName !== 'none') el.style.animationPlayState = document.hidden ? 'paused' : 'running'; }));
+  })();
+</script>
+</body>
+</html>

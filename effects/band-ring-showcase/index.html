@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>带状环陈列</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;          /* 页面底色 */
+    --mt-tilt: -18deg;         /* 俯仰角：负值俯视 */
+    --mt-speed: 26s;           /* 转一圈的时长 */
+    --mt-backDim: 0.55;        /* 背面卡片压暗程度 */
+    --mt-direction: normal;    /* 转向：normal 顺时针 / reverse 逆时针 */
+    --mt-radius: 14px;         /* 卡片圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 舞台：透视 → 缩放适配 + 俯仰 → 自转的环 → 环上的卡 */
+  .mt-stage { position: fixed; inset: 0; perspective: 1400px; overflow: hidden; }
+  .mt-tilt { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: scale(var(--s, 1)) rotateX(var(--mt-tilt)); transform-style: preserve-3d; }
+  .mt-ring { position: absolute; left: 0; top: 0; transform-style: preserve-3d; animation: mt-spin var(--mt-speed) linear infinite; animation-direction: var(--mt-direction); will-change: transform; }
+  @keyframes mt-spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+  /* 每张卡先转到自己的方位角，再推到半径处；backface 保持可见，转到后排时看到的是镜像。
+     卡片不能 overflow: hidden——那会把它压平成 2D，下面的背面压暗层就失效；圆角改写在图片和遮罩上 */
+  .mt-card { position: absolute; left: 0; top: 0; width: var(--w); aspect-ratio: 4 / 3; margin: calc(var(--w) * -0.375) calc(var(--w) * -0.5); border-radius: var(--mt-radius); transform: rotateY(var(--a)) translateZ(var(--r)); transform-style: preserve-3d; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35); }
+  .mt-card img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: var(--mt-radius); background: #16161d; -webkit-user-drag: none; user-select: none; }
+  /* 背面压暗层：自身翻 180° 且隐藏背面，于是只在卡片背对观者时露出来，正好盖在镜像上 */
+  .mt-card::after { content: ""; position: absolute; inset: 0; border-radius: var(--mt-radius); background: rgba(0, 0, 0, var(--mt-backDim)); transform: rotateY(180deg) translateZ(0.5px); backface-visibility: hidden; }
+
+  /* 用户开启「减少动态效果」时：环停在起始角度 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-ring { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage" aria-hidden="true"><div class="mt-tilt" id="mtTilt"><div class="mt-ring" id="mtRing"></div></div></div>
+<script>
+  const CONFIG = {
+    slides: [{"src":"/samples/sample-1.webp","caption":""},{"src":"/samples/sample-2.webp","caption":""},{"src":"/samples/sample-3.webp","caption":""},{"src":"/samples/sample-4.webp","caption":""},{"src":"/samples/sample-5.webp","caption":""},{"src":"/samples/sample-6.webp","caption":""},{"src":"/samples/sample-7.webp","caption":""},{"src":"/samples/sample-8.webp","caption":""}], // 图片列表
+    count: 12,          // 环上卡片总数（图片不够循环取用）
+    cardWidth: 200,     // 卡片宽度（px）
+  };
+  const GAP = 6;                                  // 相邻卡片之间的缝，越小越像一条连续的带子
+  const N = Math.min(20, Math.max(3, CONFIG.count)); // 上限 20 张 3D 卡片
+  const W = CONFIG.cardWidth;
+  const R = (W + GAP) / (2 * Math.tan(Math.PI / N)); // 让 N 张卡首尾相接围成一圈所需的半径
+  const ring = document.getElementById('mtRing'), tilt = document.getElementById('mtTilt');
+  const srcs = CONFIG.slides.map(s => s.src);
+  for (let i = 0; i < N; i++) {
+    const card = document.createElement('div'); card.className = 'mt-card';
+    card.style.setProperty('--w', W + 'px'); card.style.setProperty('--a', (i * 360 / N) + 'deg'); card.style.setProperty('--r', R + 'px');
+    const img = document.createElement('img'); img.src = srcs[i % srcs.length]; img.alt = ''; img.loading = 'lazy';
+    card.appendChild(img); ring.appendChild(card);
+  }
+  // 缩放适配：整只环（直径 + 一张卡的厚度）占画面短边的 78%，屏幕再小也不裁
+  function fit() {
+    const size = 2 * R + W;
+    tilt.style.setProperty('--s', Math.min(1, (Math.min(innerWidth, innerHeight) * 0.78) / size).toFixed(3));
+  }
+  fit(); addEventListener('resize', fit);
+  document.addEventListener('visibilitychange', () => (ring.style.animationPlayState = document.hidden ? 'paused' : 'running'));
+</script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+{
+  "slug": "card-globe",
+  "name": "卡片球",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": [
+    "球体",
+    "3D",
+    "自转",
+    "陈列",
+    "循环"
+  ],
+  "summary": "一颗由卡片拼成的球体绕倾斜的轴缓慢自转，密铺时像一只迪斯科球，稀疏时透过缝隙能看到背面压暗的卡片",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        {
+          "src": "/samples/sample-1.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-2.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-3.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-4.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-5.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-6.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-7.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-8.webp",
+          "caption": ""
+        }
+      ]
+    },
+    {
+      "key": "mode",
+      "label": "排布模式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        {
+          "value": "dense",
+          "label": "密铺"
+        },
+        {
+          "value": "sparse",
+          "label": "稀疏"
+        }
+      ],
+      "default": "dense",
+      "help": "密铺：卡片贴满球面；稀疏：卡片少而大、彼此留空，能透出背面"
+    },
+    {
+      "key": "bands",
+      "label": "纬度带数",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 7,
+      "step": 2,
+      "default": 5,
+      "help": "球面从上到下分几圈卡片，奇数时赤道正好一圈"
+    },
+    {
+      "key": "perEquator",
+      "label": "赤道卡片数",
+      "type": "range",
+      "target": "config",
+      "min": 8,
+      "max": 20,
+      "step": 2,
+      "default": 14,
+      "help": "赤道一圈的卡片数，越靠两极按比例减少"
+    },
+    {
+      "key": "sphere",
+      "label": "球半径",
+      "type": "range",
+      "target": "css",
+      "min": 160,
+      "max": 360,
+      "step": 10,
+      "default": 250,
+      "unit": "px",
+      "help": "球的半径，卡片尺寸随之等比缩放"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 90,
+      "step": 2,
+      "default": 36,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "tilt",
+      "label": "转轴倾角",
+      "type": "range",
+      "target": "css",
+      "min": -40,
+      "max": 40,
+      "step": 1,
+      "default": 22,
+      "unit": "deg",
+      "displayUnit": "°",
+      "help": "转轴的前后倾斜，正值能看到球顶"
+    },
+    {
+      "key": "backDim",
+      "label": "背面压暗",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 0.9,
+      "step": 0.05,
+      "default": 0.6,
+      "help": "稀疏模式下透出的背面卡片压暗程度，0 不压暗"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "default": 8,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "sparse",
+      "name": "稀疏透出",
+      "values": {
+        "mode": "sparse",
+        "perEquator": 10
+      }
+    },
+    {
+      "id": "fine",
+      "name": "快转细密",
+      "values": {
+        "perEquator": 18,
+        "bands": 7,
+        "speed": 20
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Card Globe 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "slug": "curved-wall-rows",
+  "name": "弧面图墙",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": ["图墙", "3D", "弧面", "自动播放"],
+  "summary": "一面朝观者鼓出的弧形卡片墙，各行反向流动或一步一停地级联滚动",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "" },
+        { "src": "/samples/sample-2.webp", "caption": "" },
+        { "src": "/samples/sample-3.webp", "caption": "" },
+        { "src": "/samples/sample-4.webp", "caption": "" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-6.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "" },
+        { "src": "/samples/sample-8.webp", "caption": "" }
+      ]
+    },
+    {
+      "key": "rows",
+      "label": "行数",
+      "type": "range",
+      "target": "config",
+      "min": 3,
+      "max": 7,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "key": "perRow",
+      "label": "每行卡片数",
+      "type": "range",
+      "target": "config",
+      "min": 10,
+      "max": 24,
+      "step": 2,
+      "default": 16,
+      "help": "每行绕成一整圈的卡片数，越多弧面越平缓"
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "config",
+      "min": 100,
+      "max": 260,
+      "step": 10,
+      "default": 150,
+      "unit": "px"
+    },
+    {
+      "key": "gap",
+      "label": "卡片间距",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 40,
+      "step": 2,
+      "default": 16,
+      "unit": "px"
+    },
+    {
+      "key": "mode",
+      "label": "滚动方式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "flow", "label": "交错流动" },
+        { "value": "cascade", "label": "级联步进" }
+      ],
+      "default": "flow",
+      "help": "交错流动：相邻行反向匀速转；级联步进：所有行同向一步一停，每行比上一行晚一点起步"
+    },
+    {
+      "key": "speed",
+      "label": "一轮时长",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 90,
+      "step": 2,
+      "default": 40,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "一行转完一圈的时长；级联步进时每步的间隔是它除以每行卡片数"
+    },
+    {
+      "key": "tilt",
+      "label": "俯仰角",
+      "type": "range",
+      "target": "css",
+      "min": -30,
+      "max": 30,
+      "step": 1,
+      "default": 6,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 10,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "cascade", "name": "级联步进", "values": { "mode": "cascade", "rows": 6 } },
+    { "id": "big", "name": "大卡三行", "values": { "rows": 3, "perRow": 10, "cardWidth": 240, "gap": 24 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Sphere Wall / Sphere Cascade 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}

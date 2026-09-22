@@ -1,0 +1,170 @@
+{
+  "slug": "depth-fly-through",
+  "name": "纵深飞入",
+  "category": "showcase",
+  "sub": "wall",
+  "tags": [
+    "纵深",
+    "3D",
+    "穿越",
+    "卡片流",
+    "循环"
+  ],
+  "summary": "许多卡片散落在漆黑深空里，观者不断向前飞，远处的小卡片慢慢长大、加速掠过身边消失，深处又有新的浮现",
+  "params": [
+    {
+      "key": "slides",
+      "label": "图片列表",
+      "type": "images",
+      "target": "config",
+      "min": 4,
+      "max": 8,
+      "captions": false,
+      "default": [
+        {
+          "src": "/samples/sample-1.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-2.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-3.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-4.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-5.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-6.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-7.webp",
+          "caption": ""
+        },
+        {
+          "src": "/samples/sample-8.webp",
+          "caption": ""
+        }
+      ]
+    },
+    {
+      "key": "count",
+      "label": "卡片数量",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 24,
+      "step": 1,
+      "default": 16,
+      "help": "同时在空中飞行的卡片数，图片不够时循环取图"
+    },
+    {
+      "key": "speed",
+      "label": "飞行时长",
+      "type": "range",
+      "target": "css",
+      "min": 6,
+      "max": 40,
+      "step": 1,
+      "default": 14,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "一张卡从最深处飞到眼前的时间"
+    },
+    {
+      "key": "depth",
+      "label": "纵深距离",
+      "type": "range",
+      "target": "css",
+      "min": 1200,
+      "max": 4000,
+      "step": 100,
+      "default": 2400,
+      "unit": "px",
+      "help": "卡片起飞的最深处离眼前多远，越大越显得从深空浮现"
+    },
+    {
+      "key": "spread",
+      "label": "散开范围",
+      "type": "range",
+      "target": "css",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "default": 40,
+      "displayUnit": "%",
+      "help": "卡片在上下左右散开的范围，占画面宽高的百分比"
+    },
+    {
+      "key": "cardWidth",
+      "label": "卡片宽度",
+      "type": "range",
+      "target": "css",
+      "min": 100,
+      "max": 320,
+      "step": 10,
+      "default": 180,
+      "unit": "px"
+    },
+    {
+      "key": "tilt",
+      "label": "随机倾斜",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "每张卡带一点随机倾斜，更像随手撒开的照片"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 24,
+      "step": 2,
+      "default": 12,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "rush",
+      "name": "疾速穿越",
+      "values": {
+        "speed": 6,
+        "count": 24
+      }
+    },
+    {
+      "id": "calm",
+      "name": "静谧漂浮",
+      "values": {
+        "count": 8,
+        "speed": 26,
+        "spread": 55
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "animos 的 Depth Stack Scroll 模板一类效果",
+    "url": "https://animos.app",
+    "license": "未使用其代码"
+  }
+}
