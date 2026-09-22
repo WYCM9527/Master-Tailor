@@ -41,7 +41,7 @@ pnpm build          # validate + tsc + vite build + 生成 dist/prompts/*.md、c
 - **GitHub Pages**：`.github/workflows/ci.yml` 在 `main` 推送且门禁全绿后自动部署（仓库需已启用 Pages，Settings → Pages → Source 选 GitHub Actions；私有仓库启用 Pages 需要付费套餐，未启用时部署步骤跳过）。项目站默认部署在 `https://<owner>.github.io/<repo>/`，构建时通过 `BASE_PATH` 适配子路径；绑定自定义域名后把仓库 Variables 里的 `SITE_BASE_PATH` 设为 `/`
 - 自行部署到子路径时同样设 `BASE_PATH=/子路径/ pnpm build`；站内的示例图、字体等根路径引用会经 `src/contract/base.ts` 与 `bakeCode` 的 `baseUrl` 改写，导出代码与 prompt 不受影响
 
-首包只带 272 条效果索引（约 180 KB gzip）；每个效果的完整参数表与源码是独立 chunk（`assets/effects/<slug>-*.js`），卡片滚近视口或进入详情页时才加载。
+首包只带 271 条效果索引（约 180 KB gzip）；每个效果的完整参数表与源码是独立 chunk（`assets/effects/<slug>-*.js`），卡片滚近视口或进入详情页时才加载。
 
 字体升级：`pnpm tsx scripts/prepare-fonts.ts`（从 npm 包与 GitHub release 重新生成 `public/fonts/`，产物已提交进仓库）。
 
@@ -123,7 +123,7 @@ validate 会检查 index.html 含四个基线能力关键字：`aria-roledescrip
 ## 目录结构
 
 ```text
-effects/           # 272 个效果（内容层，唯一需要日常维护的目录）
+effects/           # 271 个效果（内容层，唯一需要日常维护的目录）
 src/contract/      # 类型、zod schema、字体表、分类与子类、示例图表、base（部署路径）、registry（首包索引 + 效果包懒加载）
 src/engine/        # bakeCode（参数烘焙）、renderPrompt（7 段）、urlState（参数 ↔ URL）、search、previewRuntime
 src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 效果 Cell / 效果包加载 hook / 怎么用区块……

@@ -18,7 +18,7 @@ let lastEffectsEntry: string | null = null;
 /**
  * 首页 = 一屏海报（撑满视口，不再往下滚）：
  *   Hero 行（巨字 8 栏 + 元数据 4 栏）——巨字格顶部是珠针 kicker 与一排活体布样卡，鼠标划过有划粉十字线；
- *   软尺通栏（静止刻度 + 272 个效果名滑过）
+ *   软尺通栏（静止刻度 + 全部效果名滑过）
  *   三步 Cell + 「浏览全部效果」大入口 Cell
  * 分类浏览与效果网格都在 /effects（Gallery）。
  * 装饰元素全部黑白灰、1px 线、IconPark 图标；软尺滑动与数字翻滚尊重 prefers-reduced-motion。
