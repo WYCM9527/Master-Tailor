@@ -132,7 +132,16 @@ const PARAM_CHECK = '逐项核对【参数】的值已写入对应的 --mt-* / C
 
 export function renderPrompt(o: PromptOptions): string {
   const { meta, values } = o;
-  const sections = parsePromptMd(o.promptMd);
+  const raw = parsePromptMd(o.promptMd);
+  // 四个来自 prompt.md 的段落都做 {{key}} 替换：描述之外，实现提示 / 检查项 / 技术要求补充里引用参数
+  // 也应跟随当前值（写死数字会在用户调参后与【参数】冲突）
+  const fill = (s: string | undefined) => (s === undefined ? s : fillPlaceholders(s, meta, values));
+  const sections: PromptSections = {
+    description: fill(raw.description) ?? '',
+    checks: fill(raw.checks),
+    techExtra: fill(raw.techExtra),
+    hints: fill(raw.hints),
+  };
   const endpoints = o.siteUrl ? effectEndpoints(o.siteUrl, meta.slug) : undefined;
   const code = o.includeCode ? o.exportedCode?.trim() : undefined;
   // 有参考实现（内联或可抓取）时才声明取舍顺序，否则这句指向不存在的段落
@@ -149,7 +158,7 @@ export function renderPrompt(o: PromptOptions): string {
   );
 
   // 2.【效果描述】
-  parts.push(`【效果描述】\n${fillPlaceholders(sections.description, meta, values)}`);
+  parts.push(`【效果描述】\n${sections.description}`);
 
   // 3.【参数】：值 + help（help 解释「这个数字是什么意思」，是参数语义的唯一出处）
   //    每行带参考实现里的落点（--mt-<key> / CONFIG.<key>），AI 可一一对应地改值，不必猜

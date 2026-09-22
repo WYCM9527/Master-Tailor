@@ -19,6 +19,14 @@ function fail(slug: string, message: string) {
   console.error(`  ✗ [${slug}] ${message}`);
 }
 
+/** 告警：不阻断构建，只在汇总里提醒（VALIDATE_VERBOSE=1 时逐条打印） */
+let warnCount = 0;
+const warnings: string[] = [];
+function warn(slug: string, message: string) {
+  warnCount++;
+  warnings.push(`  ⚠ [${slug}] ${message}`);
+}
+
 const dirs = existsSync(effectsDir)
   ? readdirSync(effectsDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
@@ -184,6 +192,28 @@ for (const slug of dirs) {
   if (term)
     fail(slug, `效果描述里出现实现术语「${term[0]}」，请改用用户能感知的说法或移到 "## 实现提示"`);
 
+  // ---- 实现提示里写死了参数默认值（告警）----
+  // 用户调参后这些数字会与【参数】冲突；引擎会替换 {{key}}，应改成占位符。
+  // 只看 range 参数里「带小数或 ≥ 4」的默认值，避免 1、2、3 这类在文字里天然常见的数字误报
+  const hints =
+    md.match(/^##\s+实现提示\s*$\n([\s\S]*?)(?=^##\s|\s*$(?![\s\S]))/m)?.[1]?.trim() ?? '';
+  if (hints) {
+    const hardcoded: string[] = [];
+    for (const p of meta.params) {
+      if (p.type !== 'range') continue;
+      const d = p.default;
+      if (!(Number.isInteger(d) ? d >= 4 : true)) continue;
+      if (new RegExp(`\\{\\{${p.key}\\}\\}`).test(hints)) continue;
+      const lit = String(d).replace('.', '\\.');
+      if (new RegExp(`(?<![\\d.])${lit}(?![\\d.])`).test(hints)) hardcoded.push(`${p.key}=${d}`);
+    }
+    if (hardcoded.length)
+      warn(
+        slug,
+        `实现提示里出现与参数默认值相同的数字（${hardcoded.join('、')}），建议改用 {{key}} 占位符，调参后才不会与【参数】冲突`,
+      );
+  }
+
   // ---- 预设值合法 ----
   for (const preset of meta.presets) {
     for (const [key, value] of Object.entries(preset.values)) {
@@ -212,5 +242,11 @@ for (const slug of dirs) {
 if (errorCount > 0) {
   console.error(`\n校验失败：${errorCount} 个问题`);
   process.exit(1);
+}
+if (warnCount > 0) {
+  if (process.env.VALIDATE_VERBOSE) console.warn(warnings.join('\n'));
+  console.warn(
+    `⚠ ${warnCount} 个效果的实现提示写死了参数默认值（不阻断；VALIDATE_VERBOSE=1 pnpm validate 查看明细）`,
+  );
 }
 console.log(`✓ 全部 ${dirs.length} 个效果通过契约校验`);

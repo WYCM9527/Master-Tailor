@@ -78,7 +78,9 @@ describe('renderPrompt', () => {
     expect(text).toContain('- 主色 · --mt-color：#f9cf00\n'); // 无 help 不加括号
     expect(text).toContain('- 数量 · CONFIG.count：3');
     // 引擎追加的参数核对项接在效果自带的检查项之后
-    expect(text).toContain('- 自定义检查二\n- 逐项核对【参数】的值已写入对应的 --mt-* / CONFIG.*');
+    expect(text).toContain(
+      '- 条目数为 3，与参数一致\n- 逐项核对【参数】的值已写入对应的 --mt-* / CONFIG.*',
+    );
   });
 
   it('给了站点地址：不附代码时【参考实现】输出可抓取的 code / meta 地址并保留【实现提示】；附代码时补来源行', () => {
@@ -120,6 +122,19 @@ describe('renderPrompt', () => {
     );
     expect(withCode).not.toContain('【实现提示】');
     expect(withCode).not.toContain('在线预览');
+  });
+
+  it('【实现提示】【完成后请检查】【技术要求补充】里的 {{key}} 也按当前值替换', () => {
+    const text = renderPrompt({
+      meta: fixtureMeta,
+      promptMd: fixturePromptMd,
+      values: { ...defaultValues(fixtureMeta), speed: 2.5, count: 7 },
+      includeCode: false,
+    });
+    expect(text).toContain('时长按速度 2.5× 换算');
+    expect(text).toContain('支持键盘左右切换，共 7 张');
+    expect(text).toContain('- 条目数为 7，与参数一致');
+    expect(text).not.toContain('{{');
   });
 
   it('没有站点地址也不附代码：不输出取舍顺序与【参考实现】', () => {

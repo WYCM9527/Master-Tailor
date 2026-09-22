@@ -116,12 +116,13 @@ export const fixturePromptMd = `## 效果描述
 主色是 {{color}}，速度 {{speed}}，文字为 {{text}}，共 {{count}} 个，幻灯片：{{slides}}。
 
 ## 实现提示
-用 transform: translateX 三态过渡实现滑动
+用 transform: translateX 三态过渡实现滑动，时长按速度 {{speed}} 换算
 
 ## 技术要求补充
-- 轮播容器带 aria-roledescription="carousel"，支持键盘左右切换
+- 轮播容器带 aria-roledescription="carousel"，支持键盘左右切换，共 {{count}} 张
 
 ## 完成后请检查
 - 自定义检查一
 - 自定义检查二
+- 条目数为 {{count}}，与参数一致
 `;
