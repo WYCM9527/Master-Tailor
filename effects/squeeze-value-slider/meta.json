@@ -41,12 +41,16 @@
       "help": "两端圆头的直径就是它，滑条、数字、间距都按它缩放"
     },
     {
-      "key": "gradient",
-      "label": "冷暖渐变轨道",
-      "type": "toggle",
-      "target": "css",
-      "default": true,
-      "help": "关掉后是纯色轨道，滑条左侧出现填充条"
+      "key": "style",
+      "label": "轨道样式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "gradient", "label": "冷暖渐变" },
+        { "value": "fill", "label": "纯色填充" }
+      ],
+      "default": "gradient",
+      "help": "渐变：整根轨道是冷→暖的色温渐变；填充：纯色轨道，滑条左侧是填充条"
     },
     {
       "key": "track",
@@ -54,7 +58,7 @@
       "type": "color",
       "target": "css",
       "default": "#2a2a30",
-      "help": "关掉渐变后可见"
+      "help": "「纯色填充」样式下可见"
     },
     {
       "key": "fill",
@@ -62,7 +66,7 @@
       "type": "color",
       "target": "css",
       "default": "#4a4a52",
-      "help": "关掉渐变后滑条左侧的填充条"
+      "help": "「纯色填充」样式下滑条左侧的填充条"
     },
     {
       "key": "handle",
@@ -105,7 +109,7 @@
     {
       "id": "solid",
       "name": "纯色填充",
-      "values": { "gradient": false, "handle": "#ffffff", "color": "#ffffff" }
+      "values": { "style": "fill", "handle": "#ffffff", "color": "#ffffff" }
     },
     { "id": "slim", "name": "细长条", "values": { "height": 40, "width": 520, "value": 30 } }
   ],
