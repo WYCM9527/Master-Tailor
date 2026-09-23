@@ -10,12 +10,13 @@
     --mt-bg: #141418;            /* 页面底色 */
     --mt-width: 360px;           /* 滑块宽度 */
     --mt-height: 56px;           /* 滑块高度（两端圆头的直径） */
+    --mt-thickness: 2.5px;       /* 滑条粗细 */
     --mt-track: #2a2a30;         /* 轨道色（「填充」样式下可见） */
     --mt-fill: #4a4a52;          /* 填充色（「填充」样式下滑条左侧的填充条） */
     --mt-handle: #241c1c;        /* 滑条色 */
     --mt-color: #241c1c;         /* 数字色 */
-    --mt-flip: 0.3s;             /* 每位数字模糊翻页的时长 */
     --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+    --mt-flip: 0.3s;             /* 每位数字模糊翻页的时长（不在调参面板里，可手动改） */
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
@@ -31,7 +32,7 @@
   .mt-slider.style-fill .mt-fill { display: block; }
   /* 滑条：一条 SVG 路径，中段是竖直线段，进入圆头区域后由 JS 改写成圆弧 */
   .mt-handle { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-  .mt-handle path { fill: none; stroke: var(--mt-handle); stroke-linecap: round; }
+  .mt-handle path { fill: none; stroke: var(--mt-handle); stroke-width: var(--mt-thickness); stroke-linecap: round; }
   /* 数值：默认停在右端；被滑条逼近时翻到滑条左侧，之后贴着滑条走 */
   .mt-value { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; gap: 0.25em; transform: translateX(var(--vx, 0px)); color: var(--mt-color); font-size: calc(var(--mt-height) * 0.34); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
   .mt-slider.dragging .mt-value { transition-duration: 0.16s; } /* 拖动中数字跟得紧一点 */
@@ -79,7 +80,6 @@
     const hh = lerp(0.205 * H, 0.29 * H, t);               // 半高：直线时高 0.41H，满弧时 0.58H
     const s = (r - Math.sqrt(r * r - (0.29 * H) ** 2)) * t; // 弓高：0 → 约 0.154H
     const xe = xt - side * s;                              // 弦（两个端点）的 x
-    path.setAttribute('stroke-width', Math.max(2, 0.04 * H));
     if (s < 0.05) path.setAttribute('d', `M${xt} ${cy - hh}L${xt} ${cy + hh}`);
     else { const rr = (hh * hh + s * s) / (2 * s); path.setAttribute('d', `M${xe} ${cy - hh}A${rr} ${rr} 0 0 ${side > 0 ? 1 : 0} ${xe} ${cy + hh}`); }
     // 填充条停在滑条最左缘前 0.16H

@@ -38,7 +38,18 @@
       "step": 2,
       "default": 56,
       "unit": "px",
-      "help": "两端圆头的直径就是它，滑条、数字、间距都按它缩放"
+      "help": "两端圆头的直径就是它，滑条高度、数字、间距都按它缩放"
+    },
+    {
+      "key": "thickness",
+      "label": "滑条粗细",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 8,
+      "step": 0.5,
+      "default": 2.5,
+      "unit": "px"
     },
     {
       "key": "style",
@@ -89,19 +100,6 @@
       "target": "config",
       "default": "%",
       "maxLength": 4
-    },
-    {
-      "key": "flip",
-      "label": "翻页时长",
-      "type": "range",
-      "target": "css",
-      "min": 0.1,
-      "max": 0.6,
-      "step": 0.02,
-      "default": 0.3,
-      "unit": "s",
-      "displayUnit": " 秒",
-      "help": "每一位数字变化时模糊翻页的时长"
     }
   ],
   "presets": [
@@ -111,7 +109,12 @@
       "name": "纯色填充",
       "values": { "style": "fill", "handle": "#ffffff", "color": "#ffffff" }
     },
-    { "id": "slim", "name": "细长条", "values": { "height": 40, "width": 520, "value": 30 } }
+    {
+      "id": "slim",
+      "name": "细长条",
+      "values": { "height": 40, "width": 520, "value": 30, "thickness": 2 }
+    },
+    { "id": "bold", "name": "粗滑条", "values": { "thickness": 5, "height": 64 } }
   ],
   "thumb": { "mode": "autoplay" },
   "source": { "kind": "original" }
