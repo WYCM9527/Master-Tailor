@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>挤值圆头滑块</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0a0a0f;            /* 页面底色 */
+    --mt-width: 360px;           /* 进度条宽度 */
+    --mt-height: 56px;           /* 进度条高度（两端圆头的直径） */
+    --mt-fill: #f2f3f8;          /* 填充色 */
+    --mt-track: #1c1c24;         /* 轨道色 */
+    --mt-color: #f2f3f8;         /* 轨道上的数字色 */
+    --mt-colorOnFill: #0a0a0f;   /* 被挤进填充条内侧后的数字色 */
+    --mt-flip: 0.28s;            /* 每位数字模糊翻页的时长 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
+
+  /* 轨道：两端圆头的胶囊，内容裁在里面 */
+  .mt-slider { position: relative; width: var(--mt-width); height: var(--mt-height); border-radius: calc(var(--mt-height) / 2); background: var(--mt-track); overflow: hidden; cursor: grab; touch-action: none; user-select: none; outline: none; }
+  .mt-slider.dragging { cursor: grabbing; }
+  .mt-slider:focus-visible::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px var(--mt-fill); pointer-events: none; opacity: 0.6; }
+  /* 填充条：左端始终是圆头；右端（条头）的圆角 --r 由 JS 按进入右侧圆头区域的深度写入——0 是直角，到顶点等于半高，正好与轨道内圆重合 */
+  .mt-fill { position: absolute; left: 0; top: 0; height: 100%; width: var(--w, 50%); background: var(--mt-fill); border-radius: calc(var(--mt-height) / 2) var(--r, 0px) var(--r, 0px) calc(var(--mt-height) / 2); color: var(--mt-colorOnFill); }
+  .mt-fill.eased { transition: width 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  /* 条头上的两道抓握线：越弯越淡 */
+  .mt-grip { position: absolute; right: 14px; top: 50%; width: 2px; height: 30%; transform: translateY(-50%); border-radius: 1px; background: currentColor; box-shadow: -5px 0 0 currentColor; opacity: var(--grip, 0.35); pointer-events: none; }
+  /* 数值：默认停在右端；被条头顶到后切到填充条内侧（跟着条头走）并换色 */
+  .mt-value { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; gap: 0.06em; transform: translateX(var(--vx, 0px)); color: var(--mt-color); font-size: calc(var(--mt-height) * 0.36); font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s; }
+  .mt-value.inside { color: var(--mt-colorOnFill); }
+  .mt-slider.dragging .mt-value { transition-duration: 0.12s, 0.2s; } /* 拖动中数字跟得紧一点，别落到条头外面 */
+  .mt-digits { display: inline-flex; }
+  .mt-digits .d { display: inline-block; min-width: 0.62em; text-align: center; }
+  /* 模糊翻页：换掉的那一位从下方（数值增大）或上方（减小）带着模糊浮上来 */
+  .mt-digits .d.flip { animation: mt-flip var(--mt-flip) cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  @keyframes mt-flip {
+    from { transform: translateY(calc(var(--dir, 1) * 45%)); filter: blur(6px); opacity: 0; }
+    to   { transform: translateY(0); filter: blur(0); opacity: 1; }
+  }
+  .mt-unit { opacity: 0.7; font-size: 0.8em; }
+
+  /* 用户开启「减少动态效果」时：数字直接换、位置直接跳，不做翻页与过渡 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-digits .d.flip { animation: none; }
+    .mt-value, .mt-fill.eased { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-slider" id="mtSlider" role="slider" tabindex="0" aria-label="进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="64">
+  <div class="mt-fill eased" id="mtFill"><span class="mt-grip" aria-hidden="true"></span></div>
+  <div class="mt-value" id="mtValue" aria-hidden="true"><span class="mt-digits" id="mtDigits"></span><span class="mt-unit" id="mtUnit"></span></div>
+</div>
+<script>
+  const CONFIG = {
+    value: 64,      // 初始进度（0–100）
+    unit: "%",      // 数值后的单位
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const slider = document.getElementById('mtSlider'), fill = document.getElementById('mtFill'), valueEl = document.getElementById('mtValue'), digitsEl = document.getElementById('mtDigits');
+  document.getElementById('mtUnit').textContent = CONFIG.unit;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  let value = clamp(Math.round(CONFIG.value), 0, 100), shown = null, userTook = false;
+
+  // 几何都从当前尺寸读（宽高是 CSS 变量，调参会变），只在渲染时读一次
+  function geo() { const W = slider.clientWidth, H = slider.clientHeight; return { W, H, pad: H * 0.32 }; }
+
+  function render() {
+    const { W, H, pad } = geo(), p = value / 100;
+    // 填充条右端：0% 时是一颗直径 H 的圆头，100% 时到轨道尽头
+    const right = H + p * (W - H);
+    // 进入右侧圆头区域（最后半个高度）的深度 0→1，条头圆角随之 0→H/2，到顶点与轨道内圆完全重合
+    const t = clamp((right - (W - H / 2)) / (H / 2), 0, 1);
+    fill.style.setProperty('--w', right + 'px');
+    fill.style.setProperty('--r', (t * H / 2) + 'px');
+    fill.style.setProperty('--grip', (0.35 * (1 - t)).toFixed(3));
+    // 数字：先按位刷新（变化的位做翻页），再量宽度决定停在右端还是被挤到条头内侧
+    if (shown !== value) { renderDigits(value, shown === null ? 0 : Math.sign(value - shown)); shown = value; }
+    const labelW = valueEl.offsetWidth;
+    const rightSlot = W - pad - labelW;       // 默认停靠位：右端
+    const inside = right >= rightSlot - 6;    // 条头顶到数字了：挤到条头内侧，之后跟着条头走
+    valueEl.classList.toggle('inside', inside);
+    // 内侧时再让出一个内边距给条头上的抓握线，数字不和它撞在一起
+    valueEl.style.setProperty('--vx', (inside ? right - pad * 2 - labelW : rightSlot) + 'px');
+    slider.setAttribute('aria-valuenow', String(value));
+  }
+  function renderDigits(v, dir) {
+    const next = String(v).split(''), cur = [...digitsEl.children].map(d => d.textContent);
+    if (cur.length !== next.length) digitsEl.textContent = '';
+    next.forEach((ch, i) => {
+      const old = digitsEl.children[i];
+      if (old && old.textContent === ch) return;
+      const d = document.createElement('span'); d.className = 'd' + (dir ? ' flip' : ''); d.textContent = ch; d.style.setProperty('--dir', dir || 1);
+      if (old) digitsEl.replaceChild(d, old); else digitsEl.appendChild(d);
+    });
+  }
+  function setValue(v) { const nv = clamp(Math.round(v), 0, 100); if (nv === value) return; value = nv; render(); }
+
+  // 拖拽 / 点击：指针落在条头中心，条头右缘领先半个圆头
+  let dragging = false;
+  const fromPointer = (e) => { const { W, H } = geo(), x = e.clientX - slider.getBoundingClientRect().left; return clamp((x - H / 2) / (W - H), 0, 1) * 100; };
+  slider.addEventListener('pointerdown', (e) => { userTook = true; dragging = true; slider.classList.add('dragging'); slider.setPointerCapture(e.pointerId); setValue(fromPointer(e)); fill.classList.remove('eased'); });
+  slider.addEventListener('pointermove', (e) => { if (dragging) setValue(fromPointer(e)); });
+  const stop = () => { dragging = false; slider.classList.remove('dragging'); fill.classList.add('eased'); };
+  slider.addEventListener('pointerup', stop); slider.addEventListener('pointercancel', stop);
+  // 键盘：左右 ±1，按住 Shift ±10，Home / End 到两端
+  slider.addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 10 : 1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') setValue(value + step);
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') setValue(value - step);
+    else if (e.key === 'Home') setValue(0);
+    else if (e.key === 'End') setValue(100);
+    else return;
+    userTook = true; e.preventDefault();
+  });
+  render(); addEventListener('resize', render);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：进度在两端之间慢慢往返，把「挤数字」和「弯条头」都走一遍；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    let t0 = performance.now();
+    (function demo(now) {
+      if (userTook) return;
+      if (!document.hidden) { const k = (1 - Math.cos((now - t0) / 6000 * Math.PI * 2)) / 2; setValue(8 + k * 92); }
+      requestAnimationFrame(demo);
+    })(t0);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+{
+  "slug": "squeeze-value-slider",
+  "name": "挤值圆头滑块",
+  "category": "progress",
+  "sub": "click",
+  "tags": ["进度条", "滑块", "拖拽", "数字翻页", "圆角"],
+  "summary": "拖动填充条到右端时把数值挤到左侧，直角的条头进入圆端后逐渐弯成内圆，数字模糊翻页",
+  "params": [
+    {
+      "key": "value",
+      "label": "初始进度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 64,
+      "displayUnit": "%"
+    },
+    {
+      "key": "width",
+      "label": "进度条宽度",
+      "type": "range",
+      "target": "css",
+      "min": 240,
+      "max": 600,
+      "step": 10,
+      "default": 360,
+      "unit": "px"
+    },
+    {
+      "key": "height",
+      "label": "进度条高度",
+      "type": "range",
+      "target": "css",
+      "min": 36,
+      "max": 80,
+      "step": 2,
+      "default": 56,
+      "unit": "px",
+      "help": "两端圆头的直径就是它"
+    },
+    {
+      "key": "fill",
+      "label": "填充色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "track",
+      "label": "轨道色",
+      "type": "color",
+      "target": "css",
+      "default": "#1c1c24"
+    },
+    {
+      "key": "color",
+      "label": "轨道上的数字色",
+      "type": "color",
+      "target": "css",
+      "default": "#f2f3f8"
+    },
+    {
+      "key": "colorOnFill",
+      "label": "填充上的数字色",
+      "type": "color",
+      "target": "css",
+      "default": "#0a0a0f",
+      "help": "数值被挤进填充条内侧后的颜色"
+    },
+    {
+      "key": "unit",
+      "label": "单位",
+      "type": "text",
+      "target": "config",
+      "default": "%",
+      "maxLength": 4
+    },
+    {
+      "key": "flip",
+      "label": "翻页时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.1,
+      "max": 0.6,
+      "step": 0.02,
+      "default": 0.28,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "每一位数字变化时模糊翻页的时长"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "blue", "name": "蓝色填充", "values": { "fill": "#3b82f6", "colorOnFill": "#ffffff", "track": "#141826" } },
+    { "id": "slim", "name": "细长条", "values": { "height": 40, "width": 520, "value": 30 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

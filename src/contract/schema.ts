@@ -143,6 +143,7 @@ export const effectMetaSchema = z
       'showcase',
       'transition',
       'loading',
+      'progress',
       'canvas',
     ]),
     sub: z.string().min(1),

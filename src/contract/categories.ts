@@ -43,6 +43,7 @@ export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
   { id: 'showcase', name: '多卡/图展示', subs: SHOWCASE_SUBS },
   { id: 'transition', name: '页面转场', subs: TRANSITION_SUBS },
   { id: 'loading', name: '加载与进场', subs: TRIGGER_SUBS },
+  { id: 'progress', name: '进度条', subs: TRIGGER_SUBS },
   { id: 'canvas', name: '鼠标样式', subs: TRIGGER_SUBS },
 ];
 

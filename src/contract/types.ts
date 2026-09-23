@@ -16,6 +16,7 @@ export type CategoryId =
   | 'showcase'
   | 'transition'
   | 'loading'
+  | 'progress'
   | 'canvas';
 
 /**
