@@ -7,14 +7,15 @@
 <style>
   :root {
     /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
-    --mt-bg: #0a0a0f;            /* 页面底色 */
-    --mt-width: 360px;           /* 进度条宽度 */
-    --mt-height: 56px;           /* 进度条高度（两端圆头的直径） */
-    --mt-fill: #f2f3f8;          /* 填充色 */
-    --mt-track: #1c1c24;         /* 轨道色 */
-    --mt-color: #f2f3f8;         /* 轨道上的数字色 */
-    --mt-colorOnFill: #0a0a0f;   /* 被挤进填充条内侧后的数字色 */
-    --mt-flip: 0.28s;            /* 每位数字模糊翻页的时长 */
+    --mt-bg: #141418;            /* 页面底色 */
+    --mt-width: 360px;           /* 滑块宽度 */
+    --mt-height: 56px;           /* 滑块高度（两端圆头的直径） */
+    --mt-gradient: 1;            /* 轨道用冷→暖渐变：1 开 / 0 关（关掉后是纯色轨道 + 滑条左侧的填充条） */
+    --mt-track: #2a2a30;         /* 纯色轨道色（渐变关掉时可见） */
+    --mt-fill: #4a4a52;          /* 填充色（渐变关掉时，滑条左侧的填充条） */
+    --mt-handle: #241c1c;        /* 滑条色 */
+    --mt-color: #241c1c;         /* 数字色 */
+    --mt-flip: 0.3s;             /* 每位数字模糊翻页的时长 */
     --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
   }
   html, body { margin: 0; height: 100%; }
@@ -23,36 +24,33 @@
   /* 轨道：两端圆头的胶囊，内容裁在里面 */
   .mt-slider { position: relative; width: var(--mt-width); height: var(--mt-height); border-radius: calc(var(--mt-height) / 2); background: var(--mt-track); overflow: hidden; cursor: grab; touch-action: none; user-select: none; outline: none; }
   .mt-slider.dragging { cursor: grabbing; }
-  .mt-slider:focus-visible::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px var(--mt-fill); pointer-events: none; opacity: 0.6; }
-  /* 填充条：左端始终是圆头；右端（条头）的圆角 --r 由 JS 按进入右侧圆头区域的深度写入——0 是直角，到顶点等于半高，正好与轨道内圆重合 */
-  .mt-fill { position: absolute; left: 0; top: 0; height: 100%; width: var(--w, 50%); background: var(--mt-fill); border-radius: calc(var(--mt-height) / 2) var(--r, 0px) var(--r, 0px) calc(var(--mt-height) / 2); color: var(--mt-colorOnFill); }
-  .mt-fill.eased { transition: width 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
-  /* 条头上的两道抓握线：越弯越淡 */
-  .mt-grip { position: absolute; right: 14px; top: 50%; width: 2px; height: 30%; transform: translateY(-50%); border-radius: 1px; background: currentColor; box-shadow: -5px 0 0 currentColor; opacity: var(--grip, 0.35); pointer-events: none; }
-  /* 数值：默认停在右端；被条头顶到后切到填充条内侧（跟着条头走）并换色 */
-  .mt-value { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; gap: 0.06em; transform: translateX(var(--vx, 0px)); color: var(--mt-color); font-size: calc(var(--mt-height) * 0.36); font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.2s; }
-  .mt-value.inside { color: var(--mt-colorOnFill); }
-  .mt-slider.dragging .mt-value { transition-duration: 0.12s, 0.2s; } /* 拖动中数字跟得紧一点，别落到条头外面 */
+  /* 冷→暖的渐变层铺在纯色轨道上，开关只改它的透明度 */
+  .mt-slider::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #7c9cff 0%, #c8d6ff 28%, #ffffff 46%, #ffd8c6 58%, #ff8a5c 78%, #ff5a33 100%); opacity: var(--mt-gradient); }
+  .mt-slider:focus-visible::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px var(--mt-color); pointer-events: none; opacity: 0.5; }
+  /* 填充条：从左端到滑条前一小段的胶囊，只在纯色轨道下可见 */
+  .mt-fill { position: absolute; left: 0; top: 0; height: 100%; width: var(--w, 0px); border-radius: inherit; background: var(--mt-fill); opacity: calc(1 - var(--mt-gradient)); }
+  /* 滑条：一条 SVG 路径，中段是竖直线段，进入圆头区域后由 JS 改写成圆弧 */
+  .mt-handle { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .mt-handle path { fill: none; stroke: var(--mt-handle); stroke-linecap: round; }
+  /* 数值：默认停在右端；被滑条逼近时翻到滑条左侧，之后贴着滑条走 */
+  .mt-value { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; gap: 0.25em; transform: translateX(var(--vx, 0px)); color: var(--mt-color); font-size: calc(var(--mt-height) * 0.34); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .mt-slider.dragging .mt-value { transition-duration: 0.16s; } /* 拖动中数字跟得紧一点 */
   .mt-digits { display: inline-flex; }
-  .mt-digits .d { display: inline-block; min-width: 0.62em; text-align: center; }
-  /* 模糊翻页：换掉的那一位从下方（数值增大）或上方（减小）带着模糊浮上来 */
-  .mt-digits .d.flip { animation: mt-flip var(--mt-flip) cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-  @keyframes mt-flip {
-    from { transform: translateY(calc(var(--dir, 1) * 45%)); filter: blur(6px); opacity: 0; }
-    to   { transform: translateY(0); filter: blur(0); opacity: 1; }
-  }
-  .mt-unit { opacity: 0.7; font-size: 0.8em; }
+  /* 每一位是一个格子，新旧两个字叠在同一格里：旧字往外滚并模糊消失，新字从另一侧模糊滚入 */
+  .mt-digits .d { display: inline-grid; min-width: 0.62em; text-align: center; }
+  .mt-digits .d > span { grid-area: 1 / 1; }
+  .mt-digits .d .old { opacity: 0; }
 
-  /* 用户开启「减少动态效果」时：数字直接换、位置直接跳，不做翻页与过渡 */
+  /* 用户开启「减少动态效果」时：数字直接换、位置直接跳 */
   @media (prefers-reduced-motion: reduce) {
-    .mt-digits .d.flip { animation: none; }
-    .mt-value, .mt-fill.eased { transition: none; }
+    .mt-value { transition: none; }
   }
 </style>
 </head>
 <body>
 <div class="mt-slider" id="mtSlider" role="slider" tabindex="0" aria-label="进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="64">
-  <div class="mt-fill eased" id="mtFill"><span class="mt-grip" aria-hidden="true"></span></div>
+  <div class="mt-fill" id="mtFill"></div>
+  <svg class="mt-handle" aria-hidden="true"><path id="mtPath" d=""/></svg>
   <div class="mt-value" id="mtValue" aria-hidden="true"><span class="mt-digits" id="mtDigits"></span><span class="mt-unit" id="mtUnit"></span></div>
 </div>
 <script>
@@ -61,71 +59,91 @@
     unit: "%",      // 数值后的单位
   };
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const slider = document.getElementById('mtSlider'), fill = document.getElementById('mtFill'), valueEl = document.getElementById('mtValue'), digitsEl = document.getElementById('mtDigits');
+  const slider = document.getElementById('mtSlider'), fill = document.getElementById('mtFill'), path = document.getElementById('mtPath'), valueEl = document.getElementById('mtValue'), digitsEl = document.getElementById('mtDigits');
   document.getElementById('mtUnit').textContent = CONFIG.unit;
-  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-  let value = clamp(Math.round(CONFIG.value), 0, 100), shown = null, userTook = false;
-
-  // 几何都从当前尺寸读（宽高是 CSS 变量，调参会变），只在渲染时读一次
-  function geo() { const W = slider.clientWidth, H = slider.clientHeight; return { W, H, pad: H * 0.32 }; }
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, k) => a + (b - a) * k;
+  const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+  // pos 是 0–1 的连续位置（拖动时不按 1% 跳格），显示的数值 = round(pos × 100)
+  let pos = clamp(CONFIG.value, 0, 100) / 100, shown = null, userTook = false;
 
   function render() {
-    const { W, H, pad } = geo(), p = value / 100;
-    // 填充条右端：0% 时是一颗直径 H 的圆头，100% 时到轨道尽头
-    const right = H + p * (W - H);
-    // 进入右侧圆头区域（最后半个高度）的深度 0→1，条头圆角随之 0→H/2，到顶点与轨道内圆完全重合
-    const t = clamp((right - (W - H / 2)) / (H / 2), 0, 1);
-    fill.style.setProperty('--w', right + 'px');
-    fill.style.setProperty('--r', (t * H / 2) + 'px');
-    fill.style.setProperty('--grip', (0.35 * (1 - t)).toFixed(3));
-    // 数字：先按位刷新（变化的位做翻页），再量宽度决定停在右端还是被挤到条头内侧
-    if (shown !== value) { renderDigits(value, shown === null ? 0 : Math.sign(value - shown)); shown = value; }
-    const labelW = valueEl.offsetWidth;
-    const rightSlot = W - pad - labelW;       // 默认停靠位：右端
-    const inside = right >= rightSlot - 6;    // 条头顶到数字了：挤到条头内侧，之后跟着条头走
-    valueEl.classList.toggle('inside', inside);
-    // 内侧时再让出一个内边距给条头上的抓握线，数字不和它撞在一起
-    valueEl.style.setProperty('--vx', (inside ? right - pad * 2 - labelW : rightSlot) + 'px');
-    slider.setAttribute('aria-valuenow', String(value));
+    const W = slider.clientWidth, H = slider.clientHeight, cy = H / 2;
+    const inset = 0.15 * H;                                // 滑条顶点到轨道端的最小距离
+    const r = 0.35 * H;                                    // 完全弯曲时弧的半径 = 半高 − inset，与轨道圆头同心
+    const xt = inset + pos * (W - 2 * inset);              // 滑条顶点（弧顶）的 x
+    // 进入右 / 左圆头区域（最后半个高度）的深度 0→1，ease-out 让起弯早一些；side 记录弯向哪一侧
+    const tr = clamp((xt - (W - H / 2)) / (H / 2 - inset), 0, 1), tl = clamp((H / 2 - xt) / (H / 2 - inset), 0, 1);
+    const side = tr >= tl ? 1 : -1, t = 1 - (1 - Math.max(tr, tl)) ** 2;
+    const hh = lerp(0.205 * H, 0.29 * H, t);               // 半高：直线时高 0.41H，满弧时 0.58H
+    const s = (r - Math.sqrt(r * r - (0.29 * H) ** 2)) * t; // 弓高：0 → 约 0.154H
+    const xe = xt - side * s;                              // 弦（两个端点）的 x
+    path.setAttribute('stroke-width', Math.max(2, 0.04 * H));
+    if (s < 0.05) path.setAttribute('d', `M${xt} ${cy - hh}L${xt} ${cy + hh}`);
+    else { const rr = (hh * hh + s * s) / (2 * s); path.setAttribute('d', `M${xe} ${cy - hh}A${rr} ${rr} 0 0 ${side > 0 ? 1 : 0} ${xe} ${cy + hh}`); }
+    // 填充条停在滑条最左缘前 0.16H
+    fill.style.setProperty('--w', Math.max(0, Math.min(xt, xe) - 0.16 * H) + 'px');
+    // 数字：先按位刷新（变化的位翻页），再量宽度决定停在右端还是翻到滑条左侧
+    const value = Math.round(pos * 100);
+    if (shown !== value) { renderDigits(value, shown === null ? 0 : Math.sign(value - shown)); shown = value; slider.setAttribute('aria-valuenow', String(value)); }
+    const labelW = valueEl.offsetWidth, restLeft = W - 0.3 * H - labelW;   // 停靠位：右缘离轨道右端 0.3H
+    const pushed = xt + 0.3 * H >= restLeft;                                // 顶点逼近到数字左缘前 0.3H：翻到滑条左侧
+    valueEl.style.setProperty('--vx', (pushed ? xt - 0.4 * H - labelW : restLeft) + 'px'); // 左侧时右缘贴着顶点左侧 0.4H 跟着走
   }
+  function flipMs() { const v = getComputedStyle(document.documentElement).getPropertyValue('--mt-flip').trim(); return parseFloat(v) * (v.endsWith('ms') ? 1 : 1000); }
   function renderDigits(v, dir) {
-    const next = String(v).split(''), cur = [...digitsEl.children].map(d => d.textContent);
-    if (cur.length !== next.length) digitsEl.textContent = '';
+    const next = String(v).split('');
+    if (digitsEl.children.length !== next.length) { digitsEl.textContent = ''; next.forEach(() => { const d = document.createElement('span'); d.className = 'd'; d.innerHTML = '<span class="cur"></span><span class="old"></span>'; digitsEl.appendChild(d); }); }
     next.forEach((ch, i) => {
-      const old = digitsEl.children[i];
-      if (old && old.textContent === ch) return;
-      const d = document.createElement('span'); d.className = 'd' + (dir ? ' flip' : ''); d.textContent = ch; d.style.setProperty('--dir', dir || 1);
-      if (old) digitsEl.replaceChild(d, old); else digitsEl.appendChild(d);
+      const cell = digitsEl.children[i], cur = cell.firstChild, old = cell.lastChild;
+      if (cur.textContent === ch) return;
+      const prev = cur.textContent; cur.textContent = ch;
+      if (reduceMotion || !dir || !prev) return;
+      // 翻页还在进行中就只换字（连续拖动时这一位一直是模糊的），停下来后最后一次翻页把它落清楚
+      if (cell._anim && cell._anim.playState === 'running') return;
+      old.textContent = prev;
+      const ms = flipMs(), off = dir * 55;   // 数值增大：新字从下方滚上来、旧字往上滚走；减小则反过来
+      cell._anim = cur.animate([{ transform: `translateY(${off}%)`, filter: 'blur(0.2em)', opacity: 0 }, { transform: 'none', filter: 'blur(0)', opacity: 1 }], { duration: ms, easing: EASE });
+      old.animate([{ transform: 'none', filter: 'blur(0)', opacity: 1 }, { transform: `translateY(${-off}%)`, filter: 'blur(0.2em)', opacity: 0 }], { duration: ms, easing: EASE });
     });
   }
-  function setValue(v) { const nv = clamp(Math.round(v), 0, 100); if (nv === value) return; value = nv; render(); }
 
-  // 拖拽 / 点击：指针落在条头中心，条头右缘领先半个圆头
+  // 点击 / 键盘：位置带缓动滑过去；拖动：直接跟手
+  let raf = 0;
+  function animateTo(target) {
+    cancelAnimationFrame(raf);
+    if (reduceMotion) { pos = target; render(); return; }
+    const from = pos, t0 = performance.now();
+    (function step(now) {
+      const k = Math.min(1, (now - t0) / 260); pos = lerp(from, target, 1 - (1 - k) ** 3); render();
+      if (k < 1) raf = requestAnimationFrame(step);
+    })(t0);
+  }
+  // 指针 x 直接就是滑条顶点的位置
+  const fromPointer = (e) => { const W = slider.clientWidth, H = slider.clientHeight, x = e.clientX - slider.getBoundingClientRect().left; return clamp((x - 0.15 * H) / (W - 0.3 * H), 0, 1); };
   let dragging = false;
-  const fromPointer = (e) => { const { W, H } = geo(), x = e.clientX - slider.getBoundingClientRect().left; return clamp((x - H / 2) / (W - H), 0, 1) * 100; };
-  slider.addEventListener('pointerdown', (e) => { userTook = true; dragging = true; slider.classList.add('dragging'); slider.setPointerCapture(e.pointerId); setValue(fromPointer(e)); fill.classList.remove('eased'); });
-  slider.addEventListener('pointermove', (e) => { if (dragging) setValue(fromPointer(e)); });
-  const stop = () => { dragging = false; slider.classList.remove('dragging'); fill.classList.add('eased'); };
+  slider.addEventListener('pointerdown', (e) => { userTook = true; dragging = true; slider.classList.add('dragging'); slider.setPointerCapture(e.pointerId); animateTo(fromPointer(e)); });
+  slider.addEventListener('pointermove', (e) => { if (!dragging) return; cancelAnimationFrame(raf); pos = fromPointer(e); render(); });
+  const stop = () => { dragging = false; slider.classList.remove('dragging'); };
   slider.addEventListener('pointerup', stop); slider.addEventListener('pointercancel', stop);
   // 键盘：左右 ±1，按住 Shift ±10，Home / End 到两端
   slider.addEventListener('keydown', (e) => {
-    const step = e.shiftKey ? 10 : 1;
-    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') setValue(value + step);
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') setValue(value - step);
-    else if (e.key === 'Home') setValue(0);
-    else if (e.key === 'End') setValue(100);
+    const step = e.shiftKey ? 10 : 1, v = Math.round(pos * 100);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') animateTo(clamp(v + step, 0, 100) / 100);
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') animateTo(clamp(v - step, 0, 100) / 100);
+    else if (e.key === 'Home') animateTo(0);
+    else if (e.key === 'End') animateTo(1);
     else return;
     userTook = true; e.preventDefault();
   });
   render(); addEventListener('resize', render);
 
   /* @mt:thumb-start */
-  // 缩略图演示：进度在两端之间慢慢往返，把「挤数字」和「弯条头」都走一遍；用户一碰就交还
+  // 缩略图演示：位置在两端之间慢慢往返，把「挤数字」和「弯滑条」都走一遍；用户一碰就交还
   if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
-    let t0 = performance.now();
+    const t0 = performance.now();
     (function demo(now) {
       if (userTook) return;
-      if (!document.hidden) { const k = (1 - Math.cos((now - t0) / 6000 * Math.PI * 2)) / 2; setValue(8 + k * 92); }
+      if (!document.hidden) { pos = 0.06 + 0.94 * (1 - Math.cos((now - t0) / 6000 * Math.PI * 2)) / 2; render(); }
       requestAnimationFrame(demo);
     })(t0);
   }

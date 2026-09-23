@@ -4,7 +4,7 @@
   "category": "progress",
   "sub": "click",
   "tags": ["进度条", "滑块", "拖拽", "数字翻页", "圆角"],
-  "summary": "拖动填充条到右端时把数值挤到左侧，直角的条头进入圆端后逐渐弯成内圆，数字模糊翻页",
+  "summary": "细滑条拖到右端时把数值挤到自己左侧，进入圆头后逐渐弯成与轨道同心的内圆弧，变化的数字模糊翻页",
   "params": [
     {
       "key": "value",
@@ -19,7 +19,7 @@
     },
     {
       "key": "width",
-      "label": "进度条宽度",
+      "label": "滑块宽度",
       "type": "range",
       "target": "css",
       "min": 240,
@@ -30,7 +30,7 @@
     },
     {
       "key": "height",
-      "label": "进度条高度",
+      "label": "滑块高度",
       "type": "range",
       "target": "css",
       "min": 36,
@@ -38,36 +38,45 @@
       "step": 2,
       "default": 56,
       "unit": "px",
-      "help": "两端圆头的直径就是它"
+      "help": "两端圆头的直径就是它，滑条、数字、间距都按它缩放"
     },
     {
-      "key": "fill",
-      "label": "填充色",
-      "type": "color",
+      "key": "gradient",
+      "label": "冷暖渐变轨道",
+      "type": "toggle",
       "target": "css",
-      "default": "#f2f3f8"
+      "default": true,
+      "help": "关掉后是纯色轨道，滑条左侧出现填充条"
     },
     {
       "key": "track",
       "label": "轨道色",
       "type": "color",
       "target": "css",
-      "default": "#1c1c24"
+      "default": "#2a2a30",
+      "help": "关掉渐变后可见"
+    },
+    {
+      "key": "fill",
+      "label": "填充色",
+      "type": "color",
+      "target": "css",
+      "default": "#4a4a52",
+      "help": "关掉渐变后滑条左侧的填充条"
+    },
+    {
+      "key": "handle",
+      "label": "滑条色",
+      "type": "color",
+      "target": "css",
+      "default": "#241c1c"
     },
     {
       "key": "color",
-      "label": "轨道上的数字色",
+      "label": "数字色",
       "type": "color",
       "target": "css",
-      "default": "#f2f3f8"
-    },
-    {
-      "key": "colorOnFill",
-      "label": "填充上的数字色",
-      "type": "color",
-      "target": "css",
-      "default": "#0a0a0f",
-      "help": "数值被挤进填充条内侧后的颜色"
+      "default": "#241c1c"
     },
     {
       "key": "unit",
@@ -85,7 +94,7 @@
       "min": 0.1,
       "max": 0.6,
       "step": 0.02,
-      "default": 0.28,
+      "default": 0.3,
       "unit": "s",
       "displayUnit": " 秒",
       "help": "每一位数字变化时模糊翻页的时长"
@@ -93,7 +102,11 @@
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    { "id": "blue", "name": "蓝色填充", "values": { "fill": "#3b82f6", "colorOnFill": "#ffffff", "track": "#141826" } },
+    {
+      "id": "solid",
+      "name": "纯色填充",
+      "values": { "gradient": false, "handle": "#ffffff", "color": "#ffffff" }
+    },
     { "id": "slim", "name": "细长条", "values": { "height": 40, "width": 520, "value": 30 } }
   ],
   "thumb": { "mode": "autoplay" },
