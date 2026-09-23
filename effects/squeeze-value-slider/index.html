@@ -80,8 +80,10 @@
     const xe = xt - side * s;                              // 弦（两个端点）的 x
     if (s < 0.05) path.setAttribute('d', `M${xt} ${cy - hh}L${xt} ${cy + hh}`);
     else { const rr = (hh * hh + s * s) / (2 * s); path.setAttribute('d', `M${xe} ${cy - hh}A${rr} ${rr} 0 0 ${side > 0 ? 1 : 0} ${xe} ${cy + hh}`); }
-    // 填充条停在滑条最左缘前 0.16H；渐变按整根轨道宽度铺
-    fill.style.setProperty('--w', Math.max(0, Math.min(xt, xe) - 0.16 * H) + 'px');
+    // 填充条：中段停在滑条前 0.16H（0% 时因此为空）；最后 1/4 行程里平滑（smoothstep）追上并越过滑条，
+    // 100% 时正好铺满整根轨道——右端要多走 0.15H（顶点到轨道端）+ 0.16H（间隙）= 0.31H。渐变按整根轨道宽度铺
+    const k = clamp((pos - 0.75) / 0.25, 0, 1), catchUp = k * k * (3 - 2 * k);
+    fill.style.setProperty('--w', Math.max(0, xt - 0.16 * H + 0.31 * H * catchUp) + 'px');
     fill.style.setProperty('--W', W + 'px');
     // 数字：先按位刷新（变化的位翻页），再量宽度决定停在右端还是翻到滑条左侧
     const value = Math.round(pos * 100);
