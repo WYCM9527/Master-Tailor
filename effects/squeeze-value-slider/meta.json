@@ -52,16 +52,14 @@
       "unit": "px"
     },
     {
-      "key": "style",
-      "label": "轨道样式",
-      "type": "select",
+      "key": "fill",
+      "label": "填充颜色",
+      "type": "colors",
       "target": "config",
-      "options": [
-        { "value": "gradient", "label": "冷暖渐变" },
-        { "value": "fill", "label": "纯色填充" }
-      ],
-      "default": "gradient",
-      "help": "渐变：整根轨道是冷→暖的色温渐变；填充：纯色轨道，滑条左侧是填充条"
+      "min": 1,
+      "max": 6,
+      "default": ["#7c9cff", "#c8d6ff", "#ffffff", "#ffd8c6", "#ff8a5c", "#ff5a33"],
+      "help": "只留一个颜色就是纯色填充；多个颜色按顺序从左到右渐变，渐变铺满整根轨道、随填充条变长逐渐露出"
     },
     {
       "key": "track",
@@ -69,29 +67,21 @@
       "type": "color",
       "target": "css",
       "default": "#2a2a30",
-      "help": "「纯色填充」样式下可见"
-    },
-    {
-      "key": "fill",
-      "label": "填充色",
-      "type": "color",
-      "target": "css",
-      "default": "#4a4a52",
-      "help": "「纯色填充」样式下滑条左侧的填充条"
+      "help": "没被填充的那部分"
     },
     {
       "key": "handle",
       "label": "滑条色",
       "type": "color",
       "target": "css",
-      "default": "#241c1c"
+      "default": "#ffffff"
     },
     {
       "key": "color",
       "label": "数字色",
       "type": "color",
       "target": "css",
-      "default": "#241c1c"
+      "default": "#ffffff"
     },
     {
       "key": "unit",
@@ -100,15 +90,24 @@
       "target": "config",
       "default": "%",
       "maxLength": 4
+    },
+    {
+      "key": "flip",
+      "label": "翻页时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.1,
+      "max": 0.6,
+      "step": 0.02,
+      "default": 0.3,
+      "unit": "s",
+      "displayUnit": " 秒",
+      "help": "每一位数字变化时模糊翻页的时长"
     }
   ],
   "presets": [
     { "id": "default", "name": "默认", "values": {} },
-    {
-      "id": "solid",
-      "name": "纯色填充",
-      "values": { "style": "fill", "handle": "#ffffff", "color": "#ffffff" }
-    },
+    { "id": "solid", "name": "纯色填充", "values": { "fill": ["#4a4a52"] } },
     {
       "id": "slim",
       "name": "细长条",

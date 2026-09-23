@@ -11,12 +11,11 @@
     --mt-width: 360px;           /* 滑块宽度 */
     --mt-height: 56px;           /* 滑块高度（两端圆头的直径） */
     --mt-thickness: 2.5px;       /* 滑条粗细 */
-    --mt-track: #2a2a30;         /* 轨道色（「填充」样式下可见） */
-    --mt-fill: #4a4a52;          /* 填充色（「填充」样式下滑条左侧的填充条） */
-    --mt-handle: #241c1c;        /* 滑条色 */
-    --mt-color: #241c1c;         /* 数字色 */
+    --mt-track: #2a2a30;         /* 轨道色（没被填充的部分） */
+    --mt-handle: #ffffff;        /* 滑条色 */
+    --mt-color: #ffffff;         /* 数字色 */
+    --mt-flip: 0.3s;             /* 每位数字模糊翻页的时长 */
     --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
-    --mt-flip: 0.3s;             /* 每位数字模糊翻页的时长（不在调参面板里，可手动改） */
   }
   html, body { margin: 0; height: 100%; }
   body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); }
@@ -24,12 +23,10 @@
   /* 轨道：两端圆头的胶囊，内容裁在里面 */
   .mt-slider { position: relative; width: var(--mt-width); height: var(--mt-height); border-radius: calc(var(--mt-height) / 2); background: var(--mt-track); overflow: hidden; cursor: grab; touch-action: none; user-select: none; outline: none; }
   .mt-slider.dragging { cursor: grabbing; }
-  /* 「渐变」样式：冷→暖的色温渐变铺满整根轨道 */
-  .mt-slider.style-gradient::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #7c9cff 0%, #c8d6ff 28%, #ffffff 46%, #ffd8c6 58%, #ff8a5c 78%, #ff5a33 100%); }
   .mt-slider:focus-visible::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px var(--mt-color); pointer-events: none; opacity: 0.5; }
-  /* 「填充」样式：纯色轨道 + 从左端到滑条前一小段的填充胶囊 */
-  .mt-fill { display: none; position: absolute; left: 0; top: 0; height: 100%; width: var(--w, 0px); border-radius: inherit; background: var(--mt-fill); }
-  .mt-slider.style-fill .mt-fill { display: block; }
+  /* 填充条：从左端到滑条前一小段的胶囊。背景由 JS 按 CONFIG.fill 生成：一个颜色就是纯色，多个颜色是横向渐变；
+     渐变按整根轨道的宽度铺（background-size = 轨道宽），填充条变长时逐渐把它露出来，而不是跟着拉伸 */
+  .mt-fill { position: absolute; left: 0; top: 0; height: 100%; width: var(--w, 0px); border-radius: inherit; background-repeat: no-repeat; background-size: var(--W, 100%) 100%; }
   /* 滑条：一条 SVG 路径，中段是竖直线段，进入圆头区域后由 JS 改写成圆弧 */
   .mt-handle { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
   .mt-handle path { fill: none; stroke: var(--mt-handle); stroke-width: var(--mt-thickness); stroke-linecap: round; }
@@ -56,13 +53,14 @@
 </div>
 <script>
   const CONFIG = {
-    value: 64,           // 初始进度（0–100）
-    style: "gradient",   // 轨道样式：gradient 冷暖渐变 / fill 纯色轨道 + 填充条
-    unit: "%",           // 数值后的单位
+    value: 64,      // 初始进度（0–100）
+    fill: ["#7c9cff", "#c8d6ff", "#ffffff", "#ffd8c6", "#ff8a5c", "#ff5a33"],  // 填充颜色：一个颜色是纯色填充，多个颜色按顺序从左到右渐变
+    unit: "%",      // 数值后的单位
   };
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const slider = document.getElementById('mtSlider'), fill = document.getElementById('mtFill'), path = document.getElementById('mtPath'), valueEl = document.getElementById('mtValue'), digitsEl = document.getElementById('mtDigits');
-  slider.classList.add('style-' + (CONFIG.style === 'fill' ? 'fill' : 'gradient'));
+  const colors = CONFIG.fill.length ? CONFIG.fill : ['#4a4a52'];
+  fill.style.backgroundImage = colors.length === 1 ? `linear-gradient(${colors[0]}, ${colors[0]})` : `linear-gradient(90deg, ${colors.join(', ')})`;
   document.getElementById('mtUnit').textContent = CONFIG.unit;
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, k) => a + (b - a) * k;
   const EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -82,8 +80,9 @@
     const xe = xt - side * s;                              // 弦（两个端点）的 x
     if (s < 0.05) path.setAttribute('d', `M${xt} ${cy - hh}L${xt} ${cy + hh}`);
     else { const rr = (hh * hh + s * s) / (2 * s); path.setAttribute('d', `M${xe} ${cy - hh}A${rr} ${rr} 0 0 ${side > 0 ? 1 : 0} ${xe} ${cy + hh}`); }
-    // 填充条停在滑条最左缘前 0.16H
+    // 填充条停在滑条最左缘前 0.16H；渐变按整根轨道宽度铺
     fill.style.setProperty('--w', Math.max(0, Math.min(xt, xe) - 0.16 * H) + 'px');
+    fill.style.setProperty('--W', W + 'px');
     // 数字：先按位刷新（变化的位翻页），再量宽度决定停在右端还是翻到滑条左侧
     const value = Math.round(pos * 100);
     if (shown !== value) { renderDigits(value, shown === null ? 0 : Math.sign(value - shown)); shown = value; slider.setAttribute('aria-valuenow', String(value)); }
