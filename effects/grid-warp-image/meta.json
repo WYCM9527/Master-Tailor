@@ -1,7 +1,7 @@
 {
   "slug": "grid-warp-image",
   "name": "网格扭曲图",
-  "category": "canvas",
+  "category": "background",
   "sub": "hover",
   "tags": ["图片", "扭曲", "网格", "鼠标跟随", "WebGL2"],
   "summary": "一张铺满的图片被切成看不见的格子，鼠标划过时经过的格子被朝运动方向拖歪，像玻璃后的图被手指推皱，随后慢慢回弹",

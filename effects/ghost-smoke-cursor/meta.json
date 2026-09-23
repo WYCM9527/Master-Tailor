@@ -1,7 +1,7 @@
 {
   "slug": "ghost-smoke-cursor",
   "name": "幽灵烟雾光标",
-  "category": "canvas",
+  "category": "background",
   "sub": "hover",
   "tags": ["光标", "烟雾", "拖尾", "WebGL"],
   "summary": "鼠标拖着一团淡绿色的幽灵烟雾游走，烟雾随分形噪声翻卷、越靠后越淡，停手后带惯性滑行再慢慢散尽",

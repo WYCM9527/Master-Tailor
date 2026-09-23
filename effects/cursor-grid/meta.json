@@ -1,7 +1,7 @@
 {
   "slug": "cursor-grid",
   "name": "光标格纹",
-  "category": "canvas",
+  "category": "background",
   "sub": "hover",
   "tags": ["光标", "网格", "格子", "点击"],
   "summary": "鼠标走到哪里，哪里的方格描边亮起来再慢慢熄灭，像在暗处摸出一片格纹；点一下荡出一圈方格波",

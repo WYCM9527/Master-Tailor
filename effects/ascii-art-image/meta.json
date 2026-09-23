@@ -1,7 +1,7 @@
 {
   "slug": "ascii-art-image",
   "name": "字符画图",
-  "category": "canvas",
+  "category": "background",
   "sub": "hover",
   "tags": ["字符画", "ASCII", "复古", "终端"],
   "summary": "把图片翻译成一格格明暗不同的字符拼成的画，进场时字符随机逐个亮起，鼠标靠近处字符变细变密像放大镜",
