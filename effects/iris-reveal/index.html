@@ -12,11 +12,10 @@
         --mt-duration: 0.65s; /* 转场时长 */
         --mt-accent: #ffffff; /* 强调色：标题与按钮 */
         --iris-ease: cubic-bezier(0.4, 0, 0.2, 1); /* 圆形展开曲线 */
-        /* 圆心由 JS 写入（快照坐标系 = 视口；回退坐标系 = 容器） */
-        --vt-ox: 50%;
-        --vt-oy: 50%;
-        --fx-ox: 50%;
-        --fx-oy: 50%;
+        --app-radius: 18px; /* 舞台圆角，转场快照也按它裁 */
+        /* 圆心由 JS 写入，相对容器（::view-transition-new(page) 的盒子就是这一页的盒子，与容器重合；回退路径同样） */
+        --iris-x: 50%;
+        --iris-y: 50%;
       }
 
       html,
@@ -37,7 +36,7 @@
         position: relative;
         width: min(880px, 94vw);
         height: min(560px, 92vh);
-        border-radius: 18px;
+        border-radius: var(--app-radius);
         overflow: clip;
         background: #101016;
         box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
@@ -108,7 +107,12 @@
 
       /* ===== 过渡层：圆形揭示 =====
          前进：新幕从圆心睁开（半径 0 → 盖满最远角）；返回：旧幕收回圆点。
-         垫底一幕保持不动。 */
+         垫底一幕保持不动。快照在顶层渲染、不受容器 overflow 裁切，所以在 group 上补舞台圆角
+         （只写 border-radius 不裁内容，必须配 overflow: clip）。 */
+      ::view-transition-group(page) {
+        border-radius: var(--app-radius);
+        overflow: clip;
+      }
       ::view-transition-old(page),
       ::view-transition-new(page) {
         animation-duration: var(--mt-duration);
@@ -131,18 +135,18 @@
 
       @keyframes iris-in {
         from {
-          clip-path: circle(0px at var(--vt-ox) var(--vt-oy));
+          clip-path: circle(0px at var(--iris-x) var(--iris-y));
         }
         to {
-          clip-path: circle(142% at var(--vt-ox) var(--vt-oy));
+          clip-path: circle(142% at var(--iris-x) var(--iris-y));
         }
       }
       @keyframes iris-out {
         from {
-          clip-path: circle(142% at var(--vt-ox) var(--vt-oy));
+          clip-path: circle(142% at var(--iris-x) var(--iris-y));
         }
         to {
-          clip-path: circle(0px at var(--vt-ox) var(--vt-oy));
+          clip-path: circle(0px at var(--iris-x) var(--iris-y));
         }
       }
       @keyframes hold-still {
@@ -154,7 +158,7 @@
         }
       }
 
-      /* @mt:fallback 无 API 回退：同一形状的 keyframes 加在真实页面上（圆心用容器坐标） */
+      /* @mt:fallback 无 API 回退：同一组 keyframes 直接加在真实页面上（页面盒子 = 容器，圆心坐标通用） */
       .page.fx-in,
       .page.fx-out {
         animation-duration: var(--mt-duration);
@@ -162,7 +166,7 @@
         animation-fill-mode: both;
       }
       html[data-vt='forward'] .page.fx-in {
-        animation-name: iris-in-fx;
+        animation-name: iris-in;
         z-index: 2;
       }
       html[data-vt='forward'] .page.fx-out {
@@ -170,28 +174,12 @@
         z-index: 1;
       }
       html[data-vt='back'] .page.fx-out {
-        animation-name: iris-out-fx;
+        animation-name: iris-out;
         z-index: 2;
       }
       html[data-vt='back'] .page.fx-in {
         animation-name: hold-still;
         z-index: 1;
-      }
-      @keyframes iris-in-fx {
-        from {
-          clip-path: circle(0px at var(--fx-ox) var(--fx-oy));
-        }
-        to {
-          clip-path: circle(142% at var(--fx-ox) var(--fx-oy));
-        }
-      }
-      @keyframes iris-out-fx {
-        from {
-          clip-path: circle(142% at var(--fx-ox) var(--fx-oy));
-        }
-        to {
-          clip-path: circle(0px at var(--fx-ox) var(--fx-oy));
-        }
       }
 
       /* 用户开启「减少动态效果」：一律瞬间切换（JS 同步跳过转场） */
@@ -240,19 +228,18 @@
         const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
         let navigating = false; // 转场进行中忽略新的导航
 
-        // ---- 圆心：点击位置或画面中心 ----
+        // ---- 圆心：点击位置或画面中心，坐标相对容器 ----
+        // 快照 ::view-transition-new(page) 的盒子就是这一页的盒子（与容器重合），clip-path 的圆心按它算，
+        // 不能直接用 clientX / clientY，否则容器不在视口左上角时圆心会整体偏掉
         function setOrigin(e) {
           if (CONFIG.centerMode === 'center' || !e) {
-            for (const k of ['--vt-ox', '--vt-oy', '--fx-ox', '--fx-oy']) {
-              html.style.setProperty(k, '50%');
-            }
+            html.style.setProperty('--iris-x', '50%');
+            html.style.setProperty('--iris-y', '50%');
             return;
           }
           const a = app.getBoundingClientRect();
-          html.style.setProperty('--vt-ox', e.clientX + 'px');
-          html.style.setProperty('--vt-oy', e.clientY + 'px');
-          html.style.setProperty('--fx-ox', e.clientX - a.left + 'px');
-          html.style.setProperty('--fx-oy', e.clientY - a.top + 'px');
+          html.style.setProperty('--iris-x', e.clientX - a.left + 'px');
+          html.style.setProperty('--iris-y', e.clientY - a.top + 'px');
         }
 
         function swap(from, to) {
@@ -340,8 +327,8 @@
         });
 
         /* @mt:thumb-start */
-        // 缩略图演示：自动睁开→收回往返（圆心画面中心）；切后台暂停，reduced-motion 不启动
-        if (!reduceMotion.matches) {
+        // 缩略图演示：自动睁开→收回往返（圆心画面中心）；只在缩略图里跑，切后台暂停，reduced-motion 不启动
+        if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion.matches) {
           setInterval(() => {
             if (document.hidden || navigating) return;
             setOrigin(null);
