@@ -165,7 +165,10 @@ function EffectBody({ bundle, head }: { bundle: EffectBundle; head: ReactNode })
   }, [state, meta, setSearchParams]);
 
   const bg = bgColor(state.bg);
-  const cssVars = useMemo(() => collectCssVars(meta, state.values, bg), [meta, state.values, bg]);
+  const cssVars = useMemo(
+    () => collectCssVars(meta, state.values, bg, BASE_URL),
+    [meta, state.values, bg],
+  );
 
   // config 参数（文本 / 数量 / 图片等）变化时防抖重建 iframe；样式参数走 postMessage 热更新。
   // srcdoc 放在 state 里，由防抖 effect 更新——刻意不把 state.values 写进依赖，

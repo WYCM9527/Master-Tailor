@@ -171,6 +171,38 @@ describe('collectCssVars / configSignature', () => {
     expect(vars['--mt-text']).toBeUndefined();
   });
 
+  it('collectCssVars 子路径部署时把 css 图片参数的 /samples/ 改写到 base 下，外部地址不动', () => {
+    const meta = {
+      ...fixtureMeta,
+      params: [
+        ...fixtureMeta.params,
+        {
+          key: 'poster',
+          label: '海报',
+          type: 'image' as const,
+          target: 'css' as const,
+          default: '/samples/sample-4.webp',
+        },
+      ],
+    };
+    const values = defaultValues(meta);
+    // 热更新整表会覆盖烘焙进 srcdoc 的值，所以这里不带 base 就会 404（线上曾因此看不到图）
+    expect(collectCssVars(meta, values, '#000000', '/Master-Tailor/')['--mt-poster']).toBe(
+      'url("/Master-Tailor/samples/sample-4.webp")',
+    );
+    expect(collectCssVars(meta, values, '#000000', '/')['--mt-poster']).toBe(
+      'url("/samples/sample-4.webp")',
+    );
+    expect(
+      collectCssVars(
+        meta,
+        { ...values, poster: 'blob:https://x/abc' },
+        '#000000',
+        '/Master-Tailor/',
+      )['--mt-poster'],
+    ).toBe('url("blob:https://x/abc")');
+  });
+
   it('configSignature 只随 config 参数变化', () => {
     const base = defaultValues(fixtureMeta);
     const sig = configSignature(fixtureMeta, base);

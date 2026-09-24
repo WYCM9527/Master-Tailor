@@ -134,17 +134,25 @@ export function bakeCode(o: BakeOptions): string {
   return html;
 }
 
-/** 详情页热更新：由当前值生成要 postMessage 的 CSS 变量表 */
+/**
+ * 详情页热更新：由当前值生成要 postMessage 的 CSS 变量表。
+ * 这份变量会在 iframe 每次 load 时整表下发并覆盖烘焙进 srcdoc 的值，所以示例图 /samples/…
+ * 也要和 bakeCode 一样改写到 base 下——否则子路径部署时 url("/samples/…") 直接 404，预览里看不到图。
+ */
 export function collectCssVars(
   meta: EffectMeta,
   values: Values,
   bg: string,
+  baseUrl?: string,
 ): Record<string, string> {
   const vars: Record<string, string> = { '--mt-bg': bg };
   for (const p of meta.params) {
     if (p.target !== 'css') continue;
     const value = values[p.key] ?? p.default;
-    vars[`--mt-${p.key}`] = toCssValue(p, value, false);
+    vars[`--mt-${p.key}`] =
+      p.type === 'image'
+        ? toCssValue(p, prefixBase(String(value), baseUrl), false)
+        : toCssValue(p, value, false);
   }
   return vars;
 }
