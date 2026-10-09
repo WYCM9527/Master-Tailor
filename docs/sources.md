@@ -1,6 +1,6 @@
 # 内容来源与收录台账
 
-> 更新：2026-09-22 · 站内 284 个效果（本日删去「玻璃图标」glass-icons、「缩放淡入转场」zoom-fade、「滚动接力长页」scroll-handoff、「滚动换底长页」scroll-page-fade；新收 animos 批十九 16 个自动播放图片陈列）。回答两件事：**已经从哪些源收了什么、为什么不收其余的**，以及**下一批还能去哪找**。加新效果或评估新来源前先读这里，避免重复评估同一批组件。
+> 更新：2026-10-09 · 站内 281 个效果（本日删去「滚动描迹光束」「滚动描线」「滚入列表」「色块揭示进场」，历次删除见文末「已删除的效果」）。回答两件事：**已经从哪些源收了什么、为什么不收其余的**，以及**下一批还能去哪找**。加新效果或评估新来源前先读这里，避免重复评估同一批组件。
 
 ## 许可口径（红线）
 
@@ -15,18 +15,18 @@
 - **不碰**：Origin UI（新代码 AGPL）、bg.ibelick（无许可）、Hover.dev（闭源）。
 - **源站资产不搬**：雨滴玻璃的水珠精灵为程序生成（源仓库是 PNG）、LED 点阵牌字库自绘 5×7、Vue Bits 的 DarkVeil 由硬编码神经网络权重驱动、无法 clean-room → 跳过。
 - 命名与实现均为本站自有；源站行为与其文档不符时按源码实际行为重写并改名（例：Codrops `3DLettersMenuHover` 实为逐字 3D 翻转 → `flip-letters-menu`；`RapidImageHoverMenu` 实为单图跟随光标甩动 → `menu-hover-swing-image`）。
-- 历史遗留：最早从 Vue Bits 收的 109 个 `visual-inspiration` 效果 `source.name` 为空（当时只按 kind 标注）。补署名是可选清理项，不影响许可立场。
+- 历史遗留：最早从 Vue Bits 收的 `visual-inspiration` 效果（现存 107 个）`source.name` 为空（当时只按 kind 标注）。补署名是可选清理项，不影响许可立场。
 
 ## 按来源统计
 
 | 来源                   | 授权 → 处理                               | 站内数量 | 收录批次                                           |
 | ---------------------- | ----------------------------------------- | -------: | -------------------------------------------------- |
-| Vue Bits               | MIT + Commons Clause → visual-inspiration |      109 | 批一～批十（含批六/七重做、批八/九新收、批十补齐） |
-| 原创                   | —                                         |       35 | 转场、轮播、表单控件等                             |
-| Aceternity UI          | 自有许可 → visual-inspiration             |       27 | 批十二                                             |
+| Vue Bits               | MIT + Commons Clause → visual-inspiration |      107 | 批一～批十（含批六/七重做、批八/九新收、批十补齐） |
+| 原创                   | —                                         |       36 | 转场、轮播、表单控件等                             |
+| Aceternity UI          | 自有许可 → visual-inspiration             |       25 | 批十二                                             |
 | animos                 | 闭源 SaaS → visual-inspiration            |       16 | 批十九（2026-09-22，自动播放图片陈列）             |
-| Codrops                | MIT → reference                           |       26 | 批十五、十五·附、十六、备选                        |
-| 其他通用技法 / 产品    | 见下                                      |       21 | 零散                                               |
+| Codrops                | MIT → reference                           |       25 | 批十五、十五·附、十六、备选                        |
+| 其他通用技法 / 产品    | 见下                                      |       18 | 零散                                               |
 | Magic UI               | MIT → reference                           |       19 | 批十一                                             |
 | Uiverse（galaxy 仓库） | MIT → reference                           |       15 | 批十四                                             |
 | Animata                | MIT → reference                           |       15 | 批十三、批十八                                     |
@@ -34,7 +34,7 @@
 
 ## 各来源记录
 
-### Vue Bits（109）
+### Vue Bits（107）
 
 源站 137 个组件。2026-09-11 对当时已同步的 67 个逐对比对评级：A 忠实 7、B 略简化 32、C 大打折扣 18。
 
@@ -50,9 +50,9 @@
 
 不收（节选）：Globe（cobe）、Dotted Map、Tweet Card、Hero Video Dialog、Code Comparison、File Tree、Terminal、机壳类、Bento Grid、Avatar Circles、静态底纹 Pattern 系列、Scroll Progress、Pulsating / Subscribe / Rainbow Button、Comic / Video Text。
 
-### Aceternity UI（27）
+### Aceternity UI（25）
 
-约 90 个免费组件（付费 Pro 区块不碰），全部按 visual-inspiration 处理。收 26 + 早期的 3D 倾斜卡片：背景 9（灯管标题、路径光束、光束撞击、点阵跟随高亮、格子涟漪、鼠标视差层、3D 图墙、云层飘移、粒子涡旋）· 文字与滚动 8（描边渐变悬停字、波纹扭曲字、曲线填充字、翻牌字板、滚动描迹光束、滚动描线、多步加载、滚动隐现导航）· 交互 9（光标遮罩揭示、像素扭曲图、卡片文字揭示、方向感知悬停、输入粒子消散、色散倾斜图、乱码悬停卡、滚动视差行、字符画图）。
+约 90 个免费组件（付费 Pro 区块不碰），全部按 visual-inspiration 处理。收 26 + 早期的 3D 倾斜卡片，其中 2 个后被删除（滚动描迹光束 / Tracing Beam、滚动描线 / Google Gemini Effect，见下），现存：背景 9（灯管标题、路径光束、光束撞击、点阵跟随高亮、格子涟漪、鼠标视差层、3D 图墙、云层飘移、粒子涡旋）· 文字与滚动 6（描边渐变悬停字、波纹扭曲字、曲线填充字、翻牌字板、多步加载、滚动隐现导航）· 交互 9（光标遮罩揭示、像素扭曲图、卡片文字揭示、方向感知悬停、输入粒子消散、色散倾斜图、乱码悬停卡、滚动视差行、字符画图）。
 
 不收：约 27 个站内已有等价（3D Card / Wobble Card、Magnetic Button、Typewriter、Text Generate、Meteor、Spotlight、Glare Card、Moving Border、Glowing Effect、Infinite Moving Cards、Floating Dock、Encrypted Text、Card Stack、Sticky Scroll Reveal、Aurora、Wavy Background、Shooting Stars、Background Boxes、Layout Text Flip、Noise Background、Gooey Input 等）；约 27 个区块 / 表单 / 机壳 / 依赖地理数据或摄像头（Hero / Pricing / FAQ 区块、Signup Form、Tabs、Modal、Sidebar、Macbook Scroll、World Map、Webcam Pixel Grid 等）。
 
@@ -68,9 +68,9 @@
 
 站点按点赞排序的页面拒绝抓取，改为在 galaxy 仓库（718 个 loader / 1231 个按钮，README 明示全部 MIT、署名非必需）按形态取样后自写。加载 10：三点跳动、条形均衡器、双环交错、方块翻转、粘液液滴、沙漏翻转、DNA 螺旋、俄罗斯方块、打字加载、牛顿摆；按钮 5：霓虹描边、液体填充、3D 按压、拆字上翻、边框跑光。仓库只有这两类，第二轮取样价值不高。
 
-### Codrops（26）
+### Codrops（25）
 
-组织 345 个仓库（licensing 页已核：可下载演示均 MIT）。2026-09-14 筛出 92 个效果类仓库逐个检测依赖：无依赖 / 纯 CSS 12、anime.js 仅补间 8、GSAP 仅补间 45（补间改 CSS transition / WAAPI，拆字站内已有自写）、GSAP ScrollTrigger + Lenis 平滑滚动 25（滚动进度自写映射，不复现平滑滚动）、three.js / PixiJS / Blotter / mo.js / MIDI 重依赖 5（跳过，唯一例外 RainEffect 是原生 WebGL 可移植）。得 28 个候选并全部收录；其中 3 个后被删除（见下），加早期的 slice slideshow 技法共 26。
+组织 345 个仓库（licensing 页已核：可下载演示均 MIT）。2026-09-14 筛出 92 个效果类仓库逐个检测依赖：无依赖 / 纯 CSS 12、anime.js 仅补间 8、GSAP 仅补间 45（补间改 CSS transition / WAAPI，拆字站内已有自写）、GSAP ScrollTrigger + Lenis 平滑滚动 25（滚动进度自写映射，不复现平滑滚动）、three.js / PixiJS / Blotter / mo.js / MIDI 重依赖 5（跳过，唯一例外 RainEffect 是原生 WebGL 可移植）。得 28 个候选并全部收录；其中 4 个后被删除（见下），加早期的 slice slideshow 技法共 25。
 
 不收：重依赖 7（BalloonButton / WebGLBlobs / Interactive3DMallMap / LiquidDistortion / TextDistortionEffects / Animocons / MusicalInteractions）；jQuery 时代插件与整页模板（PageTransitions、SidebarTransitions、BookBlock、Slicebox、Baraja 等）；GSAP Flip 驱动的整页布局切换（ScrollBasedLayoutAnimations、GridToSlider、MenuToGrid 等，复现价值低于成本）；约 27 个站内已有等价（MagneticButtons、TiltHoverEffects、ImageTrailEffects、CircularTextEffect、MarqueeMenu、GooeyCursor、ClickEffects、TypeShuffleAnimation、StickySections、3DCarousel 等）。
 
@@ -101,10 +101,10 @@ animos.app 是闭源商业 SaaS（设计作品展示的视频动效模板编辑�
 
 不收 · 不是网页组件形态（约 12）：Multiscene 8 个（Triple Scene、Collage Reel、Fan Shuffle、Sweep Ring、Scatter Dial、Grid Zoom Strip、Spread Rows、Spread Columns）是多场景蒙太奇剪辑，参数模型装不下多段时间线；Feed Scroll 是手机信息流机壳；Poster Burst 以大字排版为主，不算图片陈列。
 
-### 原创（35）与其他（21）
+### 原创（36）与其他（18）
 
 - 原创：表单控件 5（日夜切换开关、液态开关、勾选动画、单选胶囊组、浮动标签输入框）、多数页面转场、多数轮播形态、以及站内自设的效果。
-- 其他 21 是通用交互或经典技法，按其性质分别标 reference / visual-inspiration：Keynote 转场（溶解、立方体、切页、圆形揭示、神奇移动）、apple.com 长页 / 分节换底、macOS 启动台、Netflix 海报行、Cover Flow、Swiper / Glide 的轮播形态、particles.js 粒子连线、iCSS glitch 技法、Ken Burns、Intro to CSS 3D Transforms 的 carousel 一章、CSS sticky 堆叠等。
+- 其他 18 是通用交互或经典技法，按其性质分别标 reference / visual-inspiration：Keynote 转场（溶解、立方体、切页、圆形揭示、神奇移动）、Netflix 海报行、Cover Flow、Swiper / Glide 的轮播形态、particles.js 粒子连线、iCSS glitch 技法、Ken Burns、Intro to CSS 3D Transforms 的 carousel 一章、CSS sticky 堆叠等。
 
 ## 已删除的效果
 
@@ -112,6 +112,17 @@ animos.app 是闭源商业 SaaS（设计作品展示的视频动效模板编辑�
 
 - `gradual-blur`（边缘渐进模糊）、`morphing-blob-scroll`（滚动形变色块）、`page-reflection-scroll`（页面倒影）：背景分类取消「滚动触发」子类（`BACKGROUND_SUBS` 不再含 `scroll`），三者随之删除。
 - `clip-window-menu`（裁切窗菜单）：形态价值不足，删除。
+
+2026-09-22，共 4 个（维护者决定删除）：
+
+- `glass-icons`（玻璃图标）：Vue Bits。
+- `zoom-fade`（缩放淡入转场）：macOS 启动台 / visionOS 空间过渡；`scroll-handoff`（滚动接力长页）、`scroll-page-fade`（滚动换底长页）：apple.com 产品长页 / 分节换底。
+
+2026-10-09，共 4 个（维护者决定删除）：
+
+- `scroll-trace-beam`（滚动描迹光束）、`scroll-draw-lines`（滚动描线）：Aceternity UI 的 Tracing Beam / Google Gemini Effect。
+- `animated-list`（滚入列表）：Vue Bits。
+- `block-reveal-enter`（色块揭示进场）：Codrops BlockRevealers。
 
 ## 分类决策记录
 
@@ -129,5 +140,5 @@ animos.app 是闭源商业 SaaS（设计作品展示的视频动效模板编辑�
 ## 候选池（未启动）
 
 - **MIT 安全源，尚未核对目录与去重**：Cult UI（开源部分）、Motion-Primitives、HyperUI、KokonutUI、UI Layouts、fancycomponents、smoothui。
-- **薄子类待补或合并**：`showcase/compare` 1 个、`button/idle` 1 个、`text/click` 2 个、`nav/scroll` 2 个、`transition` 全类 11 个。侧栏里点开只有一两张卡，要么补到 4–5 个，要么合并子类。
+- **薄子类待补或合并**：`showcase/compare` 1 个、`button/idle` 1 个、`text/click` 2 个、`nav/scroll` 2 个、`loading/scroll` 1 个、`transition` 全类 7 个。侧栏里点开只有一两张卡，要么补到 4–5 个，要么合并子类。
 - **视觉复查**：批九 GLSL 23 个对照源站截图逐个过一遍（2026-09-17～09-21 重做的 4 个观感不齐的效果都是这类「算法照搬、观感没对齐」）。
