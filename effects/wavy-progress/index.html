@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>波浪进度条</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #141218;            /* 页面底色 */
+    --mt-color: #d0bcff;         /* 进度色：走过的波浪、终点圆点与状态文字 */
+    --mt-track: #4a4458;         /* 轨道色：还没走到的那段直线 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: var(--mt-color); cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .mt-stage { display: flex; flex-direction: column; align-items: center; gap: 32px; }
+  .mt-indicator { display: block; overflow: visible; }
+  .mt-indicator path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  #mtActive { stroke: var(--mt-color); }
+  #mtTrack { stroke: var(--mt-track); }
+  #mtStop { fill: var(--mt-color); }
+  .mt-row { display: flex; align-items: center; gap: 12px; font-size: 14px; letter-spacing: 0.02em; }
+  .mt-btn { width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; color: var(--mt-color); background: color-mix(in srgb, var(--mt-color) 14%, transparent); cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
+  .mt-btn:hover { background: color-mix(in srgb, var(--mt-color) 24%, transparent); }
+  .mt-btn:active { transform: scale(0.92); }
+  .mt-btn:focus-visible { outline: 2px solid var(--mt-color); outline-offset: 3px; }
+  .mt-btn svg { width: 18px; height: 18px; display: block; }
+  .mt-btn .i-play, .mt-btn.paused .i-pause { display: none; }
+  .mt-btn.paused .i-play { display: block; }
+  .mt-label { min-width: 7em; font-variant-numeric: tabular-nums; opacity: 0.8; }
+
+  /* 用户开启「减少动态效果」时：波浪不流动，暂停时直接拉直 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-stage">
+  <svg class="mt-indicator" id="mtSvg" role="progressbar" aria-label="加载进度" aria-valuemin="0" aria-valuemax="100">
+    <path id="mtTrack" d=""/>
+    <path id="mtActive" d=""/>
+    <circle id="mtStop" cx="0" cy="0" r="0"/>
+  </svg>
+  <div class="mt-row">
+    <button class="mt-btn" id="mtBtn" type="button" aria-label="暂停">
+      <!-- IconPark: pause -->
+      <svg class="i-pause" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M16 12V36" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/><path d="M32 12V36" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+      <!-- IconPark: play-one -->
+      <svg class="i-play" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 24V11.8756L25.5 17.9378L36 24L25.5 30.0622L15 36.1244V24Z" stroke="currentColor" stroke-width="4" stroke-linejoin="miter"/></svg>
+    </button>
+    <span class="mt-label" id="mtLabel">0%</span>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    shape: "linear",          // 形态：linear 直线 / circular 圆环
+    mode: "determinate",      // 进度类型：determinate 确定进度（自动走到 100% 再重来）/ indeterminate 不确定进度（波浪段来回穿梭）
+    amplitude: 5,             // 波幅（px，波峰到中线的距离）
+    wavelength: 52,           // 波长（px，相邻两个波峰的距离）
+    speed: 1,                 // 流速（每秒流过几个波长，0 为不流动）
+    thickness: 8,             // 线粗（px）
+    gap: 8,                   // 间隙（px）：走过的波浪与后面轨道之间空出的距离
+    duration: 6,              // 走完一遍（秒）：确定进度从 0 走到 100% 的时长
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const svg = document.getElementById('mtSvg'), trackEl = document.getElementById('mtTrack'), activeEl = document.getElementById('mtActive'), stopEl = document.getElementById('mtStop'), btn = document.getElementById('mtBtn'), label = document.getElementById('mtLabel');
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const smooth = (e0, e1, x) => { const k = clamp((x - e0) / (e1 - e0), 0, 1); return k * k * (3 - 2 * k); };
+  const ease = (k) => (k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2);   // 三次 ease-in-out
+  const T = Math.max(1, CONFIG.thickness), A = Math.max(0, CONFIG.amplitude), L = Math.max(8, CONFIG.wavelength), G = Math.max(0, CONFIG.gap);
+  const circular = CONFIG.shape === 'circular', indeterminate = CONFIG.mode === 'indeterminate';
+  trackEl.setAttribute('stroke-width', T); activeEl.setAttribute('stroke-width', T);
+  if (indeterminate) { svg.removeAttribute('aria-valuemin'); svg.removeAttribute('aria-valuemax'); }
+
+  let W = 0, H = 0;
+  function layout() {
+    if (circular) W = H = Math.round(Math.min(240, innerWidth * 0.6, innerHeight * 0.5));
+    else { W = Math.round(Math.min(640, innerWidth * 0.86)); H = Math.ceil(T + 2 * A + 4); }
+    svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  }
+
+  // p：确定进度 0–1；phase：波浪相位；playK：1 = 波浪完整、0 = 暂停拉直；stage：run → hold（停在 100%）→ back（收回）→ rest → run
+  let p = 0, phase = 0, playK = 1, paused = false, stage = 'run', stageT = 0, settled = false;
+  let clock = reduceMotion ? 0.95 : 0;   // 不确定进度的时钟；减少动态时停在一帧能看到波浪段的位置
+
+  // 直线上的一段波浪：每 2px 取一个点；两端各用四分之一波长收拢，让端头落在中线上
+  function waveLine(a, b, cy, amp) {
+    if (amp < 0.05) return `M${a.toFixed(1)} ${cy}L${b.toFixed(1)} ${cy}`;
+    const k = (Math.PI * 2) / L, taper = L / 4, n = Math.max(2, Math.ceil((b - a) / 2));
+    let d = '';
+    for (let i = 0; i <= n; i++) {
+      const x = a + ((b - a) * i) / n, e = smooth(0, 1, Math.min((x - a) / taper, (b - x) / taper));
+      d += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + (cy + amp * e * Math.sin(k * x - phase)).toFixed(2);
+    }
+    return d;
+  }
+  // 圆环上的一段弧（单位：圈，0 在正上方、顺时针）：沿半径起伏；n 是一整圈的波数（取整，首尾无缝）
+  function waveArc(c, R, a, b, amp, n) {
+    const steps = Math.max(2, Math.ceil((b - a) * 240)), taper = L / 4 / (2 * Math.PI * R);
+    let d = '';
+    for (let i = 0; i <= steps; i++) {
+      const u = a + ((b - a) * i) / steps, ang = Math.PI * 2 * u;
+      const e = amp < 0.05 ? 0 : smooth(0, 1, Math.min((u - a) / taper, (b - u) / taper));
+      const r = R + amp * e * Math.sin(Math.PI * 2 * n * u - phase);
+      d += (i ? 'L' : 'M') + (c + r * Math.sin(ang)).toFixed(2) + ' ' + (c - r * Math.cos(ang)).toFixed(2);
+    }
+    return d;
+  }
+  // 不确定进度·直线：周期 1.8s 内两段，各自的尾、头用错开的 ease-in-out 从左扫到右
+  function lineSegs(t) {
+    const k = (t / 1.8) % 1, out = [];
+    const s1 = [ease(clamp((k - 0.2) / 0.6, 0, 1)), ease(clamp(k / 0.6, 0, 1))];
+    const s2 = [ease(clamp((k - 0.68) / 0.32, 0, 1)), ease(clamp((k - 0.45) / 0.45, 0, 1))];
+    for (const s of [s1, s2]) if (s[1] - s[0] > 0.004) out.push(s);
+    return out.sort((x, y) => x[0] - y[0]);   // 轨道按从左到右的顺序避让
+  }
+  // 不确定进度·圆环：周期 1.4s 内头先伸长、尾再追上（最长 0.72 圈），整体每秒再转 0.18 圈；每个周期起点错开 0.72 圈，首尾衔接
+  function spinArc(t) {
+    const k = (t / 1.4) % 1, base = t * 0.18 + Math.floor(t / 1.4) * 0.72;
+    return [base + ease(clamp((k - 0.5) / 0.5, 0, 1)) * 0.72, base + ease(clamp(k / 0.5, 0, 1)) * 0.72 + 0.04];
+  }
+
+  function amplitudeNow() {
+    if (indeterminate) return A * playK;
+    if (stage === 'back' || stage === 'rest') return 0;
+    return A * playK * smooth(0, 0.1, p) * (1 - smooth(0.9, 1, p));   // 起步与收尾各 10% 内波浪逐渐收平
+  }
+  function render() {
+    const amp = amplitudeNow();
+    let active = '', track = '', stopO = 0;
+    if (!circular) {
+      const cy = H / 2, x0 = T / 2, x1 = W - T / 2, span = x1 - x0, pad = T + G;   // 两个半圆端帽各占半个线宽，视觉间隙正好是 G
+      const segs = indeterminate ? lineSegs(clock) : p > 0.0005 ? [[0, p]] : [];
+      let cur = x0;
+      for (const [u, v] of segs) {
+        const a = x0 + u * span, b = x0 + v * span;
+        active += waveLine(a, b, cy, amp);
+        if (a - pad - cur > 0.5) track += `M${cur.toFixed(1)} ${cy}L${(a - pad).toFixed(1)} ${cy}`;
+        cur = Math.max(cur, b + pad);
+      }
+      if (x1 - cur > 0.5) track += `M${cur.toFixed(1)} ${cy}L${x1.toFixed(1)} ${cy}`;
+      if (!indeterminate) { stopO = clamp((x1 - cur) / (T * 1.5), 0, 1); stopEl.setAttribute('cx', x1); stopEl.setAttribute('cy', cy); }
+    } else {
+      const c = W / 2, R = c - T / 2 - A - 2, n = Math.max(3, Math.round((2 * Math.PI * R) / L)), padTurn = (T + G) / (2 * Math.PI * R);
+      const arc = indeterminate ? spinArc(clock) : p > 0.0005 ? [0, p] : null;
+      if (arc) {
+        active = waveArc(c, R, arc[0], arc[1], amp, n);
+        const rest = 1 - (arc[1] - arc[0]) - 2 * padTurn;
+        if (rest > 0.002) track = waveArc(c, R, arc[1] + padTurn, arc[1] + padTurn + rest, 0, n);
+      } else track = waveArc(c, R, 0, 1, 0, n) + 'Z';
+    }
+    activeEl.setAttribute('d', active);
+    trackEl.setAttribute('d', track);
+    stopEl.setAttribute('r', stopO > 0 ? Math.max(1.5, T * 0.3) : 0);
+    stopEl.style.opacity = stopO;
+  }
+
+  let shownLabel = '', shownPct = -1;
+  function updateLabel() {
+    let s;
+    if (indeterminate) s = paused ? '已暂停' : '加载中';
+    else if (stage === 'hold') s = '完成';
+    else s = (paused ? '已暂停 · ' : '') + (stage === 'run' ? Math.round(p * 100) : 0) + '%';
+    if (s !== shownLabel) { label.textContent = s; shownLabel = s; }
+    const pct = Math.round(p * 100);
+    if (!indeterminate && pct !== shownPct) { svg.setAttribute('aria-valuenow', pct); shownPct = pct; }
+  }
+
+  function advance(dt) {
+    stageT += dt;
+    if (stage === 'run') { p = Math.min(1, p + dt / Math.max(0.5, CONFIG.duration)); if (p >= 1) { stage = 'hold'; stageT = 0; } }
+    else if (stage === 'hold') { if (stageT >= 1.2) { stage = 'back'; stageT = 0; } }
+    else if (stage === 'back') { const k = Math.min(1, stageT / 0.6); p = 1 - ease(k); if (k >= 1) { stage = 'rest'; stageT = 0; } }
+    else if (stageT >= 0.5) { stage = 'run'; stageT = 0; }
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (document.hidden || settled) return;
+    const target = paused ? 0 : 1;
+    // 暂停时波幅以 0.12s 的时间常数指数逼近 0（约 0.35s 拉直），恢复时同样逼近 1
+    playK = reduceMotion ? target : playK + (target - playK) * (1 - Math.exp(-dt / 0.12));
+    if (!paused) {
+      if (!reduceMotion) phase += dt * CONFIG.speed * Math.PI * 2;
+      if (indeterminate) { if (!reduceMotion) clock += dt; }
+      else advance(dt);
+    }
+    render(); updateLabel();
+    settled = paused && playK < 0.002;   // 已经拉直就不再逐帧重画
+  }
+
+  function toggle() {
+    paused = !paused; settled = false;
+    btn.classList.toggle('paused', paused);
+    btn.setAttribute('aria-label', paused ? '继续' : '暂停');
+    updateLabel();
+  }
+  document.addEventListener('click', toggle);   // 点页面任意处（含按钮）切换暂停 / 继续
+  document.addEventListener('keydown', (e) => { if (e.target === document.body && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); toggle(); } });
+  addEventListener('resize', () => { layout(); settled = false; render(); });
+  layout(); render(); updateLabel();
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视频进度条</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0f0f0f;            /* 页面底色 */
+    --mt-color: #ff0033;         /* 进度色：已播放部分与拖动圆点 */
+    --mt-height: 3px;            /* 条粗：平时进度条的粗细 */
+    --mt-grow: 1.7;              /* 悬停加粗：鼠标移到进度条上时变粗的倍数 */
+    --mt-size: 168px;            /* 预览宽度：悬停时弹出的画面预览框宽度（高按 16:9） */
+    --mt-radius: 12px;           /* 播放器圆角 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #fff; }
+  .mt-player { position: relative; width: min(760px, 92vw, calc(86vh * 16 / 9)); aspect-ratio: 16 / 9; border-radius: var(--mt-radius); overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; outline: none; }
+  .mt-player:focus-visible { box-shadow: 0 0 0 2px var(--mt-color); }
+  /* 画面：每个章节一张图，当前章节的图在章节内缓慢平移，假装在播放 */
+  .mt-frames img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; opacity: 0; pointer-events: none; -webkit-user-drag: none; }
+  .mt-frames img.on { opacity: 1; }
+  .mt-screen { position: absolute; inset: 0; cursor: pointer; }
+  .mt-bezel { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: rgba(0, 0, 0, 0.5); display: grid; place-items: center; opacity: 0; pointer-events: none; }
+  .mt-bezel svg { width: 28px; height: 28px; display: none; }
+  .mt-bezel.play .i-play, .mt-bezel.pause .i-pause { display: block; }
+  .mt-shade { position: absolute; left: 0; right: 0; bottom: 0; height: 42%; background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.72)); pointer-events: none; }
+  .mt-ctrl { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 14px 4px; }
+  /* 进度条：20px 高的热区，条在热区里垂直居中；按章节断开成几段，每段宽度按章节时长分配 */
+  .mt-bar { position: relative; height: 20px; display: flex; align-items: center; gap: 3px; cursor: pointer; touch-action: none; outline: none; }
+  .mt-chap { position: relative; flex: var(--w) 1 0; height: var(--mt-height); background: rgba(255, 255, 255, 0.22); transition: height 0.1s; }
+  .mt-bar.hover .mt-chap { height: calc(var(--mt-height) * var(--mt-grow)); }
+  .mt-bar.hover .mt-chap.focus { height: calc(var(--mt-height) * var(--mt-grow) * 1.35); }   /* 鼠标所在的章节再粗一点 */
+  .mt-chap i { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0); }
+  .mt-chap .buf { background: rgba(255, 255, 255, 0.38); }   /* 已缓冲 */
+  .mt-chap .hov { background: rgba(255, 255, 255, 0.5); }    /* 悬停：播放头到鼠标之间提亮 */
+  .mt-chap .play { background: var(--mt-color); }            /* 已播放 */
+  .mt-dot { position: absolute; left: 0; top: 50%; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%; background: var(--mt-color); transform: translateX(var(--x, 0px)); scale: 0; transition: scale 0.12s; pointer-events: none; }
+  .mt-bar.hover .mt-dot, .mt-bar.drag .mt-dot, .mt-bar:focus-visible .mt-dot { scale: 1; }
+  /* 预览：跟着鼠标走，左右夹在播放器里 */
+  .mt-preview { position: absolute; left: 0; bottom: 68px; width: min(var(--mt-size), 36%); transform: translateX(var(--px, 0px)); opacity: 0; transition: opacity 0.12s; pointer-events: none; text-align: center; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+  .mt-ctrl.peek .mt-preview { opacity: 1; }
+  .mt-pv { width: 100%; aspect-ratio: 16 / 9; box-sizing: border-box; border: 2px solid #fff; border-radius: 8px; background: #222 50% 50% / 150% auto no-repeat; }
+  .mt-preview.noimg .mt-pv { display: none; }
+  .mt-pv-title { margin-top: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mt-pv-title:empty { display: none; }
+  .mt-pv-time { font-size: 13px; font-variant-numeric: tabular-nums; }
+  .mt-row { display: flex; align-items: center; gap: 6px; height: 40px; font-size: 13px; }
+  .mt-btn { width: 36px; height: 36px; flex: none; padding: 0; border: 0; border-radius: 50%; background: none; color: #fff; display: grid; place-items: center; cursor: pointer; }
+  .mt-btn:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+  .mt-btn svg { width: 22px; height: 22px; display: block; }
+  .mt-btn .i-play, .mt-btn.paused .i-pause { display: none; }
+  .mt-btn.paused .i-play { display: block; }
+  .mt-time { font-variant-numeric: tabular-nums; opacity: 0.92; white-space: nowrap; }
+  .mt-chapname { display: flex; align-items: center; min-width: 0; opacity: 0.92; white-space: nowrap; }
+  .mt-chapname::before { content: "·"; margin: 0 8px; }
+  .mt-chapname span { overflow: hidden; text-overflow: ellipsis; }
+  .mt-chapname svg { width: 14px; height: 14px; flex: none; margin-left: 2px; }
+  .mt-chapname.off { display: none; }
+
+  /* 用户开启「减少动态效果」时：画面不平移，加粗与圆点直接切换，不闪播放图标 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-chap, .mt-dot, .mt-preview { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-player" id="mtPlayer" tabindex="0" aria-label="视频播放器">
+  <div class="mt-frames" id="mtFrames"></div>
+  <div class="mt-screen" id="mtScreen"></div>
+  <div class="mt-bezel" id="mtBezel" aria-hidden="true">
+    <!-- IconPark: play-one -->
+    <svg class="i-play" viewBox="0 0 48 48" fill="none"><path d="M15 24V11.8756L25.5 17.9378L36 24L25.5 30.0622L15 36.1244V24Z" stroke="currentColor" stroke-width="4" stroke-linejoin="miter"/></svg>
+    <!-- IconPark: pause -->
+    <svg class="i-pause" viewBox="0 0 48 48" fill="none"><path d="M16 12V36" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/><path d="M32 12V36" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+  </div>
+  <div class="mt-shade"></div>
+  <div class="mt-ctrl" id="mtCtrl">
+    <div class="mt-preview" id="mtPreview" aria-hidden="true"><div class="mt-pv" id="mtPv"></div><div class="mt-pv-title" id="mtPvTitle"></div><div class="mt-pv-time" id="mtPvTime"></div></div>
+    <div class="mt-bar" id="mtBar" role="slider" tabindex="0" aria-label="播放进度" aria-valuemin="0"><span class="mt-dot" id="mtDot"></span></div>
+    <div class="mt-row">
+      <button class="mt-btn" id="mtPlay" type="button" aria-label="暂停">
+        <!-- IconPark: pause -->
+        <svg class="i-pause" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M16 12V36" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/><path d="M32 12V36" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+        <!-- IconPark: play-one -->
+        <svg class="i-play" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 24V11.8756L25.5 17.9378L36 24L25.5 30.0622L15 36.1244V24Z" stroke="currentColor" stroke-width="4" stroke-linejoin="miter"/></svg>
+      </button>
+      <span class="mt-time" id="mtTime">0:00 / 0:00</span>
+      <span class="mt-chapname" id="mtChapName"><span id="mtChapText"></span>
+        <!-- IconPark: right -->
+        <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M19 12L31 24L19 36" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+      </span>
+    </div>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    slides: [{ src: "/samples/sample-1.webp", caption: "夜枭小憩" }, { src: "/samples/sample-2.webp", caption: "海边老爷车" }, { src: "/samples/sample-3.webp", caption: "日落海滩" }, { src: "/samples/sample-8.webp", caption: "星空" }], // 章节画面：每张图是一个章节，说明文字就是章节名
+    duration: 245,     // 视频时长（秒）
+    chapters: true,    // 章节分隔：进度条按章节断开成几段，并显示章节名
+    preview: true,     // 画面预览：悬停时在时间上方显示该处的画面
+    autoplay: true,    // 自动播放（播到结尾从头循环）
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (id) => document.getElementById(id);
+  const player = $('mtPlayer'), framesEl = $('mtFrames'), bar = $('mtBar'), dot = $('mtDot'), ctrl = $('mtCtrl'), preview = $('mtPreview'), pv = $('mtPv'), pvTitle = $('mtPvTitle'), pvTime = $('mtPvTime'), timeEl = $('mtTime'), chapText = $('mtChapText'), playBtn = $('mtPlay'), bezel = $('mtBezel');
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const fmt = (s) => { s = Math.floor(s); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
+  // 章节：时长按固定权重分配（看起来长短不一），总和 = 视频时长
+  const WEIGHTS = [1.3, 2.2, 1.6, 0.9, 1.4, 1.1];
+  const slides = CONFIG.slides.length ? CONFIG.slides : [{ src: '', caption: '' }];
+  const D = Math.max(1, CONFIG.duration);
+  const wsum = slides.reduce((a, _, i) => a + WEIGHTS[i % WEIGHTS.length], 0);
+  let acc = 0;
+  const chaps = slides.map((s, i) => {
+    const len = (D * WEIGHTS[i % WEIGHTS.length]) / wsum, c = { start: acc, len, title: s.caption || `第 ${i + 1} 章`, src: s.src };
+    acc += len;
+    return c;
+  });
+  const imgs = chaps.map((c) => { const im = new Image(); im.src = c.src; im.alt = ''; im.draggable = false; framesEl.appendChild(im); return im; });
+  // 进度条分段：开了章节分隔就一章一段，否则整根一段
+  const segs = (CONFIG.chapters ? chaps : [{ start: 0, len: D }]).map((c) => {
+    const el = document.createElement('div');
+    el.className = 'mt-chap'; el.style.setProperty('--w', c.len.toFixed(3));
+    el.innerHTML = '<i class="buf"></i><i class="hov"></i><i class="play"></i>';
+    bar.insertBefore(el, dot);
+    return { start: c.start, len: c.len, el, buf: el.children[0], hov: el.children[1], play: el.children[2], x: 0, w: 0 };
+  });
+  if (!CONFIG.chapters) { bar.style.gap = '0px'; $('mtChapName').classList.add('off'); }
+  if (!CONFIG.preview) preview.classList.add('noimg');
+  bar.setAttribute('aria-valuemax', String(Math.round(D)));
+
+  // t 当前时间；buffered 已缓冲到哪；hoverT 鼠标所指的时间（null = 没在悬停）
+  let t = 0, playing = !!CONFIG.autoplay, buffered = 0, hoverT = null, dragging = false, userTook = false, dirty = true;
+
+  // 几何只在尺寸变化时量一次：各段的位置与宽度、进度条与控制区尺寸、预览框宽度
+  let barLeft = 0, ctrlW = 0, pw = 0, barX = 0;
+  function measure() {
+    const br = bar.getBoundingClientRect();
+    barLeft = br.left; barX = bar.offsetLeft; ctrlW = ctrl.clientWidth; pw = preview.offsetWidth;
+    for (const s of segs) { s.x = s.el.offsetLeft; s.w = s.el.offsetWidth; }
+    dirty = true;
+  }
+  const frac = (time, s) => clamp((time - s.start) / s.len, 0, 1);
+  const segAt = (time) => segs.find((s) => time < s.start + s.len) || segs[segs.length - 1];
+  const chapAt = (time) => { let i = chaps.length - 1; while (i > 0 && time < chaps[i].start) i--; return i; };
+  const timeToX = (time) => { const s = segAt(time); return s.x + frac(time, s) * s.w; };
+  function xToTime(x) {   // 落在两段之间的缝里时吸到较近的一端
+    for (let i = 0; i < segs.length; i++) {
+      const s = segs[i];
+      if (x < s.x + s.w || i === segs.length - 1) return x < s.x ? s.start : s.start + clamp((x - s.x) / s.w, 0, 1) * s.len;
+    }
+    return 0;
+  }
+
+  let shownChap = -1, shownSec = -1, focusSeg = null, pvChap = -1;
+  function paint() {
+    for (const s of segs) {
+      s.play.style.transform = `scaleX(${frac(t, s)})`;
+      s.buf.style.transform = `scaleX(${frac(buffered, s)})`;
+      s.hov.style.transform = `scaleX(${hoverT == null ? 0 : frac(hoverT, s)})`;
+    }
+    dot.style.setProperty('--x', timeToX(t).toFixed(1) + 'px');
+    const ci = chapAt(t), c = chaps[ci];
+    if (ci !== shownChap) {
+      imgs.forEach((im, k) => { im.classList.toggle('on', k === ci); if (k !== ci) im.style.transform = ''; });
+      chapText.textContent = c.title; shownChap = ci;
+    }
+    if (!reduceMotion) imgs[ci].style.transform = `scale(1.08) translateX(${(((t - c.start) / c.len) - 0.5) * -3}%)`;
+    const sec = Math.floor(t);
+    if (sec !== shownSec) { timeEl.textContent = `${fmt(t)} / ${fmt(D)}`; bar.setAttribute('aria-valuenow', String(sec)); bar.setAttribute('aria-valuetext', fmt(t)); shownSec = sec; }
+    if (hoverT != null) {
+      const hc = chapAt(hoverT), hs = segAt(hoverT);
+      if (hs !== focusSeg) { if (focusSeg) focusSeg.el.classList.remove('focus'); hs.el.classList.add('focus'); focusSeg = hs; }
+      preview.style.setProperty('--px', clamp(barX + timeToX(hoverT) - pw / 2, 8, ctrlW - pw - 8).toFixed(1) + 'px');
+      if (CONFIG.preview) {
+        if (hc !== pvChap) { pv.style.backgroundImage = `url("${chaps[hc].src}")`; pvChap = hc; }
+        pv.style.backgroundPosition = `${(20 + 60 * frac(hoverT, chaps[hc])).toFixed(1)}% 50%`;   // 章节内越往后，取景越往右，像不同的帧
+      }
+      pvTitle.textContent = CONFIG.chapters ? chaps[hc].title : '';
+      pvTime.textContent = fmt(hoverT);
+    }
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (document.hidden) return;
+    if (playing && !dragging) { t += dt; if (t >= D) { t = 0; buffered = 0; } dirty = true; }
+    const cap = Math.min(D, t + 0.3 * D);   // 缓冲最多领先 30% 的时长，每秒缓冲 18 秒内容
+    if (buffered < cap) { buffered = Math.min(cap, buffered + dt * 18); dirty = true; }
+    if (dirty) { paint(); dirty = false; }
+  }
+
+  function seek(time) { t = clamp(time, 0, D - 0.01); buffered = Math.max(buffered, t); dirty = true; }
+  function setHover(clientX) {
+    hoverT = xToTime(clientX - barLeft);
+    bar.classList.add('hover'); ctrl.classList.add('peek');
+    dirty = true;
+  }
+  function clearHover() {
+    hoverT = null; bar.classList.remove('hover'); ctrl.classList.remove('peek');
+    if (focusSeg) { focusSeg.el.classList.remove('focus'); focusSeg = null; }
+    dirty = true;
+  }
+  function setPlaying(v) {
+    playing = v;
+    playBtn.classList.toggle('paused', !v);
+    playBtn.setAttribute('aria-label', v ? '暂停' : '播放');
+    if (!reduceMotion) {   // 画面中央闪一下当前状态的图标
+      bezel.className = 'mt-bezel ' + (v ? 'play' : 'pause');
+      bezel.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: 1.6 }], { duration: 500, easing: 'ease-out' });
+    }
+  }
+
+  bar.addEventListener('pointerenter', (e) => { userTook = true; measure(); setHover(e.clientX); });
+  bar.addEventListener('pointermove', (e) => { userTook = true; setHover(e.clientX); if (dragging) seek(hoverT); });
+  bar.addEventListener('pointerleave', () => { if (!dragging) clearHover(); });
+  bar.addEventListener('pointerdown', (e) => {
+    userTook = true; dragging = true; measure();
+    bar.setPointerCapture(e.pointerId); bar.classList.add('drag');
+    setHover(e.clientX); seek(hoverT);
+  });
+  function endDrag(e) {
+    if (!dragging) return;
+    dragging = false; bar.classList.remove('drag');
+    const r = bar.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top - 4 || e.clientY > r.bottom + 4) clearHover();
+  }
+  bar.addEventListener('pointerup', endDrag);
+  bar.addEventListener('pointercancel', endDrag);
+  $('mtScreen').addEventListener('click', () => { userTook = true; setPlaying(!playing); });
+  playBtn.addEventListener('click', () => { userTook = true; setPlaying(!playing); });
+  player.addEventListener('keydown', (e) => {
+    if (e.target === playBtn && (e.key === ' ' || e.key === 'Enter')) return;   // 让按钮自己处理，避免切换两次
+    const k = e.key.toLowerCase();
+    if (k === ' ' || k === 'k') setPlaying(!playing);
+    else if (k === 'arrowright') seek(t + 5);
+    else if (k === 'arrowleft') seek(t - 5);
+    else if (k === 'l') seek(t + 10);
+    else if (k === 'j') seek(t - 10);
+    else return;
+    userTook = true; e.preventDefault();
+  });
+
+  setPlaying(playing); bezel.getAnimations().forEach((a) => a.cancel());
+  if ('ResizeObserver' in window) new ResizeObserver(measure).observe(bar); else addEventListener('resize', measure);
+  measure();
+  requestAnimationFrame(frame);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：模拟鼠标在进度条上从左扫到右再离开，把加粗、圆点、章节和画面预览走一遍；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const t0 = performance.now();
+    (function demo(now) {
+      if (userTook) return;
+      if (!document.hidden) {
+        const k = ((now - t0) / 7000) % 1;
+        if (k < 0.62) {
+          const u = 0.1 + 0.8 * (0.5 - 0.5 * Math.cos((k / 0.62) * Math.PI));
+          const s = segs[segs.length - 1];
+          setHover(barLeft + u * (s.x + s.w));
+        } else if (hoverT != null) clearHover();
+      }
+      requestAnimationFrame(demo);
+    })(t0);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

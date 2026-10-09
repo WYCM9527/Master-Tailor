@@ -1,0 +1,74 @@
+{
+  "slug": "reading-progress",
+  "name": "阅读进度",
+  "category": "progress",
+  "sub": "linear",
+  "tags": ["进度条", "阅读", "滚动", "回到顶部", "文章"],
+  "summary": "滚动文章时顶部细条跟着变长，也可按章节分段；右下角圆环显示读到几成，点一下回到顶部",
+  "params": [
+    {
+      "key": "bar",
+      "label": "顶部进度",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "line", "label": "细条" },
+        { "value": "segments", "label": "按章节分段" },
+        { "value": "none", "label": "不显示" }
+      ],
+      "default": "line",
+      "help": "按章节分段时一章一段，每段只在读这一章时填充"
+    },
+    {
+      "key": "ring",
+      "label": "角落圆环",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "右下角显示读到百分之几，往下读一点才出现，点一下回到顶部"
+    },
+    {
+      "key": "percent",
+      "label": "圆环显示百分比",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "关闭则圆环中间一直是向上箭头；打开时悬停才换成箭头"
+    },
+    {
+      "key": "thickness",
+      "label": "进度条粗细",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 5,
+      "unit": "px"
+    },
+    {
+      "key": "color",
+      "label": "进度色",
+      "type": "color",
+      "target": "css",
+      "default": "#ff8a3d",
+      "help": "顶部进度条、圆环和章节序号"
+    },
+    {
+      "key": "ink",
+      "label": "正文色",
+      "type": "color",
+      "target": "css",
+      "default": "#d8d4cc",
+      "help": "换浅色底色时记得把它调深"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "segments", "name": "按章节分段", "values": { "bar": "segments", "thickness": 4 } },
+    { "id": "ring-only", "name": "只留圆环", "values": { "bar": "none", "percent": false } },
+    { "id": "mint", "name": "薄荷细线", "values": { "thickness": 3, "color": "#4fd1a5" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

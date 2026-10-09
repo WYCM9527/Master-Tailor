@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>格斗血条</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #101014;            /* 页面底色 */
+    --mt-hp: #ffcf33;            /* 血条色 */
+    --mt-ghost: #e8302a;         /* 残影色：刚掉的那截血，停一下再被追上 */
+    --mt-heal: #43e07a;          /* 回血色：先亮出要回的那截，血条再长过去 */
+    --mt-skew: 16deg;            /* 斜切角度：血条和头像框的倾斜 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #fff; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .mt-game { width: min(900px, 94vw); display: grid; gap: 56px; justify-items: center; }
+  /* 顶栏：左右两名选手，中间倒计时；右边整体镜像 */
+  .mt-hud { width: 100%; display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: clamp(8px, 1.8vw, 20px); }
+  .mt-side { display: flex; align-items: center; gap: clamp(6px, 1.2vw, 12px); min-width: 0; }
+  .mt-side.p2 { flex-direction: row-reverse; }
+  .mt-side.shake { animation: mt-shake 0.24s; }
+  @keyframes mt-shake { 20% { translate: -6px 2px; } 40% { translate: 5px -2px; } 60% { translate: -3px 1px; } 80% { translate: 2px 0; } }
+  .mt-face { flex: none; width: clamp(34px, 5.4vw, 54px); aspect-ratio: 1; display: grid; place-items: center; font-size: clamp(15px, 2.3vw, 23px); font-weight: 900; border: 2px solid rgba(255, 255, 255, 0.85); transform: skewX(calc(var(--mt-skew) * -1)); }
+  .p1 .mt-face { background: #2f5bd8; }
+  .p2 .mt-face { background: #c4372f; transform: skewX(var(--mt-skew)); }
+  .mt-face span { transform: skewX(var(--mt-skew)); }
+  .p2 .mt-face span { transform: skewX(calc(var(--mt-skew) * -1)); }
+  .mt-col { flex: 1; min-width: 0; display: grid; gap: 6px; }
+  /* 血条：四层叠放，都从选手这一侧（外侧）起算宽度：残影 < 回血 < 血量 < 受击闪白 */
+  .mt-bar { position: relative; height: clamp(16px, 2.4vw, 24px); background: #1c1c24; outline: 2px solid rgba(255, 255, 255, 0.85); outline-offset: 2px; overflow: hidden; cursor: pointer; transform: skewX(calc(var(--mt-skew) * -1)); }
+  .p2 .mt-bar { transform: scaleX(-1) skewX(calc(var(--mt-skew) * -1)); }
+  .mt-bar i { position: absolute; inset: 0; transform-origin: left; }
+  .mt-ghost { background: var(--mt-ghost); }
+  .mt-healing { background: var(--mt-heal); }
+  .mt-fill { background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 55%), var(--mt-hp); }
+  .mt-fill::after { content: ""; position: absolute; inset: 0; background: #ff2a1f; opacity: 0; }
+  .mt-fill.low::after { animation: mt-low 0.6s ease-in-out infinite alternate; }
+  @keyframes mt-low { to { opacity: 0.6; } }
+  .mt-flash { background: #fff; opacity: 0; }
+  .mt-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; height: 30px; }
+  .p2 .mt-meta { flex-direction: row-reverse; }
+  .mt-name { font-size: 13px; letter-spacing: 0.14em; opacity: 0.85; white-space: nowrap; }
+  /* 连击数：显示在出手一方的血条下、靠中间的一侧 */
+  .mt-combo { font-size: clamp(16px, 2.4vw, 24px); line-height: 1.1; font-weight: 900; font-style: italic; color: var(--mt-hp); text-shadow: 0 2px 0 #000; white-space: nowrap; opacity: 0; transition: opacity 0.3s; }
+  .mt-combo.show { opacity: 1; transition: none; }
+  .mt-timer { min-width: 2ch; text-align: center; font-size: clamp(28px, 4.6vw, 48px); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+  .mt-timer.low { color: #ff4d3d; }
+  .mt-pad { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .mt-pad button { font: inherit; font-size: 15px; letter-spacing: 0.06em; color: #fff; background: #23232c; border: 2px solid rgba(255, 255, 255, 0.16); border-radius: 999px; padding: 10px 22px; cursor: pointer; transition: border-color 0.15s, scale 0.1s; }
+  .mt-pad button:hover { border-color: rgba(255, 255, 255, 0.5); }
+  .mt-pad button:active { scale: 0.95; }
+  .mt-pad button:focus-visible { outline: 2px solid var(--mt-hp); outline-offset: 2px; }
+  .mt-pad .heal { color: var(--mt-heal); }
+  /* 一局结束：K.O. 或时间到 */
+  .mt-ko { position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none; font-size: clamp(64px, 13vw, 150px); font-weight: 900; font-style: italic; letter-spacing: 0.04em; color: #fff; -webkit-text-stroke: 4px #c4122f; paint-order: stroke fill; opacity: 0; }
+  .mt-ko.show { animation: mt-ko 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) forwards; }
+  @keyframes mt-ko { from { opacity: 0; scale: 2.2; } to { opacity: 1; scale: 1; } }
+
+  /* 用户开启「减少动态效果」时：不震屏、不闪白、残血改为静态红色调，结束字直接出现 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-side.shake { animation: none; }
+    .mt-fill.low::after { animation: none; opacity: 0.35; }
+    .mt-ko.show { animation: none; opacity: 1; }
+    .mt-pad button { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-game">
+  <div class="mt-hud">
+    <div class="mt-side p1">
+      <div class="mt-face"><span>裁</span></div>
+      <div class="mt-col">
+        <div class="mt-bar" data-i="0" title="点一下让左边挨一下"><i class="mt-ghost"></i><i class="mt-healing"></i><i class="mt-fill"></i><i class="mt-flash"></i></div>
+        <div class="mt-meta"><span class="mt-name">裁缝</span><span class="mt-combo"></span></div>
+      </div>
+    </div>
+    <div class="mt-timer" id="mtTimer">99</div>
+    <div class="mt-side p2">
+      <div class="mt-face"><span>师</span></div>
+      <div class="mt-col">
+        <div class="mt-bar" data-i="1" title="点一下让右边挨一下"><i class="mt-ghost"></i><i class="mt-healing"></i><i class="mt-fill"></i><i class="mt-flash"></i></div>
+        <div class="mt-meta"><span class="mt-name">大师</span><span class="mt-combo"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="mt-pad">
+    <button type="button" data-act="0">攻击左边</button>
+    <button type="button" class="heal" data-act="heal">双方回血</button>
+    <button type="button" data-act="1">攻击右边</button>
+  </div>
+</div>
+<div class="mt-ko" id="mtKo" aria-hidden="true">K.O.</div>
+<script>
+  const CONFIG = {
+    damage: 14,        // 每次伤害（占满血的百分比，实际在 ±30% 内随机浮动）
+    lag: 0.5,          // 残影停顿（秒）：挨打后残影先停住多久再追赶，连击时从最后一下重新计时
+    catchUp: 0.6,      // 追赶时长（秒）：残影追上血条、回血时血条长满所用的时间
+    lowHp: 30,         // 残血阈值（%）：血量低于它时血条闪红
+    timer: true,       // 显示倒计时：关闭则中间显示 VS
+    combo: true,       // 连击计数：同一方连续挨打两下以上时，在出手一方显示几连击
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const easeInOut = (k) => (k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2);
+  const easeOut = (k) => 1 - (1 - k) ** 3;
+  const HEAL_DELAY = 0.25;   // 回血：绿色先亮出来，停这么久血条再长
+  const koEl = document.getElementById('mtKo'), timerEl = document.getElementById('mtTimer');
+
+  // 每一方：hp 血量、ghost 残影、heal 回血目标（都是 0–100）；hold 残影还要停多久；drain 追赶动画；grow 回血动画
+  const sides = [...document.querySelectorAll('.mt-side')].map((el, i) => ({
+    el, i, hp: 100, ghost: 100, heal: 100, hold: 0, drain: null, grow: null, combo: 0,
+    fill: el.querySelector('.mt-fill'), ghostEl: el.querySelector('.mt-ghost'), healEl: el.querySelector('.mt-healing'), flash: el.querySelector('.mt-flash'), comboEl: el.querySelector('.mt-combo'),
+  }));
+  let over = false, userTook = false;
+
+  function paint(s) {
+    s.fill.style.transform = `scaleX(${s.hp / 100})`;
+    s.ghostEl.style.transform = `scaleX(${s.ghost / 100})`;
+    s.healEl.style.transform = `scaleX(${s.heal / 100})`;
+    s.fill.classList.toggle('low', s.hp > 0 && s.hp <= CONFIG.lowHp);
+  }
+
+  function hit(i) {
+    const s = sides[i];
+    if (over || s.hp <= 0) return;
+    s.drain = null;                        // 残影正在追赶：停在当前位置，重新计时
+    s.grow = null;                         // 打断回血
+    s.ghost = Math.max(s.ghost, s.hp);
+    s.hp = Math.max(0, s.hp - CONFIG.damage * (0.7 + Math.random() * 0.6));
+    s.heal = s.hp;
+    s.hold = Math.max(0.01, CONFIG.lag);
+    s.combo++;
+    if (!reduceMotion) {
+      s.flash.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: 180, easing: 'ease-out' });
+      s.el.classList.remove('shake'); void s.el.offsetWidth; s.el.classList.add('shake');   // 重新触发震动
+    }
+    const att = sides[1 - i];
+    if (CONFIG.combo && s.combo >= 2) {
+      att.comboEl.textContent = `${s.combo} 连击`;
+      att.comboEl.classList.add('show');
+      if (!reduceMotion) att.comboEl.animate([{ scale: 1.5 }, { scale: 1 }], { duration: 160, easing: 'ease-out' });
+    }
+    paint(s);
+    if (s.hp <= 0) endRound('K.O.');
+    wake();
+  }
+  function heal(i, amount) {
+    const s = sides[i];
+    if (s.hp >= 100) return;
+    s.heal = Math.min(100, Math.max(s.heal, s.hp) + amount);
+    s.grow = { from: s.hp, t: s.grow ? HEAL_DELAY : 0 };   // 已经在回血：不再等，直接接着长
+    paint(s);
+    wake();
+  }
+
+  function step(dt) {
+    let busy = false;
+    for (const s of sides) {
+      if (s.hold > 0) {
+        s.hold -= dt; busy = true;
+        if (s.hold <= 0) {   // 停顿结束：残影开始追，连击到此为止
+          s.drain = { from: s.ghost, t: 0 };
+          s.combo = 0; sides[1 - s.i].comboEl.classList.remove('show');
+        }
+      } else if (s.drain) {
+        s.drain.t = Math.min(1, s.drain.t + dt / Math.max(0.05, CONFIG.catchUp));
+        s.ghost = s.drain.from + (s.hp - s.drain.from) * easeInOut(s.drain.t);
+        if (s.drain.t >= 1) s.drain = null;
+        busy = true;
+      }
+      if (s.grow) {
+        s.grow.t += dt;
+        const k = clamp((s.grow.t - HEAL_DELAY) / Math.max(0.05, CONFIG.catchUp), 0, 1);
+        s.hp = s.grow.from + (s.heal - s.grow.from) * easeOut(k);
+        if (k >= 1) s.grow = null;
+        busy = true;
+      }
+      s.ghost = Math.max(s.ghost, s.hp);
+      paint(s);
+    }
+    return busy;
+  }
+  let raf = 0, last = 0;
+  function wake() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(loop); } }
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (document.hidden) { raf = requestAnimationFrame(loop); return; }
+    raf = step(dt) ? requestAnimationFrame(loop) : 0;
+  }
+
+  // 一局结束：大字停 1.8s，两边回满血、倒计时复位
+  let time = 99;
+  function paintTimer() {
+    timerEl.textContent = CONFIG.timer ? String(Math.max(0, time)).padStart(2, '0') : 'VS';
+    timerEl.classList.toggle('low', CONFIG.timer && time <= 10);
+  }
+  function endRound(text) {
+    over = true;
+    koEl.textContent = text;
+    koEl.classList.remove('show'); void koEl.offsetWidth; koEl.classList.add('show');
+    setTimeout(() => {
+      koEl.classList.remove('show');
+      sides.forEach((s) => heal(s.i, 100));
+      time = 99; paintTimer();
+      setTimeout(() => { over = false; }, (HEAL_DELAY + CONFIG.catchUp) * 1000);
+    }, 1800);
+  }
+  if (CONFIG.timer) setInterval(() => {
+    if (document.hidden || over) return;
+    time--; paintTimer();
+    if (time <= 0) endRound('时间到');
+  }, 1000);
+
+  document.querySelectorAll('.mt-bar').forEach((b) => b.addEventListener('pointerdown', () => { userTook = true; hit(Number(b.dataset.i)); }));
+  document.querySelectorAll('.mt-pad button').forEach((b) => b.addEventListener('click', () => {
+    userTook = true;
+    if (b.dataset.act === 'heal') { heal(0, 30); heal(1, 30); } else hit(Number(b.dataset.act));
+  }));
+  document.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'arrowleft' || k === 'a') hit(0);
+    else if (k === 'arrowright' || k === 'd') hit(1);
+    else if (k === 'arrowup' || k === 'w') { heal(0, 30); heal(1, 30); }
+    else return;
+    userTook = true; e.preventDefault();
+  });
+  sides.forEach(paint); paintTimer();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：两边轮流挨两三下连击，隔一阵双方回血；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const script = [[1, 400], [1, 240], [1, 240], [0, 1300], [0, 240], [1, 1300], [1, 240], [0, 1200], [0, 240], [0, 240], ['heal', 1300]];
+    let n = 0;
+    (function play() {
+      const [act, wait] = script[n++ % script.length];
+      setTimeout(() => {
+        if (userTook) return;
+        if (!document.hidden && !over) { if (act === 'heal') { heal(0, 40); heal(1, 40); } else hit(act); }
+        play();
+      }, wait);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

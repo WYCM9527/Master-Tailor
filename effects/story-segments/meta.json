@@ -1,0 +1,115 @@
+{
+  "slug": "story-segments",
+  "name": "分段故事进度",
+  "category": "progress",
+  "sub": "linear",
+  "tags": ["进度条", "分段", "故事", "图片", "按住暂停"],
+  "summary": "顶部一排细分段条逐段填满、自动切图；轻点左右切段，按住暂停并隐去界面",
+  "params": [
+    {
+      "key": "slides",
+      "label": "幻灯片",
+      "type": "images",
+      "target": "config",
+      "min": 2,
+      "max": 8,
+      "captions": true,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "夜枭小憩" },
+        { "src": "/samples/sample-5.webp", "caption": "" },
+        { "src": "/samples/sample-7.webp", "caption": "抬头看看" },
+        { "src": "/samples/sample-6.webp", "caption": "" }
+      ],
+      "help": "每张图是一段故事，分段条的段数跟着张数走；说明文字显示成图上的文字贴纸，留空不显示"
+    },
+    {
+      "key": "duration",
+      "label": "每段时长",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 12,
+      "step": 0.5,
+      "default": 5,
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "gap",
+      "label": "段间距",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 12,
+      "step": 1,
+      "default": 4,
+      "unit": "px"
+    },
+    {
+      "key": "height",
+      "label": "条高",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 6,
+      "step": 0.5,
+      "default": 2.5,
+      "unit": "px"
+    },
+    {
+      "key": "color",
+      "label": "进度色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff",
+      "help": "分段条已经播过的部分；没播到的部分是半透明白"
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 32,
+      "step": 1,
+      "default": 18,
+      "unit": "px"
+    },
+    {
+      "key": "name",
+      "label": "账号名",
+      "type": "text",
+      "target": "config",
+      "default": "裁缝大师",
+      "maxLength": 12
+    },
+    {
+      "key": "loop",
+      "label": "循环播放",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "播完最后一段回到第一段；关闭则停在结尾"
+    },
+    {
+      "key": "hideOnHold",
+      "label": "按住时隐藏界面",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "按住暂停时把分段条、账号和底部回复栏一起淡出，只留图片"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "hairline", "name": "极细", "values": { "height": 1.5, "gap": 2 } },
+    { "id": "chunky", "name": "粗分段", "values": { "height": 4, "gap": 8, "color": "#ffd166" } },
+    { "id": "fast", "name": "快节奏", "values": { "duration": 2.5 } }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Instagram Stories 一类分段故事播放",
+    "url": "https://www.instagram.com",
+    "license": "未使用其代码"
+  }
+}

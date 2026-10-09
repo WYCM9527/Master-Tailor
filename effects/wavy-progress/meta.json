@@ -1,0 +1,143 @@
+{
+  "slug": "wavy-progress",
+  "name": "波浪进度条",
+  "category": "progress",
+  "sub": "linear",
+  "tags": ["进度条", "波浪", "Material", "加载", "圆环"],
+  "summary": "走过的部分是一条流动的波浪线，后面是笔直的轨道；点一下暂停，波浪拉成直线",
+  "params": [
+    {
+      "key": "shape",
+      "label": "形态",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "linear", "label": "直线" },
+        { "value": "circular", "label": "圆环" }
+      ],
+      "default": "linear"
+    },
+    {
+      "key": "mode",
+      "label": "进度类型",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "determinate", "label": "确定进度" },
+        { "value": "indeterminate", "label": "不确定进度" }
+      ],
+      "default": "determinate",
+      "help": "确定进度会自动从 0 走到 100% 再重来；不确定进度是波浪段来回穿梭，不显示百分比"
+    },
+    {
+      "key": "amplitude",
+      "label": "波幅",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 12,
+      "step": 0.5,
+      "default": 5,
+      "displayUnit": "px",
+      "help": "波峰到中线的距离，0 就是一根直线"
+    },
+    {
+      "key": "wavelength",
+      "label": "波长",
+      "type": "range",
+      "target": "config",
+      "min": 16,
+      "max": 120,
+      "step": 2,
+      "default": 52,
+      "displayUnit": "px",
+      "help": "相邻两个波峰之间的距离"
+    },
+    {
+      "key": "speed",
+      "label": "流速",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "displayUnit": " 波/秒",
+      "help": "每秒流过几个波长，0 为不流动"
+    },
+    {
+      "key": "thickness",
+      "label": "线粗",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 16,
+      "step": 1,
+      "default": 8,
+      "displayUnit": "px"
+    },
+    {
+      "key": "gap",
+      "label": "间隙",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "displayUnit": "px",
+      "help": "走过的波浪与后面轨道之间空出的距离"
+    },
+    {
+      "key": "duration",
+      "label": "走完一遍",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 20,
+      "step": 0.5,
+      "default": 6,
+      "displayUnit": " 秒",
+      "help": "确定进度从 0 走到 100% 的时长"
+    },
+    {
+      "key": "color",
+      "label": "进度色",
+      "type": "color",
+      "target": "css",
+      "default": "#d0bcff",
+      "help": "走过的波浪、轨道末端的圆点和状态文字"
+    },
+    {
+      "key": "track",
+      "label": "轨道色",
+      "type": "color",
+      "target": "css",
+      "default": "#4a4458",
+      "help": "还没走到的那段直线"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "circular", "name": "圆环", "values": { "shape": "circular" } },
+    { "id": "indeterminate", "name": "不确定进度", "values": { "mode": "indeterminate" } },
+    {
+      "id": "bold",
+      "name": "粗波浪",
+      "values": {
+        "thickness": 12,
+        "amplitude": 8,
+        "wavelength": 76,
+        "color": "#a8c7fa",
+        "track": "#2f3d55"
+      }
+    }
+  ],
+  "thumb": { "mode": "live" },
+  "source": {
+    "kind": "reference",
+    "name": "Material 3 Expressive · Wavy progress indicator 规范",
+    "url": "https://m3.material.io/components/progress-indicators/overview",
+    "license": "Apache-2.0（参考规范，代码自写）"
+  }
+}

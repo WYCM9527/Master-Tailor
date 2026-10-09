@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阅读进度</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #121212;            /* 页面底色 */
+    --mt-color: #ff8a3d;         /* 进度色：顶部进度条、圆环与章节序号 */
+    --mt-thickness: 5px;         /* 顶部进度条粗细 */
+    --mt-ink: #d8d4cc;           /* 正文色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; }
+  body { background: var(--mt-bg); color: var(--mt-ink); font-family: var(--mt-font); }
+  /* 顶部进度：固定在视口顶端。细条模式一段、没有底色；分段模式一章一段，段间 3px，带浅色底 */
+  .mt-progress { position: fixed; left: 0; right: 0; top: 0; z-index: 10; height: var(--mt-thickness); display: flex; gap: 3px; pointer-events: none; }
+  .mt-progress .seg { flex: 1; position: relative; overflow: hidden; background: color-mix(in srgb, var(--mt-ink) 14%, transparent); }
+  .mt-progress.line .seg { background: transparent; }
+  .mt-progress .seg i { position: absolute; inset: 0; background: var(--mt-color); transform-origin: left; transform: scaleX(0); }
+
+  .mt-article { max-width: 640px; margin: 0 auto; padding: 72px 24px 140px; font-size: 17px; line-height: 1.85; }
+  .mt-kicker { font-size: 13px; letter-spacing: 0.2em; color: var(--mt-color); }
+  .mt-article h1 { margin: 12px 0 10px; font-size: clamp(28px, 4vw, 38px); line-height: 1.3; color: color-mix(in srgb, var(--mt-ink) 60%, #fff); }
+  .mt-byline { margin-bottom: 40px; font-size: 13px; opacity: 0.6; }
+  .mt-lead { font-size: 18px; color: color-mix(in srgb, var(--mt-ink) 75%, #fff); }
+  .mt-article h2 { margin: 56px 0 14px; font-size: 22px; color: color-mix(in srgb, var(--mt-ink) 60%, #fff); }
+  .mt-article h2 span { margin-right: 10px; color: var(--mt-color); font-variant-numeric: tabular-nums; }
+  .mt-article p { margin: 0 0 18px; text-align: justify; }
+  .mt-end { margin-top: 64px; text-align: center; letter-spacing: 0.3em; opacity: 0.5; }
+
+  /* 右下角圆环：读到一点后出现，中间是百分比，悬停换成向上箭头，点一下回到顶部 */
+  .mt-ring { position: fixed; right: 24px; bottom: 24px; z-index: 10; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; color: var(--mt-ink); background: color-mix(in srgb, var(--mt-bg) 84%, var(--mt-ink)); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35); cursor: pointer; font: inherit; opacity: 0; scale: 0.6; pointer-events: none; transition: opacity 0.25s, scale 0.25s; }
+  .mt-ring.show { opacity: 1; scale: 1; pointer-events: auto; }
+  .mt-ring:focus-visible { outline: 2px solid var(--mt-color); outline-offset: 3px; }
+  .mt-ring .ring { position: absolute; inset: 0; width: 100%; height: 100%; rotate: -90deg; }
+  .mt-ring circle { fill: none; stroke-width: 3; }
+  .mt-ring .track { stroke: color-mix(in srgb, var(--mt-ink) 16%, transparent); }
+  .mt-ring .arc { stroke: var(--mt-color); stroke-linecap: round; }
+  .mt-ring .pct { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .mt-ring .up { width: 20px; height: 20px; display: none; }
+  .mt-ring:hover .pct, .mt-ring.nopct .pct { display: none; }
+  .mt-ring:hover .up, .mt-ring.nopct .up { display: block; }
+  .mt-ring.off { display: none; }
+
+  /* 用户开启「减少动态效果」时：圆环直接出现，回到顶部不做平滑滚动 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-ring { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-progress" id="mtProgress" aria-hidden="true"></div>
+<article class="mt-article" id="mtArticle">
+  <div class="mt-kicker">手艺笔记</div>
+  <h1>一件衬衫的诞生</h1>
+  <div class="mt-byline">裁缝大师 · 约 5 分钟读完</div>
+  <p class="mt-lead">成衣店里的一件衬衫，从挂上衣架到被人买走，往往只隔着几秒钟的犹豫。可它在来到这里之前，已经走过很长一段路：先被量，再被画，然后被剪开、被缝起，最后在蒸汽里被熨得服服帖帖。</p>
+  <section>
+    <h2><span>01</span>量体</h2>
+    <p>好衬衫从一根软尺开始。领围、肩宽、胸围、腰围、袖长，老师傅量得很快，却总要多问一句：平时习惯把袖子挽起来吗？会不会经常抬手？这些问题不写在尺寸单上，却决定了袖笼要留多少余量。</p>
+    <p>量体时人要站得自然。挺胸收腹量出来的数字很好看，穿上身却处处紧绷。所以老裁缝常常一边闲聊一边下尺，等客人放松下来，真实的身形才会露出来。</p>
+  </section>
+  <section>
+    <h2><span>02</span>打版</h2>
+    <p>尺寸到了版房，就变成牛皮纸上的一组线条。前片、后片、过肩、袖子、领座、翻领，每一片都要按尺寸推算出弧线，再加上缝份。一件普通衬衫的纸样，少说也有十几片。</p>
+    <p>版师最在意的是那几条曲线：袖笼弯得顺不顺，领口贴不贴脖子，下摆的弧度能不能让衬衫塞进裤腰时不起包。这些曲线没有公式能一步算出，靠的是一次次试穿之后的修改。</p>
+  </section>
+  <section>
+    <h2><span>03</span>裁剪</h2>
+    <p>布料铺上裁床之前，要先放松一夜。刚从布卷上放下来的布被拉得很紧，直接裁剪，缝好之后会慢慢缩回去。条纹和格子布还要对花，左右前片的条纹必须在门襟处严丝合缝地接上。</p>
+    <p>下剪时刀刃贴着台面走，干脆利落，不能来回拉扯。剪口歪了一毫米，缝起来就会差出一截。所以裁缝的剪刀从不借人，刀口的手感只有自己最清楚。</p>
+  </section>
+  <section>
+    <h2><span>04</span>缝制</h2>
+    <p>缝制的顺序有讲究：先做领子和袖克夫这些小部件，再合肩缝、上袖子，最后收侧缝和下摆。每缝完一道都要用熨斗压一下缝份，后面的工序才不会越做越歪。</p>
+    <p>好衬衫的针脚细而匀，一寸里有十几针。领尖要翻得尖而不破，门襟要直得像尺子画出来的。纽扣钉好之后，还要在扣脚绕上几圈线，让它和布面之间留出一点空隙，扣起来才不勒。</p>
+  </section>
+  <section>
+    <h2><span>05</span>熨烫</h2>
+    <p>最后一道工序是整烫。蒸汽从熨斗底下冒出来，布料在热气里变得柔软，再被一点点压平。领子要熨出弧度，袖子不能压出死褶，后背的褶裥要对齐中线。</p>
+    <p>熨好的衬衫挂在衣架上，看起来和别的衬衫没什么两样。只有穿上身的那一刻，肩线落在该落的地方，抬手时袖口不会缩上去，你才会知道，那些看不见的功夫都在这里。</p>
+  </section>
+  <div class="mt-end">— 完 —</div>
+</article>
+<button class="mt-ring" id="mtRing" type="button" aria-label="回到顶部">
+  <svg class="ring" viewBox="0 0 56 56" aria-hidden="true"><circle class="track" cx="28" cy="28" r="25"/><circle class="arc" id="mtArc" cx="28" cy="28" r="25"/></svg>
+  <span class="pct" id="mtPct">0%</span>
+  <!-- IconPark: arrow-up -->
+  <svg class="up" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 6V42" stroke="currentColor" stroke-width="4" stroke-linecap="butt" stroke-linejoin="miter"/><path d="M12 18L24 6L36 18" stroke="currentColor" stroke-width="4" stroke-linecap="butt" stroke-linejoin="miter"/></svg>
+</button>
+<script>
+  const CONFIG = {
+    bar: "line",       // 顶部进度：line 细条 / segments 按章节分段 / none 不显示
+    ring: true,        // 角落圆环：右下角显示读到百分之几，点一下回到顶部
+    percent: true,     // 圆环里显示百分比：关闭则一直显示向上箭头
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const prog = document.getElementById('mtProgress'), ring = document.getElementById('mtRing'), arc = document.getElementById('mtArc'), pct = document.getElementById('mtPct');
+  const sections = [...document.querySelectorAll('#mtArticle section')];
+  const count = CONFIG.bar === 'segments' ? sections.length : CONFIG.bar === 'line' ? 1 : 0;
+  prog.classList.add(CONFIG.bar === 'segments' ? 'segments' : 'line');
+  const fills = Array.from({ length: count }, () => {
+    const seg = document.createElement('div'), f = document.createElement('i');
+    seg.className = 'seg'; seg.appendChild(f); prog.appendChild(seg);
+    return f;
+  });
+  if (!CONFIG.ring) ring.classList.add('off');
+  if (!CONFIG.percent) ring.classList.add('nopct');
+  const C = 2 * Math.PI * 25;   // 圆环周长（半径 25，56 画布）
+  arc.style.strokeDasharray = C;
+
+  // 布局量一次：可滚动的最大距离、各章节的起点与高度；只在尺寸变化、字体加载后重量
+  let maxScroll = 0, tops = [], heights = [];
+  function measure() {
+    maxScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+    tops = sections.map((s) => s.offsetTop); heights = sections.map((s) => s.offsetHeight);
+    update();
+  }
+  let shownPct = -1;
+  function update() {
+    ticking = false;
+    const y = scrollY, p = maxScroll > 0 ? clamp(y / maxScroll, 0, 1) : 1;
+    if (count === 1) fills[0].style.transform = `scaleX(${p})`;
+    else if (count > 1) {
+      // 阅读位置从视口顶端（刚开始）滑到视口底端（读到底），每章按这个位置走过自己的比例填充，读到底时全满
+      const r = y + innerHeight * p;
+      fills.forEach((f, i) => { f.style.transform = `scaleX(${clamp((r - tops[i]) / heights[i], 0, 1)})`; });
+    }
+    if (CONFIG.ring) {
+      arc.style.strokeDashoffset = C * (1 - p);
+      const n = Math.round(p * 100);
+      if (n !== shownPct) { pct.textContent = n + '%'; shownPct = n; }
+      ring.classList.toggle('show', y > 40);
+    }
+  }
+  let ticking = false, userTook = false;
+  addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  addEventListener('resize', measure);
+  for (const ev of ['wheel', 'touchstart', 'pointerdown', 'keydown']) addEventListener(ev, () => { userTook = true; }, { passive: true });
+  ring.addEventListener('click', () => scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }));
+  measure();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：页面自己慢慢往下读、再回到顶部，把进度条和圆环走一遍；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const t0 = performance.now();
+    (function demo(now) {
+      if (userTook) return;
+      if (!document.hidden) scrollTo(0, maxScroll * (0.5 - 0.5 * Math.cos(((now - t0) / 14000) * Math.PI * 2)));
+      requestAnimationFrame(demo);
+    })(t0);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

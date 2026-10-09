@@ -1,0 +1,129 @@
+{
+  "slug": "video-scrubber",
+  "name": "视频进度条",
+  "category": "progress",
+  "sub": "linear",
+  "tags": ["进度条", "视频", "章节", "悬停预览", "拖动"],
+  "summary": "按章节断开的播放进度条，带缓冲区；悬停时变粗、冒出圆点和画面预览，拖动跳转",
+  "params": [
+    {
+      "key": "slides",
+      "label": "章节画面",
+      "type": "images",
+      "target": "config",
+      "min": 2,
+      "max": 6,
+      "captions": true,
+      "default": [
+        { "src": "/samples/sample-1.webp", "caption": "夜枭小憩" },
+        { "src": "/samples/sample-2.webp", "caption": "海边老爷车" },
+        { "src": "/samples/sample-3.webp", "caption": "日落海滩" },
+        { "src": "/samples/sample-8.webp", "caption": "星空" }
+      ],
+      "help": "每张图是一个章节的画面，说明文字就是章节名；章节长短按固定比例分配"
+    },
+    {
+      "key": "duration",
+      "label": "视频时长",
+      "type": "range",
+      "target": "config",
+      "min": 30,
+      "max": 900,
+      "step": 5,
+      "default": 245,
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "color",
+      "label": "进度色",
+      "type": "color",
+      "target": "css",
+      "default": "#ff0033",
+      "help": "已播放部分与拖动圆点"
+    },
+    {
+      "key": "height",
+      "label": "条粗",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 8,
+      "step": 0.5,
+      "default": 3,
+      "unit": "px",
+      "help": "平时进度条的粗细"
+    },
+    {
+      "key": "grow",
+      "label": "悬停加粗",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.7,
+      "displayUnit": "×",
+      "help": "鼠标移到进度条上时变粗的倍数；鼠标所在的那一章再粗一点"
+    },
+    {
+      "key": "size",
+      "label": "预览宽度",
+      "type": "range",
+      "target": "css",
+      "min": 100,
+      "max": 280,
+      "step": 4,
+      "default": 168,
+      "unit": "px",
+      "help": "悬停时弹出的画面预览框宽度，高按 16:9；播放器较窄时最多占播放器宽度的 36%"
+    },
+    {
+      "key": "radius",
+      "label": "播放器圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 28,
+      "step": 1,
+      "default": 12,
+      "unit": "px"
+    },
+    {
+      "key": "chapters",
+      "label": "章节分隔",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "进度条按章节断开成几段，并显示章节名；关闭则是一根完整的条"
+    },
+    {
+      "key": "preview",
+      "label": "画面预览",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "悬停时在时间上方显示该处的画面；关闭只显示时间"
+    },
+    {
+      "key": "autoplay",
+      "label": "自动播放",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "打开就开始播放，播到结尾从头循环"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "thick", "name": "粗条", "values": { "height": 5, "grow": 1.4, "color": "#3ea6ff" } },
+    { "id": "plain", "name": "无章节", "values": { "chapters": false } },
+    { "id": "minimal", "name": "只显示时间", "values": { "preview": false, "color": "#ffffff" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "YouTube 播放器进度条",
+    "url": "https://www.youtube.com",
+    "license": "未使用其代码"
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "slug": "fighting-health-bar",
+  "name": "格斗血条",
+  "category": "progress",
+  "sub": "linear",
+  "tags": ["进度条", "血条", "游戏", "残影", "连击"],
+  "summary": "挨打时血条瞬间掉下、红色残影停一下再追上，回血时绿色先亮；残血闪红，打空出 K.O.",
+  "params": [
+    {
+      "key": "damage",
+      "label": "每次伤害",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 40,
+      "step": 1,
+      "default": 14,
+      "displayUnit": "%",
+      "help": "占满血的百分比，实际在上下 30% 内随机浮动"
+    },
+    {
+      "key": "lag",
+      "label": "残影停顿",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.5,
+      "displayUnit": " 秒",
+      "help": "挨打后红色残影先停住多久再开始追赶；连击时从最后一下重新计时"
+    },
+    {
+      "key": "catchUp",
+      "label": "追赶时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 2,
+      "step": 0.05,
+      "default": 0.6,
+      "displayUnit": " 秒",
+      "help": "残影追上血条、回血时血条长满所用的时间"
+    },
+    {
+      "key": "skew",
+      "label": "斜切角度",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 16,
+      "unit": "deg",
+      "displayUnit": "°"
+    },
+    {
+      "key": "lowHp",
+      "label": "残血阈值",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "default": 30,
+      "displayUnit": "%",
+      "help": "血量低于它时血条闪红，0 为不闪"
+    },
+    { "key": "hp", "label": "血条色", "type": "color", "target": "css", "default": "#ffcf33" },
+    {
+      "key": "ghost",
+      "label": "残影色",
+      "type": "color",
+      "target": "css",
+      "default": "#e8302a",
+      "help": "刚掉的那截血的颜色"
+    },
+    {
+      "key": "heal",
+      "label": "回血色",
+      "type": "color",
+      "target": "css",
+      "default": "#43e07a",
+      "help": "回血时先亮出要回的那截，血条再长过去"
+    },
+    {
+      "key": "timer",
+      "label": "显示倒计时",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "关闭则中间显示 VS，也不会时间到"
+    },
+    {
+      "key": "combo",
+      "label": "连击计数",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "同一方连续挨打两下以上时，在出手一方的血条下显示几连击"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "arcade",
+      "name": "街机方条",
+      "values": { "skew": 0, "hp": "#ffe14d", "ghost": "#ff3b30" }
+    },
+    {
+      "id": "rpg",
+      "name": "绿色血条",
+      "values": { "hp": "#3ddc84", "ghost": "#ffffff", "heal": "#7cc8ff", "skew": 8 }
+    },
+    { "id": "heavy", "name": "重击慢追", "values": { "damage": 28, "lag": 0.9, "catchUp": 1.2 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}
