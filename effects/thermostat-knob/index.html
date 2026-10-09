@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>温控旋钮</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-heat: #ff6a1a;          /* 制热色 */
+    --mt-cool: #2b8cff;          /* 制冷色 */
+    --mt-size: 300px;            /* 尺寸：旋钮直径 */
+    --mt-bg: #e9e6e1;            /* 页面底色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+
+  /* 整个旋钮：底下一整块拉丝金属圆盘，上面盖内缩 6% 的黑色表面，露出来的一圈就是表圈 */
+  .mt-knob { --s: min(var(--mt-size), 84vw); position: relative; width: var(--s); height: var(--s); border-radius: 50%; cursor: grab; touch-action: none; outline: none; box-shadow: 0 34px 60px -26px rgba(40, 30, 20, 0.55), 0 8px 18px -8px rgba(40, 30, 20, 0.35); }
+  .mt-knob.drag { cursor: grabbing; }
+  .mt-knob:focus-visible { box-shadow: 0 0 0 3px var(--mt-bg), 0 0 0 5px rgba(40, 30, 20, 0.5), 0 34px 60px -26px rgba(40, 30, 20, 0.55); }
+  .mt-bezel { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(#dfe2e6, #8d9199 12%, #f6f7f8 26%, #9da1a8 40%, #e4e6ea 52%, #7f838b 66%, #f1f2f4 80%, #a3a7ad 90%, #dfe2e6); transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.3, 1); }
+  .mt-knob.drag .mt-bezel { transition: none; }
+  .mt-face { position: absolute; inset: 6%; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 35%, #222428, #060607 72%); box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(0, 0, 0, 0.5); }
+  /* 制热 / 制冷时整块表面泛出对应颜色，保持时回到黑色 */
+  .mt-glow { position: absolute; inset: 0; opacity: 0; transition: opacity 0.8s ease; }
+  .mt-glow.heat { background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--mt-heat) 82%, #fff), var(--mt-heat) 48%, color-mix(in srgb, var(--mt-heat) 50%, #000) 100%); }
+  .mt-glow.cool { background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--mt-cool) 82%, #fff), var(--mt-cool) 48%, color-mix(in srgb, var(--mt-cool) 50%, #000) 100%); }
+  .is-heat .mt-glow.heat, .is-cool .mt-glow.cool { opacity: 1; }
+  .mt-ticks { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .mt-ticks line { stroke: rgba(255, 255, 255, 0.28); stroke-width: 0.9; stroke-linecap: round; }
+  .mt-ticks line.on { stroke: rgba(255, 255, 255, 0.95); }
+  .mt-ticks line.amb { stroke: rgba(255, 255, 255, 0.95); stroke-width: 1.3; }
+  .mt-ticks line.tgt { stroke: #fff; stroke-width: 1.8; }
+  .mt-ticks text { fill: rgba(255, 255, 255, 0.9); font-size: 7px; font-weight: 600; text-anchor: middle; dominant-baseline: central; transition: opacity 0.3s; }
+  .mt-read { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; color: #fff; pointer-events: none; }
+  .mt-mode { font-size: calc(var(--s) * 0.042); letter-spacing: 0.3em; text-indent: 0.3em; opacity: 0.85; height: 1.4em; }
+  .mt-num { display: flex; align-items: flex-start; font-weight: 200; line-height: 1; font-variant-numeric: tabular-nums; }
+  .mt-int { font-size: calc(var(--s) * 0.27); letter-spacing: -0.03em; }
+  .mt-dec { font-size: calc(var(--s) * 0.08); margin-top: calc(var(--s) * 0.035); margin-left: 0.1em; min-width: 1.1em; }
+  .mt-num.up { animation: mt-up 0.22s ease-out; }
+  .mt-num.down { animation: mt-down 0.22s ease-out; }
+  @keyframes mt-up { from { transform: translateY(14%); opacity: 0.2; } }
+  @keyframes mt-down { from { transform: translateY(-14%); opacity: 0.2; } }
+  .mt-room { margin-top: calc(var(--s) * 0.02); font-size: calc(var(--s) * 0.045); opacity: 0.7; letter-spacing: 0.06em; }
+
+  /* 用户开启「减少动态效果」时：表圈不带缓动地转、数字不滑动、底色直接切换 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-bezel, .mt-glow { transition: none; }
+    .mt-num.up, .mt-num.down { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-knob" id="mtKnob" role="slider" tabindex="0" aria-label="设定温度" aria-valuemin="10" aria-valuemax="32">
+  <div class="mt-bezel" id="mtBezel"></div>
+  <div class="mt-face">
+    <i class="mt-glow heat"></i><i class="mt-glow cool"></i>
+  </div>
+  <svg class="mt-ticks" id="mtTicks" viewBox="-100 -100 200 200" aria-hidden="true"></svg>
+  <div class="mt-read" aria-hidden="true">
+    <div class="mt-mode" id="mtMode"></div>
+    <div class="mt-num" id="mtNum"><span class="mt-int" id="mtInt"></span><span class="mt-dec" id="mtDec"></span></div>
+    <div class="mt-room" id="mtRoom"></div>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    target: 24,       // 设定温度（°C）
+    ambient: 20.5,    // 室温（°C）：打开时的房间温度
+    step: '0.5',      // 步进：每拧一格变多少度，0.5 或 1
+    ticks: 140,       // 刻度数
+    sweep: 300,       // 角度范围（°）：刻度环张开的角度，缺口朝下
+    drift: 0.06,      // 室温跟进（°C/秒）：室温每秒朝设定温度靠近多少，0 为不变
+  };
+  const MIN = 10, MAX = 32;                       // 表盘温度范围
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const $ = (id) => document.getElementById(id);
+  const knob = $('mtKnob'), bezel = $('mtBezel'), svg = $('mtTicks'), numEl = $('mtNum');
+  const STEP = CONFIG.step === '1' ? 1 : 0.5;
+  $('mtDec').hidden = STEP >= 1;
+  const N = clamp(Math.round(CONFIG.ticks), 24, 240);
+  const SWEEP = clamp(CONFIG.sweep, 180, 340);
+  const START = 90 + (360 - SWEEP) / 2;           // 起点角（0° 指向右、顺时针为正），缺口居中朝下
+  const DRIFT = Math.max(0, CONFIG.drift);
+  const snap = (v) => clamp(Math.round(v / STEP) * STEP, MIN, MAX);
+  const angleOf = (t) => ((START + ((t - MIN) / (MAX - MIN)) * SWEEP) * Math.PI) / 180;
+  const tickOf = (t) => Math.round(((clamp(t, MIN, MAX) - MIN) / (MAX - MIN)) * (N - 1));
+  const fmt = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
+
+  // 刻度：普通的半径 76–82，设定温度那根拉长到 66–84，室温那根 70–84 并在内侧标出室温
+  const NS = 'http://www.w3.org/2000/svg';
+  const lines = Array.from({ length: N }, (_, i) => {
+    const a = ((START + (i / (N - 1)) * SWEEP) * Math.PI) / 180;
+    const l = document.createElementNS(NS, 'line');
+    l.dataset.c = Math.cos(a); l.dataset.s = Math.sin(a);
+    svg.appendChild(l);
+    return l;
+  });
+  const ambText = svg.appendChild(document.createElementNS(NS, 'text'));
+  function setLen(l, r1, r2) {
+    const c = +l.dataset.c, s = +l.dataset.s;
+    l.setAttribute('x1', (c * r1).toFixed(2)); l.setAttribute('y1', (s * r1).toFixed(2));
+    l.setAttribute('x2', (c * r2).toFixed(2)); l.setAttribute('y2', (s * r2).toFixed(2));
+  }
+
+  let target = snap(CONFIG.ambient), raw = target, ambient = clamp(CONFIG.ambient, MIN, MAX), rot = 0, userTook = false;
+  let shownAmb = null, lastMode = '';
+  function render(dir) {
+    const amb = Math.round(ambient * 2) / 2;
+    const ti = tickOf(target), ai = tickOf(amb), lo = Math.min(ti, ai), hi = Math.max(ti, ai);
+    lines.forEach((l, i) => {
+      const cls = i === ti ? 'tgt' : i === ai ? 'amb' : i > lo && i < hi ? 'on' : '';
+      if (l.getAttribute('class') !== cls || !l.hasAttribute('x1')) {
+        l.setAttribute('class', cls);
+        if (cls === 'tgt') setLen(l, 66, 84); else if (cls === 'amb') setLen(l, 70, 84); else setLen(l, 76, 82);
+      }
+    });
+    const a = angleOf(amb);
+    ambText.setAttribute('x', (Math.cos(a) * 60).toFixed(2));
+    ambText.setAttribute('y', (Math.sin(a) * 60).toFixed(2));
+    ambText.textContent = fmt(amb);
+    ambText.style.opacity = Math.abs(amb - target) >= 1.5 ? '1' : '0';
+
+    const diff = target - ambient;
+    const mode = diff > 0.25 ? 'heat' : diff < -0.25 ? 'cool' : 'hold';
+    if (mode !== lastMode) {
+      knob.classList.toggle('is-heat', mode === 'heat');
+      knob.classList.toggle('is-cool', mode === 'cool');
+      $('mtMode').textContent = { heat: '制热中', cool: '制冷中', hold: '保持' }[mode];
+      lastMode = mode;
+    }
+    $('mtInt').textContent = Math.trunc(target);
+    $('mtDec').textContent = STEP < 1 ? (target % 1 ? '.5' : '.0') : '';
+    if (amb !== shownAmb) { $('mtRoom').textContent = `室温 ${fmt(amb)}°`; shownAmb = amb; }
+    knob.setAttribute('aria-valuenow', target);
+    knob.setAttribute('aria-valuetext', `设定 ${fmt(target)} 度，室温 ${fmt(amb)} 度，${$('mtMode').textContent}`);
+    if (dir && !reduceMotion) { numEl.classList.remove('up', 'down'); void numEl.offsetWidth; numEl.classList.add(dir); }
+  }
+
+  // 设定新温度：表圈按同样的角度跟着转，数字往变化方向滑一下
+  function setTarget(v, spin = true) {
+    const t = snap(v);
+    if (t === target) return;
+    if (spin) { rot += ((t - target) / (MAX - MIN)) * SWEEP; bezel.style.transform = `rotate(${rot.toFixed(2)}deg)`; }
+    const dir = t > target ? 'up' : 'down';
+    target = t;
+    render(dir);
+    wake();
+  }
+
+  // 室温慢慢朝设定温度靠近；到了就停
+  let raf = 0, last = 0;
+  function tick(now) {
+    raf = 0;
+    if (document.hidden) { last = 0; raf = requestAnimationFrame(tick); return; }
+    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+    last = now;
+    const d = target - ambient;
+    if (DRIFT > 0 && Math.abs(d) > 1e-3) {
+      ambient += Math.sign(d) * Math.min(Math.abs(d), DRIFT * dt);
+      render();
+      raf = requestAnimationFrame(tick);
+    } else last = 0;
+  }
+  const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
+
+  // 绕圆心拖动：转过的角度按「角度范围对应整个温度范围」换算成温差，表圈同步旋转
+  let dragging = false, prevA = 0;
+  const angleAt = (e) => { const r = knob.getBoundingClientRect(); return (Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180) / Math.PI; };
+  knob.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    userTook = true; dragging = true; prevA = angleAt(e); raw = target;
+    knob.setPointerCapture(e.pointerId);
+    knob.classList.add('drag');
+  });
+  knob.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const a = angleAt(e);
+    let da = a - prevA;
+    if (da > 180) da -= 360;
+    if (da < -180) da += 360;
+    prevA = a;
+    const before = raw;
+    raw = clamp(raw + (da / SWEEP) * (MAX - MIN), MIN, MAX);
+    rot += ((raw - before) / (MAX - MIN)) * SWEEP;
+    bezel.style.transform = `rotate(${rot.toFixed(2)}deg)`;
+    setTarget(raw, false);
+  });
+  const end = () => { dragging = false; knob.classList.remove('drag'); };
+  knob.addEventListener('pointerup', end);
+  knob.addEventListener('pointercancel', end);
+  knob.addEventListener('wheel', (e) => { e.preventDefault(); userTook = true; setTarget(target + (e.deltaY < 0 ? STEP : -STEP)); }, { passive: false });
+  knob.addEventListener('keydown', (e) => {
+    const d = { ArrowUp: STEP, ArrowRight: STEP, ArrowDown: -STEP, ArrowLeft: -STEP, PageUp: 1, PageDown: -1 }[e.key];
+    let v = d === undefined ? null : target + d;
+    if (e.key === 'Home') v = MIN;
+    if (e.key === 'End') v = MAX;
+    if (v === null) return;
+    e.preventDefault();
+    userTook = true;
+    setTarget(v);
+  });
+
+  // 打开时设定温度从室温一格一格拧到目标值
+  render();
+  const goal = snap(CONFIG.target);
+  if (reduceMotion) setTarget(goal);
+  else {
+    const steps = Math.round(Math.abs(goal - target) / STEP);
+    for (let i = 1; i <= steps; i++) setTimeout(() => { if (!userTook) setTarget(target + Math.sign(goal - target) * STEP); }, 300 + i * (700 / Math.max(1, steps)));
+  }
+
+  /* @mt:thumb-start */
+  // 缩略图演示：每隔一会儿拧到另一个温度，制热、制冷交替；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const seq = [18, 26.5, 21, 16.5, 25];
+    let n = 0;
+    setInterval(() => {
+      if (userTook || document.hidden) return;
+      setTarget(seq[n++ % seq.length]);
+    }, 2400);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

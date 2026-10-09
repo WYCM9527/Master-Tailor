@@ -1,0 +1,128 @@
+{
+  "slug": "liquid-orb-progress",
+  "name": "液体水球",
+  "category": "progress",
+  "sub": "ring",
+  "tags": ["进度", "水球", "波浪", "液体", "晃动", "拖拽"],
+  "summary": "玻璃球里两层波浪液面一直流动，水位就是进度；改水位或左右拖动时液面荡起再慢慢平复",
+  "params": [
+    {
+      "key": "value",
+      "label": "进度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 62,
+      "displayUnit": "%",
+      "help": "打开时从空涨到这里"
+    },
+    {
+      "key": "size",
+      "label": "尺寸",
+      "type": "range",
+      "target": "css",
+      "min": 160,
+      "max": 340,
+      "step": 4,
+      "default": 240,
+      "unit": "px",
+      "help": "水球直径"
+    },
+    {
+      "key": "color",
+      "label": "液体色",
+      "type": "color",
+      "target": "css",
+      "default": "#3b8bff"
+    },
+    {
+      "key": "waveHeight",
+      "label": "波高",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "displayUnit": "px"
+    },
+    {
+      "key": "waveSpeed",
+      "label": "波速",
+      "type": "range",
+      "target": "config",
+      "min": 0.2,
+      "max": 3,
+      "step": 0.1,
+      "default": 1,
+      "displayUnit": "×"
+    },
+    {
+      "key": "slosh",
+      "label": "晃动幅度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1,
+      "displayUnit": "×",
+      "help": "液面变化或左右拖动时荡起的程度，0 为不晃"
+    },
+    {
+      "key": "settle",
+      "label": "平复时间",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 6,
+      "step": 0.1,
+      "default": 2.4,
+      "displayUnit": " 秒",
+      "help": "晃动衰减到几乎静止要多久"
+    },
+    {
+      "key": "duration",
+      "label": "涨落时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.3,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.2,
+      "displayUnit": " 秒",
+      "help": "液面追到新位置大约要多久"
+    },
+    {
+      "key": "bubbles",
+      "label": "气泡",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "液体里不时冒出小气泡往上浮"
+    },
+    {
+      "key": "label",
+      "label": "标题",
+      "type": "text",
+      "target": "config",
+      "default": "今日饮水",
+      "maxLength": 8
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "calm", "name": "平静", "values": { "waveHeight": 3, "waveSpeed": 0.5, "slosh": 0.3 } },
+    { "id": "rough", "name": "汹涌", "values": { "waveHeight": 16, "slosh": 2, "settle": 5 } },
+    { "id": "juice", "name": "橙汁", "values": { "color": "#ff8a3d" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "reference",
+    "name": "Elaine Xu · wavePercent（CodePen）",
+    "url": "https://codepen.io/ElaineXu/pen/jrzGrw",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

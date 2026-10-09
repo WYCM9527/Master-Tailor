@@ -1,0 +1,131 @@
+{
+  "slug": "needle-gauge",
+  "name": "仪表盘指针",
+  "category": "progress",
+  "sub": "ring",
+  "tags": ["仪表盘", "指针", "回弹", "刻度", "红区", "拖拽"],
+  "summary": "半圆表盘上的指针带着弹簧感摆到读数，过冲再回弹；进到末段红区时红区亮起、指针轻颤",
+  "params": [
+    {
+      "key": "value",
+      "label": "读数",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 300,
+      "step": 0.1,
+      "default": 128,
+      "help": "超过量程时停在满格"
+    },
+    {
+      "key": "max",
+      "label": "量程",
+      "type": "range",
+      "target": "config",
+      "min": 8,
+      "max": 300,
+      "step": 1,
+      "default": 220
+    },
+    {
+      "key": "majors",
+      "label": "主刻度段数",
+      "type": "range",
+      "target": "config",
+      "min": 4,
+      "max": 12,
+      "step": 1,
+      "default": 11,
+      "help": "量程被分成几大格，每格标一个数字"
+    },
+    {
+      "key": "redline",
+      "label": "警戒区",
+      "type": "range",
+      "target": "config",
+      "min": 50,
+      "max": 100,
+      "step": 1,
+      "default": 80,
+      "displayUnit": "%",
+      "help": "从量程的百分之多少开始是红区，100 为不设"
+    },
+    {
+      "key": "bounce",
+      "label": "回弹强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.6,
+      "help": "0 为稳稳停住，越大过冲越多、晃得越久"
+    },
+    {
+      "key": "sweep",
+      "label": "表盘角度",
+      "type": "range",
+      "target": "config",
+      "min": 180,
+      "max": 270,
+      "step": 10,
+      "default": 180,
+      "displayUnit": "°",
+      "help": "180 为半圆，越大越像汽车仪表"
+    },
+    {
+      "key": "unit",
+      "label": "单位",
+      "type": "text",
+      "target": "config",
+      "default": "km/h",
+      "maxLength": 8
+    },
+    {
+      "key": "selftest",
+      "label": "开机自检",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "打开时指针先扫到满格再回落"
+    },
+    {
+      "key": "color",
+      "label": "指针色",
+      "type": "color",
+      "target": "css",
+      "default": "#ff5a36"
+    },
+    {
+      "key": "size",
+      "label": "尺寸",
+      "type": "range",
+      "target": "css",
+      "min": 260,
+      "max": 560,
+      "step": 10,
+      "default": 440,
+      "unit": "px",
+      "help": "表盘宽度"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "steady", "name": "稳重", "values": { "bounce": 0 } },
+    { "id": "springy", "name": "弹簧", "values": { "bounce": 0.95 } },
+    {
+      "id": "tacho",
+      "name": "转速表",
+      "values": {
+        "max": 8,
+        "majors": 8,
+        "value": 3.2,
+        "redline": 75,
+        "sweep": 240,
+        "unit": "千转/分"
+      }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

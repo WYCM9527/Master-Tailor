@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>步骤进度条</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-color: #4f46e5;         /* 主色：完成节点、连线与按钮 */
+    --mt-nodeSize: 32px;         /* 节点大小 */
+    --mt-bg: #eef0f4;            /* 页面底色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #1f2430; -webkit-tap-highlight-color: transparent; }
+  .mt-card { width: min(620px, 92vw); box-sizing: border-box; padding: 30px 28px 24px; border-radius: 20px; background: #fff; box-shadow: 0 1px 2px rgba(20, 24, 40, 0.06), 0 24px 50px -28px rgba(20, 24, 40, 0.35); }
+
+  /* 节点条：节点之间是撑满的连线，标签绝对定位在节点正下方，连线始终对准节点圆心 */
+  .mt-steps { display: flex; align-items: flex-start; margin: 0 0 40px; padding: 0 14px; list-style: none; }
+  .mt-step { position: relative; flex: 0 0 auto; display: grid; justify-items: center; --nd: 0s; }
+  .mt-node { position: relative; width: var(--mt-nodeSize); height: var(--mt-nodeSize); padding: 0; border-radius: 50%; border: 2px solid #d6d9de; background: #fff; color: #9aa1ab; font: 600 calc(var(--mt-nodeSize) * 0.42) / 1 var(--mt-font); display: grid; place-items: center; cursor: default; transition: background-color 0.25s ease var(--nd), border-color 0.25s ease var(--nd), color 0.25s ease var(--nd), box-shadow 0.25s ease var(--nd); }
+  .mt-node:focus-visible { outline: 2px solid var(--mt-color); outline-offset: 3px; }
+  .mt-num, .mt-check { grid-area: 1 / 1; }
+  .mt-num { transition: opacity 0.15s ease var(--nd); }
+  .mt-check { width: 56%; height: 56%; fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: square; stroke-linejoin: miter; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 0.35s ease var(--nd); }
+  /* 标签最宽为相邻节点间距（由脚本量出写进 --lw），放不下就折行 */
+  .mt-lab { position: absolute; top: calc(var(--mt-nodeSize) + 10px); width: max-content; max-width: max(var(--lw, 160px), 2.4em); font-size: 13px; line-height: 1.3; text-align: center; color: #9aa1ab; transition: color 0.25s ease var(--nd); }
+  /* 当前步：主色描边与浅色外晕，外圈一直向外扩散（延迟到连线灌到这里才开始） */
+  .cur .mt-node { border-color: var(--mt-color); color: var(--mt-color); box-shadow: 0 0 0 4px color-mix(in srgb, var(--mt-color) 14%, transparent); }
+  .cur .mt-lab { color: #1f2430; }
+  .mt-node::after { content: ''; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--mt-color); opacity: 0; pointer-events: none; }
+  .pulse .cur .mt-node::after { animation: mt-breathe 1.8s ease-out var(--nd) infinite; }
+  @keyframes mt-breathe { 0% { transform: scale(1); opacity: 0.55; } 100% { transform: scale(1.75); opacity: 0; } }
+  /* 已完成：实心主色，数字换成一笔描出的对勾，可点回去 */
+  .done .mt-node { background: var(--mt-color); border-color: var(--mt-color); color: #fff; cursor: pointer; }
+  .done .mt-num { opacity: 0; }
+  .done .mt-check { stroke-dashoffset: 0; }
+  .done .mt-lab { color: #4b5263; }
+  .mt-link { flex: 1 1 auto; height: 3px; margin: calc(var(--mt-nodeSize) / 2 - 1.5px) 8px 0; border-radius: 2px; background: #e5e7eb; overflow: hidden; }
+  .mt-link i { display: block; height: 100%; background: var(--mt-color); transform: scaleX(0); transform-origin: left; transition: transform 0.5s ease; }
+  .mt-link.on i { transform: scaleX(1); }
+  .mt-link.back i { transform-origin: right; }
+
+  /* 内容面板：前进时新内容从右滑入，后退时从左滑入 */
+  .mt-panel { position: relative; min-height: 132px; overflow: hidden; border-radius: 14px; background: #f7f8fa; }
+  .mt-page { padding: 20px 22px; animation: 0.35s ease both; }
+  .mt-page.fwd { animation-name: mt-in-right; }
+  .mt-page.bwd { animation-name: mt-in-left; }
+  @keyframes mt-in-right { from { opacity: 0; transform: translateX(28px); } }
+  @keyframes mt-in-left { from { opacity: 0; transform: translateX(-28px); } }
+  .mt-page small { font-size: 12px; color: #8a91a0; letter-spacing: 0.04em; }
+  .mt-page h2 { margin: 4px 0 14px; font-size: 18px; }
+  .mt-page i { display: block; height: 10px; margin-top: 10px; border-radius: 5px; background: #e4e7ec; }
+  .mt-page.fin { display: grid; justify-items: center; align-content: center; min-height: 132px; box-sizing: border-box; text-align: center; }
+  .mt-page.fin svg { width: 40px; height: 40px; padding: 8px; border-radius: 50%; background: var(--mt-color); fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: square; stroke-linejoin: miter; }
+  .mt-page.fin h2 { margin: 12px 0 2px; }
+  .mt-panel.off { display: none; }
+  .mt-bar { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+  .mt-panel.off + .mt-bar { padding-top: 12px; }
+  .mt-bar button { height: 38px; padding: 0 18px; border-radius: 10px; font: 600 14px var(--mt-font); cursor: pointer; transition: background-color 0.2s, opacity 0.2s, transform 0.1s; }
+  .mt-bar button:active { transform: scale(0.97); }
+  .mt-bar button:disabled { opacity: 0.4; cursor: default; transform: none; }
+  .mt-bar button:focus-visible { outline: 2px solid var(--mt-color); outline-offset: 2px; }
+  .mt-prev { border: 1px solid #d6d9de; background: #fff; color: #4b5263; }
+  .mt-next { border: 0; background: var(--mt-color); color: #fff; }
+  .mt-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* 用户开启「减少动态效果」时：连线、对勾与面板直接切换，当前节点不呼吸 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-step *, .mt-link i { transition: none !important; }
+    .pulse .cur .mt-node::after { animation: none; }
+    .mt-page.fwd, .mt-page.bwd { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-card">
+  <ol class="mt-steps" id="mtSteps" aria-label="进度步骤"></ol>
+  <div class="mt-panel" id="mtPanel"></div>
+  <div class="mt-bar">
+    <button class="mt-prev" id="mtPrev" type="button">上一步</button>
+    <button class="mt-next" id="mtNext" type="button">下一步</button>
+  </div>
+  <div class="mt-sr" id="mtLive" aria-live="polite"></div>
+</div>
+<script>
+  const CONFIG = {
+    steps: '购物车｜收货地址｜支付｜完成', // 步骤：用「｜」分隔，2 到 6 步
+    current: 2,       // 当前步：打开时停在第几步
+    duration: 0.5,    // 连线时长（秒）：连线灌满一段要多久
+    pulse: true,      // 呼吸光圈：当前节点外圈一直轻轻扩散
+    panel: true,      // 内容面板：节点条下方显示当前步的内容卡片
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const $ = (id) => document.getElementById(id);
+  const NAMES = String(CONFIG.steps || '').split(/[｜|]/).map((s) => s.trim()).filter(Boolean).slice(0, 6);
+  while (NAMES.length < 2) NAMES.push(`第 ${NAMES.length + 1} 步`);
+  const M = NAMES.length;
+  const DUR = reduceMotion ? 0 : Math.max(0.05, CONFIG.duration);
+  const list = $('mtSteps'), panel = $('mtPanel'), prev = $('mtPrev'), next = $('mtNext'), live = $('mtLive');
+  list.classList.toggle('pulse', !!CONFIG.pulse);
+  panel.classList.toggle('off', !CONFIG.panel);
+
+  // 节点与连线交替排开；对勾用 IconPark 的 check 路径
+  const CHECK = '<svg class="mt-check" viewBox="0 0 48 48" aria-hidden="true"><!-- IconPark: check --><path d="M43 11L16.875 37L5 25.1818" pathLength="1" /></svg>';
+  const steps = [], links = [];
+  NAMES.forEach((name, i) => {
+    if (i) {
+      const l = document.createElement('li');
+      l.className = 'mt-link'; l.setAttribute('aria-hidden', 'true'); l.innerHTML = '<i></i>';
+      list.appendChild(l); links.push(l);
+    }
+    const li = document.createElement('li');
+    li.className = 'mt-step';
+    li.innerHTML = `<button class="mt-node" type="button"><span class="mt-num">${i + 1}</span>${CHECK}</button><span class="mt-lab"></span>`;
+    li.querySelector('.mt-lab').textContent = name;
+    li.querySelector('button').addEventListener('click', () => { if (i < cur) { userTook = true; go(i); } });
+    list.appendChild(li); steps.push(li);
+  });
+
+  // 标签宽度上限取相邻节点圆心距减 8px，节点条下方按最高的标签留白
+  function measure() {
+    const nodes = steps.map((s) => s.querySelector('.mt-node').getBoundingClientRect());
+    const gap = (nodes[M - 1].left - nodes[0].left) / (M - 1);
+    list.style.setProperty('--lw', `${Math.max(0, gap - 8)}px`);
+    const tall = Math.max(...steps.map((s) => s.querySelector('.mt-lab').offsetHeight));
+    list.style.marginBottom = `${tall + 24}px`;
+  }
+  new ResizeObserver(measure).observe(list);
+
+  // 每一步的占位内容：几条长短不一的骨架行
+  const ROWS = [[92, 74, 58], [86, 64, 80], [70, 88, 52], [96, 60, 72], [80, 70, 90], [64, 92, 76]];
+  function renderPanel(k, dir) {
+    const page = document.createElement('div');
+    page.className = `mt-page ${dir}`;
+    if (k >= M) {
+      page.classList.add('fin');
+      page.innerHTML = `<svg viewBox="0 0 48 48" aria-hidden="true"><!-- IconPark: check --><path d="M43 11L16.875 37L5 25.1818" /></svg><h2>全部完成</h2><small>共 ${M} 步都已完成</small>`;
+    } else {
+      page.innerHTML = `<small>第 ${k + 1} 步 · 共 ${M} 步</small><h2></h2>${ROWS[k].map((w) => `<i style="width:${w}%"></i>`).join('')}`;
+      page.querySelector('h2').textContent = NAMES[k];
+    }
+    panel.replaceChildren(page);
+  }
+
+  // 走到第 to 步（to = M 表示全部完成）：中间每段连线依次灌满或退回，节点状态按连线到达的时刻切换
+  let cur = 0, userTook = false;
+  function go(to, quiet, instant) {
+    to = clamp(to, 0, M);
+    const from = cur;
+    if (to === from) return;
+    const fwd = to > from, a = Math.min(from, M - 1), b = Math.min(to, M - 1);
+    const count = Math.abs(b - a), per = count && !instant ? DUR / count : 0;
+    links.forEach((l, j) => {
+      const on = j < to;
+      if (l.classList.contains('on') === on) return;
+      const order = fwd ? j - a : a - 1 - j;
+      l.classList.toggle('back', !fwd);
+      l.firstChild.style.transition = `transform ${per}s ease ${(order * per).toFixed(3)}s`;
+      l.classList.toggle('on', on);
+    });
+    steps.forEach((s, i) => {
+      const state = i < to ? 'done' : i === to ? 'cur' : '';
+      const was = s.classList.contains('done') ? 'done' : s.classList.contains('cur') ? 'cur' : '';
+      const reach = fwd ? Math.max(0, i - a) : Math.max(0, a - i);
+      s.style.setProperty('--nd', `${(state !== was ? reach * per : 0).toFixed(3)}s`);
+      s.classList.toggle('done', state === 'done');
+      s.classList.toggle('cur', state === 'cur');
+      if (state === 'cur') s.setAttribute('aria-current', 'step'); else s.removeAttribute('aria-current');
+      const btn = s.querySelector('button');
+      btn.disabled = i >= to;
+      btn.setAttribute('aria-label', `第 ${i + 1} 步：${NAMES[i]}，${state === 'done' ? '已完成，可返回' : state === 'cur' ? '进行中' : '未开始'}`);
+    });
+    cur = to;
+    renderPanel(to, instant ? '' : fwd ? 'fwd' : 'bwd');
+    prev.disabled = to === 0;
+    next.textContent = to >= M ? '重新开始' : to === M - 1 ? '完成' : '下一步';
+    if (!quiet) live.textContent = to >= M ? '全部完成' : `第 ${to + 1} 步：${NAMES[to]}`;
+  }
+  prev.addEventListener('click', () => { userTook = true; go(cur - 1); });
+  next.addEventListener('click', () => { userTook = true; go(cur >= M ? 0 : cur + 1); });
+
+  // 初始在第 1 步，打开 300ms 后沿连线走到「当前步」
+  cur = 1; go(0, true, true);
+  const start = clamp(Math.round(CONFIG.current), 1, M) - 1;
+  setTimeout(() => { if (!userTook) go(start, true); }, reduceMotion ? 0 : 300);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：一步步往前走，走完从头再来；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    setInterval(() => {
+      if (userTook || document.hidden) return;
+      go(cur >= M ? 0 : cur + 1, true);
+    }, 1500);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

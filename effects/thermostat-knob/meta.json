@@ -1,0 +1,118 @@
+{
+  "slug": "thermostat-knob",
+  "name": "温控旋钮",
+  "category": "progress",
+  "sub": "ring",
+  "tags": ["旋钮", "温控", "刻度", "拖拽", "拟物", "环形"],
+  "summary": "金属表圈包着黑色表面，绕圈拧动改温度，室温到设定温度那段刻度点亮，制热泛橙、制冷泛蓝",
+  "params": [
+    {
+      "key": "target",
+      "label": "设定温度",
+      "type": "range",
+      "target": "config",
+      "min": 10,
+      "max": 32,
+      "step": 0.5,
+      "default": 24,
+      "displayUnit": "°"
+    },
+    {
+      "key": "ambient",
+      "label": "室温",
+      "type": "range",
+      "target": "config",
+      "min": 10,
+      "max": 32,
+      "step": 0.5,
+      "default": 20.5,
+      "displayUnit": "°",
+      "help": "打开时的房间温度，会慢慢朝设定温度靠近"
+    },
+    {
+      "key": "step",
+      "label": "步进",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "0.5", "label": "0.5 度" },
+        { "value": "1", "label": "1 度" }
+      ],
+      "default": "0.5",
+      "help": "每拧一格变多少度"
+    },
+    {
+      "key": "ticks",
+      "label": "刻度数",
+      "type": "range",
+      "target": "config",
+      "min": 60,
+      "max": 200,
+      "step": 4,
+      "default": 140
+    },
+    {
+      "key": "sweep",
+      "label": "角度范围",
+      "type": "range",
+      "target": "config",
+      "min": 240,
+      "max": 330,
+      "step": 10,
+      "default": 300,
+      "displayUnit": "°",
+      "help": "刻度环张开的角度，缺口朝下"
+    },
+    {
+      "key": "drift",
+      "label": "室温跟进",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.3,
+      "step": 0.01,
+      "default": 0.06,
+      "displayUnit": " °/秒",
+      "help": "室温每秒朝设定温度靠近多少，0 为不变"
+    },
+    {
+      "key": "heat",
+      "label": "制热色",
+      "type": "color",
+      "target": "css",
+      "default": "#ff6a1a"
+    },
+    {
+      "key": "cool",
+      "label": "制冷色",
+      "type": "color",
+      "target": "css",
+      "default": "#2b8cff"
+    },
+    {
+      "key": "size",
+      "label": "尺寸",
+      "type": "range",
+      "target": "css",
+      "min": 220,
+      "max": 380,
+      "step": 4,
+      "default": 300,
+      "unit": "px",
+      "help": "旋钮直径"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "cooling", "name": "制冷", "values": { "target": 18, "ambient": 25.5 } },
+    { "id": "dense", "name": "细密刻度", "values": { "ticks": 200, "sweep": 330 } },
+    { "id": "sparse", "name": "疏朗整度", "values": { "ticks": 60, "sweep": 240, "step": "1" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Google Nest Learning Thermostat",
+    "url": "https://store.google.com/product/nest_learning_thermostat_4th_gen?hl=en-US",
+    "license": "未使用其代码"
+  }
+}

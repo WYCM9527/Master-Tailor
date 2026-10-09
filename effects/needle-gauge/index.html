@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仪表盘指针</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-color: #ff5a36;         /* 指针色：指针与读数弧 */
+    --mt-size: 440px;            /* 尺寸：表盘宽度 */
+    --mt-bg: #0c0e12;            /* 页面底色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .mt-gauge { width: min(var(--mt-size), 90vw); cursor: pointer; touch-action: none; outline: none; border-radius: 16px; }
+  .mt-gauge:focus-visible { outline: 2px solid color-mix(in srgb, var(--mt-color) 60%, transparent); outline-offset: 8px; }
+  .mt-gauge svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .mt-track { fill: none; stroke: #232830; stroke-width: 6; stroke-linecap: round; }
+  .mt-prog { fill: none; stroke: var(--mt-color); stroke-width: 6; stroke-linecap: round; opacity: 0.35; }
+  .mt-red { fill: none; stroke: #ff3b30; stroke-width: 6; opacity: 0.5; transition: opacity 0.3s; }
+  .mt-tick { stroke: rgba(255, 255, 255, 0.28); stroke-width: 0.8; }
+  .mt-tick.major { stroke: rgba(255, 255, 255, 0.8); stroke-width: 1.6; }
+  .mt-tick.hot { stroke: rgba(255, 90, 80, 0.85); }
+  .mt-lab { fill: rgba(255, 255, 255, 0.62); font-size: 8.5px; font-weight: 600; text-anchor: middle; dominant-baseline: central; font-variant-numeric: tabular-nums; }
+  .mt-needle { fill: var(--mt-color); }
+  .mt-cap { fill: #1b1f26; stroke: rgba(255, 255, 255, 0.18); stroke-width: 1.5; }
+  .mt-read { fill: #f2f4f7; font-size: 30px; font-weight: 700; text-anchor: middle; font-variant-numeric: tabular-nums; transition: fill 0.3s; }
+  .mt-unit { fill: rgba(255, 255, 255, 0.5); font-size: 9px; letter-spacing: 0.12em; text-anchor: middle; }
+  /* 指针进入红区：红区整段亮起并发光，读数变红 */
+  .hot .mt-red { opacity: 1; filter: url(#mtGlow); }
+  .hot .mt-read { fill: #ff6b5b; }
+</style>
+</head>
+<body>
+<div class="mt-gauge" id="mtGauge" role="slider" tabindex="0" aria-valuemin="0">
+  <svg id="mtSvg" aria-hidden="true">
+    <defs>
+      <radialGradient id="mtPlate"><stop offset="0" stop-color="#1b2029" /><stop offset="1" stop-color="#1b2029" stop-opacity="0" /></radialGradient>
+      <filter id="mtGlow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+    </defs>
+    <circle r="112" fill="url(#mtPlate)" />
+    <path class="mt-track" id="mtTrack" />
+    <path class="mt-prog" id="mtProg" />
+    <path class="mt-red" id="mtRed" />
+    <g id="mtTicks"></g>
+    <g id="mtNeedle"><path class="mt-needle" d="M88 0 L-6 -3.4 L-16 -2 L-16 2 L-6 3.4 Z" /></g>
+    <circle class="mt-cap" r="7.5" />
+    <text class="mt-read" id="mtRead" y="38">0</text>
+    <text class="mt-unit" id="mtUnit" y="52"></text>
+  </svg>
+</div>
+<script>
+  const CONFIG = {
+    value: 128,       // 读数：超过量程时停在满格
+    max: 220,         // 量程
+    majors: 11,       // 主刻度段数：量程被分成几大格，每格标一个数字
+    redline: 80,      // 警戒区（%）：从量程的百分之多少开始是红区，100 为不设
+    bounce: 0.6,      // 回弹强度：0 为稳稳停住，越大过冲越多、晃得越久
+    sweep: 180,       // 表盘角度（°）：180 为半圆，越大越像汽车仪表
+    unit: 'km/h',     // 单位
+    selftest: true,   // 开机自检：打开时指针先扫到满格再回落
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const $ = (id) => document.getElementById(id);
+  const gauge = $('mtGauge'), svg = $('mtSvg'), needle = $('mtNeedle'), prog = $('mtProg'), readEl = $('mtRead');
+  const MAX = Math.max(1, CONFIG.max);
+  const MAJ = clamp(Math.round(CONFIG.majors), 2, 20);
+  const SWEEP = clamp(CONFIG.sweep, 120, 300);
+  const START = 270 - SWEEP / 2;                    // 起点角（0° 指向右、顺时针为正），表盘以正上方为中线
+  const RED = clamp(CONFIG.redline, 0, 100) / 100;
+  const ZETA = 1 - 0.88 * clamp(CONFIG.bounce, 0, 1); // 阻尼比：回弹强度越大越小
+  const OMEGA = 2 * Math.PI * 1.2;                   // 指针弹簧的固有频率
+  const R = 92;                                      // 弧线半径（SVG 单位）
+  const DEC = MAX / MAJ < 1 || MAX < 20 ? 1 : 0;     // 量程小时读数带一位小数
+  const NS = 'http://www.w3.org/2000/svg';
+  const rad = (d) => (d * Math.PI) / 180;
+  const ang = (v) => START + (v / MAX) * SWEEP;
+  const pt = (a, r) => `${(Math.cos(rad(a)) * r).toFixed(2)} ${(Math.sin(rad(a)) * r).toFixed(2)}`;
+  const arc = (a0, a1, r) => (a1 - a0 < 0.01 ? '' : `M${pt(a0, r)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${pt(a1, r)}`);
+
+  // 视框：上沿留出弧线，下沿取「弧线两端最低点」与读数两者靠下的一个
+  const low = Math.max(0, Math.sin(rad(START)) * (R + 4));
+  const bottom = Math.max(60, low + 12);
+  svg.setAttribute('viewBox', `-112 -108 224 ${108 + bottom}`);
+  $('mtTrack').setAttribute('d', arc(START, START + SWEEP, R));
+  if (RED < 1) $('mtRed').setAttribute('d', arc(ang(RED * MAX), START + SWEEP, R));
+  $('mtUnit').textContent = CONFIG.unit;
+  if (SWEEP > 200) { readEl.setAttribute('y', 44); $('mtUnit').setAttribute('y', 58); }
+
+  // 刻度：每个大格再分 5 小格；主刻度内侧标数字，红区里的刻度染红
+  const ticks = $('mtTicks');
+  for (let i = 0; i <= MAJ * 5; i++) {
+    const f = i / (MAJ * 5), a = START + f * SWEEP, major = i % 5 === 0;
+    const l = ticks.appendChild(document.createElementNS(NS, 'line'));
+    const [x1, y1] = pt(a, major ? 74 : 79).split(' '), [x2, y2] = pt(a, 86).split(' ');
+    l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+    l.setAttribute('class', `mt-tick${major ? ' major' : ''}${f >= RED - 1e-6 && RED < 1 ? ' hot' : ''}`);
+    if (major) {
+      const t = ticks.appendChild(document.createElementNS(NS, 'text'));
+      const [tx, ty] = pt(a, 63).split(' ');
+      t.setAttribute('x', tx); t.setAttribute('y', ty); t.setAttribute('class', 'mt-lab');
+      const v = (MAX * i) / (MAJ * 5);
+      t.textContent = Number.isInteger(v) ? v : v.toFixed(1);
+    }
+  }
+
+  gauge.setAttribute('aria-valuemax', MAX);
+  gauge.setAttribute('aria-label', '仪表读数');
+  let target = 0, pos = 0, vel = 0, userTook = false, raf = 0, last = 0, t = 0;
+  function draw() {
+    // 红区里给指针叠一点高频抖动（只影响画面，不影响弹簧）
+    const hot = RED < 1 && pos >= RED * MAX;
+    const shake = hot && !reduceMotion ? (Math.sin(t * 61) * 0.6 + Math.sin(t * 97) * 0.4) * MAX * 0.004 : 0;
+    const shown = clamp(pos + shake, -MAX * 0.02, MAX * 1.025);
+    needle.setAttribute('transform', `rotate(${ang(shown).toFixed(2)})`);
+    prog.setAttribute('d', arc(START, ang(clamp(pos, 0, MAX)), R));
+    readEl.textContent = clamp(pos, 0, MAX).toFixed(DEC);
+    svg.classList.toggle('hot', hot);
+  }
+  // 弹簧积分：指针被拉向目标值，越过两端时撞到限位柱弹回
+  function frame(now) {
+    raf = 0;
+    if (document.hidden) { last = 0; raf = requestAnimationFrame(frame); return; }
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+    last = now; t += dt;
+    for (let h = dt; h > 0; h -= 1 / 240) {
+      const s = Math.min(h, 1 / 240);
+      vel += (-OMEGA * OMEGA * (pos - target) - 2 * ZETA * OMEGA * vel) * s;
+      pos += vel * s;
+      if (pos > MAX * 1.025) { pos = MAX * 1.025; vel *= -0.35; }
+      if (pos < -MAX * 0.02) { pos = -MAX * 0.02; vel *= -0.35; }
+    }
+    draw();
+    const resting = Math.abs(pos - target) < MAX * 0.0005 && Math.abs(vel) < MAX * 0.002;
+    if (resting) pos = target;
+    if (!resting || (RED < 1 && pos >= RED * MAX)) raf = requestAnimationFrame(frame);
+    else last = 0;
+  }
+  function setTarget(v) {
+    target = clamp(v, 0, MAX);
+    gauge.setAttribute('aria-valuenow', +target.toFixed(DEC));
+    gauge.setAttribute('aria-valuetext', `${target.toFixed(DEC)} ${CONFIG.unit}`);
+    if (reduceMotion) { pos = target; vel = 0; draw(); return; }
+    if (!raf) raf = requestAnimationFrame(frame);
+  }
+
+  // 在表盘上点按或拖动：按指针相对表心的角度换算读数，落在下方缺口里就取较近的一端
+  let dragging = false;
+  function fromPointer(e) {
+    const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(svg.getScreenCTM().inverse());
+    let a = (Math.atan2(p.y, p.x) * 180) / Math.PI;
+    let d = (((a - START) % 360) + 360) % 360;
+    if (d > SWEEP) d = d - SWEEP < (360 - SWEEP) / 2 ? SWEEP : 0;
+    return (d / SWEEP) * MAX;
+  }
+  gauge.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    userTook = true; dragging = true;
+    gauge.setPointerCapture(e.pointerId);
+    setTarget(fromPointer(e));
+  });
+  gauge.addEventListener('pointermove', (e) => { if (dragging) setTarget(fromPointer(e)); });
+  const end = () => { dragging = false; };
+  gauge.addEventListener('pointerup', end);
+  gauge.addEventListener('pointercancel', end);
+  const small = MAX / MAJ / 4, big = MAX / MAJ;
+  gauge.addEventListener('wheel', (e) => { e.preventDefault(); userTook = true; setTarget(target + (e.deltaY < 0 ? small : -small)); }, { passive: false });
+  gauge.addEventListener('keydown', (e) => {
+    const d = { ArrowUp: small, ArrowRight: small, ArrowDown: -small, ArrowLeft: -small, PageUp: big, PageDown: -big }[e.key];
+    let v = d === undefined ? null : target + d;
+    if (e.key === 'Home') v = 0;
+    if (e.key === 'End') v = MAX;
+    if (v === null) return;
+    e.preventDefault();
+    userTook = true;
+    setTarget(v);
+  });
+
+  draw();
+  if (CONFIG.selftest && !reduceMotion) {
+    setTimeout(() => { if (!userTook) setTarget(MAX); }, 300);
+    setTimeout(() => { if (!userTook) setTarget(CONFIG.value); }, 1150);
+  } else setTimeout(() => setTarget(CONFIG.value), reduceMotion ? 0 : 300);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：读数在几档之间跳，偶尔冲进红区；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const seq = [0.86, 0.3, 0.62, 0.95, 0.45];
+    let n = 0;
+    setInterval(() => {
+      if (userTook || document.hidden) return;
+      setTarget(seq[n++ % seq.length] * MAX);
+    }, 2200);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

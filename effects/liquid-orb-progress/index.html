@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>液体水球</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-color: #3b8bff;         /* 液体色 */
+    --mt-size: 240px;            /* 尺寸：水球直径 */
+    --mt-bg: #0a0f1c;            /* 页面底色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #e8edf7; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .mt-box { display: grid; justify-items: center; gap: 20px; }
+
+  /* 玻璃球：外圈细边与投影在 ::before，液体画在内缩 8px 的圆里，高光与内阴影在 ::after 盖在最上面 */
+  .mt-orb { position: relative; width: min(var(--mt-size), 76vw); aspect-ratio: 1; border-radius: 50%; cursor: ns-resize; touch-action: none; outline: none; }
+  .mt-orb::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.14); box-shadow: 0 26px 60px -24px color-mix(in srgb, var(--mt-color) 55%, transparent); transition: border-color 0.2s; }
+  .mt-orb::after { content: ''; position: absolute; inset: 8px; border-radius: 50%; pointer-events: none; box-shadow: inset 0 -14px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.06); }
+  .mt-shine { position: absolute; left: 17%; top: 13%; width: 30%; height: 15%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0)); transform: rotate(-38deg); pointer-events: none; }
+  .mt-orb:focus-visible::before { border-color: color-mix(in srgb, var(--mt-color) 70%, #fff); }
+  .mt-orb svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .mt-inner { fill: #0e1830; }
+  .mt-back { fill: var(--mt-color); opacity: 0.42; }
+  .mt-front { fill: var(--mt-color); }
+  .mt-bubs circle { fill: rgba(255, 255, 255, 0.16); stroke: rgba(255, 255, 255, 0.55); stroke-width: 1; }
+  /* 百分比画两遍：液面以上是浅色，被液体淹没的部分用水面形状裁出白字 */
+  .mt-num { font-weight: 700; font-variant-numeric: tabular-nums; text-anchor: middle; dominant-baseline: central; }
+  .mt-num.dry { fill: color-mix(in srgb, var(--mt-color) 55%, #fff); }
+  .mt-num.wet { fill: #fff; }
+  .mt-cap { font-size: 14px; letter-spacing: 0.08em; color: rgba(232, 237, 247, 0.6); }
+</style>
+</head>
+<body>
+<div class="mt-box">
+  <div class="mt-orb" id="mtOrb" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+    <svg id="mtSvg" aria-hidden="true">
+      <defs>
+        <clipPath id="mtBall"><circle id="mtBallC" /></clipPath>
+        <clipPath id="mtWet"><path id="mtWetP" /></clipPath>
+      </defs>
+      <g clip-path="url(#mtBall)">
+        <circle class="mt-inner" id="mtInner" />
+        <path class="mt-back" id="mtBack" />
+        <path class="mt-front" id="mtFront" />
+        <g class="mt-bubs" id="mtBubs" clip-path="url(#mtWet)"></g>
+      </g>
+      <text class="mt-num dry" id="mtDry"><tspan></tspan><tspan>%</tspan></text>
+      <text class="mt-num wet" id="mtWetT" clip-path="url(#mtWet)"><tspan></tspan><tspan>%</tspan></text>
+    </svg>
+    <i class="mt-shine"></i>
+  </div>
+  <div class="mt-cap" id="mtCap"></div>
+</div>
+<script>
+  const CONFIG = {
+    value: 62,        // 进度（%）：打开时从空涨到这里
+    waveHeight: 8,    // 波高（px）
+    waveSpeed: 1,     // 波速（倍）
+    slosh: 1,         // 晃动幅度（倍）：液面变化或左右拖动时荡起的程度，0 为不晃
+    settle: 2.4,      // 平复时间（秒）：晃动衰减到几乎静止要多久
+    duration: 1.2,    // 涨落时长（秒）：液面追到新位置大约要多久
+    bubbles: true,    // 气泡：液体里不时冒出小气泡往上浮
+    label: '今日饮水', // 标题
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const $ = (id) => document.getElementById(id);
+  const orb = $('mtOrb'), svg = $('mtSvg'), back = $('mtBack'), front = $('mtFront'), wetP = $('mtWetP'), bubG = $('mtBubs');
+  const texts = [$('mtDry'), $('mtWetT')];
+  const label = CONFIG.label || '进度';
+  $('mtCap').textContent = label;
+  orb.setAttribute('aria-label', label);
+
+  const AMP = clamp(CONFIG.waveHeight, 0, 40);
+  const SPD = clamp(CONFIG.waveSpeed, 0, 5);
+  const SL = clamp(CONFIG.slosh, 0, 3);
+  const DECAY = 3 / Math.max(0.3, CONFIG.settle);      // e^-3 ≈ 5%：平复时间过后晃动只剩一成不到
+  const FOLLOW = 4 / Math.max(0.1, CONFIG.duration);   // 液面按指数追目标，约一个涨落时长追上
+  const OMEGA = 2 * Math.PI * 0.9;                     // 整体晃荡的频率：每秒约 0.9 个来回
+
+  let W = 0, C = 0, R = 0;
+  function measure() {
+    W = orb.clientWidth; C = W / 2; R = C - 8;
+    svg.setAttribute('viewBox', `0 0 ${W} ${W}`);
+    for (const id of ['mtBallC', 'mtInner']) { const c = $(id); c.setAttribute('cx', C); c.setAttribute('cy', C); c.setAttribute('r', R); }
+    texts.forEach((t) => {
+      t.setAttribute('x', C); t.setAttribute('y', C);
+      t.children[0].setAttribute('font-size', (W * 0.2).toFixed(1));
+      t.children[1].setAttribute('font-size', (W * 0.09).toFixed(1));
+      t.children[1].setAttribute('dx', (W * 0.01).toFixed(1));
+    });
+    draw();
+  }
+
+  let target = 0, shown = 0, t = 0, S = 0, V = 0, boost = 0, userTook = false;
+  const bubbles = [];
+
+  // 液面高度：0% 时波峰贴着球底，100% 时波谷贴着球顶；两端附近波浪和晃动一起收平
+  const levelY = () => C + R + AMP - (shown / 100) * (2 * R + 2 * AMP);
+  const edge = () => clamp(Math.min(shown, 100 - shown) / 8, 0, 1);
+  const tilt = () => { const lim = 0.32 * R; return lim * Math.tanh(S / lim); };
+  function surfaceAt(x) {
+    const k = edge(), a = AMP * (1 + boost) * k;
+    return levelY() + a * Math.sin(x * (2 * Math.PI) / (1.5 * R) + t * 2.4 * SPD) + tilt() * k * Math.sin(((x - C) / R) * (Math.PI / 2));
+  }
+  function wave(len, ph, ampK, tiltK) {
+    const k = edge(), a = AMP * (1 + boost) * k * ampK, s = tilt() * k * tiltK, lv = levelY();
+    let d = '';
+    for (let x = C - R - 4; x <= C + R + 4; x += 4) {
+      const y = lv + a * Math.sin(x * (2 * Math.PI) / len + ph) + s * Math.sin(((x - C) / R) * (Math.PI / 2));
+      d += (d ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1);
+    }
+    return d + `L${(C + R + 4).toFixed(1)},${W}L${(C - R - 4).toFixed(1)},${W}Z`;
+  }
+  function draw() {
+    if (!W) return;
+    // 后层：波长更长、反向流动、幅度与晃动都弱一些，叠出前后两层错开的液面
+    back.setAttribute('d', wave(1.9 * R, -t * 1.7 * SPD + 2.2, 0.8, 0.85));
+    const d = wave(1.5 * R, t * 2.4 * SPD, 1, 1);
+    front.setAttribute('d', d);
+    wetP.setAttribute('d', d);
+    const n = Math.round(shown);
+    texts.forEach((el) => { el.children[0].textContent = n; });
+    bubbles.forEach((b) => { b.el.setAttribute('cx', b.x.toFixed(1)); b.el.setAttribute('cy', b.y.toFixed(1)); });
+  }
+
+  // 冒泡：从球底附近升起，左右轻摆，碰到液面就消失
+  let bubbleIn = 0.4;
+  function stepBubbles(dt) {
+    bubbleIn -= dt;
+    if (CONFIG.bubbles && shown > 6 && bubbleIn <= 0 && bubbles.length < 12) {
+      bubbleIn = 0.25 + Math.random() * 0.45;
+      const dx = (Math.random() * 2 - 1) * R * 0.6, r = (1.5 + Math.random() * 2.5) * (W / 240);
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      el.setAttribute('r', r.toFixed(1));
+      bubG.appendChild(el);
+      bubbles.push({ el, x0: C + dx, x: C + dx, y: C + Math.sqrt(R * R - dx * dx) - r - 2, r, vy: (18 + Math.random() * 28) * (W / 240), ph: Math.random() * 6.28 });
+    }
+    for (let i = bubbles.length - 1; i >= 0; i--) {
+      const b = bubbles[i];
+      b.y -= b.vy * dt;
+      b.x = b.x0 + Math.sin(t * 3 + b.ph) * 2.5;
+      if (b.y < surfaceAt(b.x) + b.r + 1) { b.el.remove(); bubbles.splice(i, 1); }
+    }
+  }
+
+  let last = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (document.hidden) { last = 0; return; }
+    const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+    last = now;
+    t += dt;
+    shown += (target - shown) * (1 - Math.exp(-FOLLOW * dt));
+    if (Math.abs(target - shown) < 0.05) shown = target;
+    // 晃荡是一个阻尼弹簧：S 为液面倾斜量（右高为正），V 为它的速度
+    for (let h = dt; h > 0; h -= 1 / 120) {
+      const s = Math.min(h, 1 / 120);
+      V += (-OMEGA * OMEGA * S - 2 * DECAY * V) * s;
+      S += V * s;
+    }
+    boost *= Math.exp(-DECAY * dt);
+    stepBubbles(dt);
+    draw();
+  }
+
+  function setTarget(v) {
+    v = clamp(Math.round(v), 0, 100);
+    if (v === target) return;
+    const d = v - target;
+    target = v;
+    orb.setAttribute('aria-valuenow', v);
+    orb.setAttribute('aria-valuetext', v + '%');
+    if (reduceMotion) { shown = v; draw(); return; }
+    // 水位变化给晃荡一个冲量：变化越大荡得越高，波浪也临时变高
+    boost = Math.min(2.5, boost + (Math.abs(d) / 100) * 2.5 * SL);
+    V += Math.sign(d) * (Math.abs(d) / 100) * 0.24 * R * OMEGA * SL;
+  }
+
+  // 点按或上下拖动改水位；拖动时左右移动相当于晃杯子，液体朝反方向堆起
+  let dragging = false, lastX = 0;
+  const fromY = (y) => { const r = orb.getBoundingClientRect(); return ((C + R - (y - r.top)) / (2 * R)) * 100; };
+  orb.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    userTook = true; dragging = true; lastX = e.clientX;
+    orb.setPointerCapture(e.pointerId);
+    setTarget(fromY(e.clientY));
+  });
+  orb.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    setTarget(fromY(e.clientY));
+    const dx = e.clientX - lastX;
+    lastX = e.clientX;
+    if (!reduceMotion) { V -= dx * 1.7 * SL; boost = Math.min(2.5, boost + (Math.abs(dx) / R) * 0.3 * SL); }
+  });
+  const end = () => { dragging = false; };
+  orb.addEventListener('pointerup', end);
+  orb.addEventListener('pointercancel', end);
+  orb.addEventListener('keydown', (e) => {
+    const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1, PageUp: 10, PageDown: -10 }[e.key];
+    let v = d === undefined ? null : target + d;
+    if (e.key === 'Home') v = 0;
+    if (e.key === 'End') v = 100;
+    if (v === null) return;
+    e.preventDefault();
+    userTook = true;
+    setTarget(v);
+  });
+
+  new ResizeObserver(measure).observe(orb);
+  measure();
+  if (!reduceMotion) requestAnimationFrame(frame);
+  setTimeout(() => setTarget(CONFIG.value), reduceMotion ? 0 : 250);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：在几个水位之间来回涨落；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const seq = [86, 28, 64, 12, 94, 46];
+    let n = 0;
+    setInterval(() => {
+      if (userTook || document.hidden) return;
+      setTarget(seq[n++ % seq.length]);
+    }, 2600);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
