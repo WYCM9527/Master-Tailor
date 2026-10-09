@@ -1,6 +1,6 @@
 # 内容来源与收录台账
 
-> 更新：2026-10-09 · 站内 281 个效果（本日删去「滚动描迹光束」「滚动描线」「滚入列表」「色块揭示进场」，历次删除见文末「已删除的效果」）。回答两件事：**已经从哪些源收了什么、为什么不收其余的**，以及**下一批还能去哪找**。加新效果或评估新来源前先读这里，避免重复评估同一批组件。
+> 更新：2026-10-09 · 站内 281 个效果、9 个一级分类（本日删去「滚动描迹光束」「滚动描线」「滚入列表」「色块揭示进场」，历次删除见文末「已删除的效果」；「页面转场」「加载与进场」并入新一级分类「加载」，见「分类决策记录」）。回答两件事：**已经从哪些源收了什么、为什么不收其余的**，以及**下一批还能去哪找**。加新效果或评估新来源前先读这里，避免重复评估同一批组件。
 
 ## 许可口径（红线）
 
@@ -97,7 +97,7 @@ animos.app 是闭源商业 SaaS（设计作品展示的视频动效模板编辑�
 | Position Dance                                                               | `position-dance-cards` 换位卡组   |                                                                                            |
 | Card Totem                                                                   | `card-totem-stream` 竖向卡片流    | 连续流 + 中央放大，区别于离散切换的 `vertical-carousel`                                    |
 
-不收 · 与站内重合（约 20）：Cover Ring / Cover Ring Vertical（`ring-carousel`）、Cover Flow / Cover Flow Vertical（`coverflow-carousel`）、Carousel Flow / Focus Slider（`peek-carousel` / `multi-slide-carousel`）、Film Strip / Hero Reel（`slide-carousel` / `hero-text-carousel`）、Image Trail（`image-trail`）、Card Toss / Cascade Drop / Cascade Deck / Stack Slide / Deck Peel（`stack-cards-carousel` / `shuffle-stack-carousel` / `card-swap`）、Ticker Loop / Ticker Tilt / Column Drift / Totem Wall（`tilted-image-wall` / `grid-motion`）、Grid Reveal / Pop Grid（`masonry-grid`）、Center Stage / Focus Shift / Spotlight Zoom / Zoom Parallax（`kenburns-carousel` / `zoom-fade-carousel`）、Diagonal Wipe / Stripe Reveal / Split Reveal / Mosaic Wipe（`slice-carousel` / `clip-shape-carousel` / 发布会转场）。
+不收 · 与站内重合（约 20）：Cover Ring / Cover Ring Vertical（`ring-carousel`）、Cover Flow / Cover Flow Vertical（`coverflow-carousel`）、Carousel Flow / Focus Slider（`peek-carousel` / `multi-slide-carousel`）、Film Strip / Hero Reel（`slide-carousel` / `hero-text-carousel`）、Image Trail（`image-trail`）、Card Toss / Cascade Drop / Cascade Deck / Stack Slide / Deck Peel（`stack-cards-carousel` / `shuffle-stack-carousel` / `card-swap`）、Ticker Loop / Ticker Tilt / Column Drift / Totem Wall（`tilted-image-wall` / `grid-motion`）、Grid Reveal / Pop Grid（`masonry-grid`）、Center Stage / Focus Shift / Spotlight Zoom / Zoom Parallax（`kenburns-carousel` / `zoom-fade-carousel`）、Diagonal Wipe / Stripe Reveal / Split Reveal / Mosaic Wipe（`slice-carousel` / `clip-shape-carousel` / 页面转场）。
 
 不收 · 不是网页组件形态（约 12）：Multiscene 8 个（Triple Scene、Collage Reel、Fan Shuffle、Sweep Ring、Scatter Dial、Grid Zoom Strip、Spread Rows、Spread Columns）是多场景蒙太奇剪辑，参数模型装不下多段时间线；Feed Scroll 是手机信息流机壳；Poster Burst 以大字排版为主，不算图片陈列。
 
@@ -126,19 +126,20 @@ animos.app 是闭源商业 SaaS（设计作品展示的视频动效模板编辑�
 
 ## 分类决策记录
 
-| 决策                                       | 内容                                                                                                                                                                                                     |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 背景不收滚动触发                           | 背景效果的子类只有自动 / 鼠标交互 / 点击；滚动驱动的背景归「多卡/图展示·滚动交互」或不收                                                                                                                 |
-| 转场不收滚动接力                           | 「页面转场」只收页面间换场（共享元素 / 推屏 / 缩放淡入 / 发布会），随滚动推进的分节、视差、堆叠一律归「多卡/图展示·滚动交互」                                                                            |
-| 表单控件归「按钮与交互」                   | 单个控件（开关 / 复选框 / 输入框）不单设分类；累计已到 5 个的阈值，**再加一个就该新增「表单控件」分类并把现有 5 个迁过去**                                                                               |
-| 「鼠标样式」分类（`canvas`）只放光标本体   | 果冻光标、十字瞄准线、拖尾等 10 个纯光标效果；全屏氛围类（融球、粒子星空等）与鼠标驱动的整幅图像 / 网格（字符画图、网格扭曲图、像素扭曲图、光标格纹、魔法光环、幽灵烟雾光标，2026-09-23 迁入）归背景效果 |
-| 多图 / 卡片墙归 `showcase/wall`            | 3D 图墙、斜向图墙、鼠标视差层从背景移入「多卡/图展示·图墙」                                                                                                                                              |
-| 自动播放的 3D 图片陈列也归 `showcase/wall` | 环带、弧面墙、隧道、螺旋、卡片球、轮盘这类无交互的自动陈列不另设子类，「图墙」描述已放宽为「墙、环、球、隧道等陈列」                                                                                     |
-| 薄库合成合集                               | Hover.css、链接下划线、图说悬停、线条菜单等单个太薄的形态用一个 `select` 参数切多种                                                                                                                      |
-| 「进度条」独立成一级分类（`progress`）     | 2026-09-23 新增：进度条 / 滑块 / 数值指示这类「表示进度并可拖动」的控件归此，子类沿用触发方式；首个效果是挤值圆头滑块                                                                                    |
+| 决策                                       | 内容                                                                                                                                                                                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 背景不收滚动触发                           | 背景效果的子类只有自动 / 鼠标交互 / 点击；滚动驱动的背景归「多卡/图展示·滚动交互」或不收                                                                                                                                              |
+| 转场不收滚动接力                           | 「加载·页面转场」只收页面间换场（擦除、揭示、翻转、溶解、共享元素形变等），随滚动推进的分节、视差、堆叠一律归「多卡/图展示·滚动交互」                                                                                                 |
+| 表单控件归「按钮与交互」                   | 单个控件（开关 / 复选框 / 输入框）不单设分类；累计已到 5 个的阈值，**再加一个就该新增「表单控件」分类并把现有 5 个迁过去**                                                                                                            |
+| 「鼠标样式」分类（`canvas`）只放光标本体   | 果冻光标、十字瞄准线、拖尾等 10 个纯光标效果；全屏氛围类（融球、粒子星空等）与鼠标驱动的整幅图像 / 网格（字符画图、网格扭曲图、像素扭曲图、光标格纹、魔法光环、幽灵烟雾光标，2026-09-23 迁入）归背景效果                              |
+| 多图 / 卡片墙归 `showcase/wall`            | 3D 图墙、斜向图墙、鼠标视差层从背景移入「多卡/图展示·图墙」                                                                                                                                                                           |
+| 自动播放的 3D 图片陈列也归 `showcase/wall` | 环带、弧面墙、隧道、螺旋、卡片球、轮盘这类无交互的自动陈列不另设子类，「图墙」描述已放宽为「墙、环、球、隧道等陈列」                                                                                                                  |
+| 薄库合成合集                               | Hover.css、链接下划线、图说悬停、线条菜单等单个太薄的形态用一个 `select` 参数切多种                                                                                                                                                   |
+| 「进度条」独立成一级分类（`progress`）     | 2026-09-23 新增：进度条 / 滑块 / 数值指示这类「表示进度并可拖动」的控件归此，子类沿用触发方式；首个效果是挤值圆头滑块                                                                                                                 |
+| 「加载」一级分类（`loading`）              | 2026-10-09：原一级「页面转场」与「加载与进场」并入新一级「加载」，成为它的两个子类「页面转场」（`transition`，7 个）与「loading动画」（`anim`，16 个）；原转场的共享元素 / 推屏 / 缩放淡入 / 发布会转场与加载类的触发方式子类不再细分 |
 
 ## 候选池（未启动）
 
 - **MIT 安全源，尚未核对目录与去重**：Cult UI（开源部分）、Motion-Primitives、HyperUI、KokonutUI、UI Layouts、fancycomponents、smoothui。
-- **薄子类待补或合并**：`showcase/compare` 1 个、`button/idle` 1 个、`text/click` 2 个、`nav/scroll` 2 个、`loading/scroll` 1 个、`transition` 全类 7 个。侧栏里点开只有一两张卡，要么补到 4–5 个，要么合并子类。
+- **薄子类待补或合并**：`showcase/compare` 1 个、`button/idle` 1 个、`text/click` 2 个、`nav/scroll` 2 个。侧栏里点开只有一两张卡，要么补到 4–5 个，要么合并子类。
 - **视觉复查**：批九 GLSL 23 个对照源站截图逐个过一遍（2026-09-17～09-21 重做的 4 个观感不齐的效果都是这类「算法照搬、观感没对齐」）。

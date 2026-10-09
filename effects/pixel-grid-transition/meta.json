@@ -1,8 +1,8 @@
 {
   "slug": "pixel-grid-transition",
   "name": "像素格转场",
-  "category": "transition",
-  "sub": "keynote",
+  "category": "loading",
+  "sub": "transition",
   "tags": ["转场", "像素", "网格", "换页"],
   "summary": "换页时整屏被一格格像素块从上到下参差地铺满，盖住的一瞬换成新页，再按相反顺序一格格褪去",
   "params": [

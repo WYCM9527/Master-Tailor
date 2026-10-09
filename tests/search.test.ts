@@ -27,8 +27,8 @@ describe('matchEffect', () => {
     name: '卡片展开转场',
     summary: '点击卡片原地长大成详情页大图',
     slug: 'demo-expand',
-    category: 'transition',
-    sub: 'shared',
+    category: 'loading',
+    sub: 'transition',
     tags: ['转场', '共享元素', 'View Transitions', '苹果风'],
   });
 
@@ -39,8 +39,9 @@ describe('matchEffect', () => {
   it('普通词在名称 / 摘要 / slug / 标签 / 分类名 / 子类名里子串匹配（AND）', () => {
     expect(matchEffect(m, parseQuery('卡片 长大'))).toBe(true); // 名称 + 摘要
     expect(matchEffect(m, parseQuery('expand'))).toBe(true); // slug
-    expect(matchEffect(m, parseQuery('页面转场'))).toBe(true); // 分类名
-    expect(matchEffect(m, parseQuery('共享元素'))).toBe(true); // 子类名 / 标签
+    expect(matchEffect(m, parseQuery('加载'))).toBe(true); // 分类名
+    expect(matchEffect(m, parseQuery('页面转场'))).toBe(true); // 子类名
+    expect(matchEffect(m, parseQuery('共享元素'))).toBe(true); // 标签
     expect(matchEffect(m, parseQuery('卡片 轮播'))).toBe(false); // AND：有一个词不中即不中
   });
 

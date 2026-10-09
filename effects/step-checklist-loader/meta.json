@@ -2,7 +2,7 @@
   "slug": "step-checklist-loader",
   "name": "多步加载",
   "category": "loading",
-  "sub": "idle",
+  "sub": "anim",
   "tags": ["加载", "步骤", "清单", "打勾"],
   "summary": "一列步骤依次完成：当前步旋转等待并放大高亮，完成后画上一个勾，整列向上滚动让下一步接到视线中央",
   "params": [

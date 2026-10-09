@@ -141,7 +141,6 @@ export const effectMetaSchema = z
       'text',
       'card',
       'showcase',
-      'transition',
       'loading',
       'progress',
       'canvas',

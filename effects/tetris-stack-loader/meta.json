@@ -2,7 +2,7 @@
   "slug": "tetris-stack-loader",
   "name": "俄罗斯方块",
   "category": "loading",
-  "sub": "idle",
+  "sub": "anim",
   "tags": [
     "加载",
     "方块",

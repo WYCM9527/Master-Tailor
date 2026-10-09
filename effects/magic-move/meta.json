@@ -1,6 +1,6 @@
 {
-  "category": "transition",
-  "sub": "shared",
+  "category": "loading",
+  "sub": "transition",
   "thumb": {
     "mode": "autoplay"
   },

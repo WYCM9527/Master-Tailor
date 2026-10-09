@@ -3,7 +3,7 @@
   <!--
   转场核心模板（内容生产参考，不参与构建）
 
-  所有 category 为 transition（sub 非 scroll）的效果共享这份骨架：
+  所有「加载·页面转场」（category loading、sub transition）的效果共享这份骨架：
   一个「迷你站」里有列表页和详情页两个 .page，go() 用同文档 View Transitions
   （document.startViewTransition）在两页间切换，转场动画全部写在 CSS 的
   「过渡层」里——多数形态只需改那一段。
@@ -16,7 +16,7 @@
   prefers-reduced-motion 瞬间切换 · 返回按钮 + Esc/Backspace + 左缘拖拽返回 ·
   转场后聚焦新页标题 · 转场进行中忽略新的导航
 
-  共享元素形态（sub: shared）追加约定：
+  共享元素形态（如魔术移动转场）追加约定：
   只给「参与本次转场」的元素挂 view-transition-name——点击哪张卡就临时给哪张卡挂名，
   转场结束立刻摘掉；详情页里的承接元素可以常挂（页面 hidden 即 display:none 时不参与快照，
   不会重名）。文档内同一时刻重名会导致整个转场被跳过。

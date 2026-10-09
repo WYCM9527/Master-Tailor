@@ -1,8 +1,8 @@
 {
   "slug": "rotated-reveal-transition",
   "name": "旋转揭幕转场",
-  "category": "transition",
-  "sub": "keynote",
+  "category": "loading",
+  "sub": "transition",
   "tags": ["转场", "色板", "斜切", "换页"],
   "summary": "换页时几块斜着的色板一层接一层从一角扫过整屏，盖满的一瞬换成新页，再顺着同一方向扫出去",
   "params": [

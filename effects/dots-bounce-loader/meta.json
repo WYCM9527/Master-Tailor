@@ -2,7 +2,7 @@
   "slug": "dots-bounce-loader",
   "name": "三点跳动",
   "category": "loading",
-  "sub": "idle",
+  "sub": "anim",
   "tags": [
     "加载",
     "圆点",

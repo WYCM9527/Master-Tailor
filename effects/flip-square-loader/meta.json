@@ -2,7 +2,7 @@
   "slug": "flip-square-loader",
   "name": "方块翻转",
   "category": "loading",
-  "sub": "idle",
+  "sub": "anim",
   "tags": [
     "加载",
     "方块",

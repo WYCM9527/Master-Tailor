@@ -139,8 +139,8 @@ for (const slug of dirs) {
     }
   }
 
-  // ---- 转场基线（category 为 transition 的效果强制）：View Transitions 为主引擎，必须带 CSS 回退路径与降级 ----
-  if (meta.category === 'transition') {
+  // ---- 转场基线（「加载·页面转场」即 sub 为 transition 的效果强制）：View Transitions 为主引擎，必须带 CSS 回退路径与降级 ----
+  if (meta.sub === 'transition') {
     for (const keyword of ['startViewTransition', 'prefers-reduced-motion', '@mt:fallback']) {
       if (!html.includes(keyword)) {
         fail(slug, `转场效果缺少基线能力关键字「${keyword}」（视图过渡 / 降级 / 无 API 回退）`);

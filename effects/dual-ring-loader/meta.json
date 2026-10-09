@@ -2,7 +2,7 @@
   "slug": "dual-ring-loader",
   "name": "双环交错",
   "category": "loading",
-  "sub": "idle",
+  "sub": "anim",
   "tags": [
     "加载",
     "圆环",

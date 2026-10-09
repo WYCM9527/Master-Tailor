@@ -2,7 +2,7 @@
   "slug": "hourglass-loader",
   "name": "沙漏翻转",
   "category": "loading",
-  "sub": "idle",
+  "sub": "anim",
   "tags": [
     "加载",
     "沙漏",

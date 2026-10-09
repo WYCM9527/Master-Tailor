@@ -2,7 +2,7 @@
   "slug": "curtain-preloader",
   "name": "揭幕预加载",
   "category": "loading",
-  "sub": "idle",
+  "sub": "anim",
   "tags": ["预加载", "幕布", "揭幕", "进场"],
   "summary": "整页先被幕布盖住、中间走一条进度线，加载到 100% 时幕布上下对开（或一条条竖幕从中间向两侧抽走），正文从后面浮现",
   "params": [

@@ -8,7 +8,7 @@
 
 ## 使用方式（给访客）
 
-1. **挑一个效果**：左侧两级侧边栏浏览——原有分类按触发方式细分，「多卡/图展示」按形态细分（轮播图 / 图片对比 / 滚动交互 / 图墙），「页面转场」按换场方式细分；卡片全部是实时渲染的迷你预览
+1. **挑一个效果**：左侧两级侧边栏浏览——原有分类按触发方式细分，「多卡/图展示」按形态细分（轮播图 / 图片对比 / 滚动交互 / 图墙），「加载」分为页面转场与 loading动画；卡片全部是实时渲染的迷你预览
 2. **调成你要的样子**：右侧面板改颜色、拖滑块，预览 / prompt / 代码三者实时同步
 3. **复制 prompt 粘给你的 AI**：Trae、Qoder、Cursor、Claude Code、扣子编程、CodeBuddy、豆包网页版……任何能写代码的 AI 都可以
 
@@ -59,7 +59,7 @@ effects/<slug>/
 ### meta.json
 
 - `category`：`background | button | nav | text | card | showcase | transition | loading | progress | canvas`（侧边栏一级）
-- `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表（`src/contract/categories.ts`）——按钮 / 导航 / 卡片 / 加载 / 进度条 / 鼠标样式的子类是触发方式（`idle | hover | click | scroll`），背景效果不收 `scroll`，文字效果多一个 `marquee`（跑马灯），「多卡/图展示」是 `carousel | compare | stack-scroll | wall`，「页面转场」是 `shared | push | zoom | keynote`。分类归属的既定决策见 `docs/sources.md`「分类决策记录」
+- `sub`：二级分类 id，必须属于所在分类在 `CATEGORIES` 中声明的子类表（`src/contract/categories.ts`）——按钮 / 导航 / 卡片 / 进度条 / 鼠标样式的子类是触发方式（`idle | hover | click | scroll`），背景效果不收 `scroll`，文字效果多一个 `marquee`（跑马灯），「多卡/图展示」是 `carousel | compare | stack-scroll | wall`，「加载」是 `transition | anim`（页面转场 / loading动画）。分类归属的既定决策见 `docs/sources.md`「分类决策记录」
 - `params[]`：9 种控件类型 `color | range | toggle | select | text | font | image | images | colors`（`colors` 为可增删的颜色列表，只允许 `config`，CONFIG 中写成单行数组 `colors: ["#…", …], // 注释`）
   - `target: "css"` → 值注入 `:root` 的 `--mt-<key>`，调参时**热更新**（动画不重置）
   - `target: "config"` → 值注入 JS 顶部 `const CONFIG` 块，调参时**防抖重建**预览
@@ -100,7 +100,7 @@ if (window.__MT_ENV && window.__MT_ENV.thumb) {
 
 validate 会检查 index.html 含四个基线能力关键字：`aria-roledescription`（轮播语义）、`keydown`（键盘切换）、`prefers-reduced-motion`（不自动播放降级）、`pointerdown`（拖拽/触摸）。纯 CSS 实现（如 scroll-snap 版）可在注释中如实说明原生能力。除此之外的约定基线：无缝循环、悬停/聚焦暂停自动播放、页面切后台暂停。新写轮播请从 `scripts/templates/carousel-core.html` 起步——它带完整的三态类切换骨架（无缝循环）、自动播放、Pointer Events 拖拽、三种分页器与 aria 结构，多数形态只需改「过渡层」CSS。
 
-### 转场基线（`category: "transition"` 的效果强制）
+### 转场基线（「加载·页面转场」即 `sub: "transition"` 的效果强制）
 
 以 View Transitions API 为主引擎，validate 检查三个关键字：`startViewTransition`（同文档视图过渡）、`prefers-reduced-motion`（瞬间切换降级）、`@mt:fallback`（无 API 时的 CSS 类回退路径标记）。转场类不收滚动驱动的形态（随滚动推进的分节 / 视差 / 堆叠归 `showcase/stack-scroll`，用 `scroll-timeline` 命名时间线显式绑定滚动容器，别用 `scroll(nearest)`）。除此之外的约定基线：返回严格反向播放、共享元素名只在参与转场时挂载（重名会导致转场被跳过）、转场期间聚焦新页标题。新写转场请从 `scripts/templates/transition-core.html` 起步——它带迷你站双页骨架、方向化 `go()`（`<html data-vt>`）、无 API 回退、键盘/焦点管理与 thumb 自动往返演示，多数形态只需改「过渡层」CSS。
 

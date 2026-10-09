@@ -25,12 +25,18 @@ const SHOWCASE_SUBS: SubDef[] = [
   { id: 'wall', name: '图墙', desc: '多张图片铺成墙、环、球、隧道等陈列，自动缓动或随鼠标视差' },
 ];
 
-/** 「页面转场」的二级分类：按过渡形态（苹果式页面间过渡） */
-const TRANSITION_SUBS: SubDef[] = [
-  { id: 'shared', name: '共享元素', desc: '点击的元素连续形变到下一页，像同一个物体在两页间移动' },
-  { id: 'push', name: '推屏导航', desc: '新页从一侧推入、旧页让位，返回时严格反向' },
-  { id: 'zoom', name: '缩放淡入', desc: '新页整体缩放淡入登场，旧页轻轻退后' },
-  { id: 'keynote', name: '发布会转场', desc: '擦除、揭示、翻转、溶解等舞台式换场' },
+/** 「加载」的二级分类：页面间换场与等待动画，不再按触发方式或过渡形态细分 */
+const LOADING_SUBS: SubDef[] = [
+  {
+    id: 'transition',
+    name: '页面转场',
+    desc: '页面之间的换场：擦除、揭示、翻转、溶解，或点中的元素连续形变到下一页',
+  },
+  {
+    id: 'anim',
+    name: 'loading动画',
+    desc: '等待时的加载指示、骨架屏与预加载揭幕，以及内容逐个进场',
+  },
 ];
 
 /** 一级分类（subs 即该分类下的二级分类表，侧边栏只显示有效果的子项） */
@@ -41,8 +47,7 @@ export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
   { id: 'text', name: '文字效果', subs: TEXT_SUBS },
   { id: 'card', name: '卡片与悬停', subs: TRIGGER_SUBS },
   { id: 'showcase', name: '多卡/图展示', subs: SHOWCASE_SUBS },
-  { id: 'transition', name: '页面转场', subs: TRANSITION_SUBS },
-  { id: 'loading', name: '加载与进场', subs: TRIGGER_SUBS },
+  { id: 'loading', name: '加载', subs: LOADING_SUBS },
   { id: 'progress', name: '进度条', subs: TRIGGER_SUBS },
   { id: 'canvas', name: '鼠标样式', subs: TRIGGER_SUBS },
 ];
