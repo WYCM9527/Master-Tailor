@@ -1,0 +1,121 @@
+{
+  "slug": "glass-drop-slider",
+  "name": "玻璃水滴滑块",
+  "category": "progress",
+  "sub": "slider",
+  "tags": ["滑块", "液态玻璃", "放大镜", "橡皮筋", "拖拽"],
+  "summary": "按住滑块就鼓成一颗透明水滴，透出放大的轨道；拖得快会被拉长，拖过两端轨道像橡皮筋",
+  "params": [
+    {
+      "key": "value",
+      "label": "初始值",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 40
+    },
+    {
+      "key": "magnify",
+      "label": "放大倍率",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 2.5,
+      "step": 0.05,
+      "default": 1.5,
+      "displayUnit": "×",
+      "help": "水滴里看到的轨道放大几倍，1 为不放大"
+    },
+    {
+      "key": "dropSize",
+      "label": "水滴尺寸",
+      "type": "range",
+      "target": "config",
+      "min": 1.2,
+      "max": 2.4,
+      "step": 0.05,
+      "default": 1.7,
+      "displayUnit": "×",
+      "help": "按住后滑块胀大到平时的几倍"
+    },
+    {
+      "key": "stretch",
+      "label": "拖动拉伸",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5,
+      "help": "拖得越快水滴被拉得越长越扁，停下时晃回原形；0 为不变形"
+    },
+    {
+      "key": "bounce",
+      "label": "越界拉伸",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "default": 16,
+      "displayUnit": "px",
+      "help": "拖过两端时轨道最多被拉长多少，松手弹回；0 为不拉伸"
+    },
+    {
+      "key": "steps",
+      "label": "步进刻度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "default": 0,
+      "help": "0 为连续；大于 0 时轨道上出现等分小圆点，松手吸附到最近一格"
+    },
+    {
+      "key": "color",
+      "label": "填充色",
+      "type": "color",
+      "target": "css",
+      "default": "#0a84ff"
+    },
+    {
+      "key": "track",
+      "label": "轨道色",
+      "type": "color",
+      "target": "css",
+      "default": "#48484e"
+    },
+    {
+      "key": "thumb",
+      "label": "滑块色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff",
+      "help": "平时实心小胶囊的颜色，按住后变成透明水滴"
+    },
+    {
+      "key": "label",
+      "label": "标题",
+      "type": "text",
+      "target": "config",
+      "default": "音量",
+      "maxLength": 8
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "steps", "name": "十格步进", "values": { "steps": 10 } },
+    { "id": "big", "name": "大水滴", "values": { "dropSize": 2.2, "magnify": 2 } },
+    { "id": "green", "name": "绿色", "values": { "color": "#30d158" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "iOS 26 Liquid Glass 滑块",
+    "url": "https://www.apple.com/newsroom/2025/06/apple-introduces-a-delightful-and-elegant-new-software-design/",
+    "license": "未使用其代码"
+  }
+}

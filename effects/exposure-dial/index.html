@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>刻度拨盘</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #000000;            /* 页面底色 */
+    --mt-color: #ffd60a;         /* 指示色：中线、圆环和读数 */
+    --mt-tick: #ffffff;          /* 刻度色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #fff; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .mt-dial { width: min(560px, 92vw); display: grid; justify-items: center; gap: 22px; }
+  /* 读数：圆环里是带正负号的数值，下面是单位；点一下回到零 */
+  .mt-read { display: grid; justify-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+  .mt-read:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.5); outline-offset: 6px; border-radius: 12px; }
+  .mt-ring { position: relative; width: 64px; height: 64px; display: grid; place-items: center; }
+  .mt-arcs { position: absolute; inset: 0; }
+  .mt-arcs.neg { scale: -1 1; }
+  .mt-ring svg { width: 100%; height: 100%; rotate: -90deg; overflow: visible; }
+  .mt-ring circle { fill: none; stroke-width: 3; }
+  .mt-ring .trk { stroke: rgba(255, 255, 255, 0.18); }
+  .mt-ring .arc { stroke: var(--mt-color); stroke-linecap: round; }
+  .mt-val { position: relative; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--mt-color); }
+  .mt-unit { font-size: 12px; letter-spacing: 0.12em; color: rgba(255, 255, 255, 0.6); }
+  .noring .mt-ring { width: auto; height: auto; }
+  .noring .mt-arcs { display: none; }
+  .noring .mt-val { font-size: 34px; font-weight: 600; }
+  /* 刻度尺：canvas 画刻度，中线是固定的 DOM 竖线 */
+  .mt-scale { position: relative; width: 100%; height: 70px; touch-action: none; cursor: grab; outline: none; border-radius: 12px; }
+  .mt-scale.grabbing { cursor: grabbing; }
+  .mt-scale:focus-visible { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35); }
+  .mt-scale canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .mt-needle { position: absolute; left: 50%; top: 2px; width: 2px; height: 48px; margin-left: -1px; border-radius: 1px; background: var(--mt-color); box-shadow: 0 0 8px var(--mt-color); pointer-events: none; }
+  .mt-needle::before { content: ""; position: absolute; left: 50%; top: -7px; margin-left: -5px; border: 5px solid transparent; border-bottom-width: 0; border-top-color: var(--mt-color); }
+</style>
+</head>
+<body>
+<div class="mt-dial" id="mtDial">
+  <button class="mt-read" id="mtRead" type="button" title="点一下回到零">
+    <span class="mt-ring">
+      <span class="mt-arcs" id="mtArcWrap"><svg viewBox="0 0 64 64" aria-hidden="true"><circle class="trk" cx="32" cy="32" r="28"/><circle class="arc" id="mtArc" cx="32" cy="32" r="28" pathLength="100" stroke-dasharray="0 100"/></svg></span>
+      <span class="mt-val" id="mtVal">0.0</span>
+    </span>
+    <span class="mt-unit" id="mtUnit"></span>
+  </button>
+  <div class="mt-scale" id="mtScale" role="slider" tabindex="0">
+    <canvas id="mtCanvas"></canvas>
+    <i class="mt-needle"></i>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    span: 3,            // 范围：读数在 −范围 到 +范围 之间
+    step: '0.1',        // 步进：每根刻度代表多少，停稳时读数总是它的整数倍
+    spacing: 10,        // 刻度间距（px）：相邻两根刻度隔多远
+    inertia: 0.6,       // 惯性：松手后顺着甩的方向滑多远，0 为松手即吸附
+    value: 0,           // 初始值：超出范围时取最近的一端
+    unit: 'EV',         // 单位
+    ring: true,         // 圆环读数：读数外套一个圆环，按正负方向填充；关闭则只显示大号数字
+    labels: true,       // 刻度数字：在整档刻度下方标数字
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  const BASE = 46, LABEL_Y = 62, H = 70;   // 刻度底边、数字基线、画布高度
+  const EDGE = 80;                        // 两端淡出的宽度（px）
+
+  const STEP = Math.max(0.01, Number(CONFIG.step) || 0.1);
+  const SPAN = Math.max(STEP, Math.abs(CONFIG.span)), MIN = -SPAN, MAX = SPAN;
+  const DEC = (String(CONFIG.step).split('.')[1] || '').length;
+  const SP = Math.max(2, CONFIG.spacing);
+  const PER = SP / STEP;                              // 每 1 个单位多少 px
+  // 整档：1 / 2 / 5 / 10 里第一个让相邻数字隔开 44px 以上的
+  const MAJOR = [1, 2, 5, 10].find((m) => m >= STEP && m * PER >= 44) || 10;
+  const MAJOR_N = Math.max(1, Math.round(MAJOR / STEP));
+  const TAU = 0.05 + 0.55 * clamp(CONFIG.inertia, 0, 1);   // 滑行速度的衰减时间常数（秒）
+  const snapV = (v) => clamp(Math.round(v / STEP) * STEP, MIN, MAX);
+  const fmt = (s) => (s > 0 ? '+' : s < 0 ? '−' : '') + Math.abs(s).toFixed(DEC);
+
+  const dial = document.getElementById('mtDial'), scale = document.getElementById('mtScale'), canvas = document.getElementById('mtCanvas');
+  const ctx = canvas.getContext('2d');
+  const valEl = document.getElementById('mtVal'), arc = document.getElementById('mtArc'), arcWrap = document.getElementById('mtArcWrap');
+  document.getElementById('mtUnit').textContent = CONFIG.unit;
+  scale.setAttribute('aria-label', '刻度拨盘');
+  scale.setAttribute('aria-valuemin', MIN); scale.setAttribute('aria-valuemax', MAX);
+  if (!CONFIG.ring) dial.classList.add('noring');
+  const css = getComputedStyle(document.documentElement);
+  const tickColor = css.getPropertyValue('--mt-tick').trim() || '#fff';
+  const font = css.getPropertyValue('--mt-font').trim();
+
+  // v 当前显示值；mode：idle 静止 / drag 拖动 / glide 惯性滑行 / snap 弹簧吸附 / wheel 滚轮
+  let v = snapV(CONFIG.value), vel = 0, mode = 'idle', snapTo = v, userTook = false;
+  let W = 0, dpr = 1;
+
+  function measure() {
+    W = scale.clientWidth; dpr = Math.min(2, devicePixelRatio || 1);
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    draw();
+  }
+
+  function draw() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = ctx.fillStyle = tickColor;
+    ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+    ctx.font = `11px ${font}`; ctx.textAlign = 'center';
+    const mid = W / 2, half = mid / PER + STEP;
+    const i0 = Math.ceil(Math.max(MIN, v - half) / STEP - 1e-6), i1 = Math.floor(Math.min(MAX, v + half) / STEP + 1e-6);
+    for (let i = i0; i <= i1; i++) {
+      const u = i * STEP, x = mid + (u - v) * PER, d = Math.abs(x - mid);
+      const fade = 1 - smooth(mid - EDGE, mid, d);
+      if (fade <= 0) continue;
+      const k = reduceMotion ? 0 : Math.exp(-((d / (SP * 3.5)) ** 2));   // 离中线越近越高越亮
+      const zero = i === 0, major = i % MAJOR_N === 0;
+      const h = (zero ? 28 : major ? 22 : 13) * (1 + 0.5 * k);
+      ctx.globalAlpha = Math.min(1, (zero ? 1 : major ? 0.85 : 0.45) + 0.4 * k) * fade;
+      ctx.beginPath(); ctx.moveTo(x, BASE); ctx.lineTo(x, BASE - h); ctx.stroke();
+      if (CONFIG.labels && major) {
+        ctx.globalAlpha = fade * (0.5 + 0.5 * k);
+        ctx.fillText(fmt(Math.round(u / MAJOR) * MAJOR).replace(/\.0+$/, ''), x, LABEL_Y);
+      }
+    }
+    ctx.globalAlpha = 1;
+    readout();
+  }
+
+  let shown = '';
+  function readout() {
+    const s = snapV(v), txt = fmt(s);
+    if (txt === shown) return;
+    shown = txt;
+    valEl.textContent = txt;
+    arc.setAttribute('stroke-dasharray', `${((Math.abs(s) / SPAN) * 100).toFixed(2)} 100`);
+    arc.style.opacity = s ? '' : '0';          // 零时连圆头小点也不留
+    arcWrap.classList.toggle('neg', s < 0);   // 负值逆时针填
+    scale.setAttribute('aria-valuenow', s.toFixed(DEC));
+    scale.setAttribute('aria-valuetext', `${txt} ${CONFIG.unit}`);
+  }
+
+  // 拖过两端：越拖越费劲，最多再拖出约 40px
+  function rubber(x) {
+    const R = 40 / PER;
+    if (x > MAX) return MAX + R * (1 - Math.exp(-(x - MAX) / R));
+    if (x < MIN) return MIN - R * (1 - Math.exp(-(MIN - x) / R));
+    return x;
+  }
+  function snapToward(t) {
+    if (reduceMotion) { v = snapTo = t; vel = 0; mode = 'idle'; draw(); return; }
+    snapTo = t; mode = 'snap'; wake();
+  }
+
+  function step(dt) {
+    if (mode === 'glide') {
+      v += vel * dt;
+      vel *= Math.exp(-dt / TAU);
+      if (v > MAX || v < MIN) { vel *= 0.35; snapTo = v > MAX ? MAX : MIN; mode = 'snap'; }   // 撞到尽头：减速后弹回端点
+      else if (Math.abs(vel) < STEP * 3) { snapTo = snapV(v); mode = 'snap'; }
+    } else if (mode === 'snap') {
+      const k = 200, z = 0.9;
+      vel += (k * (snapTo - v) - 2 * Math.sqrt(k) * z * vel) * dt;
+      v += vel * dt;
+      if (Math.abs(snapTo - v) < STEP * 0.002 && Math.abs(vel) < STEP * 0.05) { v = snapTo; vel = 0; mode = 'idle'; }
+    }
+    return mode === 'glide' || mode === 'snap';
+  }
+  let raf = 0, last = 0, dirty = false;
+  function wake() { dirty = true; if (!raf) { last = performance.now(); raf = requestAnimationFrame(loop); } }
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const n = Math.max(1, Math.ceil(dt * 120));
+    let busy = false;
+    for (let i = 0; i < n; i++) busy = step(dt / n);
+    if (busy || dirty) draw();
+    dirty = false;
+    raf = busy ? requestAnimationFrame(loop) : 0;
+  }
+
+  let drag = null;
+  scale.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    takeOver();
+    scale.setPointerCapture(e.pointerId);
+    drag = { x0: e.clientX, v0: v, moved: 0, pts: [[e.timeStamp, e.clientX]] };
+    mode = 'drag'; vel = 0; scale.classList.add('grabbing');
+  });
+  scale.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x0;
+    drag.moved = Math.max(drag.moved, Math.abs(dx));
+    v = rubber(drag.v0 - dx / PER);
+    drag.pts.push([e.timeStamp, e.clientX]);
+    if (drag.pts.length > 12) drag.pts.shift();
+    wake();
+  });
+  function endDrag(e) {
+    if (!drag) return;
+    const d = drag; drag = null; scale.classList.remove('grabbing');
+    if (d.moved < 4 && e.type === 'pointerup') {   // 轻点：把点到的刻度滑到中线
+      const r = scale.getBoundingClientRect();
+      vel = 0; snapToward(snapV(v + (e.clientX - r.left - r.width / 2) / PER)); return;
+    }
+    const recent = d.pts.filter((p) => e.timeStamp - p[0] <= 100);   // 只用松手前 100ms 的移动算速度
+    const a = recent[0], b = recent[recent.length - 1];
+    vel = recent.length > 1 && b[0] > a[0] ? -((b[1] - a[1]) / ((b[0] - a[0]) / 1000)) / PER : 0;
+    if (v > MAX || v < MIN) { vel = 0; snapToward(clamp(v, MIN, MAX)); }
+    else if (reduceMotion || CONFIG.inertia <= 0) { vel = 0; snapToward(snapV(v)); }
+    else { mode = 'glide'; wake(); }
+  }
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => scale.addEventListener(t, endDrag));
+
+  let wheelTimer = 0;
+  scale.addEventListener('wheel', (e) => {
+    e.preventDefault(); takeOver();
+    const d = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * (e.deltaMode === 1 ? 16 : 1);
+    v = clamp(v + (d * 0.5) / PER, MIN, MAX); vel = 0; mode = 'wheel';
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => snapToward(snapV(v)), 140);
+    wake();
+  }, { passive: false });
+
+  scale.addEventListener('keydown', (e) => {
+    const base = mode === 'snap' ? snapTo : snapV(v);
+    const delta = { ArrowLeft: -STEP, ArrowDown: -STEP, ArrowRight: STEP, ArrowUp: STEP, PageDown: -MAJOR, PageUp: MAJOR }[e.key];
+    let t;
+    if (delta !== undefined) t = snapV(base + delta);
+    else if (e.key === 'Home') t = MIN;
+    else if (e.key === 'End') t = MAX;
+    else return;
+    e.preventDefault(); takeOver();
+    vel = 0; snapToward(t);
+  });
+  document.getElementById('mtRead').addEventListener('click', () => { takeOver(); vel = 0; snapToward(clamp(0, MIN, MAX)); });
+
+  function takeOver() { userTook = true; }
+  addEventListener('resize', measure);
+  measure();
+  if (document.fonts) document.fonts.ready.then(draw);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：往右甩、往左甩、用力甩到尽头弹回，最后滑回零；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const script = [[420, 1700], [-760, 1800], [1400, 2200], [0, 1600]];   // [甩动速度 px/s（0 = 回零）, 上一下之后等多久 ms]
+    let n = 0;
+    (function play() {
+      const [speed, hold] = script[n++ % script.length];
+      setTimeout(() => {
+        if (userTook) return;
+        if (!document.hidden) {
+          if (speed) { vel = -speed / PER; mode = 'glide'; wake(); } else { vel = 0; snapToward(clamp(0, MIN, MAX)); }
+        }
+        play();
+      }, n === 1 ? 600 : hold);
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

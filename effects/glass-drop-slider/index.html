@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>玻璃水滴滑块</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #0b0d12;            /* 页面底色 */
+    --mt-color: #0a84ff;         /* 填充色：轨道上已选的那段 */
+    --mt-track: #48484e;         /* 轨道色 */
+    --mt-thumb: #ffffff;         /* 滑块色：平时实心小胶囊的颜色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #fff; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  /* 背后两团柔光，让毛玻璃卡片透出颜色 */
+  .mt-glow { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(38vmax 28vmax at 24% 30%, rgba(94, 92, 230, 0.5), transparent 70%), radial-gradient(34vmax 26vmax at 78% 72%, rgba(10, 132, 255, 0.4), transparent 70%); }
+  .mt-card { position: relative; width: min(440px, 90vw); box-sizing: border-box; padding: 20px 24px 22px; border-radius: 28px; background: rgba(30, 30, 34, 0.62); border: 1px solid rgba(255, 255, 255, 0.08); -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45); }
+  .mt-head { display: flex; justify-content: space-between; align-items: baseline; margin: 0 2px 8px; font-size: 15px; }
+  .mt-label { font-weight: 600; letter-spacing: 0.02em; }
+  .mt-num { color: rgba(255, 255, 255, 0.6); font-variant-numeric: tabular-nums; }
+  .mt-row { display: flex; align-items: center; gap: 14px; }
+  .mt-icon { flex: none; width: 22px; height: 22px; color: rgba(255, 255, 255, 0.6); }
+  /* 滑块：44px 高的触摸区，中间一条 6px 轨道 */
+  .mt-rail { position: relative; flex: 1; min-width: 0; height: 44px; touch-action: none; cursor: pointer; border-radius: 22px; outline: none; }
+  .mt-rail:focus-visible { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55); }
+  .mt-track, .mt-lens { position: absolute; left: 0; height: 6px; border-radius: 3px; background: var(--mt-track); overflow: hidden; }
+  .mt-track { top: 50%; width: 100%; margin-top: -3px; transform-origin: 0 50%; }
+  .mt-fill { position: absolute; inset: 0; background: var(--mt-color); transform-origin: 0 50%; }
+  .mt-tick { position: absolute; top: 50%; width: 3px; height: 3px; margin: -1.5px 0 0 -1.5px; border-radius: 50%; background: rgba(255, 255, 255, 0.55); }
+  /* 滑块本体：平时是 38×24 的实心胶囊；按住后实心层淡出，换成透明的玻璃层 */
+  .mt-thumb { position: absolute; left: 0; top: 50%; width: 38px; height: 24px; margin-top: -12px; pointer-events: none; will-change: transform; }
+  .mt-solid, .mt-glass, .mt-rim { position: absolute; inset: 0; border-radius: 12px; }
+  .mt-solid { background: var(--mt-thumb); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(0, 0, 0, 0.12); }
+  .mt-glass { overflow: hidden; opacity: 0; background: rgba(255, 255, 255, 0.05); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32); }
+  /* 玻璃里的轨道副本：以滑块中心为原点放大，看起来就是透过水滴看到的轨道 */
+  .mt-lens { top: 0; transform-origin: 0 0; }
+  .mt-rim { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.38), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.8), inset 0 -1.5px 2px rgba(255, 255, 255, 0.28), inset 0 0 7px rgba(255, 255, 255, 0.16); background: radial-gradient(55% 45% at 32% 24%, rgba(255, 255, 255, 0.5), transparent 70%), radial-gradient(40% 32% at 72% 84%, rgba(255, 255, 255, 0.2), transparent 70%); }
+</style>
+</head>
+<body>
+<div class="mt-glow"></div>
+<div class="mt-card">
+  <div class="mt-head"><span class="mt-label" id="mtLabel"></span><span class="mt-num" id="mtNum">0</span></div>
+  <div class="mt-row">
+    <!-- IconPark: volume-small -->
+    <svg class="mt-icon" id="mtIconL" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 6V42C17 42 11.7985 32.8391 11.7985 32.8391H6C4.89543 32.8391 4 31.9437 4 30.8391V17.0108C4 15.9062 4.89543 15.0108 6 15.0108H11.7985C11.7985 15.0108 17 6 24 6Z" stroke="currentColor" stroke-width="4" stroke-linejoin="miter"/><path d="M32 15L32 15C32.6232 15.5565 33.1881 16.1797 33.6841 16.8588C35.1387 18.8504 36 21.3223 36 24C36 26.6545 35.1535 29.1067 33.7218 31.0893C33.2168 31.7885 32.6391 32.4293 32 33" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+    <div class="mt-rail" id="mtRail" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="mt-track" id="mtTrack"><i class="mt-fill"></i></div>
+      <div class="mt-thumb" id="mtThumb">
+        <div class="mt-solid" id="mtSolid"></div>
+        <div class="mt-glass" id="mtGlass"><div class="mt-lens" id="mtLens"><i class="mt-fill"></i></div><div class="mt-rim"></div></div>
+      </div>
+    </div>
+    <!-- IconPark: volume-notice -->
+    <svg class="mt-icon" id="mtIconR" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 6V42C17 42 11.7985 32.8391 11.7985 32.8391H6C4.89543 32.8391 4 31.9437 4 30.8391V17.0108C4 15.9062 4.89543 15.0108 6 15.0108H11.7985C11.7985 15.0108 17 6 24 6Z" stroke="currentColor" stroke-width="4" stroke-linejoin="miter"/><path d="M32 15L32 15C32.6232 15.5565 33.1881 16.1797 33.6841 16.8588C35.1387 18.8504 36 21.3223 36 24C36 26.6545 35.1535 29.1067 33.7218 31.0893C33.2168 31.7885 32.6391 32.4293 32 33" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/><path d="M34.2359 41.1857C40.0836 37.6953 44 31.305 44 24C44 16.8085 40.2043 10.5035 34.507 6.97906" stroke="currentColor" stroke-width="4" stroke-linecap="square"/></svg>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    value: 40,         // 初始值（0–100）
+    magnify: 1.5,      // 放大倍率：水滴里看到的轨道放大几倍
+    dropSize: 1.7,     // 水滴尺寸：按住后滑块胀大到平时的几倍
+    stretch: 0.5,      // 拖动拉伸：拖得越快水滴被拉得越长越扁，0 为不变形
+    bounce: 16,        // 越界拉伸（px）：拖过两端时轨道最多被拉长多少，0 为不拉伸
+    steps: 0,          // 步进刻度：0 为连续；大于 0 时等分成这么多格，松手吸附到最近一格
+    label: '音量',     // 标题
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const TW = 38, TH = 24, TRACK_H = 6;   // 平时胶囊的宽、高，轨道粗细
+
+  const rail = document.getElementById('mtRail'), track = document.getElementById('mtTrack'), lens = document.getElementById('mtLens');
+  const thumb = document.getElementById('mtThumb'), solid = document.getElementById('mtSolid'), glass = document.getElementById('mtGlass');
+  const fills = [track.firstElementChild, lens.firstElementChild];
+  const numEl = document.getElementById('mtNum'), iconL = document.getElementById('mtIconL'), iconR = document.getElementById('mtIconR');
+  document.getElementById('mtLabel').textContent = CONFIG.label;
+  rail.setAttribute('aria-label', CONFIG.label);
+
+  const steps = Math.max(0, Math.round(CONFIG.steps));
+  const bounce = reduceMotion ? 0 : Math.max(0, CONFIG.bounce);
+  const snap = (v) => (steps ? Math.round(v * steps) / steps : v);
+  let W = 300, value = snap(clamp(CONFIG.value / 100, 0, 1));
+  // 四个弹簧量：pos 滑块中心（px）、press 按下程度、squish 速度形变、over 越界拉伸（px）
+  const pos = { x: 0, v: 0 }, press = { x: 0, v: 0 }, squish = { x: 0, v: 0 }, over = { x: 0, v: 0 };
+  let dragging = false, overTarget = 0, grab = 0, railLeft = 0, userTook = false, demoDrag = false;
+  const posFor = (v) => TW / 2 + v * (W - TW);
+
+  function spring(s, target, k, zeta, dt) {
+    s.v += (k * (target - s.x) - 2 * Math.sqrt(k) * zeta * s.v) * dt;
+    s.x += s.v * dt;
+  }
+
+  function measure() {
+    W = rail.clientWidth;
+    lens.style.width = W + 'px';
+    for (const el of [track, lens]) {
+      el.querySelectorAll('.mt-tick').forEach((t) => t.remove());
+      for (let i = 0; steps && i <= steps; i++) {
+        const t = document.createElement('i');
+        t.className = 'mt-tick';
+        t.style.left = posFor(i / steps) + 'px';
+        el.appendChild(t);
+      }
+    }
+    pos.x = posFor(value); pos.v = 0;
+    render();
+  }
+
+  function readout() {
+    const n = Math.round(snap(value) * 100);
+    numEl.textContent = n;
+    rail.setAttribute('aria-valuenow', n);
+  }
+
+  // x：希望滑块中心落在哪（轨道坐标）；超出两端的部分变成越界拉伸
+  function moveTo(x) {
+    const lo = TW / 2, hi = W - TW / 2, cx = clamp(x, lo, hi);
+    value = (cx - lo) / (hi - lo);
+    overTarget = bounce > 0.5 ? bounce * Math.tanh((x - cx) / (bounce * 2.5)) : 0;
+    readout(); wake();
+  }
+  function release() {
+    if (!dragging) return;
+    dragging = false;
+    value = snap(value);
+    readout(); wake();
+  }
+  function takeOver() {
+    userTook = true;
+    if (demoDrag) { demoDrag = false; dragging = false; }
+  }
+
+  rail.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    takeOver();
+    rail.setPointerCapture(e.pointerId);
+    railLeft = rail.getBoundingClientRect().left;
+    const x = e.clientX - railLeft;
+    grab = Math.abs(x - pos.x) <= TW * 0.75 ? x - pos.x : 0;   // 按在滑块上保留抓取偏移，按在别处滑块弹过去
+    dragging = true;
+    moveTo(x - grab);
+  });
+  rail.addEventListener('pointermove', (e) => { if (dragging && !demoDrag) moveTo(e.clientX - railLeft - grab); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => rail.addEventListener(t, release));
+  rail.addEventListener('keydown', (e) => {
+    const one = steps ? 1 / steps : 0.01;
+    const delta = { ArrowLeft: -one, ArrowDown: -one, ArrowRight: one, ArrowUp: one, PageDown: -0.1, PageUp: 0.1, Home: -1, End: 1 }[e.key];
+    if (delta === undefined) return;
+    e.preventDefault(); takeOver();
+    value = snap(clamp(value + delta, 0, 1));
+    readout(); wake();
+  });
+
+  function step(dt) {
+    const target = posFor(value);
+    if (reduceMotion) {
+      pos.x = target; pos.v = 0; press.x = dragging ? 1 : 0; squish.x = 0; over.x = 0;
+      return false;
+    }
+    spring(pos, target, dragging ? 2400 : 520, dragging ? 1 : 0.82, dt);
+    spring(press, dragging ? 1 : 0, 420, 0.62, dt);
+    spring(squish, CONFIG.stretch * Math.min(1, Math.abs(pos.v) / 1400), 260, 0.45, dt);
+    spring(over, dragging ? overTarget : 0, dragging ? 1800 : 420, dragging ? 1 : 0.38, dt);
+    return dragging || Math.abs(pos.x - target) > 0.05 || Math.abs(pos.v) > 1 || Math.abs(press.x - (dragging ? 1 : 0)) > 0.002 || Math.abs(press.v) > 0.01
+      || Math.abs(squish.x) > 0.002 || Math.abs(squish.v) > 0.01 || Math.abs(over.x) > 0.05 || Math.abs(over.v) > 1;
+  }
+
+  function render() {
+    const p = Math.max(0, press.x), pm = Math.min(1, p);
+    const S = 1 + (CONFIG.dropSize - 1) * p;
+    const q = squish.x * pm;
+    const sx = S * (1 + 0.45 * q), sy = S * (1 - 0.3 * q);
+    // 越界：轨道朝拖出去的一侧伸长 e，同时变细
+    const e = over.x, ext = Math.abs(e);
+    const tsx = (W + ext) / W, tsy = 1 - 0.3 * Math.min(1, ext / Math.max(1, bounce));
+    const lx = Math.min(0, e), tx = pos.x + e;
+    track.style.transform = `translateX(${lx}px) scale(${tsx}, ${tsy})`;
+    fills.forEach((f) => { f.style.transform = `scaleX(${pos.x / W})`; });
+    thumb.style.transform = `translateX(${tx - TW / 2}px) scale(${sx}, ${sy})`;
+    const g = clamp(p * 1.6, 0, 1);
+    solid.style.opacity = 1 - g;
+    glass.style.opacity = g;
+    // 副本缩放 = 轨道缩放 × 放大倍数 ÷ 滑块缩放；平移让滑块中心正对的那一点不动
+    const M = 1 + (CONFIG.magnify - 1) * pm;
+    const kx = (tsx * M) / sx, ky = (tsy * M) / sy;
+    lens.style.transform = `translate(${TW / 2 + ((lx - tx) * M) / sx}px, ${TH / 2 - (TRACK_H / 2) * ky}px) scale(${kx}, ${ky})`;
+    iconL.style.transform = e < 0 ? `translateX(${e}px)` : '';
+    iconR.style.transform = e > 0 ? `translateX(${e}px)` : '';
+  }
+
+  let raf = 0, last = 0;
+  function wake() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(loop); } }
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const n = Math.max(1, Math.ceil(dt * 240));   // 分步积分，硬弹簧也不会发散
+    let busy = false;
+    for (let i = 0; i < n; i++) busy = step(dt / n);
+    render();
+    raf = busy ? requestAnimationFrame(loop) : 0;
+  }
+
+  addEventListener('resize', measure);
+  measure(); readout();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：虚拟手指按住滑块慢拖、快拖过右端停一下再松手，再快速拖出左端，循环；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const drag = (from, to, ms) => new Promise((done) => {
+      const t0 = performance.now();
+      (function f(now) {
+        if (userTook) return;
+        const k = Math.min(1, (now - t0) / ms), s = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+        moveTo(posFor(from + (to - from) * s));
+        if (k < 1) requestAnimationFrame(f); else done();
+      })(t0);
+    });
+    const down = () => { if (!userTook) { demoDrag = true; dragging = true; wake(); } };
+    const up = () => { if (!userTook) { demoDrag = false; release(); } };
+    (async () => {
+      await wait(700);
+      while (!userTook) {
+        if (document.hidden) { await wait(500); continue; }
+        down(); await wait(260);
+        await drag(value, 0.72, 900); await wait(200);
+        await drag(0.72, 1.25, 380); await wait(420);
+        up(); await wait(1100);
+        down(); await wait(220);
+        await drag(1, 0.3, 450);
+        await drag(0.3, -0.18, 260); await wait(380);
+        up(); await wait(900);
+        down(); await wait(200);
+        await drag(0, 0.4, 1000); await wait(150);
+        up(); await wait(1300);
+      }
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

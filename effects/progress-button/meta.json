@@ -1,0 +1,121 @@
+{
+  "slug": "progress-button",
+  "name": "按钮变进度",
+  "category": "progress",
+  "sub": "button",
+  "tags": ["按钮", "进度", "上传", "状态反馈", "变形"],
+  "summary": "点一下按钮就地变成进度：填色、细线、收成细条、缩成圆环或翻面，走完报成功，失败抖一下",
+  "params": [
+    {
+      "key": "style",
+      "label": "样式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "fill", "label": "底色填充" },
+        { "value": "line", "label": "底部细线" },
+        { "value": "shrink", "label": "收成细条" },
+        { "value": "ring", "label": "缩成圆环" },
+        { "value": "flip", "label": "翻面" }
+      ],
+      "default": "fill"
+    },
+    {
+      "key": "duration",
+      "label": "进度时长",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 8,
+      "step": 0.5,
+      "default": 3,
+      "displayUnit": " 秒",
+      "help": "从 0 走到 100% 大约多久"
+    },
+    {
+      "key": "bursty",
+      "label": "断续推进",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "一阵快一阵停，像真实的网络请求；关掉则匀速"
+    },
+    {
+      "key": "result",
+      "label": "结果",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "alternate", "label": "成败交替" },
+        { "value": "success", "label": "总是成功" },
+        { "value": "error", "label": "总是失败" }
+      ],
+      "default": "alternate"
+    },
+    {
+      "key": "hold",
+      "label": "结果停留",
+      "type": "range",
+      "target": "config",
+      "min": 0.6,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.6,
+      "displayUnit": " 秒",
+      "help": "「已完成 / 出错了」显示多久后变回按钮"
+    },
+    {
+      "key": "label",
+      "label": "按钮文字",
+      "type": "text",
+      "target": "config",
+      "default": "上传文件",
+      "maxLength": 8
+    },
+    {
+      "key": "color",
+      "label": "主色",
+      "type": "color",
+      "target": "css",
+      "default": "#5b5bf7"
+    },
+    {
+      "key": "success",
+      "label": "成功色",
+      "type": "color",
+      "target": "css",
+      "default": "#20b26b"
+    },
+    {
+      "key": "error",
+      "label": "失败色",
+      "type": "color",
+      "target": "css",
+      "default": "#e5484d"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 16,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "shrink", "name": "收成细条", "values": { "style": "shrink" } },
+    { "id": "ring", "name": "缩成圆环", "values": { "style": "ring", "radius": 30 } },
+    { "id": "flip", "name": "翻面", "values": { "style": "flip" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Codrops · Progress Button Styles",
+    "url": "https://tympanus.net/codrops/2013/12/12/progress-button-styles/",
+    "license": "未使用其代码"
+  }
+}

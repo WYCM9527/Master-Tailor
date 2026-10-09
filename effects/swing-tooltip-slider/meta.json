@@ -1,0 +1,124 @@
+{
+  "slug": "swing-tooltip-slider",
+  "name": "摆动气泡滑块",
+  "category": "progress",
+  "sub": "slider",
+  "tags": ["滑块", "气泡", "摆动", "弹簧", "渐变"],
+  "summary": "数值气泡跟着滑块走，拖得越快歪得越厉害，停下后像钟摆一样来回晃几下才回正",
+  "params": [
+    {
+      "key": "value",
+      "label": "初始值",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 30
+    },
+    {
+      "key": "swing",
+      "label": "摆动幅度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 3,
+      "step": 0.1,
+      "default": 1.2,
+      "displayUnit": "×",
+      "help": "拖得越快气泡歪得越多，这里是整体倍数；0 为不摆动"
+    },
+    {
+      "key": "lag",
+      "label": "跟随延迟",
+      "type": "range",
+      "target": "config",
+      "min": 0.05,
+      "max": 0.4,
+      "step": 0.01,
+      "default": 0.14,
+      "displayUnit": " 秒",
+      "help": "气泡追上滑块的快慢：越大甩得越开、晃得越慢"
+    },
+    {
+      "key": "damping",
+      "label": "回正阻尼",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.3,
+      "help": "越小停下后来回晃得越久；1 为直接回正"
+    },
+    {
+      "key": "place",
+      "label": "气泡位置",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "top", "label": "立在上方" },
+        { "value": "bottom", "label": "挂在下方" }
+      ],
+      "default": "top",
+      "help": "挂在下方时像吊着的牌子，摆动方向和立着时相反"
+    },
+    {
+      "key": "shape",
+      "label": "气泡形状",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "bubble", "label": "圆角气泡" },
+        { "value": "drop", "label": "水滴" }
+      ],
+      "default": "bubble"
+    },
+    {
+      "key": "from",
+      "label": "起点色",
+      "type": "color",
+      "target": "css",
+      "default": "#ff7a45",
+      "help": "数值为 0 时填充和气泡的颜色，越往右越接近终点色"
+    },
+    {
+      "key": "to",
+      "label": "终点色",
+      "type": "color",
+      "target": "css",
+      "default": "#7b61ff"
+    },
+    {
+      "key": "track",
+      "label": "轨道色",
+      "type": "color",
+      "target": "css",
+      "default": "#ddd6cb"
+    },
+    {
+      "key": "width",
+      "label": "滑块长度",
+      "type": "range",
+      "target": "css",
+      "min": 240,
+      "max": 640,
+      "step": 10,
+      "default": 420,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "hang", "name": "挂在下方", "values": { "place": "bottom" } },
+    { "id": "drop", "name": "水滴气泡", "values": { "shape": "drop" } },
+    { "id": "loose", "name": "晃得更久", "values": { "damping": 0.15, "swing": 1.8 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "reference",
+    "name": "Temani Afif · CSS-only Custom range slider with motion（CodePen）",
+    "url": "https://codepen.io/t_afif/pen/MWdmZPL",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

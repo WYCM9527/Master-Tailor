@@ -1,0 +1,124 @@
+{
+  "slug": "exposure-dial",
+  "name": "刻度拨盘",
+  "category": "progress",
+  "sub": "slider",
+  "tags": ["滑块", "刻度尺", "惯性", "吸附", "相机"],
+  "summary": "横向刻度尺在固定的中线下左右拖，靠近中线的刻度变高变亮，甩开后带惯性滑行再吸附到格",
+  "params": [
+    {
+      "key": "span",
+      "label": "范围",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 3,
+      "help": "读数在 −范围 到 +范围 之间"
+    },
+    {
+      "key": "step",
+      "label": "步进",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "0.1", "label": "0.1" },
+        { "value": "0.25", "label": "0.25" },
+        { "value": "0.5", "label": "0.5" },
+        { "value": "1", "label": "1" }
+      ],
+      "default": "0.1",
+      "help": "每根刻度代表多少，停稳时读数总是它的整数倍"
+    },
+    {
+      "key": "spacing",
+      "label": "刻度间距",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 24,
+      "step": 1,
+      "default": 10,
+      "displayUnit": "px"
+    },
+    {
+      "key": "inertia",
+      "label": "惯性",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.6,
+      "help": "松手后顺着甩的方向滑多远；0 为松手即吸附"
+    },
+    {
+      "key": "value",
+      "label": "初始值",
+      "type": "range",
+      "target": "config",
+      "min": -10,
+      "max": 10,
+      "step": 0.1,
+      "default": 0,
+      "help": "超出范围时取最近的一端"
+    },
+    {
+      "key": "color",
+      "label": "指示色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffd60a",
+      "help": "中线、圆环和读数"
+    },
+    {
+      "key": "tick",
+      "label": "刻度色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffffff"
+    },
+    {
+      "key": "unit",
+      "label": "单位",
+      "type": "text",
+      "target": "config",
+      "default": "EV",
+      "maxLength": 6
+    },
+    {
+      "key": "ring",
+      "label": "圆环读数",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "读数外面套一个圆环，按正负方向填充；关闭则只显示大号数字"
+    },
+    {
+      "key": "labels",
+      "label": "刻度数字",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "在整档刻度下方标数字"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dense", "name": "细密长滑", "values": { "spacing": 6, "inertia": 0.85 } },
+    { "id": "whole", "name": "一档一格", "values": { "step": "1", "span": 6, "spacing": 24 } },
+    {
+      "id": "minimal",
+      "name": "极简",
+      "values": { "ring": false, "labels": false, "color": "#ffffff" }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "reference",
+    "name": "SmoothUI · Exposure Slider",
+    "url": "https://smoothui.dev/docs/components/exposure-slider",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

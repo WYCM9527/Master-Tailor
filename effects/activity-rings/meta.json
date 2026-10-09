@@ -1,0 +1,123 @@
+{
+  "slug": "activity-rings",
+  "name": "活动圆环",
+  "category": "progress",
+  "sub": "ring",
+  "tags": ["圆环", "进度", "健身", "数据卡片", "叠绕"],
+  "summary": "几道同心圆环错峰长到各自的完成度，超过一圈就叠着继续绕，读数同步往上数，可按天切换",
+  "params": [
+    {
+      "key": "rings",
+      "label": "环数",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 3,
+      "step": 1,
+      "default": 3,
+      "help": "从外往里依次是活动、锻炼、站立"
+    },
+    {
+      "key": "move",
+      "label": "活动完成度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 300,
+      "step": 5,
+      "default": 135,
+      "displayUnit": "%",
+      "help": "今天（周日）外环的数据；超过 100% 时叠着继续绕"
+    },
+    {
+      "key": "exercise",
+      "label": "锻炼完成度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 300,
+      "step": 5,
+      "default": 80,
+      "displayUnit": "%"
+    },
+    {
+      "key": "stand",
+      "label": "站立完成度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 300,
+      "step": 5,
+      "default": 50,
+      "displayUnit": "%"
+    },
+    {
+      "key": "thickness",
+      "label": "线宽",
+      "type": "range",
+      "target": "config",
+      "min": 10,
+      "max": 30,
+      "step": 1,
+      "default": 22,
+      "displayUnit": "px"
+    },
+    {
+      "key": "duration",
+      "label": "生长时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.4,
+      "max": 4,
+      "step": 0.1,
+      "default": 1.6,
+      "displayUnit": " 秒",
+      "help": "每个环从当前值转到目标值所用的时间"
+    },
+    {
+      "key": "stagger",
+      "label": "错峰间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 0.8,
+      "step": 0.02,
+      "default": 0.18,
+      "displayUnit": " 秒",
+      "help": "相邻两环起步相差多久"
+    },
+    {
+      "key": "palette",
+      "label": "配色",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "fitness", "label": "健身三色" },
+        { "value": "ocean", "label": "海洋" },
+        { "value": "sunset", "label": "落日" }
+      ],
+      "default": "fitness"
+    },
+    {
+      "key": "week",
+      "label": "显示本周",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "下方一排每天的小圆环，点哪天大圆环就转到哪天"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "over", "name": "全部超标", "values": { "move": 260, "exercise": 190, "stand": 115 } },
+    { "id": "ocean", "name": "海洋配色", "values": { "palette": "ocean" } },
+    { "id": "single", "name": "单环", "values": { "rings": 1, "thickness": 28 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "reference",
+    "name": "KokonutUI · Apple Activity Card",
+    "url": "https://kokonutui.com/docs/cards/apple-activity-card",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

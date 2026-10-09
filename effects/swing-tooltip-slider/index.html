@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>摆动气泡滑块</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #f4f1ea;            /* 页面底色 */
+    --mt-from: #ff7a45;          /* 起点色：数值为 0 时填充和气泡的颜色 */
+    --mt-to: #7b61ff;            /* 终点色：数值为 100 时的颜色 */
+    --mt-track: #ddd6cb;         /* 轨道色 */
+    --mt-width: 420px;           /* 滑块长度 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  /* 当前色：按数值在起点色和终点色之间渐变，填充、滑块描边、气泡共用 */
+  .mt-slider { --c: color-mix(in oklch, var(--mt-to) var(--p, 0%), var(--mt-from)); position: relative; width: min(var(--mt-width), 88vw); height: 40px; touch-action: none; cursor: pointer; outline: none; }
+  .mt-track { position: absolute; left: 0; right: 0; top: 50%; height: 6px; margin-top: -3px; border-radius: 3px; background: var(--mt-track); overflow: hidden; }
+  .mt-fill { position: absolute; inset: 0; background: var(--c); transform-origin: 0 50%; }
+  .mt-knob { position: absolute; left: 0; top: 50%; width: 0; height: 0; }
+  /* 滑块：当前色圆，中间 14px 白心；悬停白心缩到 10px，按住缩没（只过渡白心大小，颜色随拖动即时变） */
+  .mt-dot { position: absolute; left: -13px; top: -13px; width: 26px; height: 26px; border-radius: 50%; background: var(--c); box-shadow: 0 2px 6px rgba(60, 40, 20, 0.18); }
+  .mt-dot::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #fff; transition: scale 0.25s; }
+  .mt-slider:hover .mt-dot::after { scale: 0.715; }
+  .mt-slider.dragging .mt-dot::after { scale: 0; }
+  .mt-slider:focus-visible .mt-dot { outline: 2px solid var(--c); outline-offset: 3px; }
+  /* 气泡：以滑块圆心为轴旋转（立在上方时轴在气泡下方 25px，挂在下方时在上方 25px） */
+  .mt-tip { position: absolute; left: 0; bottom: 25px; translate: -50% 0; transform-origin: 50% calc(100% + 25px); min-width: 54px; height: 36px; box-sizing: border-box; padding: 0 12px; display: grid; place-items: center; border-radius: 12px; background: var(--c); color: #fff; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; transition: scale 0.2s; }
+  .mt-tip span { position: relative; }
+  .mt-tip::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -7px; border: 7px solid transparent; border-bottom-width: 0; border-top-color: var(--c); }
+  .bottom .mt-tip { bottom: auto; top: 25px; transform-origin: 50% -25px; }
+  .bottom .mt-tip::after { top: auto; bottom: 100%; border-top-width: 0; border-bottom-width: 7px; border-top-color: transparent; border-bottom-color: var(--c); }
+  .dragging .mt-tip { scale: 1.06; }
+  /* 水滴形：44px 正方形三个圆角一个尖角，转 45° 让尖角朝向滑块，文字不跟着转 */
+  .drop .mt-tip { width: 44px; min-width: 0; height: 44px; padding: 0; background: none; font-size: 15px; }
+  .drop .mt-tip::after { display: none; }
+  .drop .mt-tip::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50% 50% 0 50%; background: var(--c); rotate: 45deg; }
+  .drop.bottom .mt-tip::before { rotate: -135deg; }
+
+  /* 用户开启「减少动态效果」时：滑块描边和气泡缩放不做过渡 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-dot::after, .mt-tip { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-slider" id="mtSlider" role="slider" tabindex="0" aria-label="数值" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div class="mt-track"><i class="mt-fill" id="mtFill"></i></div>
+  <div class="mt-knob" id="mtKnob">
+    <div class="mt-tip" id="mtTip"><span id="mtNum">0</span></div>
+    <i class="mt-dot"></i>
+  </div>
+</div>
+<script>
+  const CONFIG = {
+    value: 30,          // 初始值（0–100）
+    swing: 1.2,         // 摆动幅度：气泡被甩开的角度倍数，0 为不摆
+    lag: 0.14,          // 跟随延迟（秒）：越大气泡追得越慢、甩得越开、晃得越慢
+    damping: 0.3,       // 回正阻尼：越小停下后来回晃得越久，1 为直接回正不来回晃
+    place: 'top',       // 气泡位置：top 立在滑块上方 / bottom 挂在滑块下方
+    shape: 'bubble',    // 气泡形状：bubble 圆角气泡 / drop 水滴
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const R = 13;           // 滑块半径
+  const MAX_DEG = 45;     // 气泡最多歪多少度
+
+  const slider = document.getElementById('mtSlider'), fill = document.getElementById('mtFill');
+  const knob = document.getElementById('mtKnob'), tip = document.getElementById('mtTip'), num = document.getElementById('mtNum');
+  const hang = CONFIG.place === 'bottom';
+  slider.classList.add(hang ? 'bottom' : 'top');
+  if (CONFIG.shape === 'drop') slider.classList.add('drop');
+
+  let W = 0, value = clamp(Math.round(CONFIG.value), 0, 100), target = 0;
+  const pos = { x: 0, v: 0 };      // 滑块圆心（px）
+  const lagged = { x: 0, v: 0 };   // 气泡顶端追着滑块跑的位置，和滑块的差值换成倾斜角
+  let dragging = false, left = 0, userTook = false, demoDrag = false;
+  const xFor = (v) => R + (v / 100) * (W - 2 * R);
+
+  function spring(s, to, k, zeta, dt) {
+    s.v += (k * (to - s.x) - 2 * Math.sqrt(k) * zeta * s.v) * dt;
+    s.x += s.v * dt;
+  }
+  function readout() {
+    num.textContent = value;
+    slider.setAttribute('aria-valuenow', value);
+  }
+  function measure() {
+    W = slider.clientWidth;
+    target = xFor(value);
+    pos.x = lagged.x = target; pos.v = lagged.v = 0;
+    render();
+  }
+  // 拖动时滑块连续跟手，数值取整；松手再吸到整数位置
+  function moveTo(x) {
+    target = clamp(x, R, W - R);
+    value = Math.round(((target - R) / (W - 2 * R)) * 100);
+    readout(); wake();
+  }
+  function release() {
+    if (!dragging) return;
+    dragging = false; slider.classList.remove('dragging');
+    target = xFor(value); wake();
+  }
+  function takeOver() {
+    userTook = true;
+    if (demoDrag) { demoDrag = false; dragging = false; slider.classList.remove('dragging'); }
+  }
+
+  slider.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    takeOver();
+    slider.setPointerCapture(e.pointerId);
+    left = slider.getBoundingClientRect().left;
+    dragging = true; slider.classList.add('dragging');
+    moveTo(e.clientX - left);
+  });
+  slider.addEventListener('pointermove', (e) => { if (dragging && !demoDrag) moveTo(e.clientX - left); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => slider.addEventListener(t, release));
+  slider.addEventListener('keydown', (e) => {
+    const delta = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, PageDown: -10, PageUp: 10, Home: -100, End: 100 }[e.key];
+    if (delta === undefined) return;
+    e.preventDefault(); takeOver();
+    value = clamp(value + delta, 0, 100);
+    target = xFor(value);
+    readout(); wake();
+  });
+
+  function step(dt) {
+    if (reduceMotion) { pos.x = lagged.x = target; pos.v = lagged.v = 0; return false; }
+    // 滑块：拖动时几乎直接跟手，键盘和点轨道时稍软
+    spring(pos, target, dragging ? 4000 : 600, dragging ? 1 : 0.9, dt);
+    // 气泡：欠阻尼弹簧追滑块，ω = 2 / 跟随延迟
+    const w = 2 / Math.max(0.03, CONFIG.lag), z = clamp(CONFIG.damping, 0.02, 1.5);
+    spring(lagged, pos.x, w * w, z, dt);
+    return dragging || Math.abs(pos.x - target) > 0.05 || Math.abs(pos.v) > 0.5 || Math.abs(lagged.x - pos.x) > 0.05 || Math.abs(lagged.v) > 0.5;
+  }
+  function render() {
+    knob.style.transform = `translateX(${pos.x}px)`;
+    fill.style.transform = `scaleX(${pos.x / W})`;
+    slider.style.setProperty('--p', clamp(((pos.x - R) / (W - 2 * R)) * 100, 0, 100).toFixed(2) + '%');
+    // 落后在左边（往右拖）时立着的气泡往左歪、挂着的往右荡
+    const deg = clamp((lagged.x - pos.x) * CONFIG.swing * 0.45, -MAX_DEG, MAX_DEG) * (hang ? -1 : 1);
+    tip.style.rotate = deg.toFixed(2) + 'deg';
+  }
+
+  let raf = 0, last = 0;
+  function wake() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(loop); } }
+  function loop(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const n = Math.max(1, Math.ceil(dt * 240));   // 分步积分，硬弹簧也不会发散
+    let busy = false;
+    for (let i = 0; i < n; i++) busy = step(dt / n);
+    render();
+    raf = busy ? requestAnimationFrame(loop) : 0;
+  }
+
+  addEventListener('resize', measure);
+  measure(); readout();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：快甩、慢拖、再快甩回去，每次停下都让气泡晃一会儿；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const drag = (to, ms) => new Promise((done) => {
+      const from = value, t0 = performance.now();
+      demoDrag = true; dragging = true; slider.classList.add('dragging');
+      (function f(now) {
+        if (userTook) return;
+        const k = Math.min(1, (now - t0) / ms), s = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+        moveTo(xFor(from + (to - from) * s));
+        if (k < 1) requestAnimationFrame(f);
+        else { demoDrag = false; release(); done(); }
+      })(t0);
+    });
+    (async () => {
+      await wait(600);
+      while (!userTook) {
+        if (document.hidden) { await wait(500); continue; }
+        await drag(82, 380); await wait(1300);
+        await drag(58, 900); await wait(700);
+        await drag(12, 340); await wait(1300);
+        await drag(30, 700); await wait(1000);
+      }
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
