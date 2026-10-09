@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>顶部加载条</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-color: #2299dd;         /* 颜色：加载条、光晕和转圈 */
+    --mt-height: 3px;            /* 线粗 */
+    --mt-bg: #e6e9ef;            /* 页面底色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #1d2129; -webkit-tap-highlight-color: transparent; }
+
+  /* 模拟浏览器窗口 */
+  .mt-win { width: min(780px, 94vw); height: min(480px, 84vh); display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 24px 60px -20px rgba(20, 30, 60, 0.35), 0 0 0 1px rgba(20, 30, 60, 0.06); }
+  .mt-chrome { flex: none; height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: #f6f7f9; border-bottom: 1px solid #e8eaee; }
+  .mt-dots { display: flex; gap: 7px; margin-right: 6px; }
+  .mt-dots i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; }
+  .mt-dots i:nth-child(2) { background: #febc2e; }
+  .mt-dots i:nth-child(3) { background: #28c840; }
+  .mt-reload { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 8px; background: none; color: #6b7280; cursor: pointer; }
+  .mt-reload:hover { background: #e9ebef; color: #1d2129; }
+  .mt-reload:focus-visible { outline: 2px solid var(--mt-color); outline-offset: 1px; }
+  .mt-reload svg { width: 16px; height: 16px; }
+  .mt-addr { flex: 1; max-width: 420px; height: 28px; line-height: 28px; padding: 0 14px; border-radius: 14px; background: #eceef2; color: #6b7280; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .mt-view { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  /* 加载条：贴在页面最顶端，从左边推进；头部一段 100px 的光晕略微上翘 */
+  .mt-np { position: absolute; left: 0; right: 0; top: 0; z-index: 5; height: 0; pointer-events: none; visibility: hidden; }
+  .mt-np.on { visibility: visible; }
+  .mt-bar { position: absolute; left: 0; top: 0; width: 100%; height: var(--mt-height); background: var(--mt-color); transform: translateX(-100%); }
+  .mt-peg { position: absolute; right: 0; top: 0; width: 100px; height: 100%; box-shadow: 0 0 10px var(--mt-color), 0 0 5px var(--mt-color); transform: rotate(3deg) translate(0, -4px); }
+  .noglow .mt-peg { display: none; }
+  .mt-spin { position: absolute; top: 19px; right: 18px; width: 18px; height: 18px; box-sizing: border-box; border: 2px solid transparent; border-top-color: var(--mt-color); border-left-color: var(--mt-color); border-radius: 50%; animation: mt-spin 0.4s linear infinite; }
+  .nospin .mt-spin { display: none; }
+  @keyframes mt-spin { to { rotate: 360deg; } }
+
+  .mt-nav { height: 56px; display: flex; align-items: center; gap: 24px; padding: 0 28px; border-bottom: 1px solid #eef0f4; font-size: 14px; }
+  .mt-logo { margin-right: 8px; font-size: 15px; font-weight: 700; letter-spacing: 0.04em; }
+  .mt-nav a { position: relative; color: #6b7280; text-decoration: none; padding: 6px 0; }
+  .mt-nav a:hover { color: #1d2129; }
+  .mt-nav a[aria-current="page"] { color: #1d2129; font-weight: 600; }
+  .mt-nav a[aria-current="page"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; border-radius: 1px; background: #1d2129; }
+  .mt-nav a:focus-visible { outline: 2px solid var(--mt-color); outline-offset: 3px; border-radius: 3px; }
+
+  /* 页面内容：加载中变淡，加载完新内容从下方浮上来 */
+  .mt-page { padding: 28px 28px 0; transition: opacity 0.3s, translate 0.3s; }
+  .mt-page.wait { opacity: 0.4; }
+  .mt-page.enter { opacity: 0; translate: 0 8px; transition: none; }
+  .mt-page h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: 0.02em; }
+  .mt-page .sub { margin: 0 0 24px; color: #6b7280; font-size: 14px; }
+  .mt-sk { display: block; height: 10px; border-radius: 5px; background: #eceff3; }
+  .mt-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .mt-cards div { display: grid; gap: 10px; padding: 14px; border-radius: 12px; background: #f7f8fa; }
+  .mt-cards i { height: 92px; border-radius: 8px; background: linear-gradient(135deg, #dfe7f3, #eef2f8); }
+  .mt-cards b { font-size: 14px; }
+  .mt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+  .mt-grid i { height: 96px; border-radius: 10px; background: var(--s); }
+  .mt-list { margin: 18px 0 0; padding: 0; list-style: none; }
+  .mt-list li { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f1f4; font-size: 15px; }
+  .mt-list span { color: #9aa1ad; font-size: 13px; }
+  .mt-about { display: flex; gap: 20px; margin-top: 20px; }
+  .mt-about i { flex: none; width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #f3d9c9, #e8c3ae); }
+  .mt-lines { flex: 1; display: grid; gap: 12px; padding-top: 6px; }
+  .mt-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  @media (max-width: 560px) {
+    .mt-nav { gap: 16px; padding: 0 18px; }
+    .mt-logo { display: none; }
+    .mt-page { padding: 22px 18px 0; }
+    .mt-cards { grid-template-columns: 1fr 1fr; }
+    .mt-cards div:nth-child(3) { display: none; }
+  }
+
+  /* 用户开启「减少动态效果」时：转圈停住、新内容直接出现（加载条仍按步跳动，并照常淡出） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-spin { animation: none; }
+    .mt-page { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-win">
+  <div class="mt-chrome">
+    <span class="mt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <button class="mt-reload" id="mtReload" type="button" aria-label="刷新">
+      <!-- IconPark: refresh -->
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M42 8V24" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/><path d="M6 24L6 40" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/><path d="M42 24C42 14.0589 33.9411 6 24 6C18.9145 6 14.3216 8.10896 11.0481 11.5M6 24C6 33.9411 14.0589 42 24 42C28.8556 42 33.2622 40.0774 36.5 36.9519" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+    </button>
+    <div class="mt-addr" id="mtAddr">tailor.studio/</div>
+  </div>
+  <div class="mt-view">
+    <div class="mt-np" id="mtNp" aria-hidden="true"><div class="mt-bar" id="mtBar"><div class="mt-peg"></div></div><div class="mt-spin"></div></div>
+    <nav class="mt-nav" aria-label="站点导航">
+      <b class="mt-logo">裁缝大师</b>
+      <a href="#home" data-route="home">首页</a>
+      <a href="#works" data-route="works">作品</a>
+      <a href="#notes" data-route="notes">手记</a>
+      <a href="#about" data-route="about">关于</a>
+    </nav>
+    <main class="mt-page" id="mtPage"></main>
+  </div>
+</div>
+<span class="mt-sr" id="mtLive" aria-live="polite"></span>
+<script>
+  const CONFIG = {
+    minimum: 8,      // 起点（%）：一开始就先亮出的长度
+    trickle: 0.2,    // 步进间隔（秒）：每隔多久自己往前挪一步，越往后挪得越少
+    speed: 0.2,      // 过渡时长（秒）：每挪一步的过渡、冲满后的停顿和淡出各用这么久
+    load: 2.4,       // 加载时长（秒）：模拟页面多久加载完，到点就冲满
+    glow: true,      // 头部光晕：进度头那一小段发光
+    spinner: true,   // 转圈：加载中右上角显示一个小转圈
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const MIN = clamp(CONFIG.minimum, 0, 99) / 100;
+  const SPEED = Math.max(0.05, CONFIG.speed) * 1000;
+  const TRICKLE = Math.max(0.05, CONFIG.trickle) * 1000;
+
+  const sk = (w) => `<span class="mt-sk" style="width:${w}%"></span>`;
+  const PAGES = {
+    home: { name: '首页', path: '', html: `<h1>量体裁衣，一针一线</h1><p class="sub">为每一位客人做一件刚好合身的衣服。</p><div class="mt-cards">${['定制衬衫', '西装改制', '旧衣翻新'].map((t) => `<div><i></i><b>${t}</b>${sk(86)}${sk(58)}</div>`).join('')}</div>` },
+    works: { name: '作品', path: 'works', html: `<h1>作品</h1>${sk(40)}<div class="mt-grid">${['#d9e4f2', '#efe2d3', '#dde9dd', '#ead9e3', '#e6e2f2', '#f1e8cf'].map((c) => `<i style="--s:${c}"></i>`).join('')}</div>` },
+    notes: { name: '手记', path: 'notes', html: `<h1>手记</h1>${sk(36)}<ul class="mt-list">${[['选布的三个讲究', '9 月 28 日'], ['袖笼为什么要留余量', '9 月 14 日'], ['熨烫的顺序', '8 月 30 日'], ['一件西装的二十道工序', '8 月 11 日']].map(([t, d]) => `<li><b>${t}</b><span>${d}</span></li>`).join('')}</ul>` },
+    about: { name: '关于', path: 'about', html: `<h1>关于</h1>${sk(30)}<div class="mt-about"><i></i><div class="mt-lines">${[92, 84, 96, 70, 88, 52].map(sk).join('')}</div></div>` },
+  };
+  const ROUTES = Object.keys(PAGES);
+
+  const view = document.querySelector('.mt-view'), np = document.getElementById('mtNp'), bar = document.getElementById('mtBar');
+  const page = document.getElementById('mtPage'), addr = document.getElementById('mtAddr'), live = document.getElementById('mtLive');
+  const links = [...document.querySelectorAll('.mt-nav a')];
+  view.classList.toggle('noglow', !CONFIG.glow);
+  view.classList.toggle('nospin', !CONFIG.spinner);
+
+  // —— 加载条：status 为 null 表示没在加载 ——
+  let status = null, trickleTimer = 0, fadeTimer = 0, loadTimer = 0;
+  function place(n, animate) {
+    bar.style.transition = animate && !reduceMotion ? `transform ${SPEED}ms linear` : 'none';
+    bar.style.transform = `translateX(${((n - 1) * 100).toFixed(3)}%)`;
+  }
+  function set(n) {
+    n = clamp(n, MIN, 1);
+    if (status === null) {
+      // 新一轮：停掉上一轮的淡出，先瞬间回到最左边再出发
+      clearTimeout(fadeTimer);
+      np.style.transition = 'none';
+      np.style.opacity = '1';
+      np.classList.add('on');
+      place(0, false);
+      bar.getBoundingClientRect();
+    }
+    status = n === 1 ? null : n;
+    place(n, true);
+    if (n === 1) {
+      fadeTimer = setTimeout(() => {
+        np.style.transition = `opacity ${SPEED}ms linear`;
+        np.style.opacity = '0';
+        fadeTimer = setTimeout(() => np.classList.remove('on'), SPEED);
+      }, SPEED);
+    }
+  }
+  // 越往后挪得越少，永远停在 99.4% 之前，等加载真正完成
+  function inc() {
+    const n = status;
+    const step = n < 0.2 ? 0.1 : n < 0.5 ? 0.04 : n < 0.8 ? 0.02 : n < 0.99 ? 0.005 : 0;
+    set(Math.min(0.994, n + step));
+  }
+  function start() {
+    if (status === null) set(0);
+    clearTimeout(trickleTimer);
+    const work = () => {
+      if (status === null) return;
+      inc();
+      trickleTimer = setTimeout(work, TRICKLE);
+    };
+    trickleTimer = setTimeout(work, TRICKLE);
+  }
+  function done() {
+    if (status === null) return;
+    clearTimeout(trickleTimer);
+    set(1);
+  }
+
+  // —— 模拟页面跳转 ——
+  let current = 'home', userTook = false;
+  function showPage(route) {
+    page.innerHTML = PAGES[route].html;
+    if (reduceMotion) return;
+    page.classList.add('enter');
+    page.getBoundingClientRect();
+    page.classList.remove('enter');
+  }
+  function navigate(route) {
+    current = route;
+    addr.textContent = 'tailor.studio/' + PAGES[route].path;
+    links.forEach((a) => { if (a.dataset.route === route) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    page.classList.add('wait');
+    page.setAttribute('aria-busy', 'true');
+    start();
+    clearTimeout(loadTimer);
+    loadTimer = setTimeout(() => {
+      showPage(route);
+      page.classList.remove('wait');
+      page.removeAttribute('aria-busy');
+      live.textContent = `已打开「${PAGES[route].name}」`;
+      done();
+    }, Math.max(0.1, CONFIG.load) * 1000 * (0.85 + Math.random() * 0.3));
+  }
+  links.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); userTook = true; navigate(a.dataset.route); }));
+  document.getElementById('mtReload').addEventListener('click', () => { userTook = true; navigate(current); });
+
+  navigate('home');
+
+  /* @mt:thumb-start */
+  // 缩略图演示：依次点开每个页面；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const next = () => {
+      if (userTook) return;
+      if (!document.hidden && status === null) navigate(ROUTES[(ROUTES.indexOf(current) + 1) % ROUTES.length]);
+      setTimeout(next, 1600);
+    };
+    setTimeout(next, Math.max(0.1, CONFIG.load) * 1000 * 1.15 + 1600);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

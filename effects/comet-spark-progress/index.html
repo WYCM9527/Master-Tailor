@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>火花彗尾</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-color: #ff8a3c;         /* 火花色：进度、光晕和火花的主色 */
+    --mt-core: #fff1c1;          /* 核心色：彗星头和刚迸出的火花 */
+    --mt-track: #1b1e28;         /* 轨道色 */
+    --mt-bg: #07080d;            /* 页面底色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #fff; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; }
+  .mt-wrap { width: min(640px, 86vw); display: grid; gap: 14px; }
+  .mt-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; letter-spacing: 0.04em; color: rgba(255, 255, 255, 0.62); }
+  .mt-row b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; }
+  .mt-track { height: 4px; border-radius: 2px; background: var(--mt-track); }
+  .mt-hint { margin: 18px 0 0; text-align: center; font-size: 12px; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.32); }
+  /* 进度、彗星和火花都画在这张铺满页面的画布上，盖在轨道之上 */
+  .mt-fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+
+  /* 用户开启「减少动态效果」时：不甩火花、不炸开，只保留进度和一个静止的亮点（在脚本里处理） */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-wrap">
+  <div class="mt-row"><span id="mtLabel"></span><b id="mtPct">0%</b></div>
+  <div class="mt-track" id="mtTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+  <p class="mt-hint">按住屏幕或空格键加速</p>
+</div>
+<canvas class="mt-fx" id="mtFx" aria-hidden="true"></canvas>
+<script>
+  const CONFIG = {
+    duration: 6,       // 进度时长（秒）：正常速度下从 0 走到 100% 大约多久
+    sparks: 120,       // 火花数量：每秒从彗星头甩出多少颗
+    trail: 0.5,        // 拖尾长度：彗星身后那道光的长短，0 为没有
+    gravity: 1,        // 重力（倍）：火花下落的快慢，0 为失重飘散
+    burst: true,       // 走满炸开：到 100% 时炸出一圈冲击波和一团火花
+    loop: true,        // 循环：炸完稍停后从头再来；关掉则停在走满，点一下重来
+    label: '正在加载',  // 文字：进度条左上方的说明
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const TAU = Math.PI * 2;
+  const D = Math.max(0.5, CONFIG.duration);
+  const MAX = 1400, REST = 1.6, FADE = 0.4, BOOST = 3;
+
+  const cv = document.getElementById('mtFx'), ctx = cv.getContext('2d');
+  const track = document.getElementById('mtTrack'), pctEl = document.getElementById('mtPct'), labelEl = document.getElementById('mtLabel');
+  const label = CONFIG.label || '正在加载';
+  labelEl.textContent = label;
+  track.setAttribute('aria-label', label);
+
+  // 颜色从 CSS 变量读取，隔一阵重读一次，调色时画布跟着变
+  let C = { color: [255, 138, 60], core: [255, 241, 193] }, PAL = [], colorTick = 0;
+  const hex = (s, fb) => { const m = /^#([0-9a-f]{6})$/i.exec(s.trim()); if (!m) return fb; const n = parseInt(m[1], 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a.toFixed(3)})`;
+  const lerpC = (a, b, k) => a.map((x, i) => Math.round(x + (b[i] - x) * k));
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    C = { color: hex(cs.getPropertyValue('--mt-color'), C.color), core: hex(cs.getPropertyValue('--mt-core'), C.core) };
+    const deep = C.color.map((x) => Math.round(x * 0.35));
+    // 火花一生的颜色：先从核心色变到火花色，再暗下去、淡出
+    PAL = Array.from({ length: 16 }, (_, i) => {
+      const k = i / 15;
+      const c = k < 0.25 ? lerpC(C.core, C.color, k / 0.25) : lerpC(C.color, deep, (k - 0.25) / 0.75);
+      return rgba(c, 1 - k * 0.85);
+    });
+  }
+  readColors();
+
+  let VW = 0, VH = 0, dpr = 1, x0 = 0, ty = 0, TW = 1;
+  function resize() {
+    dpr = Math.min(2, devicePixelRatio || 1);
+    VW = innerWidth; VH = innerHeight;
+    cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr);
+    const r = track.getBoundingClientRect();
+    x0 = r.left; ty = r.top + r.height / 2; TW = Math.max(1, r.width);
+  }
+  resize();
+  addEventListener('resize', () => { resize(); wake(); });
+
+  // —— 状态 ——
+  let state = 'run', p = 0, t = 0, speedK = 1, boost = false, doneT = 0, fillA = 1, flash = 0, acc = 0, shownPct = -1;
+  const ph1 = Math.random() * TAU, ph2 = Math.random() * TAU;
+  const sparks = [], rings = [];
+
+  function spawn(x, y, burst, headV) {
+    const a = burst ? Math.random() * TAU : Math.PI + (Math.random() - 0.5) * 1.6;
+    const v = burst ? 150 + Math.random() * 380 : 60 + Math.random() * 240;
+    sparks.push({
+      x, y,
+      vx: Math.cos(a) * v + (burst ? 0 : headV * 0.3),
+      vy: Math.sin(a) * v - (burst ? 60 : 30),
+      age: 0,
+      life: (burst ? 0.6 : 0.45) + Math.random() * 0.7,
+      size: 0.8 + Math.random() * 1.6,
+    });
+  }
+  function finish() {
+    p = 1; state = 'done'; doneT = 0;
+    labelEl.textContent = '完成';
+    if (CONFIG.burst && !reduceMotion) {
+      rings.push({ age: 0 });
+      for (let i = 0; i < 90 && sparks.length < MAX; i++) spawn(x0 + TW, ty, true, 0);
+      flash = 1;
+    }
+  }
+  function reset() {
+    state = 'run'; p = 0; t = 0; fillA = 1; speedK = 1; acc = 0;
+    labelEl.textContent = label;
+  }
+  function readout() {
+    const n = Math.floor(p * 100);
+    if (n === shownPct) return;
+    shownPct = n;
+    pctEl.textContent = n + '%';
+    track.setAttribute('aria-valuenow', n);
+  }
+
+  function step(dt) {
+    const hx = x0 + p * TW;
+    if (state === 'run') {
+      t += dt;
+      // 速度有快有慢：两条正弦叠加，平均为 1；按住时再乘 BOOST
+      const m = (1 + 0.45 * Math.sin(2.1 * t + ph1) + 0.25 * Math.sin(5.3 * t + ph2)) * (boost ? BOOST : 1);
+      speedK += (m - speedK) * Math.min(1, dt * 6);
+      p = Math.min(1, p + (dt * speedK) / D);
+      if (!reduceMotion) {
+        acc += dt * Math.max(0, CONFIG.sparks) * (boost ? 2.5 : 1) * clamp(speedK, 0.5, 2);
+        const headV = (TW * speedK) / D;
+        while (acc >= 1) { acc -= 1; if (sparks.length < MAX) spawn(hx, ty + (Math.random() - 0.5) * 3, false, headV); }
+      }
+      if (p >= 1) finish();
+    } else if (state === 'done' && CONFIG.loop) {
+      doneT += dt;
+      if (doneT > REST) fillA = 1 - (doneT - REST) / FADE;
+      if (fillA <= 0) reset();
+    }
+    const G = 520 * Math.max(0, CONFIG.gravity), drag = Math.exp(-1.6 * dt);
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.age += dt;
+      if (s.age >= s.life) { sparks[i] = sparks[sparks.length - 1]; sparks.pop(); continue; }
+      s.vx *= drag;
+      s.vy = s.vy * drag + G * dt;
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+    }
+    for (let i = rings.length - 1; i >= 0; i--) { rings[i].age += dt; if (rings[i].age > 0.7) rings.splice(i, 1); }
+    flash = Math.max(0, flash - dt * 2.5);
+    readout();
+  }
+
+  function draw() {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, VW, VH);
+    const hx = x0 + p * TW;
+    if (p > 0 && fillA > 0) {
+      const g = ctx.createLinearGradient(x0, 0, Math.max(x0 + 1, hx), 0);
+      g.addColorStop(0, rgba(C.color, 0.15 * fillA));
+      g.addColorStop(1, rgba(C.color, fillA));
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.roundRect(x0, ty - 2, hx - x0, 4, 2); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    // 拖尾：头部往后收尖的一道光，跑得越快越长
+    if (state === 'run' && !reduceMotion && CONFIG.trail > 0) {
+      const L = Math.min(hx - x0, CONFIG.trail * 160 * clamp(speedK, 0.4, 2.2));
+      if (L > 1) {
+        const g = ctx.createLinearGradient(hx - L, 0, hx, 0);
+        g.addColorStop(0, rgba(C.color, 0));
+        g.addColorStop(1, rgba(C.core, 0.85));
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.moveTo(hx - L, ty); ctx.lineTo(hx, ty - 3.5); ctx.lineTo(hx, ty + 3.5); ctx.closePath(); ctx.fill();
+      }
+    }
+    // 火花：沿速度方向画成短线
+    ctx.lineCap = 'round';
+    for (const s of sparks) {
+      const k = s.age / s.life;
+      ctx.strokeStyle = PAL[Math.min(15, (k * 16) | 0)];
+      ctx.lineWidth = s.size * (1 - k * 0.6);
+      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx * 0.016, s.y - s.vy * 0.016); ctx.stroke();
+    }
+    for (const r of rings) {
+      const k = r.age / 0.7;
+      ctx.strokeStyle = rgba(C.color, 1 - k);
+      ctx.lineWidth = 3 * (1 - k) + 0.5;
+      ctx.beginPath(); ctx.arc(x0 + TW, ty, 6 + 90 * (1 - (1 - k) ** 3), 0, TAU); ctx.stroke();
+    }
+    // 彗星头：一团光晕 + 一个亮核；走满时光晕猛地放大再收回
+    if (p > 0 && (state === 'run' || flash > 0)) {
+      const R = (reduceMotion ? 14 : 26) + flash * 40;
+      const g = ctx.createRadialGradient(hx, ty, 0, hx, ty, R);
+      g.addColorStop(0, rgba(C.core, 0.9));
+      g.addColorStop(0.25, rgba(C.color, 0.55));
+      g.addColorStop(1, rgba(C.color, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(hx, ty, R, 0, TAU); ctx.fill();
+      ctx.fillStyle = rgba(C.core, 1);
+      ctx.beginPath(); ctx.arc(hx, ty, 3.5, 0, TAU); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  let raf = 0, last = 0;
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (++colorTick % 30 === 0) readColors();
+    step(dt);
+    draw();
+    // 停在走满且火花散尽后就不再逐帧重画
+    if (state === 'done' && !CONFIG.loop && !sparks.length && !rings.length && flash === 0) { raf = 0; return; }
+    raf = requestAnimationFrame(frame);
+  }
+  function wake() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+
+  // —— 按住加速；走满停住时点一下重来 ——
+  let userTook = false;
+  function press() {
+    userTook = true;
+    if (state === 'done') reset(); else boost = true;
+    wake();
+  }
+  const release = () => { boost = false; };
+  addEventListener('pointerdown', (e) => { if (e.button === 0) press(); });
+  addEventListener('pointerup', release);
+  addEventListener('pointercancel', release);
+  addEventListener('blur', release);
+  addEventListener('keydown', (e) => {
+    if (e.key !== ' ' && e.key !== 'Enter') return;
+    e.preventDefault();
+    if (!e.repeat) press();
+  });
+  addEventListener('keyup', (e) => { if (e.key === ' ' || e.key === 'Enter') release(); });
+
+  wake();
+
+  /* @mt:thumb-start */
+  // 缩略图演示：每一轮走到中段时按住加速一小会儿；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    let boosted = false;
+    setInterval(() => {
+      if (userTook) return;
+      if (state === 'run' && p > 0.35 && p < 0.6 && !boosted) { boosted = true; boost = true; setTimeout(() => { if (!userTook) boost = false; }, 700); }
+      if (state === 'done') boosted = false;
+    }, 100);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

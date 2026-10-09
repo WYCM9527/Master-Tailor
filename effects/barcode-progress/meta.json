@@ -1,0 +1,129 @@
+{
+  "slug": "barcode-progress",
+  "name": "细栅进度条",
+  "category": "progress",
+  "sub": "linear",
+  "tags": ["进度条", "竖条", "逐根点亮", "拖拽", "极简"],
+  "summary": "几十根细竖条排成一排，走到哪根点亮哪根并拉高，进度一变就逐根扫过去",
+  "params": [
+    {
+      "key": "value",
+      "label": "进度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 62,
+      "displayUnit": "%",
+      "help": "打开时从 0 扫到这里"
+    },
+    {
+      "key": "count",
+      "label": "条数",
+      "type": "range",
+      "target": "config",
+      "min": 16,
+      "max": 120,
+      "step": 1,
+      "default": 56
+    },
+    {
+      "key": "barWidth",
+      "label": "条宽",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 8,
+      "step": 0.5,
+      "default": 3,
+      "unit": "px"
+    },
+    {
+      "key": "gap",
+      "label": "间距",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 8,
+      "step": 0.5,
+      "default": 3,
+      "unit": "px"
+    },
+    {
+      "key": "height",
+      "label": "高度",
+      "type": "range",
+      "target": "css",
+      "min": 12,
+      "max": 64,
+      "step": 1,
+      "default": 32,
+      "unit": "px",
+      "help": "点亮时的竖条高度"
+    },
+    {
+      "key": "lift",
+      "label": "点亮拉高",
+      "type": "range",
+      "target": "config",
+      "min": 1,
+      "max": 1.8,
+      "step": 0.05,
+      "default": 1.35,
+      "displayUnit": "×",
+      "help": "点亮的竖条比未亮的高多少"
+    },
+    {
+      "key": "stagger",
+      "label": "点亮间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 8,
+      "displayUnit": " 毫秒",
+      "help": "相邻两根先后点亮相差多久，形成一道扫过的波"
+    },
+    {
+      "key": "color",
+      "label": "点亮色",
+      "type": "color",
+      "target": "css",
+      "default": "#5eead4"
+    },
+    {
+      "key": "track",
+      "label": "未亮色",
+      "type": "color",
+      "target": "css",
+      "default": "#2b313c"
+    },
+    {
+      "key": "label",
+      "label": "标题",
+      "type": "text",
+      "target": "config",
+      "default": "同步相册",
+      "maxLength": 10
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "dense", "name": "细密", "values": { "count": 110, "barWidth": 1.5, "gap": 1.5 } },
+    {
+      "id": "chunky",
+      "name": "粗条",
+      "values": { "count": 26, "barWidth": 8, "gap": 5, "height": 48 }
+    },
+    { "id": "amber", "name": "琥珀", "values": { "color": "#fbbf24" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "reference",
+    "name": "Animata · Progress",
+    "url": "https://animata.design/docs/graphs/progress",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

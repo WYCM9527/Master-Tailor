@@ -1,0 +1,104 @@
+{
+  "slug": "top-loading-bar",
+  "name": "顶部加载条",
+  "category": "progress",
+  "sub": "linear",
+  "tags": ["加载条", "页面跳转", "顶部进度", "细线", "转圈"],
+  "summary": "页面顶端一根细线一顿一顿往前挪、越来越慢，头部带光晕，加载完冲满再淡出",
+  "params": [
+    {
+      "key": "minimum",
+      "label": "起点",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 8,
+      "displayUnit": "%",
+      "help": "一开始就先亮出的长度"
+    },
+    {
+      "key": "trickle",
+      "label": "步进间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.2,
+      "displayUnit": " 秒",
+      "help": "每隔多久自己往前挪一步，越往后挪得越少"
+    },
+    {
+      "key": "speed",
+      "label": "过渡时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.1,
+      "max": 0.6,
+      "step": 0.05,
+      "default": 0.2,
+      "displayUnit": " 秒",
+      "help": "每挪一步的过渡、冲满后的停顿和淡出各用这么久"
+    },
+    {
+      "key": "load",
+      "label": "加载时长",
+      "type": "range",
+      "target": "config",
+      "min": 0.5,
+      "max": 8,
+      "step": 0.1,
+      "default": 2.4,
+      "displayUnit": " 秒",
+      "help": "模拟页面多久加载完，到点就冲满"
+    },
+    {
+      "key": "height",
+      "label": "线粗",
+      "type": "range",
+      "target": "css",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 3,
+      "unit": "px"
+    },
+    {
+      "key": "color",
+      "label": "颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#2299dd"
+    },
+    {
+      "key": "glow",
+      "label": "头部光晕",
+      "type": "toggle",
+      "target": "config",
+      "default": true
+    },
+    {
+      "key": "spinner",
+      "label": "转圈",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "加载中在右上角显示一个小转圈"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "slow", "name": "慢网速", "values": { "load": 6, "trickle": 0.4 } },
+    { "id": "thick", "name": "粗线无转圈", "values": { "height": 5, "spinner": false } },
+    { "id": "pink", "name": "品红", "values": { "color": "#e5307a" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "reference",
+    "name": "NProgress",
+    "url": "https://github.com/rstacruz/nprogress",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

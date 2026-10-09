@@ -1,0 +1,110 @@
+{
+  "slug": "comet-spark-progress",
+  "name": "火花彗尾",
+  "category": "progress",
+  "sub": "linear",
+  "tags": ["进度条", "粒子", "火花", "彗星", "炸开"],
+  "summary": "进度头是一颗发光的彗星，身后甩出下落的火花，按住加速，走满时炸开一圈",
+  "params": [
+    {
+      "key": "duration",
+      "label": "进度时长",
+      "type": "range",
+      "target": "config",
+      "min": 2,
+      "max": 15,
+      "step": 0.5,
+      "default": 6,
+      "displayUnit": " 秒",
+      "help": "正常速度下从 0 走到 100% 大约多久"
+    },
+    {
+      "key": "sparks",
+      "label": "火花数量",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 300,
+      "step": 10,
+      "default": 120,
+      "help": "每秒从彗星头甩出多少颗"
+    },
+    {
+      "key": "trail",
+      "label": "拖尾长度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.5,
+      "help": "彗星身后那道光的长短，0 为没有"
+    },
+    {
+      "key": "gravity",
+      "label": "重力",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.05,
+      "default": 1,
+      "displayUnit": "×",
+      "help": "火花下落的快慢，0 为失重飘散"
+    },
+    {
+      "key": "burst",
+      "label": "走满炸开",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "到 100% 时炸出一圈冲击波和一团火花"
+    },
+    {
+      "key": "loop",
+      "label": "循环",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "炸完稍停后从头再来；关掉则停在走满，点一下重来"
+    },
+    {
+      "key": "label",
+      "label": "文字",
+      "type": "text",
+      "target": "config",
+      "default": "正在加载",
+      "maxLength": 10
+    },
+    {
+      "key": "color",
+      "label": "火花色",
+      "type": "color",
+      "target": "css",
+      "default": "#ff8a3c"
+    },
+    {
+      "key": "core",
+      "label": "核心色",
+      "type": "color",
+      "target": "css",
+      "default": "#fff1c1",
+      "help": "彗星头和刚迸出的火花"
+    },
+    {
+      "key": "track",
+      "label": "轨道色",
+      "type": "color",
+      "target": "css",
+      "default": "#1b1e28"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "meteor", "name": "流星雨", "values": { "sparks": 260, "trail": 0.9 } },
+    { "id": "float", "name": "失重", "values": { "gravity": 0.1 } },
+    { "id": "ice", "name": "冰蓝", "values": { "color": "#4cc9ff", "core": "#e6fbff" } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

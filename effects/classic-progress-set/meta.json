@@ -1,0 +1,115 @@
+{
+  "slug": "classic-progress-set",
+  "name": "经典进度条合集",
+  "category": "progress",
+  "sub": "linear",
+  "tags": ["进度条", "合集", "斜纹", "跑马灯", "复古", "不定进度"],
+  "summary": "斜纹流动、跑马灯、分格点亮、光泽胶囊、不定进度、光带扫过六种老牌进度条，可单选",
+  "params": [
+    {
+      "key": "style",
+      "label": "样式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "all", "label": "全部" },
+        { "value": "stripes", "label": "斜纹流动" },
+        { "value": "marquee", "label": "跑马灯" },
+        { "value": "segments", "label": "分格点亮" },
+        { "value": "aqua", "label": "光泽胶囊" },
+        { "value": "indeterminate", "label": "不定进度" },
+        { "value": "sheen", "label": "光带扫过" }
+      ],
+      "default": "all"
+    },
+    {
+      "key": "value",
+      "label": "进度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 66,
+      "displayUnit": "%",
+      "help": "能显示具体进度的样式走到这里"
+    },
+    {
+      "key": "speed",
+      "label": "速度",
+      "type": "range",
+      "target": "config",
+      "min": 0.25,
+      "max": 3,
+      "step": 0.05,
+      "default": 1,
+      "displayUnit": "×",
+      "help": "流动、闪烁、光带的快慢，以及重播时走到进度的快慢"
+    },
+    {
+      "key": "height",
+      "label": "高度",
+      "type": "range",
+      "target": "css",
+      "min": 4,
+      "max": 28,
+      "step": 1,
+      "default": 14,
+      "unit": "px"
+    },
+    {
+      "key": "radius",
+      "label": "圆角",
+      "type": "range",
+      "target": "css",
+      "min": 0,
+      "max": 14,
+      "step": 1,
+      "default": 7,
+      "unit": "px",
+      "help": "光泽胶囊始终是全圆角"
+    },
+    {
+      "key": "color",
+      "label": "主色",
+      "type": "color",
+      "target": "css",
+      "default": "#3b82f6"
+    },
+    {
+      "key": "track",
+      "label": "轨道色",
+      "type": "color",
+      "target": "css",
+      "default": "#e5e7eb"
+    },
+    {
+      "key": "label",
+      "label": "标题",
+      "type": "text",
+      "target": "config",
+      "default": "正在安装更新",
+      "maxLength": 12
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "stripes",
+      "name": "斜纹粗条",
+      "values": { "style": "stripes", "height": 22, "radius": 4 }
+    },
+    {
+      "id": "retro",
+      "name": "复古分格",
+      "values": { "style": "segments", "height": 18, "radius": 0 }
+    },
+    {
+      "id": "thin",
+      "name": "细线不定",
+      "values": { "style": "indeterminate", "height": 4, "radius": 2 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

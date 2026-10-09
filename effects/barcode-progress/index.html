@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>细栅进度条</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-color: #5eead4;         /* 点亮色 */
+    --mt-track: #2b313c;         /* 未亮色 */
+    --mt-barWidth: 3px;          /* 条宽 */
+    --mt-gap: 3px;               /* 间距 */
+    --mt-height: 32px;           /* 高度：点亮时的竖条高度 */
+    --mt-bg: #0b0d11;            /* 页面底色 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #e8eaed; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .mt-card { display: grid; gap: 18px; padding: 24px 26px 26px; border-radius: 20px; background: #13161c; border: 1px solid rgba(255, 255, 255, 0.06); box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8); }
+  .mt-head { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; }
+  .mt-head b { font-size: 15px; font-weight: 600; letter-spacing: 0.04em; color: rgba(232, 234, 237, 0.85); }
+  .mt-head strong { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--mt-color); }
+
+  /* 竖条一排：宽度按条数算，放不下时竖条一起变窄；未亮的矮一截，点亮时拉到全高 */
+  .mt-bars { --n: 56; --rest: 0.74; display: flex; align-items: center; gap: var(--mt-gap); width: min(calc(var(--n) * (var(--mt-barWidth) + var(--mt-gap)) - var(--mt-gap)), calc(100vw - 96px)); height: calc(var(--mt-height) + 8px); cursor: pointer; touch-action: none; outline: none; }
+  .mt-bars i { flex: 0 1 var(--mt-barWidth); min-width: 1px; height: var(--mt-height); border-radius: calc(var(--mt-barWidth) / 2); background: var(--mt-track); scale: 1 var(--rest); transition: background-color 0.3s, scale 0.3s, box-shadow 0.3s; transition-delay: var(--d, 0ms); }
+  .mt-bars i.on { background: var(--mt-color); scale: 1 1; transition-duration: 0.12s; }
+  .mt-bars i.head { box-shadow: 0 0 10px var(--mt-color); }
+  /* 悬停：未亮的再缩一点、变淡，提示可以点 */
+  .mt-bars:hover i:not(.on) { scale: 1 calc(var(--rest) * 0.75); opacity: 0.7; transition-delay: 0ms; }
+  .mt-bars:focus-visible { outline: 2px solid color-mix(in srgb, var(--mt-color) 60%, transparent); outline-offset: 6px; border-radius: 4px; }
+
+  /* 用户开启「减少动态效果」时：竖条直接点亮，不做逐根扫过与拉高过渡 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-bars i { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-card">
+  <div class="mt-head"><b id="mtLabel"></b><strong id="mtPct">0%</strong></div>
+  <div class="mt-bars" id="mtBars" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+</div>
+<script>
+  const CONFIG = {
+    value: 62,       // 进度（%）：打开时从 0 扫到这里
+    count: 56,       // 条数
+    lift: 1.35,      // 点亮拉高（倍）：点亮的竖条比未亮的高多少
+    stagger: 8,      // 点亮间隔（毫秒）：相邻两根先后点亮相差多久，形成一道扫过的波
+    label: '同步相册', // 标题
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const N = clamp(Math.round(CONFIG.count), 4, 240);
+  const STAGGER = reduceMotion ? 0 : Math.max(0, CONFIG.stagger);
+
+  const wrap = document.getElementById('mtBars'), pctEl = document.getElementById('mtPct');
+  const label = CONFIG.label || '进度';
+  document.getElementById('mtLabel').textContent = label;
+  wrap.setAttribute('aria-label', label);
+  wrap.style.setProperty('--n', N);
+  wrap.style.setProperty('--rest', (1 / clamp(CONFIG.lift, 1, 3)).toFixed(3));
+  const bars = Array.from({ length: N }, () => wrap.appendChild(document.createElement('i')));
+
+  let value = 0, lit = 0, shown = 0, numRaf = 0, userTook = false;
+  // 点亮数从 lit 变到 k：中间这些竖条按离起点的远近依次延迟，往前是逐根点亮，往回是逐根熄灭
+  function light(k) {
+    const from = lit;
+    if (k === from) return;
+    const lo = Math.min(from, k), hi = Math.max(from, k);
+    for (let i = lo; i < hi; i++) {
+      bars[i].style.setProperty('--d', `${Math.abs(i - (k > from ? lo : hi - 1)) * STAGGER}ms`);
+      bars[i].classList.toggle('on', k > from);
+    }
+    if (from > 0) bars[from - 1].classList.remove('head');
+    if (k > 0) bars[k - 1].classList.add('head');
+    lit = k;
+    countTo(value, (hi - lo) * STAGGER + 120);
+  }
+  // 百分比数字跟着扫过的时间一起滚动
+  function countTo(target, ms) {
+    cancelAnimationFrame(numRaf);
+    const a = shown, t0 = performance.now();
+    const step = (now) => {
+      const k = reduceMotion ? 1 : clamp((now - t0) / ms, 0, 1);
+      shown = a + (target - a) * k;
+      pctEl.textContent = Math.round(shown) + '%';
+      if (k < 1) numRaf = requestAnimationFrame(step);
+    };
+    numRaf = requestAnimationFrame(step);
+  }
+  function setValue(v) {
+    value = clamp(Math.round(v), 0, 100);
+    wrap.setAttribute('aria-valuenow', value);
+    wrap.setAttribute('aria-valuetext', value + '%');
+    light(Math.round((value / 100) * N));
+  }
+
+  // 拖动或点按：按指针在整排里的位置换算进度
+  let dragging = false;
+  const fromX = (x) => { const r = wrap.getBoundingClientRect(); return ((x - r.left) / r.width) * 100; };
+  wrap.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    userTook = true;
+    dragging = true;
+    wrap.setPointerCapture(e.pointerId);
+    setValue(fromX(e.clientX));
+  });
+  wrap.addEventListener('pointermove', (e) => { if (dragging) setValue(fromX(e.clientX)); });
+  const end = () => { dragging = false; };
+  wrap.addEventListener('pointerup', end);
+  wrap.addEventListener('pointercancel', end);
+  wrap.addEventListener('keydown', (e) => {
+    const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: 10, PageDown: -10 }[e.key];
+    let v = d === undefined ? null : value + d;
+    if (e.key === 'Home') v = 0;
+    if (e.key === 'End') v = 100;
+    if (v === null) return;
+    e.preventDefault();
+    userTook = true;
+    setValue(v);
+  });
+
+  setTimeout(() => setValue(CONFIG.value), reduceMotion ? 0 : 250);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：在几个进度之间来回扫；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const seq = [100, 24, 78, 46, 92, 12];
+    let n = 0;
+    setInterval(() => {
+      if (userTook || document.hidden) return;
+      setValue(seq[n++ % seq.length]);
+    }, 1800);
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>
