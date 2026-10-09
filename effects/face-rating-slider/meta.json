@@ -1,0 +1,104 @@
+{
+  "slug": "face-rating-slider",
+  "name": "表情评分滑块",
+  "category": "progress",
+  "sub": "slider",
+  "tags": ["评分", "表情", "滑块", "反馈", "档位", "拖拽"],
+  "summary": "拖动评分滑块，上方的脸从撇嘴难过慢慢变成眯眼大笑，脑袋跟着歪，档位文字上下滑换",
+  "params": [
+    {
+      "key": "levels",
+      "label": "档位文字",
+      "type": "text",
+      "target": "config",
+      "default": "很差｜较差｜一般｜不错｜超赞",
+      "maxLength": 40,
+      "help": "用「｜」分隔，2–6 档"
+    },
+    {
+      "key": "value",
+      "label": "初始评分",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 72,
+      "displayUnit": "%",
+      "help": "打开时滑块走到这里"
+    },
+    {
+      "key": "expression",
+      "label": "表情幅度",
+      "type": "range",
+      "target": "config",
+      "min": 0.4,
+      "max": 1.4,
+      "step": 0.05,
+      "default": 1,
+      "displayUnit": "×",
+      "help": "嘴角、眉毛、眯眼的夸张程度"
+    },
+    {
+      "key": "wobble",
+      "label": "晃动",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1,
+      "displayUnit": "×",
+      "help": "拖动时脑袋歪斜、换档时压扁回弹的幅度"
+    },
+    {
+      "key": "snap",
+      "label": "吸附档位",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "松手后滑块弹到最近一档"
+    },
+    {
+      "key": "title",
+      "label": "标题",
+      "type": "text",
+      "target": "config",
+      "default": "这次的体验怎么样？",
+      "maxLength": 16
+    },
+    {
+      "key": "sad",
+      "label": "低分色",
+      "type": "color",
+      "target": "css",
+      "default": "#8fb0dc"
+    },
+    {
+      "key": "happy",
+      "label": "高分色",
+      "type": "color",
+      "target": "css",
+      "default": "#ffc83d"
+    },
+    {
+      "key": "size",
+      "label": "表情大小",
+      "type": "range",
+      "target": "css",
+      "min": 96,
+      "max": 200,
+      "step": 4,
+      "default": 148,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "mild", "name": "含蓄", "values": { "expression": 0.55, "wobble": 0.3 } },
+    { "id": "lively", "name": "夸张", "values": { "expression": 1.4, "wobble": 1.8 } },
+    { "id": "three", "name": "三档", "values": { "levels": "不满意｜一般｜满意", "value": 50 } }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": { "kind": "original" }
+}

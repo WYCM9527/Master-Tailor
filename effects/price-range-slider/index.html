@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>价格区间滑块</title>
+<style>
+  :root {
+    /* ===== 可调参数（由裁缝大师写入当前值，也可手动修改） ===== */
+    --mt-bg: #f4f4f2;            /* 页面底色 */
+    --mt-color: #f0446b;         /* 主色：选中区间的柱子和连线 */
+    --mt-track: #dcdcdc;         /* 轨道色：区间外的柱子和轨道 */
+    --mt-font: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; /* 字体 */
+  }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--mt-bg); overflow: hidden; display: grid; place-items: center; font-family: var(--mt-font); color: #222; -webkit-tap-highlight-color: transparent; }
+  .mt-card { width: min(520px, 92vw); box-sizing: border-box; padding: 24px 28px 20px; border-radius: 22px; background: #fff; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.08); }
+  .mt-card h2 { margin: 0; font-size: 20px; font-weight: 700; }
+  .mt-sub { margin: 4px 0 22px; font-size: 13px; color: #717171; }
+  /* 直方图 + 轨道：柱子底边压在轨道上 */
+  .mt-area { position: relative; height: 98px; margin: 0 2px; touch-action: none; cursor: pointer; user-select: none; -webkit-user-select: none; }
+  .mt-area.shift { cursor: grabbing; }
+  .mt-bars { position: absolute; left: 0; right: 0; top: 0; height: 84px; display: flex; align-items: flex-end; gap: 2px; }
+  .mt-bars i { flex: 1; min-width: 0; border-radius: 3px 3px 0 0; background: var(--mt-track); transform-origin: 50% 100%; transition: background-color 0.18s; }
+  .mt-bars i.in { background: var(--mt-color); }
+  .mt-bars i.pop { animation: mt-pop 0.32s ease-out; }
+  @keyframes mt-pop { 45% { transform: scaleY(1.14); } }
+  .mt-rail { position: absolute; left: 0; right: 0; top: 83px; height: 2px; background: var(--mt-track); }
+  .mt-sel { position: absolute; top: 82px; height: 4px; border-radius: 2px; background: var(--mt-color); }
+  .mt-thumb { position: absolute; top: 84px; left: 0; width: 28px; height: 28px; margin: -14px 0 0 -14px; box-sizing: border-box; border-radius: 50%; background: #fff; border: 1px solid #b0b0b0; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14); outline: none; transition: scale 0.18s, box-shadow 0.18s, border-color 0.18s; }
+  .mt-thumb:hover, .mt-thumb.active { scale: 1.08; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); }
+  .mt-thumb.active { border-color: var(--mt-color); box-shadow: 0 0 0 6px color-mix(in srgb, var(--mt-color) 18%, transparent), 0 3px 10px rgba(0, 0, 0, 0.2); }
+  .mt-thumb:focus-visible { box-shadow: 0 0 0 3px #fff, 0 0 0 5px #222; }
+  /* 最低 / 最高输入框：聚焦时显示纯数字，回车或失焦后按数值格式显示 */
+  .mt-fields { display: flex; align-items: center; gap: 14px; margin-top: 18px; }
+  .mt-field { flex: 1; min-width: 0; padding: 8px 14px 9px; border: 1px solid #b0b0b0; border-radius: 12px; transition: box-shadow 0.15s, border-color 0.15s; }
+  .mt-field:focus-within { border-color: #222; box-shadow: inset 0 0 0 1px #222; }
+  .mt-field span { display: block; font-size: 12px; color: #717171; }
+  .mt-field input { width: 100%; padding: 0; border: 0; outline: 0; background: none; font: 600 16px var(--mt-font); color: #222; font-variant-numeric: tabular-nums; }
+  .mt-dash { width: 12px; height: 1px; background: #b0b0b0; }
+  .mt-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding-top: 16px; border-top: 1px solid #ebebeb; }
+  .mt-clear { padding: 8px 6px; margin-left: -6px; border: 0; background: none; font: 600 15px var(--mt-font); color: #222; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; border-radius: 8px; }
+  .mt-go { padding: 12px 20px; border: 0; border-radius: 10px; background: #222; color: #fff; font: 600 15px var(--mt-font); font-variant-numeric: tabular-nums; cursor: pointer; transition: transform 0.15s; }
+  .mt-go:active { transform: scale(0.97); }
+  .mt-clear:focus-visible, .mt-go:focus-visible { outline: 2px solid #222; outline-offset: 2px; }
+  .mt-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* 用户开启「减少动态效果」时：柱子不弹、颜色和滑块直接切换 */
+  @media (prefers-reduced-motion: reduce) {
+    .mt-bars i, .mt-thumb, .mt-go { transition: none; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="mt-card">
+  <h2>价格范围</h2>
+  <p class="mt-sub">每晚价格，含所有费用</p>
+  <div class="mt-area" id="mtArea">
+    <div class="mt-bars" id="mtBars" aria-hidden="true"></div>
+    <div class="mt-rail"></div>
+    <div class="mt-sel" id="mtSel"></div>
+    <div class="mt-thumb" id="mtLoT" role="slider" tabindex="0" aria-label="最低价"></div>
+    <div class="mt-thumb" id="mtHiT" role="slider" tabindex="0" aria-label="最高价"></div>
+  </div>
+  <div class="mt-fields">
+    <label class="mt-field"><span>最低</span><input id="mtLoIn" inputmode="numeric" autocomplete="off"></label>
+    <i class="mt-dash"></i>
+    <label class="mt-field"><span>最高</span><input id="mtHiIn" inputmode="numeric" autocomplete="off"></label>
+  </div>
+  <div class="mt-foot">
+    <button class="mt-clear" id="mtClear" type="button">清除</button>
+    <button class="mt-go" id="mtGo" type="button"></button>
+  </div>
+  <div class="mt-sr" id="mtLive" aria-live="polite"></div>
+</div>
+<script>
+  const CONFIG = {
+    bars: 40,            // 柱数：价格分布直方图的柱子数量
+    ceiling: 3000,       // 价格上限（元）：滑块最右端的价格，拉到头显示「以上」
+    low: 20,             // 初始最低（%）：打开时左滑块的位置
+    high: 68,            // 初始最高（%）：打开时右滑块的位置
+    gap: 6,              // 最小间距（%）：两个滑块之间至少隔开多少
+    format: 'comma',     // 数值格式：comma 千分位 / short 千位缩写 / yuan 中文元
+    noun: '处房源',       // 结果名称：底部按钮里的计数单位
+  };
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const $ = (id) => document.getElementById(id);
+  const TOTAL = 1860;     // 全区间的结果总数
+
+  const B = clamp(Math.round(CONFIG.bars), 4, 80);
+  const CEIL = Math.max(100, +CONFIG.ceiling || 3000);
+  const GAP = clamp(+CONFIG.gap || 0, 0, 50) / 100;
+  // 步进取上限的 1% 附近的整数：1、2、5 × 10ⁿ
+  const STEP = (() => { const raw = CEIL / 100, p = 10 ** Math.floor(Math.log10(raw)); return [1, 2, 5, 10].map((k) => k * p).find((s) => s >= raw * 0.75) || p * 10; })();
+
+  // 分布：右偏的主峰加一个小峰，柱高带一点固定的起伏
+  const rnd = (i) => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+  const dens = (x) => Math.exp(-((Math.log(x * 7 + 0.35) - Math.log(1.9)) ** 2) / 0.42) + 0.32 * Math.exp(-((x - 0.66) ** 2) / 0.008) + 0.04;
+  const raw = Array.from({ length: B }, (_, i) => dens((i + 0.5) / B) * (0.78 + 0.44 * rnd(i)));
+  const peak = Math.max(...raw), sum = raw.reduce((a, b) => a + b, 0);
+  const counts = raw.map((h) => Math.round((h / sum) * TOTAL));
+  const barsEl = $('mtBars');
+  const bars = raw.map((h) => { const b = document.createElement('i'); b.style.height = `${Math.max(4, (h / peak) * 100).toFixed(1)}%`; barsEl.append(b); return b; });
+  bars.forEach((b) => b.addEventListener('animationend', () => b.classList.remove('pop')));
+
+  const fmt = (v, isHi) => {
+    const top = isHi && v >= CEIL;
+    if (CONFIG.format === 'yuan') return `${v} 元${top ? '以上' : ''}`;
+    if (CONFIG.format === 'short') return `¥${v >= 1000 ? `${+(v / 1000).toFixed(1)}k` : v}${top ? '+' : ''}`;
+    return `¥${v.toLocaleString('en-US')}${top ? '+' : ''}`;
+  };
+  const snap = (v) => clamp(Math.round(v / STEP) * STEP, 0, CEIL);
+
+  const area = $('mtArea'), sel = $('mtSel'), loT = $('mtLoT'), hiT = $('mtHiT'), loIn = $('mtLoIn'), hiIn = $('mtHiIn'), go = $('mtGo'), live = $('mtLive');
+  // 目标值（元）与显示位置（0–1，弹簧追目标）
+  let lo = 0, hi = CEIL, W = 0, mode = null, grab = 0, grabLo = 0, grabHi = 0, userTook = false, demo = false;
+  const dLo = { x: 0, v: 0 }, dHi = { x: 1, v: 0 };
+  let shown = 0, countFrom = 0, countTo = 0, countT0 = 0, liveTimer = 0;
+  const editing = { lo: false, hi: false };
+
+  function setRange(a, b, which) {
+    const g = GAP * CEIL;
+    a = snap(a); b = snap(b);
+    if (which === 'lo') a = Math.min(a, b - g);
+    if (which === 'hi') b = Math.max(b, a + g);
+    if (which === 'both') { const w = b - a; if (a < 0) { a = 0; b = w; } if (b > CEIL) { b = CEIL; a = CEIL - w; } }
+    lo = clamp(Math.min(a, CEIL - g), 0, CEIL); hi = clamp(Math.max(b, lo + g), 0, CEIL);
+    if (hi - lo < g) lo = Math.max(0, hi - g);
+    readout(); wake();
+  }
+  function readout() {
+    // 输入框：用户正在键入时不覆盖；聚焦但没键入时显示纯数字，其余时候按数值格式
+    if (!editing.lo) loIn.value = document.activeElement === loIn ? String(lo) : fmt(lo, false);
+    if (!editing.hi) hiIn.value = document.activeElement === hiIn ? String(hi) : fmt(hi, true);
+    const g = GAP * CEIL;
+    loT.setAttribute('aria-valuemin', 0); loT.setAttribute('aria-valuemax', hi - g); loT.setAttribute('aria-valuenow', lo); loT.setAttribute('aria-valuetext', fmt(lo, false));
+    hiT.setAttribute('aria-valuemin', lo + g); hiT.setAttribute('aria-valuemax', CEIL); hiT.setAttribute('aria-valuenow', hi); hiT.setAttribute('aria-valuetext', fmt(hi, true));
+    // 结果数：完全落在区间内的柱子按比例计数，跨边界的柱子按覆盖比例
+    const a = lo / CEIL, b = hi / CEIL;
+    let n = 0;
+    counts.forEach((c, i) => { const l = i / B, r = (i + 1) / B; n += c * clamp((Math.min(r, b) - Math.max(l, a)) * B, 0, 1); });
+    n = Math.round(n);
+    if (n !== countTo) { countFrom = shown; countTo = n; countT0 = performance.now(); }
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(() => { live.textContent = `${fmt(lo, false)} 至 ${fmt(hi, true)}，共 ${countTo.toLocaleString('en-US')} ${CONFIG.noun}`; }, 600);
+  }
+
+  function pointerFrac(e) { return clamp((e.clientX - area.getBoundingClientRect().left) / W, 0, 1); }
+  area.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    userTook = true; demo = false;
+    const f = pointerFrac(e), px = f * W, a = lo / CEIL, b = hi / CEIL;
+    const da = Math.abs(px - a * W), db = Math.abs(px - b * W);
+    const onBars = e.clientY - area.getBoundingClientRect().top < 76;
+    if (Math.min(da, db) <= 18) mode = da < db || (da === db && px < a * W) ? 'lo' : 'hi';
+    else if (onBars && f > a && f < b) { mode = 'both'; grab = f; grabLo = lo; grabHi = hi; area.classList.add('shift'); }
+    else { mode = Math.abs(f - a) <= Math.abs(f - b) ? 'lo' : 'hi'; setRange(mode === 'lo' ? f * CEIL : lo, mode === 'hi' ? f * CEIL : hi, mode); }
+    (mode === 'hi' ? hiT : mode === 'lo' ? loT : null)?.classList.add('active');
+    area.setPointerCapture(e.pointerId);
+  });
+  area.addEventListener('pointermove', (e) => {
+    if (!mode) return;
+    const f = pointerFrac(e);
+    if (mode === 'lo') setRange(f * CEIL, hi, 'lo');
+    else if (mode === 'hi') setRange(lo, f * CEIL, 'hi');
+    else { const d = (f - grab) * CEIL; setRange(grabLo + d, grabHi + d, 'both'); }
+  });
+  const end = () => { mode = null; area.classList.remove('shift'); loT.classList.remove('active'); hiT.classList.remove('active'); wake(); };
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) => area.addEventListener(t, end));
+
+  [[loT, 'lo'], [hiT, 'hi']].forEach(([el, which]) => el.addEventListener('keydown', (e) => {
+    const d = { ArrowLeft: -STEP, ArrowDown: -STEP, ArrowRight: STEP, ArrowUp: STEP, PageDown: -STEP * 10, PageUp: STEP * 10, Home: -CEIL, End: CEIL }[e.key];
+    if (d === undefined) return;
+    e.preventDefault(); userTook = true; demo = false;
+    if (which === 'lo') setRange(lo + d, hi, 'lo'); else setRange(lo, hi + d, 'hi');
+  }));
+  [[loIn, 'lo'], [hiIn, 'hi']].forEach(([el, which]) => {
+    el.addEventListener('focus', () => { userTook = true; demo = false; el.value = String(which === 'lo' ? lo : hi); el.select(); });
+    el.addEventListener('input', () => { editing[which] = true; });
+    const apply = (keepFocus) => {
+      const n = parseInt(el.value.replace(/[^\d]/g, ''), 10);
+      const typed = editing[which];
+      editing[which] = false;
+      if (typed && !Number.isNaN(n)) { if (which === 'lo') setRange(n, hi, 'lo'); else setRange(lo, n, 'hi'); }
+      const v = which === 'lo' ? lo : hi;
+      el.value = keepFocus ? String(v) : fmt(v, which === 'hi');
+    };
+    el.addEventListener('blur', () => apply(false));
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { apply(true); el.select(); } });
+  });
+  $('mtClear').addEventListener('click', () => { userTook = true; demo = false; setRange(0, CEIL, null); });
+  go.addEventListener('click', () => { live.textContent = `已筛选：${countTo.toLocaleString('en-US')} ${CONFIG.noun}`; });
+
+  function spring(s, to, k, zeta, dt) {
+    s.v += (k * (to - s.x) - 2 * Math.sqrt(k) * zeta * s.v) * dt;
+    s.x += s.v * dt;
+  }
+  let inside = bars.map(() => false);
+  function render(now) {
+    const a = dLo.x, b = dHi.x;
+    loT.style.transform = `translateX(${(a * W).toFixed(2)}px)`;
+    hiT.style.transform = `translateX(${(b * W).toFixed(2)}px)`;
+    sel.style.left = `${(a * W).toFixed(2)}px`; sel.style.width = `${Math.max(0, (b - a) * W).toFixed(2)}px`;
+    bars.forEach((el, i) => {
+      const c = (i + 0.5) / B, on = c >= a && c <= b;
+      if (on === inside[i]) return;
+      inside[i] = on; el.classList.toggle('in', on);
+      if (on && !reduceMotion) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+    });
+    const k = reduceMotion ? 1 : clamp((now - countT0) / 420, 0, 1);
+    shown = Math.round(countFrom + (countTo - countFrom) * (1 - (1 - k) ** 3));
+    go.textContent = `显示 ${shown.toLocaleString('en-US')} ${CONFIG.noun}`;
+  }
+  let raf = 0, last = 0;
+  function wake() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(loop); } }
+  function loop(now) {
+    raf = 0;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const tA = lo / CEIL, tB = hi / CEIL;
+    if (reduceMotion || mode) { dLo.x = tA; dHi.x = tB; dLo.v = dHi.v = 0; }
+    else {
+      const n = Math.max(1, Math.ceil(dt * 240));
+      for (let i = 0; i < n; i++) { spring(dLo, tA, 380, 0.82, dt / n); spring(dHi, tB, 380, 0.82, dt / n); }
+    }
+    render(now);
+    const moving = Math.abs(dLo.x - tA) + Math.abs(dHi.x - tB) > 1e-4 || Math.abs(dLo.v) + Math.abs(dHi.v) > 1e-3;
+    if (moving || mode || shown !== countTo) raf = requestAnimationFrame(loop);
+  }
+
+  function measure() { W = area.clientWidth; render(performance.now()); }
+  addEventListener('resize', measure);
+  const l0 = clamp(Math.min(CONFIG.low, CONFIG.high), 0, 100), h0 = clamp(Math.max(CONFIG.low, CONFIG.high), 0, 100);
+  inside = bars.map(() => true);
+  bars.forEach((b) => b.classList.add('in'));
+  measure();
+  // 打开时两个滑块从两端收拢到初始区间
+  setRange(0, CEIL, null);
+  dLo.x = 0; dHi.x = 1; shown = countTo; countFrom = countTo;
+  render(performance.now());
+  setTimeout(() => { if (!userTook) setRange((l0 / 100) * CEIL, (h0 / 100) * CEIL, null); }, reduceMotion ? 0 : 350);
+
+  /* @mt:thumb-start */
+  // 缩略图演示：区间在几组位置之间缓动切换；用户一碰就交还
+  if (window.__MT_ENV && window.__MT_ENV.thumb && !reduceMotion) {
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const tween = (a1, b1, ms) => new Promise((done) => {
+      const a0 = lo, b0 = hi, t0 = performance.now();
+      demo = true;
+      (function f(now) {
+        if (userTook || !demo) return done();
+        const k = Math.min(1, (now - t0) / ms), e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+        setRange(a0 + (a1 - a0) * e, b0 + (b1 - b0) * e, null);
+        if (k < 1) requestAnimationFrame(f); else { demo = false; done(); }
+      })(t0);
+    });
+    (async () => {
+      await wait(1500);
+      const seq = [[0.08, 0.36], [0.3, 0.9], [0.5, 0.64], [0.12, 0.96], [0.2, 0.68]];
+      for (let i = 0; !userTook; i = (i + 1) % seq.length) {
+        if (document.hidden) { await wait(500); continue; }
+        await tween(seq[i][0] * CEIL, seq[i][1] * CEIL, 900); await wait(1100);
+      }
+    })();
+  }
+  /* @mt:thumb-end */
+</script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+{
+  "slug": "value-scrubber",
+  "name": "数值拖拽条",
+  "category": "progress",
+  "sub": "slider",
+  "tags": ["设计工具", "属性面板", "拖拽改值", "刻度", "微调", "输入"],
+  "summary": "设计工具式属性面板：在整条上左右拖改值，底色跟着伸缩，拖过头整条微微拉长再弹回",
+  "params": [
+    {
+      "key": "mode",
+      "label": "拖拽方式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "relative", "label": "相对拖动" },
+        { "value": "absolute", "label": "点哪到哪" }
+      ],
+      "default": "relative"
+    },
+    {
+      "key": "sensitivity",
+      "label": "灵敏度",
+      "type": "range",
+      "target": "config",
+      "min": 0.25,
+      "max": 3,
+      "step": 0.05,
+      "default": 1,
+      "displayUnit": "×",
+      "help": "相对拖动时拖过整条宽度改变几倍量程"
+    },
+    {
+      "key": "ticks",
+      "label": "刻度数",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 15,
+      "step": 1,
+      "default": 9,
+      "help": "条内等距的竖刻度，0 为不显示"
+    },
+    {
+      "key": "stretch",
+      "label": "拉伸回弹",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "相对拖动拖过头时整条微微拉长，松手弹回"
+    },
+    {
+      "key": "theme",
+      "label": "主题",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "dark", "label": "深色" },
+        { "value": "light", "label": "浅色" }
+      ],
+      "default": "dark"
+    },
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "target": "css",
+      "default": "#8b7bff"
+    },
+    {
+      "key": "height",
+      "label": "条高",
+      "type": "range",
+      "target": "css",
+      "min": 28,
+      "max": 48,
+      "step": 2,
+      "default": 36,
+      "unit": "px"
+    },
+    {
+      "key": "width",
+      "label": "面板宽度",
+      "type": "range",
+      "target": "css",
+      "min": 280,
+      "max": 480,
+      "step": 10,
+      "default": 380,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "light", "name": "浅色", "values": { "theme": "light", "accent": "#2f6bff" } },
+    { "id": "absolute", "name": "点哪到哪", "values": { "mode": "absolute", "ticks": 0 } },
+    {
+      "id": "fine",
+      "name": "细刻度慢调",
+      "values": { "ticks": 15, "sensitivity": 0.5, "height": 30 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "reference",
+    "name": "SmoothUI · Scrubber",
+    "url": "https://smoothui.dev/docs/components/scrubber",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}

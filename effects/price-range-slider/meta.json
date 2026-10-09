@@ -1,0 +1,117 @@
+{
+  "slug": "price-range-slider",
+  "name": "价格区间滑块",
+  "category": "progress",
+  "sub": "slider",
+  "tags": ["区间", "双滑块", "直方图", "筛选", "价格", "拖拽"],
+  "summary": "双滑块选价格区间，上方的价格分布直方图只点亮区间内的柱子，底部结果数跟着滚动",
+  "params": [
+    {
+      "key": "bars",
+      "label": "柱数",
+      "type": "range",
+      "target": "config",
+      "min": 12,
+      "max": 60,
+      "step": 1,
+      "default": 40
+    },
+    {
+      "key": "ceiling",
+      "label": "价格上限",
+      "type": "range",
+      "target": "config",
+      "min": 500,
+      "max": 20000,
+      "step": 100,
+      "default": 3000,
+      "displayUnit": " 元",
+      "help": "滑块最右端的价格，拉到头显示「以上」"
+    },
+    {
+      "key": "low",
+      "label": "初始最低",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 20,
+      "displayUnit": "%"
+    },
+    {
+      "key": "high",
+      "label": "初始最高",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 68,
+      "displayUnit": "%"
+    },
+    {
+      "key": "gap",
+      "label": "最小间距",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "default": 6,
+      "displayUnit": "%",
+      "help": "两个滑块之间至少隔开多少"
+    },
+    {
+      "key": "format",
+      "label": "数值格式",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "comma", "label": "千分位 ¥1,234" },
+        { "value": "short", "label": "千位缩写 ¥1.2k" },
+        { "value": "yuan", "label": "中文 1234 元" }
+      ],
+      "default": "comma"
+    },
+    {
+      "key": "noun",
+      "label": "结果名称",
+      "type": "text",
+      "target": "config",
+      "default": "处房源",
+      "maxLength": 6
+    },
+    {
+      "key": "color",
+      "label": "主色",
+      "type": "color",
+      "target": "css",
+      "default": "#f0446b"
+    },
+    {
+      "key": "track",
+      "label": "轨道色",
+      "type": "color",
+      "target": "css",
+      "default": "#dcdcdc"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    { "id": "chunky", "name": "粗柱", "values": { "bars": 24, "gap": 12 } },
+    { "id": "fine", "name": "细密", "values": { "bars": 60 } },
+    {
+      "id": "luxury",
+      "name": "高价区",
+      "values": { "ceiling": 20000, "format": "short", "low": 30, "high": 80 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "Airbnb 搜索筛选 · 价格区间",
+    "url": "https://www.airbnb.com",
+    "license": "未使用其代码"
+  }
+}

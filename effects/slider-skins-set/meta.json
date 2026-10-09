@@ -1,0 +1,134 @@
+{
+  "slug": "slider-skins-set",
+  "name": "滑块皮肤合集",
+  "category": "progress",
+  "sub": "slider",
+  "tags": ["滑块", "合集", "镂空", "霓虹", "拟物", "刻度"],
+  "summary": "镂空、霓虹、胶囊数值、刻度尺、拟物凹槽五种滑块皮肤，可单选，也可并排联动对比",
+  "params": [
+    {
+      "key": "skin",
+      "label": "皮肤",
+      "type": "select",
+      "target": "config",
+      "options": [
+        { "value": "all", "label": "全部" },
+        { "value": "cutout", "label": "镂空" },
+        { "value": "neon", "label": "霓虹" },
+        { "value": "pill", "label": "胶囊数值" },
+        { "value": "ruler", "label": "刻度尺" },
+        { "value": "soft", "label": "拟物凹槽" }
+      ],
+      "default": "all"
+    },
+    {
+      "key": "value",
+      "label": "初始值",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 60,
+      "displayUnit": "%"
+    },
+    {
+      "key": "sync",
+      "label": "联动",
+      "type": "toggle",
+      "target": "config",
+      "default": true,
+      "help": "拖动任一条时其余皮肤一起动"
+    },
+    {
+      "key": "glow",
+      "label": "霓虹强度",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 2,
+      "step": 0.1,
+      "default": 1,
+      "displayUnit": "×",
+      "help": "霓虹皮肤的光晕随数值增强的幅度"
+    },
+    {
+      "key": "color",
+      "label": "主色",
+      "type": "color",
+      "target": "css",
+      "default": "#ff7a1a"
+    },
+    {
+      "key": "thickness",
+      "label": "粗细",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 10,
+      "step": 1,
+      "default": 5,
+      "unit": "px",
+      "help": "轨道线条的粗细，胶囊和凹槽按比例加粗"
+    },
+    {
+      "key": "size",
+      "label": "拇指大小",
+      "type": "range",
+      "target": "css",
+      "min": 20,
+      "max": 40,
+      "step": 2,
+      "default": 28,
+      "unit": "px"
+    },
+    {
+      "key": "gap",
+      "label": "镂空间隙",
+      "type": "range",
+      "target": "css",
+      "min": 2,
+      "max": 14,
+      "step": 1,
+      "default": 7,
+      "unit": "px",
+      "help": "镂空皮肤里拇指和轨道之间的空隙"
+    },
+    {
+      "key": "width",
+      "label": "滑块长度",
+      "type": "range",
+      "target": "css",
+      "min": 220,
+      "max": 480,
+      "step": 10,
+      "default": 360,
+      "unit": "px"
+    }
+  ],
+  "presets": [
+    { "id": "default", "name": "默认", "values": {} },
+    {
+      "id": "thin",
+      "name": "细线",
+      "values": { "thickness": 2, "size": 22, "gap": 5 }
+    },
+    {
+      "id": "chunky",
+      "name": "粗壮",
+      "values": { "thickness": 9, "size": 36, "gap": 10 }
+    },
+    {
+      "id": "neon",
+      "name": "霓虹青",
+      "values": { "skin": "neon", "color": "#00e5ff", "glow": 1.6 }
+    }
+  ],
+  "thumb": { "mode": "autoplay" },
+  "source": {
+    "kind": "reference",
+    "name": "Temani Afif · CSS only custom range sliders",
+    "url": "https://codepen.io/t_afif/pen/KKGpmGE",
+    "license": "MIT（思路参考，代码自写）"
+  }
+}
