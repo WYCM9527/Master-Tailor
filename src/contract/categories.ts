@@ -36,6 +36,14 @@ const LOADING_SUBS: SubDef[] = [
   { id: 'enter', name: '进场', desc: '页面内容滚入视野或首次出现时的入场动画' },
 ];
 
+/** 「进度条」的二级分类：按形态细分，不按触发方式（滑块都靠拖动，按触发方式会全挤进「点击效果」） */
+const PROGRESS_SUBS: SubDef[] = [
+  { id: 'linear', name: '线性进度', desc: '横向的条形进度：加载条、播放条、血条、分段与阅读进度' },
+  { id: 'ring', name: '环形与仪表', desc: '圆环、表盘、水球、旋钮这类圆形的进度与数值指示' },
+  { id: 'slider', name: '滑块', desc: '拖动取值的滑块：单值、区间、刻度尺与数值拖拽条' },
+  { id: 'button', name: '按钮与步骤', desc: '按钮本身变成进度，或按步骤推进的流程进度' },
+];
+
 /** 一级分类（subs 即该分类下的二级分类表，侧边栏只显示有效果的子项） */
 export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
   { id: 'background', name: '背景效果', subs: BACKGROUND_SUBS },
@@ -45,7 +53,7 @@ export const CATEGORIES: { id: CategoryId; name: string; subs: SubDef[] }[] = [
   { id: 'card', name: '卡片与悬停', subs: TRIGGER_SUBS },
   { id: 'showcase', name: '多卡/图展示', subs: SHOWCASE_SUBS },
   { id: 'loading', name: '加载', subs: LOADING_SUBS },
-  { id: 'progress', name: '进度条', subs: TRIGGER_SUBS },
+  { id: 'progress', name: '进度条', subs: PROGRESS_SUBS },
   { id: 'canvas', name: '鼠标样式', subs: TRIGGER_SUBS },
 ];
 

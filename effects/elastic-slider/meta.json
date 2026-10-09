@@ -1,8 +1,8 @@
 {
   "slug": "elastic-slider",
   "name": "弹性滑块",
-  "category": "button",
-  "sub": "click",
+  "category": "progress",
+  "sub": "slider",
   "tags": [
     "滑块",
     "弹性",

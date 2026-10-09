@@ -31,6 +31,7 @@
 
 - 背景效果不收「滚动触发」子类；滚动驱动的归「多卡/图展示·滚动交互」（`showcase/stack-scroll`）或不收。
 - 「加载」下分三个子类：「页面转场」（`loading/transition`）、「loading动画」（`loading/anim`）与「进场」（`loading/enter`），不再按过渡形态或触发方式细分。页面转场只收页面间换场，进场收页面内容出现时的入场动画；随滚动推进的分节、视差、堆叠一律归 `showcase/stack-scroll`。
+- 「进度条」按形态分四个子类：「线性进度」（`progress/linear`）、「环形与仪表」（`progress/ring`）、「滑块」（`progress/slider`）与「按钮与步骤」（`progress/button`）。拖动取值的滑块一律归 `progress/slider`，不放「按钮与交互」。
 - 表单控件归「按钮与交互」，累计 5 个已到阈值：**再加一个就新增「表单控件」分类并迁移现有 5 个**。
 - `canvas` 分类（侧栏名「鼠标样式」）只放光标本体；全屏氛围类与鼠标驱动的整幅图像 / 网格效果归背景。多图 / 卡片墙归 `showcase/wall`。
 - 太薄的形态（Hover.css、下划线、图说悬停等）合成一个带 `select` 的合集，不拆成十几个效果。

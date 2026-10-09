@@ -22,7 +22,8 @@ export type CategoryId =
  * 二级分类（侧边栏第二级）：每个一级分类在 CATEGORIES 中自声明子类表。
  * 原有 6 类的子类是触发方式（idle / hover / click / scroll）；
  * 「多卡/图展示」的子类是 carousel / compare / stack-scroll / wall；
- * 「加载」的子类是 transition（页面转场）/ anim（loading动画）/ enter（进场）。
+ * 「加载」的子类是 transition（页面转场）/ anim（loading动画）/ enter（进场）；
+ * 「进度条」的子类按形态：linear / ring / slider / button。
  */
 export interface SubDef {
   id: string;

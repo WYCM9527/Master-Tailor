@@ -1,8 +1,8 @@
 {
   "slug": "ring-gauge-progress",
   "name": "环形进度",
-  "category": "loading",
-  "sub": "anim",
+  "category": "progress",
+  "sub": "ring",
   "tags": ["进度", "圆环", "仪表", "数字"],
   "summary": "一个粗圆环从顶部顺时针长出进度，剩余部分是留有小空隙的淡轨道，中间的数字与弧线同步滚动",
   "params": [

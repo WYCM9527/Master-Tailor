@@ -2,7 +2,7 @@
   "slug": "squeeze-value-slider",
   "name": "挤值圆头滑块",
   "category": "progress",
-  "sub": "click",
+  "sub": "slider",
   "tags": ["进度条", "滑块", "拖拽", "数字翻页", "圆角"],
   "summary": "细滑条拖到右端时把数值挤到自己左侧，进入圆头后逐渐弯成与轨道同心的内圆弧，变化的数字模糊翻页",
   "params": [
