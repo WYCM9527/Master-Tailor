@@ -1,8 +1,8 @@
 {
   "slug": "scroll-reveal",
-  "name": "滚动进场",
+  "name": "依次上浮",
   "category": "loading",
-  "sub": "anim",
+  "sub": "enter",
   "tags": ["滚动", "进场", "淡入"],
   "summary": "内容滚到视野内时淡入上移进场，兄弟元素依次错开",
   "params": [

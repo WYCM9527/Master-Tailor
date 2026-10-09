@@ -236,7 +236,7 @@ async function runOne(context: BrowserContext, lab: Page, t: Target): Promise<Re
         await page.goto(`${ORIGIN}/e/${meta.slug}.html`, { waitUntil: 'load' });
         lap('load');
         await page.waitForTimeout(400);
-        // 一轮基本交互：鼠标划过画面中部（悬停类），点击类点一下，滚动类滚两屏。
+        // 一轮基本交互：鼠标划过画面中部（悬停类），点击类点一下，滚动类与进场类滚两屏。
         // 每个输入事件都要等页面跑完一帧才算送达，重着色器在软件渲染下一帧要好几秒，事件数从简：
         // 进入画面 + 移动一次足以触发 mouseenter / mousemove 类逻辑
         const cx = VIEWPORT.width / 2;
@@ -246,7 +246,7 @@ async function runOne(context: BrowserContext, lab: Page, t: Target): Promise<Re
         if (meta.sub === 'click') {
           await page.mouse.click(cx, cy);
         }
-        if (meta.sub === 'scroll' || meta.sub === 'stack-scroll') {
+        if (meta.sub === 'scroll' || meta.sub === 'stack-scroll' || meta.sub === 'enter') {
           await page.mouse.wheel(0, 600);
           await page.waitForTimeout(200);
           await page.mouse.wheel(0, 600);

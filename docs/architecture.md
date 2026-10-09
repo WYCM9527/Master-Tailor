@@ -28,14 +28,14 @@ src/engine/bakeCode.ts ── 参数值写进 :root 的 --mt-* 与 const CONFIG 
 
 ## 契约层 `src/contract/`
 
-| 文件                      | 职责                                                                                                                                                                                      |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `types.ts`                | `EffectMeta`（全量 meta）、`EffectIndex`（= meta 去掉 `params / presets`，首包用）、`EffectBundle`（全量 meta + html + promptMd）、参数类型、`BgSetting`                                  |
-| `schema.ts`               | zod 校验；**只在开发态和 `pnpm validate` 里跑**，生产包不含 zod                                                                                                                           |
-| `categories.ts`           | 一级分类与各自的子类表（`CATEGORIES`）；背景无 `scroll` 子类，文字多 `marquee`，展示类是 `carousel / compare / stack-scroll / wall`，加载是 `transition / anim`（页面转场 / loading动画） |
-| `registry.ts`             | 收集、排序（一级 → 二级 → slug）、编号、懒加载与缓存                                                                                                                                      |
-| `fonts.ts` / `samples.ts` | 字体表与示例图表（`/samples/sample-N.webp`）                                                                                                                                              |
-| `base.ts`                 | `BASE_URL` / `withBase()`：站内根路径 → 部署 base 路径（子路径部署用）                                                                                                                    |
+| 文件                      | 职责                                                                                                                                                                                                     |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `types.ts`                | `EffectMeta`（全量 meta）、`EffectIndex`（= meta 去掉 `params / presets`，首包用）、`EffectBundle`（全量 meta + html + promptMd）、参数类型、`BgSetting`                                                 |
+| `schema.ts`               | zod 校验；**只在开发态和 `pnpm validate` 里跑**，生产包不含 zod                                                                                                                                          |
+| `categories.ts`           | 一级分类与各自的子类表（`CATEGORIES`）；背景无 `scroll` 子类，文字多 `marquee`，展示类是 `carousel / compare / stack-scroll / wall`，加载是 `transition / anim / enter`（页面转场 / loading动画 / 进场） |
+| `registry.ts`             | 收集、排序（一级 → 二级 → slug）、编号、懒加载与缓存                                                                                                                                                     |
+| `fonts.ts` / `samples.ts` | 字体表与示例图表（`/samples/sample-N.webp`）                                                                                                                                                             |
+| `base.ts`                 | `BASE_URL` / `withBase()`：站内根路径 → 部署 base 路径（子路径部署用）                                                                                                                                   |
 
 ## 引擎层 `src/engine/`
 
