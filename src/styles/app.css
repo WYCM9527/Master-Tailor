@@ -1239,6 +1239,7 @@
   line-height: 1.5;
 }
 input[type='text'],
+.text-grow,
 select {
   width: 100%;
   background: var(--bg);
@@ -1251,11 +1252,23 @@ select {
   transition: border-color var(--ease);
 }
 input[type='text']:focus,
+.text-grow:focus,
 select:focus {
   border-color: var(--fg);
 }
-input[type='text']::placeholder {
+input[type='text']::placeholder,
+.text-grow::placeholder {
   color: var(--fg-mute);
+}
+/* 长文本框：高度跟随内容，单行时与 input 等高（7px + 1.5 行高 + 7px） */
+.text-grow {
+  display: block;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
+  field-sizing: content;
 }
 select {
   appearance: none;
@@ -1433,10 +1446,39 @@ input[type='color']::-webkit-color-swatch {
   height: 40px;
   border-right: 1px solid var(--line);
 }
-.slide-slot-row input[type='text'] {
+.slide-slot-row input[type='text'],
+.slide-slot-row .text-grow {
   border: 0;
   flex: 1;
   min-width: 0;
+}
+/* 列表里单行时与颜色行同为 40px 高 */
+.slide-slot-row .text-grow {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+/* 列表里的框没有边框，聚焦时靠底色区分正在编辑哪一格 */
+.slide-slot-row .text-grow:focus {
+  background: var(--k2);
+}
+/* 带字段名的多项文本：每项内「字段名 | 输入框」两列，字段名列宽取最长的名字 */
+.text-fields {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  padding: 4px 0;
+}
+.text-field-name {
+  padding: 6px 0 6px 10px;
+  font-size: 12px;
+  line-height: 19.5px;
+  color: var(--fg-mute);
+  cursor: text;
+}
+.text-fields .text-grow {
+  padding-top: 6px;
+  padding-bottom: 6px;
 }
 .slide-noc {
   flex: 1;

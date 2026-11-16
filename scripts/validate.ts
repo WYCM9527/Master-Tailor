@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { effectMetaSchema } from '../src/contract/schema.ts';
 import { FONTS } from '../src/contract/fonts.ts';
+import { LIST_SEP, fieldSepOf, isListText } from '../src/engine/textList.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const effectsDir = path.join(root, 'effects');
@@ -120,6 +121,44 @@ for (const slug of dirs) {
         if (!existsSync(path.join(root, 'public', item.src))) {
           fail(slug, `images 参数 ${p.key} 的默认示例图 ${item.src} 不存在`);
         }
+      }
+    }
+    // 多项文本（默认值用「｜」分隔多项）：fields 声明要与默认值 / 预设的字段数对得上，面板才能按字段拆框
+    if (p.type === 'text') {
+      const fields = p.fields;
+      if (p.fieldSep !== undefined && !fields) {
+        fail(slug, `text 参数 ${p.key} 声明了 fieldSep 却没有 fields`);
+      }
+      if (fields) {
+        const sep = fieldSepOf(p);
+        if (!isListText(p)) {
+          fail(slug, `text 参数 ${p.key} 声明了 fields，但默认值不是用「｜」分隔的多项`);
+        }
+        if (sep === LIST_SEP) fail(slug, `text 参数 ${p.key} 的 fieldSep 不能是多项分隔符「｜」`);
+        if (new Set(fields).size !== fields.length)
+          fail(slug, `text 参数 ${p.key} 的 fields 有重名`);
+        const samples: [string, string][] = [['默认值', p.default]];
+        for (const preset of meta.presets) {
+          const v = preset.values[p.key];
+          if (typeof v === 'string') samples.push([`预设「${preset.name}」`, v]);
+        }
+        // 段数多于字段数时，面板会把多出的段并进最后一格，而效果多半按位置取值，两边就对不上了
+        for (const [where, value] of samples) {
+          value.split(LIST_SEP).forEach((item, i) => {
+            const n = item.split(sep).length;
+            if (n > fields.length) {
+              fail(
+                slug,
+                `text 参数 ${p.key} 的${where}第 ${i + 1} 项拆出 ${n} 段，多于 fields 声明的 ${fields.length} 个`,
+              );
+            }
+          });
+        }
+      } else if (isListText(p) && p.default.split(LIST_SEP).every((item) => item.includes('='))) {
+        fail(
+          slug,
+          `text 参数 ${p.key} 每项都含「=」，请声明 fields（字段名），面板才会按字段拆成小框`,
+        );
       }
     }
   }

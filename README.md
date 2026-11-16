@@ -64,6 +64,7 @@ effects/<slug>/
   - `target: "css"` → 值注入 `:root` 的 `--mt-<key>`，调参时**热更新**（动画不重置）
   - `target: "config"` → 值注入 JS 顶部 `const CONFIG` 块，调参时**防抖重建**预览
   - `text` 只允许 config；`font` 只允许 css（值为字体表 id）；`image` 默认值必须是 `/samples/…`
+  - `text` 的多项写法：默认值用全角「｜」分隔多项时，面板拆成一项一个输入框（可增删，回车在下方新增，粘贴多行按行拆项）。项内还有子字段的声明 `fields`（如 `["大字", "标题", "说明"]`），字段分隔符缺省为 `=`，其他写 `fieldSep`（如 `","`），面板再把每项拆成带字段名的小框。值仍是原来那一串，CONFIG / 分享链接 / prompt 不变；每项都含 `=` 却没声明 `fields`、或字段数对不上，validate 都会拦下
   - `images`（图片列表，轮播用）：只允许 config，列表项为 `{src, caption}`，声明 `min / max / captions`；面板中每槽位可换示例图 / 上传 / 填标题并可增减张数；CONFIG 中必须写成**单行数组** `slides: [ ... ], // 注释`；导出代码与 prompt 一律写 `./slide-1.jpg …` 占位；分享链接编码为「示例图索引:标题」列表（上传的图回退示例图）
 - `presets[]`：2–4 套，必须含 `id: "default"`（values 可为空对象），values 只写与默认不同的键
 - `thumb.mode`：`live`（效果自身一直在动）或 `autoplay`（依赖鼠标/点击/滚动，需要演示块）
@@ -125,7 +126,7 @@ validate 会检查 index.html 含四个基线能力关键字：`aria-roledescrip
 ```text
 effects/           # 304 个效果（内容层，唯一需要日常维护的目录）
 src/contract/      # 类型、zod schema、字体表、分类与子类、示例图表、base（部署路径）、registry（首包索引 + 效果包懒加载）
-src/engine/        # bakeCode（参数烘焙）、renderPrompt（7 段）、urlState（参数 ↔ URL）、search、previewRuntime
+src/engine/        # bakeCode（参数烘焙）、renderPrompt（7 段）、urlState（参数 ↔ URL）、textList（多项文本拆分）、search、previewRuntime
 src/components/    # 参数面板 / 预览 iframe / prompt 面板 / 代码面板 / 效果 Cell / 效果包加载 hook / 怎么用区块……
 src/app/           # HashRouter 页面：Home（海报首页 + 分类索引 + 怎么用）/ Gallery（/effects 效果页）/ EffectPage / NotFound
 src/styles/        # tokens（灰阶 / 间距 / 字号）、base（reset）、app（12 栏网格与全部组件样式）、transitions（路由转场）

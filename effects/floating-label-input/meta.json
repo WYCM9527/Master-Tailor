@@ -6,7 +6,7 @@
   "tags": ["输入框", "表单", "浮动标签", "校验"],
   "summary": "点进输入框，占位标签缩小上浮到框顶，一条彩色底线从中间向两侧画出；输入合规时右侧描出绿色对勾，不合规失焦时底线变红抖动",
   "params": [
-    { "key": "fields", "label": "字段", "type": "text", "target": "config", "default": "姓名=text｜邮箱=email｜手机=tel", "maxLength": 80, "help": "「标签=类型」，类型 text / email / tel / password，用「｜」分隔" },
+    { "key": "fields", "label": "字段", "type": "text", "target": "config", "default": "姓名=text｜邮箱=email｜手机=tel", "maxLength": 80, "help": "「标签=类型」，类型 text / email / tel / password，用「｜」分隔", "fields": ["标签", "类型"] },
     { "key": "validate", "label": "输入校验", "type": "toggle", "target": "config", "default": true },
     { "key": "demoText", "label": "演示输入内容", "type": "text", "target": "config", "default": "张三｜hi@example.com｜13800000000", "maxLength": 80, "help": "按字段顺序，用「｜」分隔" },
     { "key": "accent", "label": "聚焦颜色", "type": "color", "target": "css", "default": "#7c9cff" },

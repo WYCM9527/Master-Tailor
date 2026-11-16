@@ -6,7 +6,7 @@
   "tags": ["粘液", "融化", "菜单", "SVG 滤镜"],
   "summary": "悬停菜单项时，文字先像蜡一样融化黏成一团，再凝固成另一个词、换了颜色；移开时融回原词",
   "params": [
-    { "key": "pairs", "label": "词对", "type": "text", "target": "config", "default": "作品=Works｜关于=About｜日志=Journal｜联系=Contact", "maxLength": 120, "help": "每项「悬停前=悬停后」，用「｜」分隔" },
+    { "key": "pairs", "label": "词对", "type": "text", "target": "config", "default": "作品=Works｜关于=About｜日志=Journal｜联系=Contact", "maxLength": 120, "help": "每项「悬停前=悬停后」，用「｜」分隔", "fields": ["悬停前", "悬停后"] },
     { "key": "duration", "label": "融化时长", "type": "range", "target": "config", "min": 0.4, "max": 2.5, "step": 0.1, "default": 1.2, "displayUnit": " 秒" },
     { "key": "blur", "label": "黏连强度", "type": "range", "target": "config", "min": 2, "max": 12, "step": 1, "default": 4 },
     { "key": "accent", "label": "融化后颜色", "type": "color", "target": "css", "default": "#f472b6" },

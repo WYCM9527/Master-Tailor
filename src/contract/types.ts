@@ -80,6 +80,13 @@ export interface TextParam extends BaseParam {
   type: 'text';
   default: string;
   maxLength?: number;
+  /**
+   * 多项文本（默认值用「｜」分隔多项）里每项的字段名，如 ["大字", "标题", "说明"]；
+   * 声明后面板把每项按 fieldSep 拆成带字段名的小框，值的写法不变
+   */
+  fields?: string[];
+  /** 字段分隔符（单个字符），缺省为「=」 */
+  fieldSep?: string;
 }
 
 /** 字体参数：值为 FONTS 表中的字体 id */

@@ -43,6 +43,7 @@ src/engine/bakeCode.ts ── 参数值写进 :root 的 --mt-* 与 const CONFIG 
 - **`previewRuntime`**：注入到预览文档 `</head>` 前的一段脚本。定义 `window.__MT_ENV = { thumb, visible }`；监听父页面消息：`mt:css`（热更新 CSS 变量）、`mt:pointer`（转发真实鼠标坐标给 `window.__mtOnPointer`）、`mt:visible`（离屏时把 `document.hidden / visibilityState` 改写为隐藏并派发 `visibilitychange`，效果代码只认 `document.hidden`）；向父页面发 `mt:activity`（全屏态退出按钮的活动信号）。thumb 模式把 `devicePixelRatio` 封顶为 1。
 - **`renderPrompt`**：任务 → 效果描述 → 参数（值 + help）→ 技术要求（全局四条 + 效果补充）→〔实现提示，仅不附代码时〕→ 完成后请检查 → 如果遇到问题 → 参考实现。每个事实只出现一次。
 - **`urlState`**：详情页状态 ↔ URL query，只写非默认值；解码时非法值回退默认；图片列表编码为「示例图索引:标题」，上传的图回退示例图。
+- **`textList`**：多项文本参数（默认值用「｜」分隔多项）的拆分与拼接：按 `fields` / `fieldSep` 拆字段、末尾空字段不留分隔符、字段输入去掉分隔符、算出往空字段写字要补回的分隔符（面板据此扣减该框的字数上限）。参数面板的逐项 / 逐字段编辑与 validate 共用，值的写法不变，所以 URL、CONFIG、prompt 都不受影响。
 - **`search`**：名称 + 摘要 + slug + 标签 + 分类名 + 子类名的子串匹配（AND），`#标签` 精确匹配，标签补全。只用 `EffectIndex` 字段。
 
 ## 页面 `src/app/`
@@ -67,11 +68,11 @@ src/engine/bakeCode.ts ── 参数值写进 :root 的 --mt-* 与 const CONFIG 
 
 ## 测试与门禁
 
-| 层          | 工具                                    | 覆盖                                                                                                                                                   |
-| ----------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 契约        | `scripts/validate.ts`（zod + 文本规则） | 三件套齐全、schema、`--mt-*` / CONFIG 注释、零外链、reduced-motion、轮播 / 转场基线关键字、thumb 块配对、效果描述 ≤ 200 字且无数值 / 占位符 / 实现术语 |
-| 引擎        | `tests/*.test.ts`（vitest）             | bakeCode / renderPrompt / urlState / search                                                                                                            |
-| 效果运行    | `scripts/smoke.ts`（Playwright）        | 逐个打开效果：异常 / console.error / 资源失败、站外请求、空白渲染                                                                                      |
-| 类型 / 风格 | `tsc -b`、eslint、prettier              | —                                                                                                                                                      |
+| 层          | 工具                                    | 覆盖                                                                                                                                                                                                  |
+| ----------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 契约        | `scripts/validate.ts`（zod + 文本规则） | 三件套齐全、schema、`--mt-*` / CONFIG 注释、零外链、reduced-motion、轮播 / 转场基线关键字、thumb 块配对、效果描述 ≤ 200 字且无数值 / 占位符 / 实现术语、多项文本 `fields` 与默认值 / 预设的字段数一致 |
+| 引擎        | `tests/*.test.ts`（vitest）             | bakeCode / renderPrompt / urlState / search / textList（含全量效果的字段拆分往返）                                                                                                                    |
+| 效果运行    | `scripts/smoke.ts`（Playwright）        | 逐个打开效果：异常 / console.error / 资源失败、站外请求、空白渲染                                                                                                                                     |
+| 类型 / 风格 | `tsc -b`、eslint、prettier              | —                                                                                                                                                                                                     |
 
 运行方式与 CI 结构见 [runbook](runbook.md)。

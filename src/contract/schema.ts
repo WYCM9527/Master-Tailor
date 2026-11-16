@@ -64,6 +64,8 @@ const textParam = z.object({
   target: z.literal('config'),
   default: z.string(),
   maxLength: z.number().int().positive().optional(),
+  fields: z.array(z.string().min(1)).min(2).max(6).optional(),
+  fieldSep: z.string().length(1).optional(),
 });
 
 const fontParam = z.object({
