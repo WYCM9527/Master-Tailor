@@ -1,6 +1,6 @@
 # 内容来源与收录台账
 
-> 更新：2026-10-10 · 站内 304 个效果、9 个一级分类（本日「进度条」新增 23 个、子类改按形态，见「进度条（23）」与「分类决策记录」；10-09 删去「滚动描迹光束」「滚动描线」「滚入列表」「色块揭示进场」，历次删除见文末「已删除的效果」，同日「页面转场」「加载与进场」并入新一级分类「加载」）。回答两件事：**已经从哪些源收了什么、为什么不收其余的**，以及**下一批还能去哪找**。加新效果或评估新来源前先读这里，避免重复评估同一批组件。
+> 更新：2026-11-16 · 站内 305 个效果、9 个一级分类（本日新增「景深残影大字」，记在「原创与其他」；10-10「进度条」新增 23 个、子类改按形态，见「进度条（23）」与「分类决策记录」；10-09 删去「滚动描迹光束」「滚动描线」「滚入列表」「色块揭示进场」，历次删除见文末「已删除的效果」，同日「页面转场」「加载与进场」并入新一级分类「加载」）。回答两件事：**已经从哪些源收了什么、为什么不收其余的**，以及**下一批还能去哪找**。加新效果或评估新来源前先读这里，避免重复评估同一批组件。
 
 ## 许可口径（红线）
 
@@ -27,7 +27,7 @@
 | 进度条专题             | 来源混合，见「进度条（23）」              |       23 | 2026-10-10 进度条批一～批五                        |
 | animos                 | 闭源 SaaS → visual-inspiration            |       16 | 批十九（2026-09-22，自动播放图片陈列）             |
 | Codrops                | MIT → reference                           |       25 | 批十五、十五·附、十六、备选                        |
-| 其他通用技法 / 产品    | 见下                                      |       18 | 零散                                               |
+| 其他通用技法 / 产品    | 见下                                      |       19 | 零散                                               |
 | Magic UI               | MIT → reference                           |       19 | 批十一                                             |
 | Uiverse（galaxy 仓库） | MIT → reference                           |       15 | 批十四                                             |
 | Animata                | MIT → reference                           |       15 | 批十三、批十八                                     |
@@ -102,10 +102,11 @@ animos.app 是闭源商业 SaaS（设计作品展示的视频动效模板编辑�
 
 不收 · 不是网页组件形态（约 12）：Multiscene 8 个（Triple Scene、Collage Reel、Fan Shuffle、Sweep Ring、Scatter Dial、Grid Zoom Strip、Spread Rows、Spread Columns）是多场景蒙太奇剪辑，参数模型装不下多段时间线；Feed Scroll 是手机信息流机壳；Poster Burst 以大字排版为主，不算图片陈列。
 
-### 原创（36）与其他（18）
+### 原创（36）与其他（19）
 
 - 原创：表单控件 5（日夜切换开关、液态开关、勾选动画、单选胶囊组、浮动标签输入框）、多数页面转场、多数轮播形态、以及站内自设的效果。
-- 其他 18 是通用交互或经典技法，按其性质分别标 reference / visual-inspiration：Keynote 转场（溶解、立方体、切页、圆形揭示、神奇移动）、Netflix 海报行、Cover Flow、Swiper / Glide 的轮播形态、particles.js 粒子连线、iCSS glitch 技法、Ken Burns、Intro to CSS 3D Transforms 的 carousel 一章、CSS sticky 堆叠等。
+- 其他 19 是通用交互或经典技法，按其性质分别标 reference / visual-inspiration：Keynote 转场（溶解、立方体、切页、圆形揭示、神奇移动）、Netflix 海报行、Cover Flow、Swiper / Glide 的轮播形态、particles.js 粒子连线、iCSS glitch 技法、Ken Burns、Intro to CSS 3D Transforms 的 carousel 一章、CSS sticky 堆叠等。
+- 2026-11-16 景深残影大字（`orbit-blur-monogram`，文字效果 · 自动效果）：RonniePPT 的 PowerPoint 教程视频，SWOT 四个大字用「透明占位框偏轴 + 三维旋转 + 艺术效果虚化 + 平滑切换」做出立体景深轮换。只看成片效果、按网页手段重写 → visual-inspiration；原片叠在大字上的白色横标、片头穿孔缩放与片尾百叶窗转场没收。
 
 ### 进度条（23）
 

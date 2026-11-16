@@ -1,0 +1,156 @@
+{
+  "slug": "orbit-blur-monogram",
+  "name": "景深残影大字",
+  "category": "text",
+  "sub": "idle",
+  "tags": ["3D", "透视", "景深", "虚化", "大字", "SWOT"],
+  "summary": "超大首字母正对镜头清晰定格，其余字母在后方偏轴翻转并化作柔焦残影，按节拍轮流转正对焦",
+  "params": [
+    {
+      "key": "items",
+      "label": "条目列表",
+      "type": "text",
+      "target": "config",
+      "default": "S=Strengths=核心引擎自研、交互响应丝滑，设计语言高度克制且辨识度鲜明。｜W=Weaknesses=早期生态插件尚少，重度三维场景在低功耗设备上的帧率仍需打磨。｜O=Opportunities=AI 辅助生成降低创作门槛，轻量化网页动效正在替代传统演示文稿。｜T=Threats=同质化模板快速涌入市场，跨端浏览器的渲染差异带来持续维护成本。",
+      "maxLength": 320,
+      "help": "每项按「大字=标题=说明」填写，多项之间用「｜」分隔",
+      "fields": ["大字", "标题", "说明"]
+    },
+    {
+      "key": "interval",
+      "label": "轮换间隔",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 8,
+      "step": 0.5,
+      "default": 2.8,
+      "displayUnit": " 秒",
+      "help": "调到 0 表示不自动轮换，仅靠点击、拖拽或方向键切换"
+    },
+    {
+      "key": "duration",
+      "label": "切换时长",
+      "type": "range",
+      "target": "css",
+      "min": 0.4,
+      "max": 2,
+      "step": 0.05,
+      "default": 1.05,
+      "unit": "s",
+      "displayUnit": " 秒"
+    },
+    {
+      "key": "tiltAngle",
+      "label": "侧翻角度",
+      "type": "range",
+      "target": "config",
+      "min": 65,
+      "max": 135,
+      "step": 5,
+      "default": 110,
+      "displayUnit": "°",
+      "help": "后方大字绕竖轴翻转的角度，超过 90° 会翻至背面斜侧方"
+    },
+    {
+      "key": "pitchAngle",
+      "label": "俯仰倾角",
+      "type": "range",
+      "target": "config",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "default": 20,
+      "displayUnit": "°",
+      "help": "后方大字的上下俯仰倾斜角，打破水平对称感"
+    },
+    {
+      "key": "perspective",
+      "label": "透视距离",
+      "type": "range",
+      "target": "css",
+      "min": 140,
+      "max": 700,
+      "step": 20,
+      "default": 220,
+      "unit": "px",
+      "help": "越小广角近大远小拉伸越剧烈，越大越接近平视"
+    },
+    {
+      "key": "blurAmount",
+      "label": "残影虚化",
+      "type": "range",
+      "target": "config",
+      "min": 6,
+      "max": 40,
+      "step": 2,
+      "default": 16,
+      "unit": "px",
+      "help": "两侧偏轴残影的基准模糊半径，远景自动加深"
+    },
+    {
+      "key": "stageColor",
+      "label": "舞台底色",
+      "type": "color",
+      "target": "css",
+      "default": "#d8d1a8",
+      "help": "聚光中心由此提亮，四周暗角由此压暗"
+    },
+    {
+      "key": "glyphColor",
+      "label": "主字颜色",
+      "type": "color",
+      "target": "css",
+      "default": "#0c0a08"
+    }
+  ],
+  "presets": [
+    {
+      "id": "default",
+      "name": "默认",
+      "values": {}
+    },
+    {
+      "id": "ink",
+      "name": "中文墨韵",
+      "values": {
+        "items": "势=品牌势能=以鲜明的视觉母题建立第一眼记忆，在嘈杂的信息流里迅速定锚。｜器=产品器物=克制打磨每一次按压与滑动的阻尼，让工具本身隐入直觉之后。｜道=增长路径=靠真实口碑与可复用的工作流自然裂变，而非短期流量采买。｜界=竞争壁垒=审美体系与工程细节同频咬合，很难被粗放的模板复制替代。",
+        "stageColor": "#dcdad2",
+        "glyphColor": "#121210",
+        "tiltAngle": 115,
+        "blurAmount": 18
+      }
+    },
+    {
+      "id": "obsidian",
+      "name": "暗夜反白",
+      "values": {
+        "stageColor": "#282b38",
+        "glyphColor": "#f0efe9",
+        "perspective": 200,
+        "tiltAngle": 115,
+        "duration": 0.9
+      }
+    },
+    {
+      "id": "wide",
+      "name": "夸张广角",
+      "values": {
+        "perspective": 160,
+        "tiltAngle": 125,
+        "pitchAngle": 28,
+        "blurAmount": 20,
+        "interval": 2.5,
+        "duration": 0.85
+      }
+    }
+  ],
+  "thumb": {
+    "mode": "live"
+  },
+  "source": {
+    "kind": "visual-inspiration",
+    "name": "RonniePPT 的 SWOT 大字三维平滑切换一类效果",
+    "license": "未使用其代码"
+  }
+}
